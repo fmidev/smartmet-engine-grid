@@ -37,15 +37,19 @@ Engine::Engine(const char* theConfigFile)
     if (!itsConfig.exists("server.cache.numOfGrids"))
       throw SmartMet::Spine::Exception(BCP, "The 'server.cache.numOfGrids' attribute not specified in the config file");
 
-    if (!itsConfig.exists("server.cache.expirationTime"))
-      throw SmartMet::Spine::Exception(BCP, "The 'server.cache.expirationTime' attribute not specified in the config file");
+    if (!itsConfig.exists("server.cache.maxUncompressedSizeInMegaBytes"))
+      throw SmartMet::Spine::Exception(BCP, "The 'server.cache.maxUncompressedSizeInMegaBytes' attribute not specified in the config file");
+
+    if (!itsConfig.exists("server.cache.maxCompressedSizeInMegaBytes"))
+      throw SmartMet::Spine::Exception(BCP, "The 'server.cache.maxCompressedSizeInMegaBytes' attribute not specified in the config file");
 
     itsConfig.lookupValue("redis.address", itsRedisAddress);
     itsConfig.lookupValue("redis.port", itsRedisPort);
     itsConfig.lookupValue("server.gridDirectory", itsServerGridDirectory);
     itsConfig.lookupValue("server.configDirectory", itsServerConfigDirectory);
     itsConfig.lookupValue("server.cache.numOfGrids", itsNumOfCachedGrids);
-    itsConfig.lookupValue("server.cache.expirationTime", itsCacheExpirationTime);
+    itsConfig.lookupValue("server.cache.maxUncompressedSizeInMegaBytes", itsMaxUncompressedMegaBytesOfCachedGrids);
+    itsConfig.lookupValue("server.cache.maxCompressedSizeInMegaBytes", itsMaxCompressedMegaBytesOfCachedGrids);
 
 
     // Initializing information that is needed for identifying the content of the grid files.
@@ -53,11 +57,9 @@ Engine::Engine(const char* theConfigFile)
     SmartMet::Identification::gribDef.init(itsServerConfigDirectory.c_str());
 
 
-    // Initializing the size of the grid value cache. The first number is the number of the cached grids
-    // and the second number is the minimum number of the seconds that the cached grid should be kept
-    // in the memory after its last access. The point is that the oldest cache information is automatically
-    // removed if there is no space for the a grid. On the other hand, if there is no need for caching
-    // new grids then the old grids can stay in memory.
+    // Initializing the size of the grid value cache.
+
+    SmartMet::GRID::valueCache.init(itsNumOfCachedGrids,itsMaxUncompressedMegaBytesOfCachedGrids,itsMaxCompressedMegaBytesOfCachedGrids);
 
   }
   catch (...)

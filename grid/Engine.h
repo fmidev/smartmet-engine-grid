@@ -38,13 +38,15 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::shared_ptr<SmartMet::DataServer::ServiceInterface>  dataServer;
     std::shared_ptr<SmartMet::QueryServer::ServiceInterface> queryServer;
 
-    libconfig::Config itsConfig;
-    std::string       itsRedisAddress;
-    int               itsRedisPort;
-    std::string       itsServerGridDirectory;
-    std::string       itsServerConfigDirectory;
-    uint              itsNumOfCachedGrids;
-    uint              itsCacheExpirationTime;
+    libconfig::Config   itsConfig;
+    std::string         itsRedisAddress;
+    int                 itsRedisPort;
+    std::string         itsServerGridDirectory;
+    std::string         itsServerConfigDirectory;
+    uint                itsNumOfCachedGrids;
+    uint                itsMaxCompressedMegaBytesOfCachedGrids;
+    uint                itsMaxUncompressedMegaBytesOfCachedGrids;
+    uint                itsCacheExpirationTime;
 };
 
 }  // namespace Grid
