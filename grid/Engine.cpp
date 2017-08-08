@@ -20,7 +20,7 @@ Engine::Engine(const char* theConfigFile)
     itsConfig.readFile(theConfigFile);
 
     itsRedisAddress = "127.0.0.1";
-    itsRedisPort = 0; //6379;
+    itsRedisPort = 6379;
 
     if (!itsConfig.exists("redis.address"))
       throw SmartMet::Spine::Exception(BCP, "The 'redis.address' attribute not specified in the config file");
@@ -57,7 +57,6 @@ Engine::Engine(const char* theConfigFile)
 
 
 
-    printf("REDIS %s %d %s\n",itsRedisAddress.c_str(),itsRedisPort,itsRedisTablePrefix.c_str());
     // Initializing information that is needed for identifying the content of the grid files.
 
     SmartMet::Identification::gribDef.init(itsServerConfigDirectory.c_str());
