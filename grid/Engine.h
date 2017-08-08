@@ -41,6 +41,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     libconfig::Config   itsConfig;
     std::string         itsRedisAddress;
     int                 itsRedisPort;
+    std::string         itsRedisTablePrefix;
     std::string         itsServerGridDirectory;
     std::string         itsServerConfigDirectory;
     uint                itsNumOfCachedGrids;

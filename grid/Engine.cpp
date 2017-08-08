@@ -20,13 +20,16 @@ Engine::Engine(const char* theConfigFile)
     itsConfig.readFile(theConfigFile);
 
     itsRedisAddress = "127.0.0.1";
-    itsRedisPort = 6379;
+    itsRedisPort = 0; //6379;
 
     if (!itsConfig.exists("redis.address"))
       throw SmartMet::Spine::Exception(BCP, "The 'redis.address' attribute not specified in the config file");
 
     if (!itsConfig.exists("redis.port"))
       throw SmartMet::Spine::Exception(BCP, "The 'redis.port' attribute not specified in the config file");
+
+    if (!itsConfig.exists("redis.tablePrefix"))
+      throw SmartMet::Spine::Exception(BCP, "The 'redis.tablePrefix' attribute not specified in the config file");
 
     if (!itsConfig.exists("server.gridDirectory"))
       throw SmartMet::Spine::Exception(BCP, "The 'server.gridDirectory' attribute not specified in the config file");
@@ -45,6 +48,7 @@ Engine::Engine(const char* theConfigFile)
 
     itsConfig.lookupValue("redis.address", itsRedisAddress);
     itsConfig.lookupValue("redis.port", itsRedisPort);
+    itsConfig.lookupValue("redis.tablePrefix", itsRedisTablePrefix);
     itsConfig.lookupValue("server.gridDirectory", itsServerGridDirectory);
     itsConfig.lookupValue("server.configDirectory", itsServerConfigDirectory);
     itsConfig.lookupValue("server.cache.numOfGrids", itsNumOfCachedGrids);
@@ -52,6 +56,8 @@ Engine::Engine(const char* theConfigFile)
     itsConfig.lookupValue("server.cache.maxCompressedSizeInMegaBytes", itsMaxCompressedMegaBytesOfCachedGrids);
 
 
+
+    printf("REDIS %s %d %s\n",itsRedisAddress.c_str(),itsRedisPort,itsRedisTablePrefix.c_str());
     // Initializing information that is needed for identifying the content of the grid files.
 
     SmartMet::Identification::gribDef.init(itsServerConfigDirectory.c_str());
@@ -90,7 +96,7 @@ void Engine::init()
   try
   {
     SmartMet::ContentServer::RedisImplementation *redis = new SmartMet::ContentServer::RedisImplementation();
-    redis->init(itsRedisAddress.c_str(),itsRedisPort);
+    redis->init(itsRedisAddress.c_str(),itsRedisPort,itsRedisTablePrefix.c_str());
     contentServerRedis.reset(redis);
 
 
