@@ -31,6 +31,15 @@ Engine::Engine(const char* theConfigFile)
     if (!itsConfig.exists("redis.tablePrefix"))
       throw SmartMet::Spine::Exception(BCP, "The 'redis.tablePrefix' attribute not specified in the config file");
 
+    if (!itsConfig.exists("server.processingLog.file"))
+      throw SmartMet::Spine::Exception(BCP, "The 'server.processingLog.file' attribute not specified in the config file");
+
+    if (!itsConfig.exists("server.processingLog.maxSize"))
+      throw SmartMet::Spine::Exception(BCP, "The 'server.processingLog.maxSize' attribute not specified in the config file");
+
+    if (!itsConfig.exists("server.processingLog.truncateSize"))
+      throw SmartMet::Spine::Exception(BCP, "The 'server.processingLog.truncateSize' attribute not specified in the config file");
+
     if (!itsConfig.exists("server.gridDirectory"))
       throw SmartMet::Spine::Exception(BCP, "The 'server.gridDirectory' attribute not specified in the config file");
 
@@ -51,6 +60,9 @@ Engine::Engine(const char* theConfigFile)
     itsConfig.lookupValue("redis.tablePrefix", itsRedisTablePrefix);
     itsConfig.lookupValue("server.gridDirectory", itsServerGridDirectory);
     itsConfig.lookupValue("server.configDirectory", itsServerConfigDirectory);
+    itsConfig.lookupValue("server.processingLog.file", itsServerProcessingLogFile);
+    itsConfig.lookupValue("server.processingLog.maxSize", itsServerProcessingLogMaxSize);
+    itsConfig.lookupValue("server.processingLog.truncateSize", itsServerProcessingLogTruncateSize);
     itsConfig.lookupValue("server.cache.numOfGrids", itsNumOfCachedGrids);
     itsConfig.lookupValue("server.cache.maxUncompressedSizeInMegaBytes", itsMaxUncompressedMegaBytesOfCachedGrids);
     itsConfig.lookupValue("server.cache.maxCompressedSizeInMegaBytes", itsMaxCompressedMegaBytesOfCachedGrids);
@@ -98,7 +110,6 @@ void Engine::init()
     redis->init(itsRedisAddress.c_str(),itsRedisPort,itsRedisTablePrefix.c_str());
     contentServerRedis.reset(redis);
 
-
     SmartMet::ContentServer::CacheImplementation *cache = new SmartMet::ContentServer::CacheImplementation();
     cache->init(0,redis);
     contentServerCache.reset(cache);
@@ -112,6 +123,15 @@ void Engine::init()
     SmartMet::QueryServer::ServiceImplementation *qServer = new SmartMet::QueryServer::ServiceImplementation();
     qServer->init(cache,dServer);
     queryServer.reset(qServer);
+
+    if (itsServerProcessingLogFile.length() > 0)
+    {
+      itsProcessingLog.init(true,itsServerProcessingLogFile.c_str(),itsServerProcessingLogMaxSize,itsServerProcessingLogTruncateSize);
+      cache->setProcessingLog(&itsProcessingLog);
+      dataServer->setProcessingLog(&itsProcessingLog);
+      queryServer->setProcessingLog(&itsProcessingLog);
+    }
+
   }
   catch (...)
   {
