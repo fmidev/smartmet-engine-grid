@@ -3,6 +3,9 @@
 #include <spine/Exception.h>
 #include "grid-files/grid/ValueCache.h"
 #include "grid-files/identification/GribDef.h"
+#include "grid-content/contentServer/corba/client/ClientImplementation.h"
+#include "grid-content/dataServer/corba/client/ClientImplementation.h"
+#include "grid-content/queryServer/corba/client/ClientImplementation.h"
 
 
 namespace SmartMet
@@ -31,47 +34,70 @@ Engine::Engine(const char* theConfigFile)
     if (!itsConfig.exists("redis.tablePrefix"))
       throw SmartMet::Spine::Exception(BCP, "The 'redis.tablePrefix' attribute not specified in the config file");
 
-    if (!itsConfig.exists("server.processingLog.file"))
-      throw SmartMet::Spine::Exception(BCP, "The 'server.processingLog.file' attribute not specified in the config file");
+    if (!itsConfig.exists("grid-files.configDirectory"))
+      throw SmartMet::Spine::Exception(BCP, "The 'grid-files.configDirectory' attribute not specified in the config file");
 
-    if (!itsConfig.exists("server.processingLog.maxSize"))
-      throw SmartMet::Spine::Exception(BCP, "The 'server.processingLog.maxSize' attribute not specified in the config file");
+    if (!itsConfig.exists("remote-content-server.enabled"))
+      throw SmartMet::Spine::Exception(BCP, "The 'remote-content-server.enabled' attribute not specified in the config file");
 
-    if (!itsConfig.exists("server.processingLog.truncateSize"))
-      throw SmartMet::Spine::Exception(BCP, "The 'server.processingLog.truncateSize' attribute not specified in the config file");
+    if (!itsConfig.exists("remote-content-server.ior"))
+      throw SmartMet::Spine::Exception(BCP, "The 'remote-content-server.ior' attribute not specified in the config file");
 
-    if (!itsConfig.exists("server.gridDirectory"))
-      throw SmartMet::Spine::Exception(BCP, "The 'server.gridDirectory' attribute not specified in the config file");
+    if (!itsConfig.exists("remote-data-server.enabled"))
+      throw SmartMet::Spine::Exception(BCP, "The 'remote-data-server.enabled' attribute not specified in the config file");
 
-    if (!itsConfig.exists("server.configDirectory"))
-      throw SmartMet::Spine::Exception(BCP, "The 'server.configDirectory' attribute not specified in the config file");
+    if (!itsConfig.exists("remote-data-server.ior"))
+      throw SmartMet::Spine::Exception(BCP, "The 'remote-data-server.ior' attribute not specified in the config file");
 
-    if (!itsConfig.exists("server.cache.numOfGrids"))
-      throw SmartMet::Spine::Exception(BCP, "The 'server.cache.numOfGrids' attribute not specified in the config file");
+    if (!itsConfig.exists("remote-query-server.enabled"))
+      throw SmartMet::Spine::Exception(BCP, "The 'remote-query-server.enabled' attribute not specified in the config file");
 
-    if (!itsConfig.exists("server.cache.maxUncompressedSizeInMegaBytes"))
-      throw SmartMet::Spine::Exception(BCP, "The 'server.cache.maxUncompressedSizeInMegaBytes' attribute not specified in the config file");
+    if (!itsConfig.exists("remote-query-server.ior"))
+      throw SmartMet::Spine::Exception(BCP, "The 'remote-query-server.ior' attribute not specified in the config file");
 
-    if (!itsConfig.exists("server.cache.maxCompressedSizeInMegaBytes"))
-      throw SmartMet::Spine::Exception(BCP, "The 'server.cache.maxCompressedSizeInMegaBytes' attribute not specified in the config file");
+    if (!itsConfig.exists("local-data-server.processingLog.file"))
+      throw SmartMet::Spine::Exception(BCP, "The 'local-data-server.processingLog.file' attribute not specified in the config file");
+
+    if (!itsConfig.exists("local-data-server.processingLog.maxSize"))
+      throw SmartMet::Spine::Exception(BCP, "The 'local-data-server.processingLog.maxSize' attribute not specified in the config file");
+
+    if (!itsConfig.exists("local-data-server.processingLog.truncateSize"))
+      throw SmartMet::Spine::Exception(BCP, "The 'local-data-server.processingLog.truncateSize' attribute not specified in the config file");
+
+    if (!itsConfig.exists("local-data-server.gridDirectory"))
+      throw SmartMet::Spine::Exception(BCP, "The 'local-data-server.gridDirectory' attribute not specified in the config file");
+
+    if (!itsConfig.exists("local-data-server.cache.numOfGrids"))
+      throw SmartMet::Spine::Exception(BCP, "The 'local-data-server.cache.numOfGrids' attribute not specified in the config file");
+
+    if (!itsConfig.exists("local-data-server.cache.maxUncompressedSizeInMegaBytes"))
+      throw SmartMet::Spine::Exception(BCP, "The 'local-data-server.cache.maxUncompressedSizeInMegaBytes' attribute not specified in the config file");
+
+    if (!itsConfig.exists("local-data-server.cache.maxCompressedSizeInMegaBytes"))
+      throw SmartMet::Spine::Exception(BCP, "The 'local-data-server.cache.maxCompressedSizeInMegaBytes' attribute not specified in the config file");
 
     itsConfig.lookupValue("redis.address", itsRedisAddress);
     itsConfig.lookupValue("redis.port", itsRedisPort);
     itsConfig.lookupValue("redis.tablePrefix", itsRedisTablePrefix);
-    itsConfig.lookupValue("server.gridDirectory", itsServerGridDirectory);
-    itsConfig.lookupValue("server.configDirectory", itsServerConfigDirectory);
-    itsConfig.lookupValue("server.processingLog.file", itsServerProcessingLogFile);
-    itsConfig.lookupValue("server.processingLog.maxSize", itsServerProcessingLogMaxSize);
-    itsConfig.lookupValue("server.processingLog.truncateSize", itsServerProcessingLogTruncateSize);
-    itsConfig.lookupValue("server.cache.numOfGrids", itsNumOfCachedGrids);
-    itsConfig.lookupValue("server.cache.maxUncompressedSizeInMegaBytes", itsMaxUncompressedMegaBytesOfCachedGrids);
-    itsConfig.lookupValue("server.cache.maxCompressedSizeInMegaBytes", itsMaxCompressedMegaBytesOfCachedGrids);
-
+    itsConfig.lookupValue("grid-files.configDirectory", itsGridConfigDirectory);
+    itsConfig.lookupValue("remote-content-server.enabled", itsRemoteContentServerEnabled);
+    itsConfig.lookupValue("remote-content-server.ior", itsRemoteContentServerIor);
+    itsConfig.lookupValue("remote-data-server.enabled", itsRemoteDataServerEnabled);
+    itsConfig.lookupValue("remote-data-server.ior", itsRemoteDataServerIor);
+    itsConfig.lookupValue("remote-query-server.enabled", itsRemoteQueryServerEnabled);
+    itsConfig.lookupValue("remote-query-server.ior", itsRemoteQueryServerIor);
+    itsConfig.lookupValue("local-data-server.gridDirectory", itsServerGridDirectory);
+    itsConfig.lookupValue("local-data-server.processingLog.file", itsServerProcessingLogFile);
+    itsConfig.lookupValue("local-data-server.processingLog.maxSize", itsServerProcessingLogMaxSize);
+    itsConfig.lookupValue("local-data-server.processingLog.truncateSize", itsServerProcessingLogTruncateSize);
+    itsConfig.lookupValue("local-data-server.cache.numOfGrids", itsNumOfCachedGrids);
+    itsConfig.lookupValue("local-data-server.cache.maxUncompressedSizeInMegaBytes", itsMaxUncompressedMegaBytesOfCachedGrids);
+    itsConfig.lookupValue("local-data-server.cache.maxCompressedSizeInMegaBytes", itsMaxCompressedMegaBytesOfCachedGrids);
 
 
     // Initializing information that is needed for identifying the content of the grid files.
 
-    SmartMet::Identification::gribDef.init(itsServerConfigDirectory.c_str());
+    SmartMet::Identification::gribDef.init(itsGridConfigDirectory.c_str());
 
 
     // Initializing the size of the grid value cache.
@@ -106,32 +132,67 @@ void Engine::init()
 {
   try
   {
-    SmartMet::ContentServer::RedisImplementation *redis = new SmartMet::ContentServer::RedisImplementation();
+    ContentServer::RedisImplementation *redis = new ContentServer::RedisImplementation();
     redis->init(itsRedisAddress.c_str(),itsRedisPort,itsRedisTablePrefix.c_str());
     contentServerRedis.reset(redis);
 
-    SmartMet::ContentServer::CacheImplementation *cache = new SmartMet::ContentServer::CacheImplementation();
-    cache->init(0,redis);
-    contentServerCache.reset(cache);
-    cache->startEventProcessing();
+    ContentServer::ServiceInterface *cServer = NULL;
+    DataServer::ServiceInterface *dServer = NULL;
+    //QueryServer::ServiceInterface *qServer = NULL;
 
-    SmartMet::DataServer::ServiceImplementation *dServer = new SmartMet::DataServer::ServiceImplementation();
-    dServer->init(0,0,"NotRegistered","NotRegistered",itsServerGridDirectory,cache);
-    dataServer.reset(dServer);
-    dServer->startEventProcessing();
 
-    SmartMet::QueryServer::ServiceImplementation *qServer = new SmartMet::QueryServer::ServiceImplementation();
-    qServer->init(cache,dServer);
-    queryServer.reset(qServer);
-
-    if (itsServerProcessingLogFile.length() > 0)
+    if (itsRemoteContentServerEnabled == "true"  &&  itsRemoteContentServerIor.length() > 50)
     {
-      itsProcessingLog.init(true,itsServerProcessingLogFile.c_str(),itsServerProcessingLogMaxSize,itsServerProcessingLogTruncateSize);
-      cache->setProcessingLog(&itsProcessingLog);
-      dataServer->setProcessingLog(&itsProcessingLog);
-      queryServer->setProcessingLog(&itsProcessingLog);
+      ContentServer::Corba::ClientImplementation *client = new ContentServer::Corba::ClientImplementation();
+      client->init(itsRemoteContentServerIor.c_str());
+      contentServerCache.reset(client);
+      cServer = client;
+    }
+    else
+    {
+      ContentServer::CacheImplementation *cache = new ContentServer::CacheImplementation();
+      cache->init(0,redis);
+      contentServerCache.reset(cache);
+      cache->startEventProcessing();
+      cServer = cache;
     }
 
+    if (itsRemoteDataServerEnabled == "true"  &&  itsRemoteDataServerIor.length() > 50)
+    {
+      DataServer::Corba::ClientImplementation *client = new DataServer::Corba::ClientImplementation();
+      client->init(itsRemoteDataServerIor);
+      dataServer.reset(client);
+      dServer = client;
+    }
+    else
+    {
+      DataServer::ServiceImplementation *server = new DataServer::ServiceImplementation();
+      server->init(0,0,"NotRegistered","NotRegistered",itsServerGridDirectory,cServer);
+      //dServer->init(0,0,"NotRegistered","NotRegistered",itsServerGridDirectory,cache);
+      dataServer.reset(server);
+      server->startEventProcessing();
+
+      if (itsServerProcessingLogFile.length() > 0)
+      {
+        itsProcessingLog.init(true,itsServerProcessingLogFile.c_str(),itsServerProcessingLogMaxSize,itsServerProcessingLogTruncateSize);
+        //cache->setProcessingLog(&itsProcessingLog);
+        server->setProcessingLog(&itsProcessingLog);
+      }
+    }
+
+    if (itsRemoteQueryServerEnabled == "true"  &&  itsRemoteQueryServerIor.length() > 50)
+    {
+      QueryServer::Corba::ClientImplementation *client = new QueryServer::Corba::ClientImplementation();
+      client->init(itsRemoteQueryServerIor);
+      queryServer.reset(client);
+      //qServer = client;
+    }
+    else
+    {
+      QueryServer::ServiceImplementation *server = new QueryServer::ServiceImplementation();
+      server->init(cServer,dServer);
+      queryServer.reset(server);
+    }
   }
   catch (...)
   {

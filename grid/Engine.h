@@ -42,11 +42,17 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::string         itsRedisAddress;
     int                 itsRedisPort;
     std::string         itsRedisTablePrefix;
+    std::string         itsRemoteContentServerEnabled;
+    std::string         itsRemoteContentServerIor;
+    std::string         itsRemoteDataServerEnabled;
+    std::string         itsRemoteDataServerIor;
+    std::string         itsRemoteQueryServerEnabled;
+    std::string         itsRemoteQueryServerIor;
+    std::string         itsGridConfigDirectory;
     std::string         itsServerProcessingLogFile;
     int                 itsServerProcessingLogMaxSize;
     int                 itsServerProcessingLogTruncateSize;
     std::string         itsServerGridDirectory;
-    std::string         itsServerConfigDirectory;
     uint                itsNumOfCachedGrids;
     uint                itsMaxCompressedMegaBytesOfCachedGrids;
     uint                itsMaxUncompressedMegaBytesOfCachedGrids;

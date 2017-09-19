@@ -2,6 +2,11 @@ SUBNAME = grid
 SPEC = smartmet-engine-$(SUBNAME)
 INCDIR = smartmet/engines/$(SUBNAME)
 
+# Enabling / disabling CORBA usage.
+
+CORBA = enabled
+
+
 # Installation directories
 
 processor := $(shell uname -p)
@@ -24,6 +29,16 @@ datadir = $(PREFIX)/share
 enginedir = $(datadir)/smartmet/engines
 objdir = obj
 
+
+ifeq ($(CORBA), disabled)
+  CORBA_FLAGS = -DCORBA_DISABLED
+else
+  CORBA_INCLUDE = -I/usr/include/smartmet/grid-content/contentServer/corba/stubs \
+                  -I/usr/include/smartmet/grid-content/dataServer/corba/stubs \
+                  -I/usr/include/smartmet/grid-content/queryServer/corba/stubs
+  CORBA_LIBS = -lomniORB4 -lomnithread  
+endif
+
 # Compiler options
 
 DEFINES = -DUNIX -D_REENTRANT
@@ -40,7 +55,8 @@ ifeq ($(CXX), clang++)
 
  INCLUDES = \
 	-isystem $(includedir) \
-	-isystem $(includedir)/smartmet
+	-isystem $(includedir)/smartmet \
+	$(CORBA_INCLUDE)
 
 else
 
@@ -65,7 +81,8 @@ else
 	-I$(includedir) \
 	-I$(includedir)/smartmet \
 	-I$(includedir)/smartmet/grid-files \
-	-I$(includedir)/smartmet/grid-content
+	-I$(includedir)/smartmet/grid-content \
+	$(CORBA_INCLUDE)
 
 endif
 
@@ -88,7 +105,8 @@ LIBS = -L$(libdir) \
 	-lboost_system \
 	-lpthread \
 	-lpqxx \
-	-lconfig++ 
+	-lconfig++ \
+	$(CORBA_LIBS)
 
 
 # What to install
