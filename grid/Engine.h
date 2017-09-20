@@ -4,6 +4,7 @@
 #include <grid-content/contentServer/cache/CacheImplementation.h>
 #include <grid-content/contentServer/redis/RedisImplementation.h>
 #include <grid-content/dataServer/implementation/ServiceImplementation.h>
+#include <grid-content/dataServer/cache/CacheImplementation.h>
 #include <grid-content/queryServer/implementation/ServiceImplementation.h>
 #include <libconfig.h++>
 
@@ -36,6 +37,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::shared_ptr<SmartMet::ContentServer::ServiceInterface> contentServerCache;
     std::shared_ptr<SmartMet::ContentServer::ServiceInterface> contentServerRedis;
     std::shared_ptr<SmartMet::DataServer::ServiceInterface>  dataServer;
+    std::shared_ptr<SmartMet::DataServer::ServiceInterface> dataServerClient;
     std::shared_ptr<SmartMet::QueryServer::ServiceInterface> queryServer;
 
     libconfig::Config   itsConfig;
@@ -45,6 +47,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::string         itsRemoteContentServerEnabled;
     std::string         itsRemoteContentServerIor;
     std::string         itsRemoteDataServerEnabled;
+    std::string         itsRemoteDataServerCache;
     std::string         itsRemoteDataServerIor;
     std::string         itsRemoteQueryServerEnabled;
     std::string         itsRemoteQueryServerIor;

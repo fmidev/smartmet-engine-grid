@@ -46,6 +46,9 @@ Engine::Engine(const char* theConfigFile)
     if (!itsConfig.exists("remote-data-server.enabled"))
       throw SmartMet::Spine::Exception(BCP, "The 'remote-data-server.enabled' attribute not specified in the config file");
 
+    if (!itsConfig.exists("remote-data-server.cache"))
+      throw SmartMet::Spine::Exception(BCP, "The 'remote-data-server.cache' attribute not specified in the config file");
+
     if (!itsConfig.exists("remote-data-server.ior"))
       throw SmartMet::Spine::Exception(BCP, "The 'remote-data-server.ior' attribute not specified in the config file");
 
@@ -83,6 +86,7 @@ Engine::Engine(const char* theConfigFile)
     itsConfig.lookupValue("remote-content-server.enabled", itsRemoteContentServerEnabled);
     itsConfig.lookupValue("remote-content-server.ior", itsRemoteContentServerIor);
     itsConfig.lookupValue("remote-data-server.enabled", itsRemoteDataServerEnabled);
+    itsConfig.lookupValue("remote-data-server.cache", itsRemoteDataServerCache);
     itsConfig.lookupValue("remote-data-server.ior", itsRemoteDataServerIor);
     itsConfig.lookupValue("remote-query-server.enabled", itsRemoteQueryServerEnabled);
     itsConfig.lookupValue("remote-query-server.ior", itsRemoteQueryServerIor);
@@ -161,8 +165,20 @@ void Engine::init()
     {
       DataServer::Corba::ClientImplementation *client = new DataServer::Corba::ClientImplementation();
       client->init(itsRemoteDataServerIor);
-      dataServer.reset(client);
-      dServer = client;
+
+      if (itsRemoteDataServerCache == "true")
+      {
+        DataServer::CacheImplementation *serverCache = new DataServer::CacheImplementation();
+        serverCache->init(client);
+        dataServerClient.reset(client);
+        dataServer.reset(serverCache);
+        dServer = serverCache;
+      }
+      else
+      {
+        dataServer.reset(client);
+        dServer = client;
+      }
     }
     else
     {
