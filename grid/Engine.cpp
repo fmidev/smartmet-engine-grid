@@ -187,6 +187,7 @@ void Engine::init()
       //dServer->init(0,0,"NotRegistered","NotRegistered",itsServerGridDirectory,cache);
       dataServer.reset(server);
       server->startEventProcessing();
+      dServer = server;
 
       if (itsServerProcessingLogFile.length() > 0)
       {
