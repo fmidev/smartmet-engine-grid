@@ -8,6 +8,9 @@
 #include <grid-content/queryServer/implementation/ServiceImplementation.h>
 #include <libconfig.h++>
 
+#include "ParameterInfo.h"
+
+
 namespace SmartMet
 {
 namespace Engine
@@ -15,52 +18,81 @@ namespace Engine
 namespace Grid
 {
 
+typedef std::shared_ptr<ContentServer::ServiceInterface> ContentServer_sptr;
+typedef std::shared_ptr<DataServer::ServiceInterface> DataServer_sptr;
+typedef std::shared_ptr<QueryServer::ServiceInterface> QueryServer_sptr;
+typedef std::vector<ParameterInfo> ParameterInfo_vec;
+typedef std::vector<std::pair<std::string,T::GeometryId>> Producer_vec;
+
+
 
 class Engine : public SmartMet::Spine::SmartMetEngine
 {
   public:
 
-    Engine(const char *theConfigFile);
-    ~Engine();
+                        Engine(const char *theConfigFile);
+    virtual             ~Engine();
 
-    std::shared_ptr<SmartMet::ContentServer::ServiceInterface> getContentServerPtr();
-    std::shared_ptr<SmartMet::DataServer::ServiceInterface>  getDataServerPtr();
-    std::shared_ptr<SmartMet::QueryServer::ServiceInterface> getQueryServerPt();
+    int                 getGridValues(
+                            std::vector<std::string> producerNameList,
+                            std::string originTime,
+                            T::ParamKeyType parameterKeyType,
+                            T::ParamId paramKey,
+                            T::ParamLevelIdType paramLevelIdType,
+                            T::ParamLevelId paramLevelId,
+                            T::ParamLevel paramLevel,
+                            T::ForecastType forecastType,
+                            T::ForecastNumber forecastNumber,
+                            std::string forecastTime,
+                            std::vector<T::Coordinate> coordinates,
+                            bool areaSearch,                          // If true then coordinates defines the area polygon.
+                            T::GridValueList& valueList);
+
+    ContentServer_sptr  getContentServer_sptr();
+    DataServer_sptr     getDataServer_sptr();
+    QueryServer_sptr    getQueryServer_sptr();
 
   protected:
 
-    void init();
-    void shutdown();
+    void                init();
+    void                shutdown();
+    void                loadParameters();
+    void                loadProducers();
+    void                getParameterInfoList(std::string parameterName,std::vector<ParameterInfo>& infoList);
+    void                getGeometryIdListByCoordinates(std::vector<T::Coordinate>& coordinates,std::set<T::GeometryId>& geometryIdList);
 
   private:
 
-    std::shared_ptr<SmartMet::ContentServer::ServiceInterface> contentServerCache;
-    std::shared_ptr<SmartMet::ContentServer::ServiceInterface> contentServerRedis;
-    std::shared_ptr<SmartMet::DataServer::ServiceInterface>  dataServer;
-    std::shared_ptr<SmartMet::DataServer::ServiceInterface> dataServerClient;
-    std::shared_ptr<SmartMet::QueryServer::ServiceInterface> queryServer;
-
-    libconfig::Config   itsConfig;
-    std::string         itsRedisAddress;
-    int                 itsRedisPort;
-    std::string         itsRedisTablePrefix;
-    std::string         itsRemoteContentServerEnabled;
-    std::string         itsRemoteContentServerIor;
-    std::string         itsRemoteDataServerEnabled;
-    std::string         itsRemoteDataServerCache;
-    std::string         itsRemoteDataServerIor;
-    std::string         itsRemoteQueryServerEnabled;
-    std::string         itsRemoteQueryServerIor;
-    std::string         itsGridConfigDirectory;
-    std::string         itsServerProcessingLogFile;
-    int                 itsServerProcessingLogMaxSize;
-    int                 itsServerProcessingLogTruncateSize;
-    std::string         itsServerGridDirectory;
-    uint                itsNumOfCachedGrids;
-    uint                itsMaxCompressedMegaBytesOfCachedGrids;
-    uint                itsMaxUncompressedMegaBytesOfCachedGrids;
-    uint                itsCacheExpirationTime;
-    Log                 itsProcessingLog;
+    libconfig::Config   mConfig;
+    std::string         mRedisAddress;
+    int                 mRedisPort;
+    std::string         mRedisTablePrefix;
+    std::string         mRemoteContentServerEnabled;
+    std::string         mRemoteContentServerIor;
+    std::string         mRemoteDataServerEnabled;
+    std::string         mRemoteDataServerCache;
+    std::string         mRemoteDataServerIor;
+    std::string         mRemoteQueryServerEnabled;
+    std::string         mRemoteQueryServerIor;
+    std::string         mGridConfigDirectory;
+    std::string         mServerProcessingLogFile;
+    int                 mServerProcessingLogMaxSize;
+    int                 mServerProcessingLogTruncateSize;
+    std::string         mServerGridDirectory;
+    uint                mNumOfCachedGrids;
+    uint                mMaxCompressedMegaBytesOfCachedGrids;
+    uint                mMaxUncompressedMegaBytesOfCachedGrids;
+    uint                mCacheExpirationTime;
+    Log                 mProcessingLog;
+    std::string         mParameterFile;
+    std::string         mProducerFile;
+    ParameterInfo_vec   mParameters;
+    Producer_vec        mProducerVector;
+    ContentServer_sptr  mContentServerCache;
+    ContentServer_sptr  mContentServerRedis;
+    DataServer_sptr     mDataServer;
+    DataServer_sptr     mDataServerClient;
+    QueryServer_sptr    mQueryServer;
 };
 
 }  // namespace Grid
