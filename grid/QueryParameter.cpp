@@ -16,7 +16,7 @@ QueryParameter::QueryParameter()
     mParameterKeyType = T::ParamKeyType::UNKNOWN;
     mParameterLevelIdType = T::ParamLevelIdType::FMI;
     mParameterLevelId = 0;
-    mLevel = 0;
+    mParameterLevel = 0;
     mForecastType = -1;
     mForecastNumber = -1;
     mInterpolationMethod = T::InterpolationMethod::Linear;
@@ -41,7 +41,7 @@ QueryParameter::QueryParameter(const QueryParameter& queryParameter)
     mParameterKey = queryParameter.mParameterKey;
     mParameterLevelIdType = queryParameter.mParameterLevelIdType;
     mParameterLevelId = queryParameter.mParameterLevelId;
-    mLevel = queryParameter.mLevel;
+    mParameterLevel = queryParameter.mParameterLevel;
     mForecastType = queryParameter.mForecastType;
     mForecastNumber = queryParameter.mForecastNumber;
     mInterpolationMethod = queryParameter.mInterpolationMethod;
@@ -99,24 +99,17 @@ void QueryParameter::print(std::ostream& stream,uint level,uint optionFlags)
     stream << space(level) << "- mParameterKeyType     = " << (uint)mParameterKeyType << "\n";
     stream << space(level) << "- mParameterKey         = " << mParameterKey << "\n";
     stream << space(level) << "- mParameterLevelIdType = " << (uint)mParameterLevelIdType << "\n";
-    stream << space(level) << "- mParameterLevelId     = " << mParameterLevelId << "\n";
-    stream << space(level) << "- mLevel                = " << mLevel << "\n";
-    stream << space(level) << "- mForecastType         = " << mForecastType << "\n";
-    stream << space(level) << "- mForecastNumber       = " << mForecastNumber << "\n";
+    stream << space(level) << "- mParameterLevelId     = " << (int)mParameterLevelId << "\n";
+    stream << space(level) << "- mParameterLevel       = " << mParameterLevel << "\n";
+    stream << space(level) << "- mForecastType         = " << (int)mForecastType << "\n";
+    stream << space(level) << "- mForecastNumber       = " << (int)mForecastNumber << "\n";
     stream << space(level) << "- mInterpolationMethod  = " << (uint)mInterpolationMethod << "\n";
 
     stream << space(level) << "- mValueList            = \n";
 
     for (auto it = mValueList.begin();  it != mValueList.end(); ++it)
     {
-      stream << space(level) << "  * " << it->first << "\n";
-
-      uint len = it->second.getLength();
-      for (uint t=0; t<len; t++)
-      {
-        T::GridValue *rec = it->second.getGridValueByIndex(t);
-        rec->print(stream,level+2,optionFlags);
-      }
+      it->print(stream,level+2,optionFlags);
     }
 
   }

@@ -15,9 +15,7 @@ ParameterInfo::ParameterInfo()
   try
   {
     mParameterKeyType = T::ParamKeyType::UNKNOWN;
-    mParamLevelIdType = T::ParamLevelIdType::ANY;
-    mParamLevelId = 0;
-    mParamLevel = 0;
+    //mParameterLevelIdType = T::ParamLevelIdType::ANY;
     mInterpolationMethod = T::InterpolationMethod::Linear;
   }
   catch (...)
@@ -36,10 +34,10 @@ ParameterInfo::ParameterInfo(const ParameterInfo& info)
   {
     mParameterName = info.mParameterName;
     mParameterKeyType = info.mParameterKeyType;
-    mParamKey = info.mParamKey;
-    mParamLevelIdType = info.mParamLevelIdType;
-    mParamLevelId = info.mParamLevelId;
-    mParamLevel = info.mParamLevel;
+    mParameterKey = info.mParameterKey;
+    mParameterLevelIdType = info.mParameterLevelIdType;
+    mParameterLevelId = info.mParameterLevelId;
+    mParameterLevel = info.mParameterLevel;
     mInterpolationMethod = info.mInterpolationMethod;
   }
   catch (...)
@@ -72,14 +70,27 @@ void ParameterInfo::print(std::ostream& stream,uint level,uint optionFlags)
   try
   {
     stream << space(level) << "ParameterInfo\n";
-    stream << space(level) << "- mParameterName       = " << mParameterName << "\n";
-    stream << space(level) << "- mParameterKeyType    = " << (uint)mParameterKeyType << "\n";
-    stream << space(level) << "- mParamKey            = " << mParamKey << "\n";
-    stream << space(level) << "- mParamLevelIdType    = " << (uint)mParamLevelIdType << "\n";
-    stream << space(level) << "- mParamLevelId        = " << (uint)mParamLevelId << "\n";
-    stream << space(level) << "- mParamLevel          = " << mParamLevel << "\n";
-    stream << space(level) << "- mInterpolationMethod = " << (uint)mInterpolationMethod << "\n";
-}
+    stream << space(level) << "- mParameterName         = " << mParameterName << "\n";
+    stream << space(level) << "- mParameterKeyType      = " << (uint)mParameterKeyType << "\n";
+    stream << space(level) << "- mParameterKey          = " << mParameterKey << "\n";
+
+    if (mParameterLevelIdType)
+      stream << space(level) << "- mParameterLevelIdType  = " << (uint)(*mParameterLevelIdType) << "\n";
+    else
+      stream << space(level) << "- mParameterLevelIdType  = \n";
+
+    if (mParameterLevelId)
+      stream << space(level) << "- mParameterLevelId      = " << (uint)(*mParameterLevelId) << "\n";
+    else
+      stream << space(level) << "- mParameterLevelId      = \n";
+
+    if (mParameterLevel)
+      stream << space(level) << "- mParameterLevel        = " << (*mParameterLevel) << "\n";
+    else
+      stream << space(level) << "- mParameterLevel        = \n";
+
+    stream << space(level) << "- mInterpolationMethod   = " << (uint)mInterpolationMethod << "\n";
+  }
   catch (...)
   {
     throw SmartMet::Spine::Exception(BCP,exception_operation_failed,NULL);

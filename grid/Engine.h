@@ -8,6 +8,7 @@
 #include <grid-content/queryServer/implementation/ServiceImplementation.h>
 #include <libconfig.h++>
 
+#include "Query.h"
 #include "ParameterInfo.h"
 
 
@@ -33,9 +34,9 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                         Engine(const char *theConfigFile);
     virtual             ~Engine();
 
-    int                 getGridValues(
-                            std::vector<std::string> producerNameList,
-                            std::string originTime,
+    void                executeQuery(Query& query);
+
+    void                getGridValues(
                             T::ParamKeyType parameterKeyType,
                             T::ParamId paramKey,
                             T::ParamLevelIdType paramLevelIdType,
@@ -44,9 +45,39 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                             T::ForecastType forecastType,
                             T::ForecastNumber forecastNumber,
                             std::string forecastTime,
-                            std::vector<T::Coordinate> coordinates,
+                            bool timeMatchRequired,
+                            std::vector<std::vector<T::Coordinate>>& coordinates,
                             bool areaSearch,                          // If true then coordinates defines the area polygon.
-                            T::GridValueList& valueList);
+                            ParameterValues& valueList);
+
+    void                getGridValues(
+                            std::vector<ParameterInfo>& parameterInfoList,
+                            T::ForecastType forecastType,
+                            T::ForecastNumber forecastNumber,
+                            std::string forecastTime,
+                            bool timeMatchRequired,
+                            std::vector<std::vector<T::Coordinate>>& coordinates,
+                            bool areaSearch,
+                            ParameterValues& valueList);
+
+    void                  getGridValues(
+                            std::vector<ParameterInfo>& parameterInfoList,
+                            T::ForecastType forecastType,
+                            T::ForecastNumber forecastNumber,
+                            std::string startTime,
+                            std::string endTime,
+                            std::vector<std::vector<T::Coordinate>>& coordinates,
+                            bool areaSearch,
+                            std::vector<ParameterValues>& valueList);
+
+
+    void                getParameterInfoList(
+                            T::ParamKeyType parameterKeyType,
+                            T::ParamId paramKey,
+                            T::ParamLevelIdType paramLevelIdType,
+                            T::ParamLevelId paramLevelId,
+                            T::ParamLevel paramLevel,
+                            std::vector<ParameterInfo>& parameterInfoList);
 
     ContentServer_sptr  getContentServer_sptr();
     DataServer_sptr     getDataServer_sptr();
@@ -58,8 +89,10 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                shutdown();
     void                loadParameters();
     void                loadProducers();
-    void                getParameterInfoList(std::string parameterName,std::vector<ParameterInfo>& infoList);
-    void                getGeometryIdListByCoordinates(std::vector<T::Coordinate>& coordinates,std::set<T::GeometryId>& geometryIdList);
+    void                getParameterInfoList(std::string parameterName,T::ParamLevelIdType paramLevelIdType,T::ParamLevelId paramLevelId,T::ParamLevel paramLevel,std::vector<ParameterInfo>& infoList);
+    void                getGeometryIdListByCoordinates(std::vector<std::vector<T::Coordinate>>& coordinates,std::set<T::GeometryId>& geometryIdList);
+
+
 
   private:
 
@@ -85,7 +118,9 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     uint                mCacheExpirationTime;
     Log                 mProcessingLog;
     std::string         mParameterFile;
+    time_t              mParameterFileModificationTime;
     std::string         mProducerFile;
+    time_t              mProducerFileModificationTime;
     ParameterInfo_vec   mParameters;
     Producer_vec        mProducerVector;
     ContentServer_sptr  mContentServerCache;
@@ -93,6 +128,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     DataServer_sptr     mDataServer;
     DataServer_sptr     mDataServerClient;
     QueryServer_sptr    mQueryServer;
+    ThreadLock          mThreadLock;
 };
 
 }  // namespace Grid

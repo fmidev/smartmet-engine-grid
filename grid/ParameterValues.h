@@ -1,6 +1,7 @@
 #pragma once
 
-#include "ParameterValues.h"
+#include "grid-files/grid/Typedefs.h"
+#include "grid-files/grid/GridValueList.h"
 
 
 namespace SmartMet
@@ -11,18 +12,20 @@ namespace Grid
 {
 
 
-class QueryParameter
+class ParameterValues
 {
   public:
-                            QueryParameter();
-                            QueryParameter(const QueryParameter& queryParameter);
-    virtual                 ~QueryParameter();
+                            ParameterValues();
+                            ParameterValues(const ParameterValues& parameterValues);
+    virtual                 ~ParameterValues();
 
-    QueryParameter*         duplicate();
     void                    print(std::ostream& stream,uint level,uint optionFlags);
 
-    std::string             mParam;
-    std::string             mName;
+    std::string             mForecastTime;
+    uint                    mProducerId;
+    uint                    mGenerationId;
+    uint                    mGeometryId;
+
     T::ParamKeyType         mParameterKeyType;
     T::ParamId              mParameterKey;
     T::ParamLevelIdType     mParameterLevelIdType;
@@ -30,9 +33,8 @@ class QueryParameter
     T::ParamLevel           mParameterLevel;
     T::ForecastType         mForecastType;
     T::ForecastNumber       mForecastNumber;
-    T::InterpolationMethod  mInterpolationMethod;
 
-    std::vector<ParameterValues> mValueList;
+    T::GridValueList        mValueList;
 };
 
 
