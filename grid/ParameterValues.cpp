@@ -92,7 +92,7 @@ void ParameterValues::print(std::ostream& stream,uint level,uint optionFlags)
     stream << space(level) << "- mParameterLevel       = " << mParameterLevel << "\n";
     stream << space(level) << "- mForecastType         = " << mForecastType << "\n";
     stream << space(level) << "- mForecastNumber       = " << mForecastNumber << "\n";
-    stream << space(level) << "- mValueList            = \n";
+    stream << space(level) << "- mValueList            = (" << mValueList.getLength() << " records)\n";
 
     uint len = mValueList.getLength();
     for (uint t=0; t<len; t++)

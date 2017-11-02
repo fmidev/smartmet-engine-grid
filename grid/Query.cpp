@@ -16,8 +16,8 @@ Query::Query()
 {
   try
   {
-    mAreaCoordinates = false;
-    mTimeMatchRequired = false;
+    mAreaQuery = false;
+    mTimeRangeQuery = false;
   }
   catch (...)
   {
@@ -37,10 +37,10 @@ Query::Query(Query& query)
     mForecastTimeList = query.mForecastTimeList;
     mCoordinateList = query.mCoordinateList;
     mQueryParameterList = query.mQueryParameterList;
-    mAreaCoordinates = query.mAreaCoordinates;
+    mAreaQuery = query.mAreaQuery;
     mStartTime = query.mStartTime;
     mEndTime = query.mEndTime;
-    mTimeMatchRequired = query.mTimeMatchRequired;
+    mTimeRangeQuery = query.mTimeRangeQuery;
   }
   catch (...)
   {
@@ -67,6 +67,95 @@ Query::~Query()
 
 
 
+bool Query::parameterInQuery(std::string param)
+{
+  try
+  {
+    for (auto it = mQueryParameterList.rbegin(); it != mQueryParameterList.rend(); ++it)
+    {
+      if (it->mParam == param  ||  it->mSymbolicName == param)
+        return true;
+    }
+    return false;
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
+
+
+uint Query::getValuesPerTimeStep()
+{
+  try
+  {
+    uint valueCount = 0;
+    for (auto param = mQueryParameterList.begin(); param != mQueryParameterList.end(); ++param)
+    {
+      for (auto vList = param->mValueList.begin(); vList != param->mValueList.end(); ++vList)
+      {
+        uint vCount = vList->mValueList.getLength();
+        if (vCount > valueCount)
+          valueCount = vCount;
+      }
+    }
+    return valueCount;
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
+
+QueryParameter* Query::getQueryParameterPtr(std::string param)
+{
+  try
+  {
+    for (auto it = mQueryParameterList.rbegin(); it != mQueryParameterList.rend(); ++it)
+    {
+      if (it->mParam == param  ||  it->mSymbolicName == param)
+        return &(*it);
+    }
+    return NULL;
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
+
+
+void Query::removeTemporaryParameters()
+{
+  try
+  {
+    while (mQueryParameterList.size() > 0)
+    {
+      if (mQueryParameterList[mQueryParameterList.size()-1].mTemporary)
+        mQueryParameterList.pop_back();
+      else
+        return;
+    }
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
+
+
 void Query::print(std::ostream& stream,uint level,uint optionFlags)
 {
   try
@@ -75,8 +164,8 @@ void Query::print(std::ostream& stream,uint level,uint optionFlags)
 
     stream << space(level) << "- mStartTime              = " << mStartTime << "\n";
     stream << space(level) << "- mEndTime                = " << mEndTime << "\n";
-    stream << space(level) << "- mAreaCoordinates        = " << (int)mAreaCoordinates << "\n";
-    stream << space(level) << "- mTimeMatchRequired      = " << (int)mTimeMatchRequired << "\n";
+    stream << space(level) << "- mAreaQuery        = " << (int)mAreaQuery << "\n";
+    stream << space(level) << "- mTimeRangeQuery      = " << (int)mTimeRangeQuery << "\n";
 
     stream << space(level) << "- mForecastTimeList\n";
     for (auto it = mForecastTimeList.begin(); it != mForecastTimeList.end(); ++it)
@@ -90,11 +179,12 @@ void Query::print(std::ostream& stream,uint level,uint optionFlags)
     for (auto it = mQueryParameterList.begin(); it != mQueryParameterList.end(); ++it)
       it->print(stream,level+2,optionFlags);
 
-    stream << space(level) << "- mCoordinateList         = \n";
+    stream << space(level) << "- mPolygonPath            = \n";
     for (auto cList = mCoordinateList.begin(); cList != mCoordinateList.end(); ++cList)
     {
+      stream << space(level) << "  - mCoordinateList         = \n";
       for (auto it = cList->begin(); it != cList->end(); ++it)
-        stream << space(level) << "   * " << it->x() << "," << it->y() << "\n";
+        stream << space(level) << "     * " << it->x() << "," << it->y() << "\n";
     }
 
   }

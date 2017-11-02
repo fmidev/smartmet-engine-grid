@@ -20,6 +20,7 @@ QueryParameter::QueryParameter()
     mForecastType = -1;
     mForecastNumber = -1;
     mInterpolationMethod = T::InterpolationMethod::Linear;
+    mTemporary = false;
   }
   catch (...)
   {
@@ -36,7 +37,7 @@ QueryParameter::QueryParameter(const QueryParameter& queryParameter)
   try
   {
     mParam = queryParameter.mParam;
-    mName = queryParameter.mName;
+    mSymbolicName = queryParameter.mSymbolicName;
     mParameterKeyType = queryParameter.mParameterKeyType;
     mParameterKey = queryParameter.mParameterKey;
     mParameterLevelIdType = queryParameter.mParameterLevelIdType;
@@ -45,8 +46,10 @@ QueryParameter::QueryParameter(const QueryParameter& queryParameter)
     mForecastType = queryParameter.mForecastType;
     mForecastNumber = queryParameter.mForecastNumber;
     mInterpolationMethod = queryParameter.mInterpolationMethod;
-
     mValueList = queryParameter.mValueList;
+    mTemporary = queryParameter.mTemporary;
+    mFunction = queryParameter.mFunction;
+    mFunctionParams = queryParameter.mFunctionParams;
   }
   catch (...)
   {
@@ -95,7 +98,7 @@ void QueryParameter::print(std::ostream& stream,uint level,uint optionFlags)
   {
     stream << space(level) << "QueryParameter\n";
     stream << space(level) << "- mParam                = " << mParam << "\n";
-    stream << space(level) << "- mName                 = " << mName << "\n";
+    stream << space(level) << "- mSymbolicName         = " << mSymbolicName << "\n";
     stream << space(level) << "- mParameterKeyType     = " << (uint)mParameterKeyType << "\n";
     stream << space(level) << "- mParameterKey         = " << mParameterKey << "\n";
     stream << space(level) << "- mParameterLevelIdType = " << (uint)mParameterLevelIdType << "\n";
@@ -104,6 +107,14 @@ void QueryParameter::print(std::ostream& stream,uint level,uint optionFlags)
     stream << space(level) << "- mForecastType         = " << (int)mForecastType << "\n";
     stream << space(level) << "- mForecastNumber       = " << (int)mForecastNumber << "\n";
     stream << space(level) << "- mInterpolationMethod  = " << (uint)mInterpolationMethod << "\n";
+    stream << space(level) << "- mTemporary            = " << (int)mTemporary << "\n";
+    stream << space(level) << "- mFunction             = " << mFunction << "\n";
+
+    stream << space(level) << "- mFunctionParams       = \n";
+    for (auto it = mFunctionParams.begin();  it != mFunctionParams.end(); ++it)
+    {
+      stream << space(level) << "   * " << *it << "\n";
+    }
 
     stream << space(level) << "- mValueList            = \n";
 

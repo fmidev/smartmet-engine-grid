@@ -9,6 +9,7 @@
 #include "grid-content/queryServer/corba/client/ClientImplementation.h"
 
 
+
 namespace SmartMet
 {
 namespace Engine
@@ -21,6 +22,8 @@ Engine::Engine(const char* theConfigFile)
 {
   try
   {
+    mLastConfiguratonCheck = time(0);
+    mLuaState = NULL;
     mConfig.readFile(theConfigFile);
 
     mRedisAddress = "127.0.0.1";
@@ -83,8 +86,14 @@ Engine::Engine(const char* theConfigFile)
     if (!mConfig.exists("parameterFile"))
       throw SmartMet::Spine::Exception(BCP, "The 'parameterFile' attribute not specified in the config file");
 
+    if (!mConfig.exists("parameterAliasFile"))
+      throw SmartMet::Spine::Exception(BCP, "The 'parameterAliasFile' attribute not specified in the config file");
+
     if (!mConfig.exists("producerFile"))
       throw SmartMet::Spine::Exception(BCP, "The 'producerFile' attribute not specified in the config file");
+
+    if (!mConfig.exists("luaFunctionFile"))
+      throw SmartMet::Spine::Exception(BCP, "The 'luaFunctionFile' attribute not specified in the config file");
 
     mConfig.lookupValue("redis.address", mRedisAddress);
     mConfig.lookupValue("redis.port", mRedisPort);
@@ -105,7 +114,9 @@ Engine::Engine(const char* theConfigFile)
     mConfig.lookupValue("local-data-server.cache.maxUncompressedSizeInMegaBytes", mMaxUncompressedMegaBytesOfCachedGrids);
     mConfig.lookupValue("local-data-server.cache.maxCompressedSizeInMegaBytes", mMaxCompressedMegaBytesOfCachedGrids);
     mConfig.lookupValue("parameterFile", mParameterFile);
+    mConfig.lookupValue("parameterAliasFile", mParameterAliasFile);
     mConfig.lookupValue("producerFile", mProducerFile);
+    mConfig.lookupValue("luaFunctionFile", mLuaFunctionFile);
 
 
     // Initializing information that is needed for identifying the content of the grid files.
@@ -131,6 +142,8 @@ Engine::~Engine()
 {
   try
   {
+    if (mLuaState != NULL)
+      lua_close(mLuaState);
   }
   catch (...)
   {
@@ -141,12 +154,15 @@ Engine::~Engine()
 
 
 
+
 void Engine::init()
 {
   try
   {
-    loadParameters();
-    loadProducers();
+    loadParameterAliasFile();
+    loadParameterFile();
+    loadProducerFile();
+    loadLuaFunctionFile();
 
     ContentServer::RedisImplementation *redis = new ContentServer::RedisImplementation();
     redis->init(mRedisAddress.c_str(),mRedisPort,mRedisTablePrefix.c_str());
@@ -237,7 +253,7 @@ void Engine::shutdown()
 {
   try
   {
-    std::cout << "  -- Shutdown requested (grid-content engine)\n";
+    std::cout << "  -- Shutdown requested (grid engine)\n";
 
     if (!mContentServerRedis)
       mContentServerRedis->shutdown();
@@ -261,7 +277,7 @@ void Engine::shutdown()
 
 
 
-void Engine::loadParameters()
+void Engine::loadParameterFile()
 {
   try
   {
@@ -274,7 +290,7 @@ void Engine::loadParameters()
       throw exception;
     }
 
-    mParameters.clear();
+    mParameterList.clear();
 
     char st[1000];
 
@@ -330,8 +346,8 @@ void Engine::loadParameters()
           if (field[6][0] != '\0')
             rec.mInterpolationMethod = (T::InterpolationMethod)atoi(field[6]);
 
-          rec.print(std::cout,0,0);
-          mParameters.push_back(rec);
+          //rec.print(std::cout,0,0);
+          mParameterList.push_back(rec);
         }
       }
     }
@@ -349,11 +365,102 @@ void Engine::loadParameters()
 
 
 
-void Engine::loadProducers()
+void Engine::loadParameterAliasFile()
 {
   try
   {
 
+    FILE *file = fopen(mParameterAliasFile.c_str(),"r");
+    if (file == NULL)
+    {
+      SmartMet::Spine::Exception exception(BCP,"Cannot open the parameter alias file!");
+      exception.addParameter("Filename",mParameterAliasFile);
+      throw exception;
+    }
+
+    mParameterAliasList.clear();
+
+    char st[1000];
+    uint lineCount = 0;
+
+    while (!feof(file))
+    {
+      if (fgets(st,1000,file) != NULL)
+      {
+        lineCount++;
+        if (st[0] != '#')
+        {
+          int ind = 0;
+          char *field[100];
+          uint c = 1;
+          field[0] = st;
+          char *p = st;
+          while (*p != '\0'  &&  c < 100)
+          {
+            if (*p == '{')
+              ind++;
+
+            if (*p == '}')
+              ind--;
+
+            if ((*p == ';'  || *p == '\n')  &&  ind == 0)
+            {
+              *p = '\0';
+              p++;
+              field[c] = p;
+              c++;
+            }
+            else
+            {
+              p++;
+            }
+          }
+
+          if (c > 2)
+          {
+            ParameterAlias rec;
+
+            if (field[0][0] != '\0')
+              rec.mName = field[0];
+
+            if (field[1][0] != '\0')
+              rec.mTitle = field[1];
+
+            if (field[2][0] != '\0')
+              rec.mParameterString = field[2];
+
+            auto alias = mParameterAliasList.find(toLowerString(rec.mName));
+            if (alias != mParameterAliasList.end())
+            {
+              printf("### ALIAS '%s' ALREADY DEFINED (%s:%u)!\n",rec.mName.c_str(),mParameterAliasFile.c_str(),lineCount);
+              //rec.print(std::cout,0,0);
+            }
+            else
+            {
+              mParameterAliasList.insert(std::pair<std::string,ParameterAlias>(toLowerString(rec.mName),rec));
+            }
+          }
+        }
+      }
+    }
+    fclose(file);
+
+    mParameterAliasFileModificationTime = getFileModificationTime(mParameterAliasFile.c_str());
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP,exception_operation_failed,NULL);
+  }
+}
+
+
+
+
+
+void Engine::loadProducerFile()
+{
+  try
+  {
     FILE *file = fopen(mProducerFile.c_str(),"r");
     if (file == NULL)
     {
@@ -362,7 +469,7 @@ void Engine::loadProducers()
       throw exception;
     }
 
-    mProducerVector.clear();
+    mProducerList.clear();
 
     char st[1000];
 
@@ -395,7 +502,7 @@ void Engine::loadProducers()
 
         if (c >= 2 && field[0][0] != '\0' &&  field[1][0] != '\0')
         {
-          mProducerVector.push_back(std::pair<std::string,T::GeometryId>(std::string(field[0]),atoi(field[1])));
+          mProducerList.push_back(std::pair<std::string,T::GeometryId>(std::string(field[0]),atoi(field[1])));
         }
       }
     }
@@ -413,11 +520,45 @@ void Engine::loadProducers()
 
 
 
-void Engine::getParameterInfoList(std::string parameterName,T::ParamLevelIdType paramLevelIdType,T::ParamLevelId paramLevelId,T::ParamLevel paramLevel,std::vector<ParameterInfo>& infoList)
+void Engine::loadLuaFunctionFile()
 {
   try
   {
-    for (auto it=mParameters.begin(); it != mParameters.end(); ++it)
+    if (mLuaState != NULL)
+    {
+      lua_close(mLuaState);
+      mLuaState = NULL;
+    }
+
+    mLuaState = luaL_newstate();
+    luaL_openlibs(mLuaState);
+
+    if (luaL_dofile(mLuaState,mLuaFunctionFile.c_str()) != 0)
+    {
+      SmartMet::Spine::Exception exception(BCP, "Cannot load a LUA file!");
+      exception.addParameter("Filename",mLuaFunctionFile);
+      exception.addParameter("Lua message",lua_tostring(mLuaState, -1));
+      lua_pop(mLuaState, 1);
+      throw exception;
+    }
+
+    mLuaFunctionFileModificationTime = getFileModificationTime(mLuaFunctionFile.c_str());
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
+
+
+void Engine::getParameterInfoList(std::string parameterName,T::ParamLevelIdType paramLevelIdType,T::ParamLevelId paramLevelId,T::ParamLevel paramLevel,ParameterInfo_vec& infoList)
+{
+  try
+  {
+    for (auto it=mParameterList.begin(); it != mParameterList.end(); ++it)
     {
       if (strcasecmp(it->mParameterName.c_str(),parameterName.c_str()) == 0)
       {
@@ -445,7 +586,7 @@ void Engine::getParameterInfoList(std::string parameterName,T::ParamLevelIdType 
 
 
 
-void Engine::getGeometryIdListByCoordinates(std::vector<std::vector<T::Coordinate>>& coordinates,std::set<T::GeometryId>& geometryIdList)
+void Engine::getGeometryIdListByCoordinates(QueryCoordinates& coordinates,std::set<T::GeometryId>& geometryIdList)
 {
   try
   {
@@ -456,7 +597,6 @@ void Engine::getGeometryIdListByCoordinates(std::vector<std::vector<T::Coordinat
     {
       for (auto coordinate = cList->begin(); coordinate != cList->end(); ++coordinate)
       {
-        std::cout << coordinate->x() << "," << coordinate->y() << "  ";
         std::set<T::GeometryId> idList;
         Identification::gribDef.getGeometryIdListByLatLon(coordinate->y(),coordinate->x(),idList);
 
@@ -477,7 +617,6 @@ void Engine::getGeometryIdListByCoordinates(std::vector<std::vector<T::Coordinat
           }
         }
       }
-      std::cout << "\n";
     }
 
     for (auto it = countList.begin(); it != countList.end(); ++it)
@@ -495,63 +634,14 @@ void Engine::getGeometryIdListByCoordinates(std::vector<std::vector<T::Coordinat
 
 
 
-
 void Engine::getGridValues(
-                        T::ParamKeyType parameterKeyType,
-                        T::ParamId paramKey,
-                        T::ParamLevelIdType paramLevelIdType,
-                        T::ParamLevelId paramLevelId,
-                        T::ParamLevel paramLevel,
+                        Producer_vec& producers,
+                        ParameterInfo_vec& parameterInfoList,
                         T::ForecastType forecastType,
                         T::ForecastNumber forecastNumber,
                         std::string forecastTime,
                         bool timeMatchRequired,
-                        std::vector<std::vector<T::Coordinate>>& coordinates,
-                        bool areaSearch,
-                        ParameterValues& valueList)
-{
-  try
-  {
-    std::vector<ParameterInfo> parameterInfoList;
-    char key[100];
-    strcpy(key,paramKey.c_str());
-    char *p1 = strstr(key,".");
-    if (p1 != NULL)
-    {
-      *p1 = '\0';
-      p1++;
-      char *p2 = strstr(p1,".");
-      if (p2 != NULL)
-      {
-        *p2 = '\0';
-        p2++;
-        getParameterInfoList(parameterKeyType,key,paramLevelIdType,(T::ParamLevelId)atoi(p1),atoi(p2),parameterInfoList);
-      }
-    }
-    else
-    {
-      getParameterInfoList(parameterKeyType,paramKey,paramLevelIdType,paramLevelId,paramLevel,parameterInfoList);
-    }
-
-    getGridValues(parameterInfoList,forecastType,forecastNumber,forecastTime,timeMatchRequired,coordinates,areaSearch,valueList);
-  }
-  catch (...)
-  {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
-  }
-}
-
-
-
-
-
-void Engine::getGridValues(
-                        std::vector<ParameterInfo>& parameterInfoList,
-                        T::ForecastType forecastType,
-                        T::ForecastNumber forecastNumber,
-                        std::string forecastTime,
-                        bool timeMatchRequired,
-                        std::vector<std::vector<T::Coordinate>>& coordinates,
+                        QueryCoordinates& coordinates,
                         bool areaSearch,
                         ParameterValues& valueList)
 {
@@ -575,18 +665,16 @@ void Engine::getGridValues(
     getGeometryIdListByCoordinates(coordinates,geometryIdList);
 
 
-    printf("ParamList : %u\n",(uint)parameterInfoList.size());
-
     // No producers defined. We should go through the producer list that is defined
     // in the configuration file.
 
-    for (auto it = mProducerVector.begin(); it != mProducerVector.end(); ++it)
+    for (auto it = producers.begin(); it != producers.end(); ++it)
     {
       std::string producerName = it->first;
 
       T::GeometryId producerGeometryId = it->second;
 
-      printf("Producer %s:%d\n",producerName.c_str(),producerGeometryId);
+      // printf("Producer %s:%d\n",producerName.c_str(),producerGeometryId);
 
       if (geometryIdList.find(producerGeometryId) != geometryIdList.end())
       {
@@ -598,7 +686,13 @@ void Engine::getGridValues(
 
           T::GenerationInfoList generationInfoList;
           int result = mContentServerCache->getGenerationInfoListByProducerId(0,producerInfo.mProducerId,generationInfoList);
-
+          if (result != 0)
+          {
+            SmartMet::Spine::Exception exception(BCP, "ContentServer returns an error!");
+            exception.addParameter("Service","getGenerationInfoListByProducerId");
+            exception.addParameter("Message",ContentServer::getResultString(result));
+            throw exception;
+          }
 
           T::GenerationInfo *generationInfo = generationInfoList.getLastGenerationInfoByProducerId(producerInfo.mProducerId);
 
@@ -616,6 +710,13 @@ void Engine::getGridValues(
 
               T::ContentInfoList contentList;
               int result = mContentServerCache->getContentListByParameterGenerationIdAndForecastTime(0,generationInfo->mGenerationId,pInfo->mParameterKeyType,pInfo->mParameterKey,*pInfo->mParameterLevelIdType,*pInfo->mParameterLevelId,*pInfo->mParameterLevel,forecastType,forecastNumber,producerGeometryId,forecastTime,contentList);
+              if (result != 0)
+              {
+                SmartMet::Spine::Exception exception(BCP, "ContentServer returns an error!");
+                exception.addParameter("Service","getContentListByParameterGenerationIdAndForecastTime");
+                exception.addParameter("Message",ContentServer::getResultString(result));
+                throw exception;
+              }
 
 //            contentList.print(std::cout,0,0);
               if (contentList.getLength() > 0)
@@ -643,9 +744,27 @@ void Engine::getGridValues(
                     valueList.mParameterLevel = contentInfo->mParameterLevel;
 
                     if (!areaSearch)
+                    {
                       int result = mDataServer->getGridValueListByPointList(0,contentInfo->mFileId,contentInfo->mMessageIndex,T::CoordinateType::LATLON_COORDINATES,coordinates[0],pInfo->mInterpolationMethod,valueList.mValueList);
+                      if (result != 0)
+                      {
+                        SmartMet::Spine::Exception exception(BCP, "DataServer returns an error!");
+                        exception.addParameter("Service","getGridValueListByPointList");
+                        exception.addParameter("Message",DataServer::getResultString(result));
+                        throw exception;
+                      }
+                    }
                     else
+                    {
                       int result = mDataServer->getGridValueListByPolygonPath(0,contentInfo->mFileId,contentInfo->mMessageIndex,T::CoordinateType::LATLON_COORDINATES,coordinates,valueList.mValueList);
+                      if (result != 0)
+                      {
+                        SmartMet::Spine::Exception exception(BCP, "DataServer returns an error!");
+                        exception.addParameter("Service","getGridValueListByPolygonPath");
+                        exception.addParameter("Message",DataServer::getResultString(result));
+                        throw exception;
+                      }
+                    }
 
                     return;
                   }
@@ -691,12 +810,42 @@ void Engine::getGridValues(
                     if (!areaSearch)
                     {
                       result1 = mDataServer->getGridValueListByPointList(0,contentInfo1->mFileId,contentInfo1->mMessageIndex,T::CoordinateType::LATLON_COORDINATES,coordinates[0],pInfo->mInterpolationMethod,list1);
+                      if (result1 != 0)
+                      {
+                        SmartMet::Spine::Exception exception(BCP, "DataServer returns an error!");
+                        exception.addParameter("Service","getGridValueListByPointList");
+                        exception.addParameter("Message",DataServer::getResultString(result1));
+                        throw exception;
+                      }
+
                       result2 = mDataServer->getGridValueListByPointList(0,contentInfo2->mFileId,contentInfo2->mMessageIndex,T::CoordinateType::LATLON_COORDINATES,coordinates[0],pInfo->mInterpolationMethod,list2);
+                      if (result2 != 0)
+                      {
+                        SmartMet::Spine::Exception exception(BCP, "DataServer returns an error!");
+                        exception.addParameter("Service","getGridValueListByPointList");
+                        exception.addParameter("Message",DataServer::getResultString(result2));
+                        throw exception;
+                      }
                     }
                     else
                     {
                       result1 = mDataServer->getGridValueListByPolygonPath(0,contentInfo1->mFileId,contentInfo1->mMessageIndex,T::CoordinateType::LATLON_COORDINATES,coordinates,list1);
+                      if (result1 != 0)
+                      {
+                        SmartMet::Spine::Exception exception(BCP, "DataServer returns an error!");
+                        exception.addParameter("Service","getGridValueListByPointList");
+                        exception.addParameter("Message",DataServer::getResultString(result1));
+                        throw exception;
+                      }
+
                       result2 = mDataServer->getGridValueListByPolygonPath(0,contentInfo2->mFileId,contentInfo2->mMessageIndex,T::CoordinateType::LATLON_COORDINATES,coordinates,list2);
+                      if (result2 != 0)
+                      {
+                        SmartMet::Spine::Exception exception(BCP, "DataServer returns an error!");
+                        exception.addParameter("Service","getGridValueListByPolygonPath");
+                        exception.addParameter("Message",DataServer::getResultString(result2));
+                        throw exception;
+                      }
                     }
 
                     uint len1 = list1.getLength();
@@ -739,12 +888,12 @@ void Engine::getGridValues(
         }
         else
         {
-          printf("Producer '%s' not found\n",producerName.c_str());
+          // printf("Producer '%s' not found\n",producerName.c_str());
         }
       }
       else
       {
-        printf("Producer's '%s' geometry '%d' not supported\n",producerName.c_str(),producerGeometryId);
+        // printf("Producer's '%s' geometry '%d' not supported\n",producerName.c_str(),producerGeometryId);
       }
     }
   }
@@ -759,14 +908,15 @@ void Engine::getGridValues(
 
 
 void Engine::getGridValues(
-                        std::vector<ParameterInfo>& parameterInfoList,
+                        Producer_vec& producers,
+                        ParameterInfo_vec& parameterInfoList,
                         T::ForecastType forecastType,
                         T::ForecastNumber forecastNumber,
                         std::string startTime,
                         std::string endTime,
-                        std::vector<std::vector<T::Coordinate>>& coordinates,
+                        QueryCoordinates& coordinates,
                         bool areaSearch,
-                        std::vector<ParameterValues>& valueList)
+                        ParameterValues_vec& valueList)
 {
   try
   {
@@ -788,18 +938,16 @@ void Engine::getGridValues(
     getGeometryIdListByCoordinates(coordinates,geometryIdList);
 
 
-    printf("ParamList : %u\n",(uint)parameterInfoList.size());
-
     // No producers defined. We should go through the producer list that is defined
     // in the configuration file.
 
-    for (auto it = mProducerVector.begin(); it != mProducerVector.end(); ++it)
+    for (auto it = producers.begin(); it != producers.end(); ++it)
     {
       std::string producerName = it->first;
 
       T::GeometryId producerGeometryId = it->second;
 
-      printf("Producer %s:%d\n",producerName.c_str(),producerGeometryId);
+      // printf("Producer %s:%d\n",producerName.c_str(),producerGeometryId);
 
       if (geometryIdList.find(producerGeometryId) != geometryIdList.end())
       {
@@ -811,6 +959,14 @@ void Engine::getGridValues(
 
           T::GenerationInfoList generationInfoList;
           int result = mContentServerCache->getGenerationInfoListByProducerId(0,producerInfo.mProducerId,generationInfoList);
+          if (result != 0)
+          {
+            SmartMet::Spine::Exception exception(BCP, "ContentServer returns an error!");
+            exception.addParameter("Service","getGenerationInfoListByProducerId");
+            exception.addParameter("Message",ContentServer::getResultString(result));
+            throw exception;
+          }
+
           T::GenerationInfo *generationInfo = generationInfoList.getLastGenerationInfoByProducerId(producerInfo.mProducerId);
 
           uint gCount = 0;
@@ -827,9 +983,15 @@ void Engine::getGridValues(
 
               T::ContentInfoList contentList;
               int result = mContentServerCache->getContentListByParameterAndGenerationId(0,generationInfo->mGenerationId,pInfo->mParameterKeyType,pInfo->mParameterKey,*pInfo->mParameterLevelIdType,*pInfo->mParameterLevelId,*pInfo->mParameterLevel,*pInfo->mParameterLevel,forecastType,forecastNumber,producerGeometryId,startTime,endTime,0,contentList);
-              //int result = mContentServerCache->getContentListByParameterGenerationIdAndForecastTime(0,generationInfo->mGenerationId,pInfo->mParameterKeyType,pInfo->mParameterKey,pInfo->mParameterLevelIdType,pInfo->mParameterLevelId,pInfo->mParameterLevel,forecastType,forecastNumber,producerGeometryId,forecastTime,contentList);
+              if (result != 0)
+              {
+                SmartMet::Spine::Exception exception(BCP, "ContentServer returns an error!");
+                exception.addParameter("Service","getContentListByParameterAndGenerationId");
+                exception.addParameter("Message",ContentServer::getResultString(result));
+                throw exception;
+              }
 
-              //contentList.print(std::cout,0,0);
+              contentList.print(std::cout,0,0);
 
               std::string lastTime = startTime;
 
@@ -857,22 +1019,41 @@ void Engine::getGridValues(
                 valList.mForecastNumber = contentInfo->mForecastNumber;
 
                 if (!areaSearch)
+                {
                   int result = mDataServer->getGridValueListByPointList(0,contentInfo->mFileId,contentInfo->mMessageIndex,T::CoordinateType::LATLON_COORDINATES,coordinates[0],pInfo->mInterpolationMethod,valList.mValueList);
+                  if (result != 0)
+                  {
+                    SmartMet::Spine::Exception exception(BCP, "DataServer returns an error!");
+                    exception.addParameter("Service","getGridValueListByPointList");
+                    exception.addParameter("Message",DataServer::getResultString(result));
+                    throw exception;
+                  }
+                }
                 else
+                {
                   int result = mDataServer->getGridValueListByPolygonPath(0,contentInfo->mFileId,contentInfo->mMessageIndex,T::CoordinateType::LATLON_COORDINATES,coordinates,valList.mValueList);
+                  if (result != 0)
+                  {
+                    SmartMet::Spine::Exception exception(BCP, "DataServer returns an error!");
+                    exception.addParameter("Service","getGridValueListByPolygonPath");
+                    exception.addParameter("Message",DataServer::getResultString(result));
+                    throw exception;
+                  }
+                }
 
                 valueList.push_back(valList);
               }
 
-
               if (lastTime == endTime)
                 return;
 
-
               // We have not found content for the full time range, so we should continue to search.
 
-              boost::posix_time::ptime tt = toTimeStamp(lastTime) + boost::posix_time::minutes(1);
-              startTime = toString(tt);
+              if (lastTime > startTime)
+              {
+                boost::posix_time::ptime tt = toTimeStamp(lastTime) + boost::posix_time::minutes(1);
+                startTime = toString(tt);
+              }
             }
             generationInfo = generationInfoList.getPrevGenerationInfoByProducerId(generationInfo->mProducerId,generationInfo->mName);
             gCount++;
@@ -880,12 +1061,12 @@ void Engine::getGridValues(
         }
         else
         {
-          printf("Producer '%s' not found\n",producerName.c_str());
+          // printf("Producer '%s' not found\n",producerName.c_str());
         }
       }
       else
       {
-        printf("Producer's '%s' geometry '%d' not supported\n",producerName.c_str(),producerGeometryId);
+        // printf("Producer's '%s' geometry '%d' not supported\n",producerName.c_str(),producerGeometryId);
       }
     }
   }
@@ -904,11 +1085,10 @@ void Engine::getParameterInfoList(T::ParamKeyType parameterKeyType,
                                   T::ParamLevelIdType paramLevelIdType,
                                   T::ParamLevelId paramLevelId,
                                   T::ParamLevel paramLevel,
-                                  std::vector<ParameterInfo>& parameterInfoList)
+                                  ParameterInfo_vec& parameterInfoList)
 {
   try
   {
-    //if (parameterKeyType == T::ParamKeyType::UNKNOWN)
     getParameterInfoList(paramKey,paramLevelIdType,paramLevelId,paramLevel,parameterInfoList);
 
     if (parameterInfoList.size() == 0)
@@ -1075,76 +1255,569 @@ void Engine::getParameterInfoList(T::ParamKeyType parameterKeyType,
 
 
 
-void Engine::executeQuery(Query& query)
+bool Engine::getParameterFunctionInfo(std::string paramStr,std::string& function,std::string& functionParams)
 {
   try
   {
-    time_t t1 = getFileModificationTime(mProducerFile.c_str());
-    time_t t2 = getFileModificationTime(mParameterFile.c_str());
+    char buf[1000];
+    char tmp[1000];
 
-    if (mProducerFileModificationTime != t1  ||  mParameterFileModificationTime != t2)
+    uint c = 0;
+    strcpy(buf,paramStr.c_str());
+    char *p = buf;
+
+    while (*p != '\0'  &&  *p != '{')
     {
-      AutoThreadLock lock(&mThreadLock);
-
-      t1 = getFileModificationTime(mProducerFile.c_str());
-      t2 = getFileModificationTime(mParameterFile.c_str());
-
-      if (mProducerFileModificationTime != t1  &&  (time(0) - t1) > 5)
-      {
-        loadProducers();
-      }
-
-      if (mParameterFileModificationTime != t2  &&  (time(0) - t2) > 5)
-      {
-        loadParameters();
-      }
+      p++;
     }
 
-    if (query.mTimeMatchRequired)
+    if (*p == '{')
     {
-      for (auto qParam = query.mQueryParameterList.begin(); qParam != query.mQueryParameterList.end(); ++qParam)
+      *p = '\0';
+      p++;
+      int level = 1;
+      while (*p != '\0')
       {
-        std::vector<ParameterInfo> parameterInfoList;
-
-        char key[100];
-        strcpy(key,qParam->mParameterKey.c_str());
-        char *p1 = strstr(key,".");
-        if (p1 != NULL)
+        if (*p == '}')
         {
-          *p1 = '\0';
-          p1++;
-          char *p2 = strstr(p1,".");
-          if (p2 != NULL)
+          level--;
+          if (level == 0)
           {
-            *p2 = '\0';
-            p2++;
-            getParameterInfoList(qParam->mParameterKeyType,key,qParam->mParameterLevelIdType,(T::ParamLevelId)atoi(p1),atoi(p2),parameterInfoList);
+            tmp[c] = '\0';
+            function = buf;
+            functionParams = tmp;
+            //printf("FUNCTION [%s] [%s]\n",buf,tmp);
+            return true;
           }
         }
         else
-        {
-          getParameterInfoList(qParam->mParameterKeyType,qParam->mParameterKey,qParam->mParameterLevelIdType,qParam->mParameterLevelId,qParam->mParameterLevel,parameterInfoList);
-        }
+        if (*p == '{')
+          level++;
 
-        getGridValues(parameterInfoList,qParam->mForecastType,qParam->mForecastNumber,query.mStartTime,query.mEndTime,query.mCoordinateList,query.mAreaCoordinates,qParam->mValueList);
+        tmp[c] = *p;
+        c++;
+        p++;
+      }
+    }
+    return false;
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
+
+
+
+bool Engine::getFunctionParams(std::string functionParamsStr,std::vector<std::string>& functionParams)
+{
+  try
+  {
+    bool containsFunction = false;
+    char buf[1000];
+    char tmp[1000];
+    uint c = 0;
+    strcpy(buf,functionParamsStr.c_str());
+
+    char *p = buf;
+    uint level = 0;
+    while (*p != '\0')
+    {
+      if (*p == '{')
+      {
+        containsFunction = true;
+        level++;
       }
 
-      std::set<std::string> timeList;
+      if (*p == '}')
+        level--;
+
+      if (*p == ';'  &&  level == 0)
+      {
+        tmp[c] = '\0';
+        //printf("PARAM [%s]\n",tmp);
+        functionParams.push_back(std::string(tmp));
+        c = 0;
+      }
+      else
+      {
+        tmp[c] = *p;
+        c++;
+      }
+      p++;
+    }
+
+    if (c > 0)
+    {
+      tmp[c] = '\0';
+      //printf("PARAM [%s]\n",tmp);
+      functionParams.push_back(std::string(tmp));
+    }
+    return containsFunction;
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
+
+
+
+void Engine::getParameterLevelInfo(std::string param,std::string& key,T::ParamLevelId& paramLevelId,T::ParamLevel& paramLevel,T::ForecastType& forecastType,T::ForecastNumber& forecastNumber)
+{
+  try
+  {
+    char buf[1000];
+    strcpy(buf,param.c_str());
+
+    char *field[100];
+    uint c = 1;
+    field[0] = buf;
+    char *p = buf;
+    while (*p != '\0'  &&  c < 100)
+    {
+      if (*p == ':')
+      {
+        *p = '\0';
+        p++;
+        field[c] = p;
+        c++;
+      }
+      else
+      {
+        p++;
+      }
+    }
+
+    key = field[0];
+
+    if (c > 1)
+    {
+      if (field[1][0] != '\0')
+        paramLevelId = (T::ParamLevelId)atoi(field[1]);
+    }
+
+    if (c > 2)
+    {
+      if (field[2][0] != '\0')
+        paramLevel = atoi(field[2]);
+    }
+
+    if (c > 3)
+    {
+      if (field[3][0] != '\0')
+        forecastType = (T::ForecastType)atoi(field[3]);
+    }
+
+    if (c > 4)
+    {
+      if (field[4][0] != '\0')
+        forecastNumber = (T::ForecastNumber)atoi(field[4]);
+    }
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
+
+
+void Engine::parseFunction(std::string paramStr,std::string& function,std::vector<std::string>& functionParams,std::vector<QueryParameter>& additionalParameterList)
+{
+  try
+  {
+    std::string functionParamsStr;
+    if (getParameterFunctionInfo(paramStr,function,functionParamsStr))
+    {
+      getFunctionParams(functionParamsStr,functionParams);
+
+      for (auto fParam = functionParams.begin(); fParam != functionParams.end(); ++fParam)
+      {
+        if (atof(fParam->c_str()) == 0)
+        {
+          QueryParameter newParam;
+          newParam.mParam = *fParam;
+          newParam.mSymbolicName = *fParam;
+          newParam.mTemporary = true;
+
+          auto alias = mParameterAliasList.find(toLowerString(*fParam));
+          if (alias != mParameterAliasList.end())
+            newParam.mParam = alias->second.mParameterString;
+
+          parseFunction(newParam.mParam,newParam.mFunction,newParam.mFunctionParams,additionalParameterList);
+
+          additionalParameterList.insert(additionalParameterList.begin(),newParam);
+        }
+      }
+    }
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
+
+
+T::ParamValue Engine::executeFunction(std::string& function,std::vector<T::ParamValue>& parameters)
+{
+  try
+  {
+    int pLen = (int)parameters.size();
+
+    lua_getglobal(mLuaState,"main");
+    lua_pushstring(mLuaState,function.c_str());
+    lua_pushinteger(mLuaState,pLen);
+
+    lua_newtable(mLuaState);
+    for(int i = 0; i < pLen; i++)
+    {
+      lua_pushnumber(mLuaState,parameters[i]);
+      lua_rawseti(mLuaState,-2,i + 1);
+    }
+
+    int res = lua_pcall(mLuaState, 3, 2, 0);
+    if (res != 0)
+    {
+      // LUA ERROR
+      SmartMet::Spine::Exception exception(BCP, "LUA call returns an error!");
+      exception.addParameter("Lua message",lua_tostring(mLuaState, -1));
+      lua_pop(mLuaState, 1);
+      throw exception;
+    }
+    else
+    {
+      size_t len = 0;
+      const char* cstr = lua_tolstring(mLuaState, -1, &len);
+      std::string message(cstr, len);
+      lua_pop(mLuaState, 1);  /* pop returned value */
+
+      double value = lua_tonumber(mLuaState,-1);
+      lua_pop(mLuaState, 1);  /* pop returned value */
+
+      if (message != "OK")
+      {
+        printf("*** LUA RESULT %f (%s)\n\n",value,message.c_str());
+      }
+
+      return value;
+    }
+    return 0;
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
+
+
+void Engine::checkConfigurationUpdates()
+{
+  try
+  {
+    AutoThreadLock lock(&mThreadLock);
+
+    if ((time(0) - mLastConfiguratonCheck) > 5)
+    {
+      mLastConfiguratonCheck = time(0);
+
+      time_t t1 = getFileModificationTime(mProducerFile.c_str());
+      time_t t2 = getFileModificationTime(mParameterFile.c_str());
+      time_t t3 = getFileModificationTime(mParameterAliasFile.c_str());
+      time_t t4 = getFileModificationTime(mLuaFunctionFile.c_str());
+
+
+      if (mProducerFileModificationTime != t1  &&  (mLastConfiguratonCheck - t1) > 5)
+        loadProducerFile();
+
+      if (mParameterFileModificationTime != t2  &&  (mLastConfiguratonCheck - t2) > 5)
+        loadParameterFile();
+
+      if (mParameterAliasFileModificationTime != t3  &&  (mLastConfiguratonCheck - t3) > 5)
+        loadParameterAliasFile();
+
+      if (mLuaFunctionFileModificationTime != t4  &&  (mLastConfiguratonCheck - t4) > 5)
+        loadLuaFunctionFile();
+    }
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
+
+
+void Engine::getProducerList(Query& query,Producer_vec& producers)
+{
+  try
+  {
+    if (query.mProducerNameList.size() == 0)
+    {
+      producers = mProducerList;
+      return;
+    }
+
+    for (auto pName = query.mProducerNameList.begin(); pName != query.mProducerNameList.end(); ++pName)
+    {
+      for (auto it = mProducerList.begin(); it != mProducerList.end(); ++it)
+      {
+        if (strcasecmp(pName->c_str(),it->first.c_str()) == 0)
+          producers.push_back(std::pair<std::string,T::GeometryId>(it->first,it->second));
+      }
+    }
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
+
+
+void Engine::updateQueryParameters(Query& query)
+{
+  try
+  {
+    std::vector<QueryParameter> additionalParameterList;
+
+    // Going through all the query parameters.
+
+    for (auto qParam = query.mQueryParameterList.begin(); qParam != query.mQueryParameterList.end(); ++qParam)
+    {
+      // If the parameter is a symbolic name (defined in the configuration file) then
+      // we should use its definition.
+
+      if (strncasecmp(qParam->mSymbolicName.c_str(),qParam->mParam.c_str(),qParam->mSymbolicName.length()) != 0)
+      {
+        auto alias = mParameterAliasList.find(toLowerString(qParam->mSymbolicName));
+        if (alias != mParameterAliasList.end())
+        {
+          std::cout << qParam->mSymbolicName << "  => " << alias->second.mParameterString << " ( " << qParam->mParam << " )\n";
+          qParam->mParam = alias->second.mParameterString;
+        }
+      }
+
+      // If the parameter contains a function then we should parse it and make sure that
+      // we fetch the required parameter values for it.
+
+      if (qParam->mFunction.length() == 0)
+        parseFunction(qParam->mParam,qParam->mFunction,qParam->mFunctionParams,additionalParameterList);
+    }
+
+    // Adding parameters that are required by functions into the query.
+
+    for (auto p = additionalParameterList.begin(); p != additionalParameterList.end(); ++p)
+      query.mQueryParameterList.push_back(*p);
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
+
+
+void Engine::executeQueryFunctions(Query& query)
+{
+  try
+  {
+    uint valueCount = query.getValuesPerTimeStep();
+
+    for (auto qParam = query.mQueryParameterList.rbegin(); qParam != query.mQueryParameterList.rend(); ++qParam)
+    {
+      if (qParam->mFunction.length() > 0)
+      {
+        uint tCount = 0;
+        for (auto tt = query.mForecastTimeList.begin(); tt != query.mForecastTimeList.end(); ++tt)
+        {
+          ParameterValues pValues;
+          pValues.mForecastTime = *tt;
+
+          std::vector<T::ParamValue> areaParameters;
+          std::vector<T::ParamValue> extParameters;
+
+          bool areaCnt = false;
+          T::GridValue lastRec;
+          for (uint vCount=0; vCount < valueCount; vCount++)
+          {
+            std::vector<T::ParamValue> parameters;
+
+            for (auto it = qParam->mFunctionParams.begin(); it != qParam->mFunctionParams.end(); ++it)
+            {
+              T::ParamValue a = atof(it->c_str());
+              QueryParameter *q = query.getQueryParameterPtr(it->c_str());
+              if (q != NULL)
+              {
+                if (tCount < (uint)q->mValueList.size())
+                {
+                  T::GridValue *rec = q->mValueList[tCount].mValueList.getGridValueByIndex(vCount);
+                  if (rec != NULL)
+                  {
+                    a = rec->mValue;
+                    if (rec->mX == -1000  &&  rec->mY == -1000)
+                    {
+                      areaCnt = true;
+                    }
+                    else
+                    {
+                      lastRec = *rec;
+                    }
+                  }
+                }
+                else
+                {
+                  areaCnt = true;
+                }
+              }
+
+              parameters.push_back(a);
+              areaParameters.push_back(a);
+
+              if (areaCnt  &&  vCount == 0)
+                extParameters.push_back(a);
+            }
+
+            if (qParam->mFunction.substr(0,1) != "@")
+            {
+              T::ParamValue val = executeFunction(qParam->mFunction,parameters);
+              pValues.mValueList.addGridValue(new T::GridValue(lastRec.mX,lastRec.mY,val));
+            }
+          }
+
+          if (areaCnt  &&  qParam->mFunction.substr(0,1) != "@")
+          {
+            T::ParamValue val = executeFunction(qParam->mFunction,extParameters);
+            pValues.mValueList.addGridValue(new T::GridValue(-1000,-1000,val));
+          }
+
+          if (qParam->mFunction.substr(0,1) == "@")
+          {
+            //T::ParamValue val = executeAreaFunction(qParam->mFunction,areaParameters);
+            std::string func = qParam->mFunction.substr(1);
+            T::ParamValue val = executeFunction(func,areaParameters);
+            pValues.mValueList.addGridValue(new T::GridValue(-1000,-1000,val));
+          }
+
+          if (areaCnt)
+          {
+            if (pValues.mValueList.getLength() > 0)
+            {
+              T::GridValue *rec = pValues.mValueList.getGridValueByIndex(0);
+              T::ParamValue val = rec->mValue;
+              pValues.mValueList.clear();
+              pValues.mValueList.addGridValue(new T::GridValue(-1000,-1000,val));
+            }
+          }
+          qParam->mValueList.push_back(pValues);
+
+          tCount++;
+        }
+      }
+    }
+
+    //query.print(std::cout,0,0);
+
+    query.removeTemporaryParameters();
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
+
+
+void Engine::executeTimeRangeQuery(Query& query)
+{
+  try
+  {
+    // Fetching valid producers.
+
+    Producer_vec producers;
+    getProducerList(query,producers);
+
+    // Parsing parameters and functions in the query.
+
+    updateQueryParameters(query);
+
+    // Fetching parameter data according to the given time range and the coordinate list. Notice
+    // that the coordinate list can be used in two ways. It can 1) contain coordinate points
+    // where the data will be fetched or 2) it can define an area (= polygon) where the grid
+    // points are fetched. The area can be defined by using single or multiple polygons.
+    // That's why the coordinates are defined as a vector of coordinate vectors.
+
+    for (auto qParam = query.mQueryParameterList.begin(); qParam != query.mQueryParameterList.end(); ++qParam)
+    {
+      // Checking that the parameter is "a data parameter" - not a function.
+
+      if (qParam->mFunction.length() == 0)
+      {
+        std::vector<ParameterInfo> parameterInfoList;
+
+        std::string key = qParam->mParam;
+        T::ParamLevelId paramLevelId = qParam->mParameterLevelId;
+        T::ParamLevel paramLevel = qParam->mParameterLevel;
+        T::ForecastType forecastType = qParam->mForecastType;
+        T::ForecastNumber forecastNumber = qParam->mForecastNumber;
+
+        printf("LEVEL %s %d %d\n",qParam->mParam.c_str(),(int)paramLevelId,(int)paramLevel);
+        getParameterLevelInfo(qParam->mParam,key,paramLevelId,paramLevel,forecastType,forecastNumber);
+        printf("* LEVEL %d %d\n",(int)paramLevelId,(int)paramLevel);
+
+        getParameterInfoList(qParam->mParameterKeyType,key,qParam->mParameterLevelIdType,paramLevelId,paramLevel,parameterInfoList);
+
+        getGridValues(producers,parameterInfoList,forecastType,forecastNumber,query.mStartTime,query.mEndTime,query.mCoordinateList,query.mAreaQuery,qParam->mValueList);
+      }
+    }
+
+    // Finding out which forecast time are found from the forecast data. The point is that different
+    // parameters might contain different forecast times, and we want a list of all forecast times.
+
+    std::set<std::string> timeList;
+
+    for (auto qParam = query.mQueryParameterList.begin(); qParam != query.mQueryParameterList.end(); ++qParam)
+    {
+      for (auto it = qParam->mValueList.begin(); it != qParam->mValueList.end(); ++it)
+      {
+        if (timeList.find(it->mForecastTime) == timeList.end())
+          timeList.insert(it->mForecastTime);
+      }
+    }
+
+    // Going through all the found forecast times and making sure that each parameter contains the current
+    // forecast time. If not, then the forecast time is added to the parameters's forecast time list, but
+    // the actual value list of the current forecast time will be empty.
+
+    for (auto tt = timeList.begin(); tt != timeList.end(); ++tt)
+    {
+      query.mForecastTimeList.push_back(*tt);
 
       for (auto qParam = query.mQueryParameterList.begin(); qParam != query.mQueryParameterList.end(); ++qParam)
       {
-        for (auto it = qParam->mValueList.begin(); it != qParam->mValueList.end(); ++it)
-        {
-          if (timeList.find(it->mForecastTime) == timeList.end())
-            timeList.insert(it->mForecastTime);
-        }
-      }
-
-      for (auto tt = timeList.begin(); tt != timeList.end(); ++tt)
-      {
-        query.mForecastTimeList.push_back(*tt);
-
-        for (auto qParam = query.mQueryParameterList.begin(); qParam != query.mQueryParameterList.end(); ++qParam)
+        if (qParam->mFunction.length() == 0)
         {
           bool found = false;
           uint cnt = 0;
@@ -1156,53 +1829,122 @@ void Engine::executeQuery(Query& query)
             if (it->mForecastTime == *tt)
               found = true;
           }
+
           if (!found)
           {
-            //std::cout << "NOT FOUND " << qParam->mName << " " << *tt << "  " << cnt << "\n";
+            // The forecast time was not found from the current parameter. Adding the forecast time
+            // with an empty value list.
+
             ParameterValues pValues;
             pValues.mForecastTime = *tt;
             qParam->mValueList.insert(qParam->mValueList.begin() + cnt,pValues);
           }
         }
       }
-
-      return;
     }
 
+    // At this point we have fetched values for all data parameters. Now we are able to
+    // execute functions that uses this data.
+
+    executeQueryFunctions(query);
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
+
+
+void Engine::executeTimeStepQuery(Query& query)
+{
+  try
+  {
+    // Fetching valid producers.
+
+    Producer_vec producers;
+    getProducerList(query,producers);
+
+    // Parsing parameters and functions in the query.
+
+    updateQueryParameters(query);
+
+
+    // Fetching parameter data according to the given timesteps and the coordinate list. Notice
+    // that the coordinate list can be used in two ways. It can 1) contain coordinate points
+    // where the data will be fetched or 2) it can define an area (= polygon) where the grid
+    // points are fetched. The area can be defined by using single or multiple polygons.
+    // That's why the coordinates are defined as a vector of coordinate vectors.
 
     for (auto fTime = query.mForecastTimeList.begin(); fTime != query.mForecastTimeList.end(); ++fTime)
     {
       for (auto qParam = query.mQueryParameterList.begin(); qParam != query.mQueryParameterList.end(); ++qParam)
       {
-        ParameterValues valueList;
-        try
+        if (qParam->mFunction.length() == 0)
         {
-          getGridValues(
-              qParam->mParameterKeyType,
-              qParam->mParameterKey,
-              qParam->mParameterLevelIdType,
-              qParam->mParameterLevelId,
-              qParam->mParameterLevel,
-              qParam->mForecastType,
-              qParam->mForecastNumber,
-              *fTime,
-              query.mTimeMatchRequired,
-              query.mCoordinateList,
-              query.mAreaCoordinates,
-              valueList);
-        }
-        catch (...)
-        {
-          SmartMet::Spine::Exception exception(BCP, "Operation failed!", NULL);
-         exception.printError();
-        }
+          std::vector<ParameterInfo> parameterInfoList;
 
-        if (valueList.mValueList.getLength() == 0)
-          valueList.mForecastTime = *fTime;
+          std::string key = qParam->mParam;
+          T::ParamLevelId paramLevelId = qParam->mParameterLevelId;
+          T::ParamLevel paramLevel = qParam->mParameterLevel;
+          T::ForecastType forecastType = qParam->mForecastType;
+          T::ForecastNumber forecastNumber = qParam->mForecastNumber;
 
-        qParam->mValueList.push_back(valueList);
+          getParameterLevelInfo(qParam->mParam,key,paramLevelId,paramLevel,forecastType,forecastNumber);
+
+          getParameterInfoList(qParam->mParameterKeyType,key,qParam->mParameterLevelIdType,paramLevelId,paramLevel,parameterInfoList);
+
+          ParameterValues valueList;
+          try
+          {
+            getGridValues(producers,parameterInfoList,forecastType,forecastNumber,*fTime,query.mTimeRangeQuery,query.mCoordinateList,query.mAreaQuery,valueList);
+          }
+          catch (...)
+          {
+            SmartMet::Spine::Exception exception(BCP, "Operation failed!", NULL);
+           exception.printError();
+          }
+
+          if (valueList.mValueList.getLength() == 0)
+            valueList.mForecastTime = *fTime;
+
+          qParam->mValueList.push_back(valueList);
+        }
       }
     }
+
+    // At this point we have fetched values for all data parameters. Now we are able to
+    // execute functions that uses this data.
+
+    executeQueryFunctions(query);
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
+
+
+void Engine::executeQuery(Query& query)
+{
+  try
+  {
+    // Checking if the configuration files have changed. If so, the
+    // changes will be loaded automatically.
+
+    checkConfigurationUpdates();
+
+    //query.print(std::cout,0,0);
+
+    if (query.mTimeRangeQuery)
+      executeTimeRangeQuery(query);
+    else
+      executeTimeStepQuery(query);
   }
   catch (...)
   {

@@ -1,6 +1,19 @@
+##########################################################################
+# This file is used for mapping query parameters into valid search
+# parameters. The point is that a parameter name itself does not contain
+# enough information if order to find exact data from the data server.
+# Usually we also information about the parameter level id and the level
+# value.  
+#
+# For example, the parameter name "Temperature" does not tell us, which
+# level type (Ground, Pressure, Altitude, Hybrid, etc.) or level value
+# (2m, 300Pa, etc.) to use. In this file we can define this additional
+# information for different parameters. Each CSV line in this file contain
+# the following fields:  
+#
 # FIELDS
 # --------------------
-# 1. parameterAlias
+# 1. parameterSymbolicName
 # 2. parameterKeyType
 #      0   UNKNOWN
 #      1   FMI_ID
@@ -35,20 +48,31 @@
 #      15  Isothermal level, temperature in 1/100 K"
 # 6. parameterLevel
 # 7. Interpolation method (0 = Unknown, 1 = linear, 2 = nearest)
+#
+# If a field is empty then query should be able to get this information
+# in some other way.
 
+#Temp;2;T-K;1;1;0;1;
+#Temp;2;T-K;1;6;2;1;
+#
+
+##########################################################################
+#
 # ------------------------------------------------------------------
-# Sample parameters
+# Sample mappings
 # ------------------------------------------------------------------
-t;2;T-K;;;;1;
-t2m;2;T-K;1;6;2;1;
-t2;2;T-K;1;1;0;1;
-demo;2;T-K;1;2;300;1;
+T;2;T-K;;;;1;
+Temp;2;T-K;1;1;0;1;
+Temp;2;T-K;1;6;2;1;
+T300M;2;T-K;1;2;300;1;
+#
 # ------------------------------------------------------------------
-# Newbase parameters
+# Newbase mappings
 # ------------------------------------------------------------------
 Pressure;5;Pressure;;;;1;
 GeopHeight;5;GeopHeight;;;;1;
 GeomHeight;5;GeomHeight;;;;1;
+Temperature;5;Temperature;1;1;;1;
 Temperature;5;Temperature;;;;1;
 MaximumTemperature;5;MaximumTemperature;;;;1;
 MinimumTemperature;5;MinimumTemperature;;;;1;
@@ -1270,7 +1294,7 @@ PM10Concentration;5;PM10Concentration;;;;1;
 PM25Concentration;5;PM25Concentration;;;;1;
 SO2Concentration;5;SO2Concentration;;;;1;
 # ------------------------------------------------------------------
-# Radon parameters
+# Radon mappings
 # ------------------------------------------------------------------
 MINT2M-C;2;MINT2M-C;;;;1;
 PRECFORM-N;2;PRECFORM-N;;;;1;
@@ -1434,7 +1458,6 @@ TD-K;2;TD-K;;;;1;
 RH-PRCNT;2;RH-PRCNT;;;;1;
 CLDSYM-N;2;CLDSYM-N;;;;1;
 FF-MS;2;FF-MS;;;;1;
-FF-MS;2;FF-MS;1;2;300;1;  ############
 DD-D;2;DD-D;;;;1;
 U-MS;2;U-MS;;;;1;
 V-MS;2;V-MS;;;;1;
