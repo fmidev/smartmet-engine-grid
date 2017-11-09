@@ -38,7 +38,7 @@ MYFORMULA3;Formula3;SUM{MYFORMULA;MUL{MYFORMULA2;3}}
 Pressure;Pressure;Pressure:::::1
 GeopHeight;GeopHeight;GeopHeight:::::1
 GeomHeight;GeomHeight;GeomHeight:::::1
-Temperature;Temperature;K2C{Temperature:::::1}
+#Temperature;Temperature;K2C{Temperature:::::1}
 TemperatureC;Temperature;K2C{Temperature:::::1}
 TemperatureK;Temperature;Temperature:::::1
 MaximumTemperature;MaximumTemperature;MaximumTemperature:::::1

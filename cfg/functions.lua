@@ -1,4 +1,8 @@
 
+ParamValueMissing = 340282346638528859811704183484516925440;
+debug = 0;
+
+
 -- ***********************************************************************
 --  FUNCTION : ABS
 -- ***********************************************************************
@@ -11,10 +15,14 @@ function ABS(numOfParams,params)
 
   if (numOfParams == 1) then
     result.message = 'OK';
-    if (params[1] >= 0) then
-      result.value = params[1];
+    if (params[1] ~= ParamValueMissing) then
+      if (params[1] >= 0) then
+        result.value = params[1];
+      else
+        result.value = -params[1];
+      end
     else
-      result.value = -params[1];
+      result.value = ParamValueMissing;
     end
   else
     result.message = 'ABS() : Invalid number of parameters given ('..numOfParameter..')!';
@@ -38,14 +46,18 @@ end
 function AVG(numOfParams,params)
 
   local result = {};
+  local count = 0;
   
   if (numOfParams > 0) then    
     local sum = 0;
     for index, value in pairs(params) do
-      sum = sum + value;
+      if (value ~= ParamValueMissing) then
+	    sum = sum + value;
+	    count = count + 1;
+	  end
     end
     result.message = 'OK';
-    result.value = sum / numOfParams;
+    result.value = sum / count;
   else
     result.message = 'AVG(): No parameters given!';
     result.value = 0;  
@@ -71,7 +83,11 @@ function C2K(numOfParams,params)
 
   if (numOfParams == 1) then
     result.message = 'OK';
-    result.value = params[1] + 273.16;
+    if (params[1] ~= ParamValueMissing) then  
+      result.value = params[1] + 273.16;
+    else
+      result.value = ParamValueMissing;
+    end    
   else
     result.message = 'C2K() : Invalid number of parameters given ('..numOfParameter..')!';
     result.value = 0;
@@ -97,7 +113,11 @@ function DIV(numOfParams,params)
   
   if (numOfParams == 2) then    
     result.message = 'OK';
-    result.value = params[1] / params[2];
+    if (params[1] ~= ParamValueMissing and params[2] ~= ParamValueMissing) then
+      result.value = params[1] / params[2];
+    else
+      result.value = ParamValueMissing;  
+    end
   else
     result.message = 'DIV() : Invalid number of parameters given ('..numOfParameter..')!';
     result.value = 0;  
@@ -122,7 +142,11 @@ function K2C(numOfParams,params)
 
   if (numOfParams == 1) then
     result.message = 'OK';
-    result.value = params[1] - 273.16;
+    if (params[1] ~= ParamValueMissing) then  
+      result.value = params[1] - 273.16;
+    else
+      result.value = ParamValueMissing;
+    end    
   else
     result.message = 'K2C() : Invalid number of parameters given ('..numOfParameter..')!';
     result.value = 0;
@@ -149,7 +173,7 @@ function MAX(numOfParams,params)
   if (numOfParams > 0) then    
     local max = params[1];
     for index, value in pairs(params) do
-      if (value > max) then
+      if (value > max and value ~= ParamValueMissing) then
         max = value;
       end
     end
@@ -182,7 +206,7 @@ function MIN(numOfParams,params)
   if (numOfParams > 0) then    
     local min = params[1];
     for index, value in pairs(params) do
-      if (value < min) then
+      if (value < min and value ~= ParamValueMissing) then
         min = value;
       end
     end
@@ -214,7 +238,11 @@ function MUL(numOfParams,params)
   
   if (numOfParams == 2) then    
     result.message = 'OK';
-    result.value = params[1] * params[2];
+    if (params[1] ~= ParamValueMissing and params[2] ~= ParamValueMissing) then
+      result.value = params[1] * params[2];
+    else
+      result.value = ParamValueMissing;  
+    end
   else
     result.message = 'MUL() : Invalid number of parameters given ('..numOfParameter..')!';
     result.value = 0;  
@@ -240,11 +268,15 @@ function NEG(numOfParams,params)
   local result = {};
 
   if (numOfParams == 1) then
-  result.message = 'OK';
-    result.value = -params[1];
+    result.message = 'OK';
+    if (params[1] ~= ParamValueMissing) then    
+      result.value = -params[1];
+    else
+      result.value = ParamValueMissing;
+    end    
   else
     result.message = 'NEG() : Invalid number of parameters given ('..numOfParameter..')!';
-  result.value = 0;  
+    result.value = 0;  
   end
   
   return result;
@@ -268,7 +300,9 @@ function SUM(numOfParams,params)
   if (numOfParams > 0) then   
     local sum = 0;
     for index, value in pairs(params) do
-      sum = sum + value;
+      if (value ~= ParamValueMissing) then
+        sum = sum + value;
+      end
     end
     result.message = 'OK';
     result.value = sum;
@@ -287,10 +321,12 @@ end
 
 function main(functionName,numOfParams,params)
 
-   -- print('LUA CALL : '..functionName..'('..numOfParams..')');  
-   -- for index, value in pairs(params) do
-   --  print('['..index..']'..value);
-   -- end
+  if (debug > 0) then  
+    print('LUA CALL : '..functionName..'('..numOfParams..')');  
+    for index, value in pairs(params) do
+      print('['..index..']'..value);
+    end
+  end
   
   local result = {};
   
@@ -306,10 +342,13 @@ function main(functionName,numOfParams,params)
   elseif (functionName == 'SUM') then result = SUM(numOfParams,params);
   else
     result.message = 'Unknown function called ('..functionName..')';
-    result.value = 0;
+    result.value = ParamValueMissing;
   end
   
-  -- print('RESULT : '..result.value..' ('..result.message..')');
+  if (debug > 0) then  
+    print('RESULT : '..result.value..' ('..result.message..')');
+   end
+   
   return result.value,result.message;
   
 end

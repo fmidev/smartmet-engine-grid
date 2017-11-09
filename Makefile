@@ -82,7 +82,6 @@ else
 	-I$(includedir)/smartmet \
 	-I$(includedir)/smartmet/grid-files \
 	-I$(includedir)/smartmet/grid-content \
-	-I /usr/include/lua5.3 \
 	$(CORBA_INCLUDE)
 
 endif
@@ -105,7 +104,6 @@ LIBS = -L$(libdir) \
 	-lboost_thread \
 	-lboost_system \
 	-lpthread \
-	-llua5.3 \
 	-lpqxx \
 	-lconfig++ \
 	$(CORBA_LIBS)
