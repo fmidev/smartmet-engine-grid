@@ -32,10 +32,10 @@ Engine::Engine(const char* theConfigFile)
         "local-data-server.cache.numOfGrids",
         "local-data-server.cache.maxUncompressedSizeInMegaBytes",
         "local-data-server.cache.maxCompressedSizeInMegaBytes",
-        "local-query-server.parameterFile",
-        "local-query-server.parameterAliasFile",
         "local-query-server.producerFile",
-        "local-query-server.luaFunctionFile",
+        "local-query-server.luaFiles",
+        "local-query-server.mappingFiles",
+        "local-query-server.aliasFiles",
         "remote-content-server.enabled",
         "remote-content-server.ior",
         "remote-data-server.enabled",
@@ -108,10 +108,7 @@ Engine::Engine(const char* theConfigFile)
     mConfig.lookupValue("local-data-server.cache.maxUncompressedSizeInMegaBytes", mMaxUncompressedMegaBytesOfCachedGrids);
     mConfig.lookupValue("local-data-server.cache.maxCompressedSizeInMegaBytes", mMaxCompressedMegaBytesOfCachedGrids);
 
-    mConfig.lookupValue("local-query-server.parameterFile",mParameterFile);
-    mConfig.lookupValue("local-query-server.parameterAliasFile",mParameterAliasFile);
     mConfig.lookupValue("local-query-server.producerFile",mProducerFile);
-    mConfig.lookupValue("local-query-server.luaFunctionFile",mLuaFunctionFile);
 
     mConfig.lookupValue("content-server-log.file", mContentServerLogFile);
     mConfig.lookupValue("content-server-log.maxSize", mContentServerLogMaxSize);
@@ -124,6 +121,39 @@ Engine::Engine(const char* theConfigFile)
     mConfig.lookupValue("query-server-log.file", mQueryServerLogFile);
     mConfig.lookupValue("query-server-log.maxSize", mQueryServerLogMaxSize);
     mConfig.lookupValue("query-server-log.truncateSize", mQueryServerLogTruncateSize);
+
+    const libconfig::Setting& mappingFiles = mConfig.lookup("local-query-server.mappingFiles");
+
+    if (!mappingFiles.isArray())
+      throw Spine::Exception(BCP, "Configured value of 'local-query-server.mappingFiles' must be an array");
+
+    for (int i = 0; i < mappingFiles.getLength(); ++i)
+    {
+      mParameterMappingFiles.push_back(mappingFiles[i]);
+    }
+
+
+    const libconfig::Setting& aliasFiles = mConfig.lookup("local-query-server.aliasFiles");
+
+    if (!aliasFiles.isArray())
+      throw Spine::Exception(BCP, "Configured value of 'local-query-server.aliasFiles' must be an array");
+
+    for (int i = 0; i < aliasFiles.getLength(); ++i)
+    {
+      mParameterAliasFiles.push_back(aliasFiles[i]);
+    }
+
+
+    const libconfig::Setting& luaFiles = mConfig.lookup("local-query-server.luaFiles");
+
+    if (!luaFiles.isArray())
+      throw Spine::Exception(BCP, "Configured value of 'local-query-server.luaFiles' must be an array");
+
+    for (int i = 0; i < luaFiles.getLength(); ++i)
+    {
+      mLuaFiles.push_back(luaFiles[i]);
+    }
+
 
     // Initializing information that is needed for identifying the content of the grid files.
 
@@ -224,7 +254,7 @@ void Engine::init()
     else
     {
       QueryServer::ServiceImplementation *server = new QueryServer::ServiceImplementation();
-      server->init(cServer,dServer,mGridConfigDirectory,mParameterFile,mParameterAliasFile,mProducerFile,mLuaFunctionFile);
+      server->init(cServer,dServer,mGridConfigDirectory,mParameterMappingFiles,mParameterAliasFiles,mProducerFile,mLuaFiles);
       qServer = server;
 
       mQueryServer.reset(server);

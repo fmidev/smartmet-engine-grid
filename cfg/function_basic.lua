@@ -1,5 +1,5 @@
 
-ParamValueMissing = 340282346638528859811704183484516925440;
+ParamValueMissing = -16777216;
 debug = 0;
 
 
@@ -25,11 +25,11 @@ function ABS(numOfParams,params)
       result.value = ParamValueMissing;
     end
   else
-    result.message = 'ABS() : Invalid number of parameters given ('..numOfParameter..')!';
+    result.message = 'ABS() : Invalid number of parameters given ('..numOfParams..')!';
     result.value = 0;  
   end
   
-  return result;
+  return result.value,result.message;
   
 end
 
@@ -63,38 +63,8 @@ function AVG(numOfParams,params)
     result.value = 0;  
   end
     
-  return result;
+  return result.value,result.message;
 
-end
-
-
-
-
-
--- ***********************************************************************
---  FUNCTION : C2K
--- ***********************************************************************
---  The function converts given Celcius degrees to Kelvin degrees.
--- ***********************************************************************
-
-function C2K(numOfParams,params)
-
-  local result = {};
-
-  if (numOfParams == 1) then
-    result.message = 'OK';
-    if (params[1] ~= ParamValueMissing) then  
-      result.value = params[1] + 273.16;
-    else
-      result.value = ParamValueMissing;
-    end    
-  else
-    result.message = 'C2K() : Invalid number of parameters given ('..numOfParameter..')!';
-    result.value = 0;
-  end
-  
-  return result;
-  
 end
 
 
@@ -119,43 +89,13 @@ function DIV(numOfParams,params)
       result.value = ParamValueMissing;  
     end
   else
-    result.message = 'DIV() : Invalid number of parameters given ('..numOfParameter..')!';
+    result.message = 'DIV() : Invalid number of parameters given ('..numOfParams..')!';
     result.value = 0;  
   end
     
-  return result;
+  return result.value,result.message;
 
 end
-
-
-
-
--- ***********************************************************************
---  FUNCTION : K2C
--- ***********************************************************************
---  The function converts given Kelvin degrees to Celcius degrees.
--- ***********************************************************************
-
-function K2C(numOfParams,params)
-
-  local result = {};
-
-  if (numOfParams == 1) then
-    result.message = 'OK';
-    if (params[1] ~= ParamValueMissing) then  
-      result.value = params[1] - 273.16;
-    else
-      result.value = ParamValueMissing;
-    end    
-  else
-    result.message = 'K2C() : Invalid number of parameters given ('..numOfParameter..')!';
-    result.value = 0;
-  end
-  
-  return result;
-  
-end
-
 
 
 
@@ -185,7 +125,7 @@ function MAX(numOfParams,params)
     result.value = 0;  
   end
     
-  return result;
+  return result.value,result.message;
 
 end
 
@@ -218,7 +158,7 @@ function MIN(numOfParams,params)
     result.value = 0;  
   end
     
-  return result;
+  return result.value,result.message;
 
 end
  
@@ -244,11 +184,11 @@ function MUL(numOfParams,params)
       result.value = ParamValueMissing;  
     end
   else
-    result.message = 'MUL() : Invalid number of parameters given ('..numOfParameter..')!';
+    result.message = 'MUL() : Invalid number of parameters given ('..numOfParams..')!';
     result.value = 0;  
   end
     
-  return result;
+  return result.value,result.message;
 
 end
 
@@ -275,11 +215,11 @@ function NEG(numOfParams,params)
       result.value = ParamValueMissing;
     end    
   else
-    result.message = 'NEG() : Invalid number of parameters given ('..numOfParameter..')!';
+    result.message = 'NEG() : Invalid number of parameters given ('..numOfParams..')!';
     result.value = 0;  
   end
   
-  return result;
+  return result.value,result.message;
   
 end
 
@@ -311,44 +251,45 @@ function SUM(numOfParams,params)
     result.value = 0;  
   end
     
-  return result;
-
-end
-
-
-
-
-
-function main(functionName,numOfParams,params)
-
-  if (debug > 0) then  
-    print('LUA CALL : '..functionName..'('..numOfParams..')');  
-    for index, value in pairs(params) do
-      print('['..index..']'..value);
-    end
-  end
-  
-  local result = {};
-  
-  if     (functionName == 'ABS') then result = ABS(numOfParams,params);
-  elseif (functionName == 'AVG') then result = AVG(numOfParams,params);
-  elseif (functionName == 'C2K') then result = C2K(numOfParams,params);
-  elseif (functionName == 'DIV') then result = DIV(numOfParams,params);
-  elseif (functionName == 'K2C') then result = K2C(numOfParams,params);
-  elseif (functionName == 'MAX') then result = MAX(numOfParams,params);
-  elseif (functionName == 'MIN') then result = MIN(numOfParams,params);
-  elseif (functionName == 'MUL') then result = MUL(numOfParams,params);
-  elseif (functionName == 'NEG') then result = NEG(numOfParams,params);
-  elseif (functionName == 'SUM') then result = SUM(numOfParams,params);
-  else
-    result.message = 'Unknown function called ('..functionName..')';
-    result.value = ParamValueMissing;
-  end
-  
-  if (debug > 0) then  
-    print('RESULT : '..result.value..' ('..result.message..')');
-   end
-   
   return result.value,result.message;
-  
+
 end
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : getFunctionNames
+-- ***********************************************************************
+--  The function returns the list of available functions in this file.
+--  In this way the query server knows which function are available in
+--  each LUA file.
+-- 
+--  Each LUA file should contain this function. The 'type' parameter
+--  indicates how the current LUA function is implemented.
+--
+--    Type 1 : 
+--      Function takes two parameters as input:
+--        - numOfParams => defines how many values is in the params array
+--        - params      => Array of float values
+--    Function return two parameters:
+--        - result value (function result or ParamValueMissing)
+--        - result string (=> 'OK' or an error message)
+--
+--  So far there are no other types defined.
+--  
+-- ***********************************************************************
+
+
+function getFunctionNames(type)
+
+  local functionNames = '';
+
+  if (type == 1) then 
+    functionNames = 'ABS,AVG,DIV,MAX,MIN,MUL,NEG,SUM';
+  end
+  
+  return functionNames;
+
+end
+

@@ -155,6 +155,7 @@ format:
 
 install:
 	@mkdir -p $(includedir)/$(INCDIR)
+	@rm -rf $(includedir)/$(INCDIR)/*
 	@list='$(HDRS)'; \
 	for hdr in $$list; do \
 	  HDR=$$(basename $$hdr); \

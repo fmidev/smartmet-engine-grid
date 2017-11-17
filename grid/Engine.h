@@ -19,7 +19,7 @@ namespace Grid
 typedef std::shared_ptr<ContentServer::ServiceInterface> ContentServer_sptr;
 typedef std::shared_ptr<DataServer::ServiceInterface> DataServer_sptr;
 typedef std::shared_ptr<QueryServer::ServiceInterface> QueryServer_sptr;
-
+typedef std::vector<std::string> String_vec;
 
 class Engine : public SmartMet::Spine::SmartMetEngine
 {
@@ -63,7 +63,6 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::string         mRemoteQueryServerIor;
 
     std::string         mGridConfigDirectory;
-
     std::string         mServerGridDirectory;
 
     std::string         mContentServerLogFile;
@@ -85,10 +84,11 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     uint                mMaxCompressedMegaBytesOfCachedGrids;
     uint                mMaxUncompressedMegaBytesOfCachedGrids;
 
-    std::string         mParameterAliasFile;
-    std::string         mParameterFile;
     std::string         mProducerFile;
-    std::string         mLuaFunctionFile;
+
+    String_vec          mLuaFiles;
+    String_vec          mParameterAliasFiles;
+    String_vec          mParameterMappingFiles;
 };
 
 }  // namespace Grid
