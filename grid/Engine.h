@@ -54,16 +54,18 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     DataServer_sptr     mDataServer;
     DataServer_sptr     mDataServerClient;
+    String_vec          mDataServerLuaFiles;
     std::string         mRemoteDataServerEnabled;
     std::string         mRemoteDataServerCache;
     std::string         mRemoteDataServerIor;
 
     QueryServer_sptr    mQueryServer;
+    String_vec          mQueryServerLuaFiles;
     std::string         mRemoteQueryServerEnabled;
     std::string         mRemoteQueryServerIor;
 
     std::string         mGridConfigDirectory;
-    std::string         mServerGridDirectory;
+    std::string         mDataServerGridDirectory;
 
     std::string         mContentServerLogFile;
     int                 mContentServerLogMaxSize;
@@ -86,7 +88,6 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     std::string         mProducerFile;
 
-    String_vec          mLuaFiles;
     String_vec          mParameterAliasFiles;
     String_vec          mParameterMappingFiles;
 };

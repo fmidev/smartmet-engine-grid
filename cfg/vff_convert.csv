@@ -1,0 +1,9 @@
+# FIELDS
+# 1. Target parameter name (fmiName)
+# 2. Source parameter names (fmiName)
+# 3. Conversion function
+# 4. Producers
+#
+T-C;T-K;K2C;
+T-F;T-K;K2F;
+FF-MS;V-MS,U-MS;HYPOTENUSE;

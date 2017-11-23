@@ -1,12 +1,12 @@
 #include "Engine.h"
 
 #include <spine/Exception.h>
-#include "grid-files/common/GeneralFunctions.h"
-#include "grid-files/grid/ValueCache.h"
-#include "grid-files/identification/GribDef.h"
-#include "grid-content/contentServer/corba/client/ClientImplementation.h"
-#include "grid-content/dataServer/corba/client/ClientImplementation.h"
-#include "grid-content/queryServer/corba/client/ClientImplementation.h"
+#include <grid-files/common/GeneralFunctions.h>
+#include <grid-files/grid/ValueCache.h>
+#include <grid-files/identification/GribDef.h>
+#include <grid-content/contentServer/corba/client/ClientImplementation.h>
+#include <grid-content/dataServer/corba/client/ClientImplementation.h>
+#include <grid-content/queryServer/corba/client/ClientImplementation.h>
 
 
 
@@ -29,6 +29,7 @@ Engine::Engine(const char* theConfigFile)
         "local-content-server.redis.port",
         "local-content-server.redis.tablePrefix",
         "local-data-server.gridDirectory",
+        "local-data-server.luaFiles",
         "local-data-server.cache.numOfGrids",
         "local-data-server.cache.maxUncompressedSizeInMegaBytes",
         "local-data-server.cache.maxCompressedSizeInMegaBytes",
@@ -102,7 +103,7 @@ Engine::Engine(const char* theConfigFile)
     mConfig.lookupValue("remote-query-server.enabled", mRemoteQueryServerEnabled);
     mConfig.lookupValue("remote-query-server.ior", mRemoteQueryServerIor);
 
-    mConfig.lookupValue("local-data-server.gridDirectory", mServerGridDirectory);
+    mConfig.lookupValue("local-data-server.gridDirectory", mDataServerGridDirectory);
 
     mConfig.lookupValue("local-data-server.cache.numOfGrids", mNumOfCachedGrids);
     mConfig.lookupValue("local-data-server.cache.maxUncompressedSizeInMegaBytes", mMaxUncompressedMegaBytesOfCachedGrids);
@@ -144,14 +145,25 @@ Engine::Engine(const char* theConfigFile)
     }
 
 
-    const libconfig::Setting& luaFiles = mConfig.lookup("local-query-server.luaFiles");
+    const libconfig::Setting& qsLuaFiles = mConfig.lookup("local-query-server.luaFiles");
 
-    if (!luaFiles.isArray())
+    if (!qsLuaFiles.isArray())
       throw Spine::Exception(BCP, "Configured value of 'local-query-server.luaFiles' must be an array");
 
-    for (int i = 0; i < luaFiles.getLength(); ++i)
+    for (int i = 0; i < qsLuaFiles.getLength(); ++i)
     {
-      mLuaFiles.push_back(luaFiles[i]);
+      mQueryServerLuaFiles.push_back(qsLuaFiles[i]);
+    }
+
+
+    const libconfig::Setting& dsLuaFiles = mConfig.lookup("local-data-server.luaFiles");
+
+    if (!dsLuaFiles.isArray())
+      throw Spine::Exception(BCP, "Configured value of 'local-data-server.luaFiles' must be an array");
+
+    for (int i = 0; i < dsLuaFiles.getLength(); ++i)
+    {
+      mDataServerLuaFiles.push_back(dsLuaFiles[i]);
     }
 
 
@@ -235,8 +247,8 @@ void Engine::init()
     else
     {
       DataServer::ServiceImplementation *server = new DataServer::ServiceImplementation();
-      server->init(0,0,"NotRegistered","NotRegistered",mServerGridDirectory,cServer);
-      //dServer->init(0,0,"NotRegistered","NotRegistered",mServerGridDirectory,cache);
+      server->init(0,0,"NotRegistered","NotRegistered",mDataServerGridDirectory,cServer,mDataServerLuaFiles);
+      //dServer->init(0,0,"NotRegistered","NotRegistered",mDataServerGridDirectory,cache);
       mDataServer.reset(server);
       server->startEventProcessing();
       dServer = server;
@@ -254,7 +266,7 @@ void Engine::init()
     else
     {
       QueryServer::ServiceImplementation *server = new QueryServer::ServiceImplementation();
-      server->init(cServer,dServer,mGridConfigDirectory,mParameterMappingFiles,mParameterAliasFiles,mProducerFile,mLuaFiles);
+      server->init(cServer,dServer,mGridConfigDirectory,mParameterMappingFiles,mParameterAliasFiles,mProducerFile,mQueryServerLuaFiles);
       qServer = server;
 
       mQueryServer.reset(server);
