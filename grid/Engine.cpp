@@ -6,6 +6,7 @@
 #include <grid-files/identification/GribDef.h>
 #include <grid-content/contentServer/corba/client/ClientImplementation.h>
 #include <grid-content/dataServer/corba/client/ClientImplementation.h>
+#include <grid-content/dataServer/implementation/VirtualContentFactory_type1.h>
 #include <grid-content/queryServer/corba/client/ClientImplementation.h>
 
 
@@ -104,6 +105,7 @@ Engine::Engine(const char* theConfigFile)
     mConfig.lookupValue("remote-query-server.ior", mRemoteQueryServerIor);
 
     mConfig.lookupValue("local-data-server.gridDirectory", mDataServerGridDirectory);
+    mConfig.lookupValue("local-data-server.virtualFileDefinitions",mVirtualFileDefinitions);
 
     mConfig.lookupValue("local-data-server.cache.numOfGrids", mNumOfCachedGrids);
     mConfig.lookupValue("local-data-server.cache.maxUncompressedSizeInMegaBytes", mMaxUncompressedMegaBytesOfCachedGrids);
@@ -165,6 +167,7 @@ Engine::Engine(const char* theConfigFile)
     {
       mDataServerLuaFiles.push_back(dsLuaFiles[i]);
     }
+
 
 
     // Initializing information that is needed for identifying the content of the grid files.
@@ -249,6 +252,13 @@ void Engine::init()
       DataServer::ServiceImplementation *server = new DataServer::ServiceImplementation();
       server->init(0,0,"NotRegistered","NotRegistered",mDataServerGridDirectory,cServer,mDataServerLuaFiles);
       //dServer->init(0,0,"NotRegistered","NotRegistered",mDataServerGridDirectory,cache);
+
+      DataServer::VirtualContentFactory_type1 *factory = new DataServer::VirtualContentFactory_type1();
+      factory->init(mVirtualFileDefinitions);
+
+      server->addVirtualContentFactory(factory);
+
+
       mDataServer.reset(server);
       server->startEventProcessing();
       dServer = server;

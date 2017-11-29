@@ -259,6 +259,34 @@ end
 
 
 -- ***********************************************************************
+--  FUNCTION : DIFF
+-- ***********************************************************************
+--  The function returns the sum of the given parameters.
+-- ***********************************************************************
+
+function DIFF(numOfParams,params)
+
+  local result = {};
+
+  if (numOfParams == 2) then
+    result.message = 'OK';
+    if (params[1] ~= ParamValueMissing) then    
+      result.value = params[1]-params[2];
+    else
+      result.value = ParamValueMissing;
+    end    
+  else
+    result.message = 'NEG() : Invalid number of parameters given ('..numOfParams..')!';
+    result.value = 0;  
+  end
+  
+  return result.value,result.message;
+
+end
+
+
+
+-- ***********************************************************************
 --  FUNCTION : getFunctionNames
 -- ***********************************************************************
 --  The function returns the list of available functions in this file.
@@ -286,7 +314,7 @@ function getFunctionNames(type)
   local functionNames = '';
 
   if (type == 1) then 
-    functionNames = 'ABS,AVG,DIV,MAX,MIN,MUL,NEG,SUM';
+    functionNames = 'ABS,AVG,DIV,MAX,MIN,MUL,NEG,SUM,DIFF';
   end
   
   return functionNames;
