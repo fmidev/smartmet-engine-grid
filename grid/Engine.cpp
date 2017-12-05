@@ -30,6 +30,8 @@ Engine::Engine(const char* theConfigFile)
         "local-content-server.redis.port",
         "local-content-server.redis.tablePrefix",
         "local-data-server.gridDirectory",
+        "local-data-server.virtualFiles.enabled",
+        "local-data-server.virtualFiles.definitionFile",
         "local-data-server.luaFiles",
         "local-data-server.cache.numOfGrids",
         "local-data-server.cache.maxUncompressedSizeInMegaBytes",
@@ -105,7 +107,8 @@ Engine::Engine(const char* theConfigFile)
     mConfig.lookupValue("remote-query-server.ior", mRemoteQueryServerIor);
 
     mConfig.lookupValue("local-data-server.gridDirectory", mDataServerGridDirectory);
-    mConfig.lookupValue("local-data-server.virtualFileDefinitions",mVirtualFileDefinitions);
+    mConfig.lookupValue("local-data-server.virtualFiles.enabled",mVirtualFilesEnabled);
+    mConfig.lookupValue("local-data-server.virtualFiles.definitionFile",mVirtualFileDefinitions);
 
     mConfig.lookupValue("local-data-server.cache.numOfGrids", mNumOfCachedGrids);
     mConfig.lookupValue("local-data-server.cache.maxUncompressedSizeInMegaBytes", mMaxUncompressedMegaBytesOfCachedGrids);
@@ -253,11 +256,17 @@ void Engine::init()
       server->init(0,0,"NotRegistered","NotRegistered",mDataServerGridDirectory,cServer,mDataServerLuaFiles);
       //dServer->init(0,0,"NotRegistered","NotRegistered",mDataServerGridDirectory,cache);
 
-      DataServer::VirtualContentFactory_type1 *factory = new DataServer::VirtualContentFactory_type1();
-      factory->init(mVirtualFileDefinitions);
-
-      server->addVirtualContentFactory(factory);
-
+      if (mVirtualFilesEnabled == "true")
+      {
+        server->enableVirtualContent(true);
+        DataServer::VirtualContentFactory_type1 *factory = new DataServer::VirtualContentFactory_type1();
+        factory->init(mVirtualFileDefinitions);
+        server->addVirtualContentFactory(factory);
+      }
+      else
+      {
+        server->enableVirtualContent(false);
+      }
 
       mDataServer.reset(server);
       server->startEventProcessing();

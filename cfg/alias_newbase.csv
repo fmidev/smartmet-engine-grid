@@ -21,6 +21,7 @@
 # the same "Temperature" as a parameter to this function. This would lead to a continuous
 # loop.  
 # -------------------------------------------------------------------------------------------
+Temperature:K2C{$Temperature}
 # 1CloudBase:$1CloudBase
 # 1CloudCover:$1CloudCover
 # 1CloudTop:$1CloudTop
@@ -100,7 +101,7 @@ CloudHeight:$CloudHeight
 CloudIce:$CloudIce
 CloudSymbol:$CloudSymbol
 CloudTop2:$CloudTop2
-# CloudTopBrightnessTemperature:$CloudTopBrightnessTemperature
+# CloudTopBrightness$CloudTopBrightnessTemperature
 CloudTop:$CloudTop
 CloudWater:$CloudWater
 # CloudWaterReflectivity:$CloudWaterReflectivity
@@ -135,15 +136,15 @@ CyanosSumChangeP:$CyanosSumChangeP
 # CyanosSum:$CyanosSum
 # DailyDiffuseRadiation:$DailyDiffuseRadiation
 # DailyGlobalRadiation:$DailyGlobalRadiation
-# DailyMeanTemperature:$DailyMeanTemperature
+# DailyMean$DailyMeanTemperature
 # DailyNetRadiation:$DailyNetRadiation
 # DailyPrecipitationCode:$DailyPrecipitationCode
 # DailyReflectedRadiation:$DailyReflectedRadiation
 # Day:$Day
 # DeepRoadTemperature2:$DeepRoadTemperature2
-# DeepRoadTemperature:$DeepRoadTemperature
+# DeepRoad$DeepRoadTemperature
 # DeepSoilMoistureContent:$DeepSoilMoistureContent
-DeepSoilTemperature:$DeepSoilTemperature
+DeepSoil$DeepSoilTemperature
 # DegreeDays:$DegreeDays
 # DeIcingClass0Probability:$DeIcingClass0Probability
 # DeIcingClass1Probability:$DeIcingClass1Probability
@@ -319,18 +320,18 @@ HighCloudCover:$HighCloudCover
 # HourlyGlobalRadiation:$HourlyGlobalRadiation
 # HourlyMaximumGustKT:$HourlyMaximumGustKT
 # HourlyMaximumGust:$HourlyMaximumGust
-# HourlyMaximumTemperature:$HourlyMaximumTemperature
+# HourlyMaximum$HourlyMaximumTemperature
 # HourlyMaximumWindSpeed:$HourlyMaximumWindSpeed
 # HourlyMaxRainIntensity:$HourlyMaxRainIntensity
-# HourlyMinimumTemperature:$HourlyMinimumTemperature
+# HourlyMinimum$HourlyMinimumTemperature
 # HourlyMinimumWindSpeed:$HourlyMinimumWindSpeed
 # HourlyNetRadiation:$HourlyNetRadiation
 # HourlyPressure:$HourlyPressure
 # HourlyReflectedRadiation:$HourlyReflectedRadiation
 # HourlyRelativeHumidity:$HourlyRelativeHumidity
 # HourlySunShine:$HourlySunShine
-# HourlyTemperature:$HourlyTemperature
-# HourlyWaterTemperature:$HourlyWaterTemperature
+# Hourly$HourlyTemperature
+# HourlyWater$HourlyWaterTemperature
 # HourlyWindDirection:$HourlyWindDirection
 # HourlyWindSpeed:$HourlyWindSpeed
 # Hour:$Hour
@@ -456,7 +457,7 @@ MoninObukhovLength:$MoninObukhovLength
 # MonthlyMeanPrecipitation6190:$MonthlyMeanPrecipitation6190
 # MonthlyMeanTemperature3160:$MonthlyMeanTemperature3160
 # MonthlyMeanTemperature6190:$MonthlyMeanTemperature6190
-# MonthlyMeanTemperature:$MonthlyMeanTemperature
+# MonthlyMean$MonthlyMeanTemperature
 # MonthlyPrecipitation:$MonthlyPrecipitation
 # Month:$Month
 # MugwortPollenAvailable:$MugwortPollenAvailable
@@ -474,7 +475,7 @@ NOConcentration:$NOConcentration
 # NormalGroundMinTemperatureF63:$NormalGroundMinTemperatureF63
 # NormalGroundMinTemperatureF88:$NormalGroundMinTemperatureF88
 # NormalGroundMinTemperatureF98:$NormalGroundMinTemperatureF98
-# NormalGroundMinTemperature:$NormalGroundMinTemperature
+# NormalGroundMin$NormalGroundMinTemperature
 # NormalMaxTemperatureF02:$NormalMaxTemperatureF02
 # NormalMaxTemperatureF12:$NormalMaxTemperatureF12
 # NormalMaxTemperatureF37:$NormalMaxTemperatureF37
@@ -482,7 +483,7 @@ NOConcentration:$NOConcentration
 # NormalMaxTemperatureF63:$NormalMaxTemperatureF63
 # NormalMaxTemperatureF88:$NormalMaxTemperatureF88
 # NormalMaxTemperatureF98:$NormalMaxTemperatureF98
-# NormalMaxTemperature:$NormalMaxTemperature
+# NormalMax$NormalMaxTemperature
 # NormalMeanTemperatureF02:$NormalMeanTemperatureF02
 # NormalMeanTemperatureF12:$NormalMeanTemperatureF12
 # NormalMeanTemperatureF37:$NormalMeanTemperatureF37
@@ -490,7 +491,7 @@ NOConcentration:$NOConcentration
 # NormalMeanTemperatureF63:$NormalMeanTemperatureF63
 # NormalMeanTemperatureF88:$NormalMeanTemperatureF88
 # NormalMeanTemperatureF98:$NormalMeanTemperatureF98
-# NormalMeanTemperature:$NormalMeanTemperature
+# NormalMean$NormalMeanTemperature
 # NormalMinTemperatureF02:$NormalMinTemperatureF02
 # NormalMinTemperatureF12:$NormalMinTemperatureF12
 # NormalMinTemperatureF37:$NormalMinTemperatureF37
@@ -498,7 +499,7 @@ NOConcentration:$NOConcentration
 # NormalMinTemperatureF63:$NormalMinTemperatureF63
 # NormalMinTemperatureF88:$NormalMinTemperatureF88
 # NormalMinTemperatureF98:$NormalMinTemperatureF98
-# NormalMinTemperature:$NormalMinTemperature
+# NormalMin$NormalMinTemperature
 NorthwardIceVelocity:$NorthwardIceVelocity
 O3Concentration:$O3Concentration
 # O3Contents:$O3Contents
@@ -812,7 +813,7 @@ RoadSnowCover:$RoadSnowCover
 # RoadT1Derivative:$RoadT1Derivative
 # RoadT2Derivative:$RoadT2Derivative
 # RoadTemperature2:$RoadTemperature2
-RoadTemperature:$RoadTemperature
+Road$RoadTemperature
 # RoadWarning1:$RoadWarning1
 # RoadWarning2:$RoadWarning2
 # RoadWarning3:$RoadWarning3

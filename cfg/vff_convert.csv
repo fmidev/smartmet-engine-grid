@@ -1,9 +1,10 @@
 # FIELDS
 # 1. Target parameter name (fmiName)
 # 2. Source parameter names (fmiName)
-# 3. Conversion function
-# 4. Producers
+# 3. Function name
+# 4. Function type
+# 5. Producers
 #
-T-C;T-K;K2C;;
-T-F;T-K;K2F;;
-FF-MS;V-MS,U-MS;HYPOTENUSE;;
+T-C;T-K;K2C;2;MEPS,ECG;
+T-F;T-K;K2F;2;ECG;
+FF-MS;V-MS,U-MS;HYPOTENUSE;3;MEPS;

@@ -87,6 +87,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     uint                mMaxUncompressedMegaBytesOfCachedGrids;
 
     std::string         mProducerFile;
+    std::string         mVirtualFilesEnabled;
     std::string         mVirtualFileDefinitions;
 
     String_vec          mParameterAliasFiles;
