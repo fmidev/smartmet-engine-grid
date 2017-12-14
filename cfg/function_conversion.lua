@@ -21,7 +21,7 @@ function C2F(numOfParams,params)
       result.value = ParamValueMissing;
     end    
   else
-    result.message = 'C2F() : Invalid number of parameters given ('..numOfParams..')!';
+    result.message = 'Invalid number of parameters given ('..numOfParams..')!';
     result.value = 0;
   end
   
@@ -51,7 +51,7 @@ function C2K(numOfParams,params)
       result.value = ParamValueMissing;
     end    
   else
-    result.message = 'C2K() : Invalid number of parameters given ('..numOfParams..')!';
+    result.message = 'Invalid number of parameters given ('..numOfParams..')!';
     result.value = 0;
   end
   
@@ -81,7 +81,7 @@ function F2C(numOfParams,params)
       result.value = ParamValueMissing;
     end    
   else
-    result.message = 'F2C() : Invalid number of parameters given ('..numOfParams..')!';
+    result.message = 'Invalid number of parameters given ('..numOfParams..')!';
     result.value = 0;
   end
   
@@ -110,7 +110,7 @@ function F2K(numOfParams,params)
       result.value = ParamValueMissing;
     end    
   else
-    result.message = 'F2K() : Invalid number of parameters given ('..numOfParams..')!';
+    result.message = 'Invalid number of parameters given ('..numOfParams..')!';
     result.value = 0;
   end
   
@@ -139,7 +139,7 @@ function K2C(numOfParams,params)
       result.value = ParamValueMissing;
     end    
   else
-    result.message = 'K2C() : Invalid number of parameters given ('..numOfParams..')!';
+    result.message = 'Invalid number of parameters given ('..numOfParams..')!';
     result.value = 0;
   end
   
@@ -169,7 +169,7 @@ function K2F(numOfParams,params)
       result.value = ParamValueMissing;
     end    
   else
-    result.message = 'K2F() : Invalid number of parameters given ('..numOfParams..')!';
+    result.message = 'Invalid number of parameters given ('..numOfParams..')!';
     result.value = 0;
   end
   
@@ -199,7 +199,7 @@ function DEG2RAD(numOfParams,params)
       result.value = ParamValueMissing;
     end    
   else
-    result.message = 'DEG2RAD() : Invalid number of parameters given ('..numOfParams..')!';
+    result.message = 'Invalid number of parameters given ('..numOfParams..')!';
     result.value = 0;
   end
   
@@ -229,7 +229,7 @@ function RAD2DEG(numOfParams,params)
       result.value = ParamValueMissing;
     end    
   else
-    result.message = 'RAD2DEG() : Invalid number of parameters given ('..numOfParams..')!';
+    result.message = 'Invalid number of parameters given ('..numOfParams..')!';
     result.value = 0;
   end
   

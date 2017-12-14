@@ -29,6 +29,12 @@ Engine::Engine(const char* theConfigFile)
         "local-content-server.redis.address",
         "local-content-server.redis.port",
         "local-content-server.redis.tablePrefix",
+        "local-content-server.processing-log.file",
+        "local-content-server.processing-log.maxSize",
+        "local-content-server.processing-log.truncateSize",
+        "local-content-server.debug-log.file",
+        "local-content-server.debug-log.maxSize",
+        "local-content-server.debug-log.truncateSize",
         "local-data-server.gridDirectory",
         "local-data-server.virtualFiles.enabled",
         "local-data-server.virtualFiles.definitionFile",
@@ -36,10 +42,23 @@ Engine::Engine(const char* theConfigFile)
         "local-data-server.cache.numOfGrids",
         "local-data-server.cache.maxUncompressedSizeInMegaBytes",
         "local-data-server.cache.maxCompressedSizeInMegaBytes",
+        "local-data-server.processing-log.file",
+        "local-data-server.processing-log.maxSize",
+        "local-data-server.processing-log.truncateSize",
+        "local-data-server.debug-log.file",
+        "local-data-server.debug-log.maxSize",
+        "local-data-server.debug-log.truncateSize",
         "local-query-server.producerFile",
+        "local-query-server.producerAliasFile",
         "local-query-server.luaFiles",
         "local-query-server.mappingFiles",
         "local-query-server.aliasFiles",
+        "local-query-server.processing-log.file",
+        "local-query-server.processing-log.maxSize",
+        "local-query-server.processing-log.truncateSize",
+        "local-query-server.debug-log.file",
+        "local-query-server.debug-log.maxSize",
+        "local-query-server.debug-log.truncateSize",
         "remote-content-server.enabled",
         "remote-content-server.ior",
         "remote-data-server.enabled",
@@ -47,15 +66,6 @@ Engine::Engine(const char* theConfigFile)
         "remote-data-server.ior",
         "remote-query-server.enabled",
         "remote-query-server.ior",
-        "content-server-log.file",
-        "content-server-log.maxSize",
-        "content-server-log.truncateSize",
-        "data-server-log.file",
-        "data-server-log.maxSize",
-        "data-server-log.truncateSize",
-        "query-server-log.file",
-        "query-server-log.maxSize",
-        "query-server-log.truncateSize",
         NULL
     };
 
@@ -115,18 +125,28 @@ Engine::Engine(const char* theConfigFile)
     mConfig.lookupValue("local-data-server.cache.maxCompressedSizeInMegaBytes", mMaxCompressedMegaBytesOfCachedGrids);
 
     mConfig.lookupValue("local-query-server.producerFile",mProducerFile);
+    mConfig.lookupValue("local-query-server.producerAliasFile",mProducerAliasFile);
 
-    mConfig.lookupValue("content-server-log.file", mContentServerLogFile);
-    mConfig.lookupValue("content-server-log.maxSize", mContentServerLogMaxSize);
-    mConfig.lookupValue("content-server-log.truncateSize", mContentServerLogTruncateSize);
+    mConfig.lookupValue("local-content-server.processing-log.file", mContentServerProcessingLogFile);
+    mConfig.lookupValue("local-content-server.processing-log.maxSize", mContentServerProcessingLogMaxSize);
+    mConfig.lookupValue("local-content-server.processing-log.truncateSize", mContentServerProcessingLogTruncateSize);
+    mConfig.lookupValue("local-content-server.debug-log.file", mContentServerDebugLogFile);
+    mConfig.lookupValue("local-content-server.debug-log.maxSize", mContentServerDebugLogMaxSize);
+    mConfig.lookupValue("local-content-server.debug-log.truncateSize", mContentServerDebugLogTruncateSize);
 
-    mConfig.lookupValue("data-server-log.file", mDataServerLogFile);
-    mConfig.lookupValue("data-server-log.maxSize", mDataServerLogMaxSize);
-    mConfig.lookupValue("data-server-log.truncateSize", mDataServerLogTruncateSize);
+    mConfig.lookupValue("local-data-server.processing-log.file", mDataServerProcessingLogFile);
+    mConfig.lookupValue("local-data-server.processing-log.maxSize", mDataServerProcessingLogMaxSize);
+    mConfig.lookupValue("local-data-server.processing-log.truncateSize", mDataServerProcessingLogTruncateSize);
+    mConfig.lookupValue("local-data-server.debug-log.file", mDataServerDebugLogFile);
+    mConfig.lookupValue("local-data-server.debug-log.maxSize", mDataServerDebugLogMaxSize);
+    mConfig.lookupValue("local-data-server.debug-log.truncateSize", mDataServerDebugLogTruncateSize);
 
-    mConfig.lookupValue("query-server-log.file", mQueryServerLogFile);
-    mConfig.lookupValue("query-server-log.maxSize", mQueryServerLogMaxSize);
-    mConfig.lookupValue("query-server-log.truncateSize", mQueryServerLogTruncateSize);
+    mConfig.lookupValue("local-query-server.processing-log.file", mQueryServerProcessingLogFile);
+    mConfig.lookupValue("local-query-server.processing-log.maxSize", mQueryServerProcessingLogMaxSize);
+    mConfig.lookupValue("local-query-server.processing-log.truncateSize", mQueryServerProcessingLogTruncateSize);
+    mConfig.lookupValue("local-query-server.debug-log.file", mQueryServerDebugLogFile);
+    mConfig.lookupValue("local-query-server.debug-log.maxSize", mQueryServerDebugLogMaxSize);
+    mConfig.lookupValue("local-query-server.debug-log.truncateSize", mQueryServerDebugLogTruncateSize);
 
     const libconfig::Setting& mappingFiles = mConfig.lookup("local-query-server.mappingFiles");
 
@@ -285,31 +305,47 @@ void Engine::init()
     else
     {
       QueryServer::ServiceImplementation *server = new QueryServer::ServiceImplementation();
-      server->init(cServer,dServer,mGridConfigDirectory,mParameterMappingFiles,mParameterAliasFiles,mProducerFile,mQueryServerLuaFiles);
+      server->init(cServer,dServer,mGridConfigDirectory,mParameterMappingFiles,mParameterAliasFiles,mProducerFile,mProducerAliasFile,mQueryServerLuaFiles);
       qServer = server;
 
       mQueryServer.reset(server);
     }
 
 
-    if (mContentServerLogFile.length() > 0)
+    if (mContentServerProcessingLogFile.length() > 0)
     {
-      mContentServerLog.init(true,mContentServerLogFile.c_str(),mContentServerLogMaxSize,mContentServerLogTruncateSize);
-      cServer->setProcessingLog(&mContentServerLog);
+      mContentServerProcessingLog.init(true,mContentServerProcessingLogFile.c_str(),mContentServerProcessingLogMaxSize,mContentServerProcessingLogTruncateSize);
+      cServer->setProcessingLog(&mContentServerProcessingLog);
     }
 
-
-    if (mDataServerLogFile.length() > 0)
+    if (mContentServerDebugLogFile.length() > 0)
     {
-      mDataServerLog.init(true,mDataServerLogFile.c_str(),mDataServerLogMaxSize,mDataServerLogTruncateSize);
-      dServer->setProcessingLog(&mDataServerLog);
+      mContentServerDebugLog.init(true,mContentServerDebugLogFile.c_str(),mContentServerDebugLogMaxSize,mContentServerDebugLogTruncateSize);
+      cServer->setDebugLog(&mContentServerDebugLog);
     }
 
-
-    if (mQueryServerLogFile.length() > 0)
+    if (mDataServerProcessingLogFile.length() > 0)
     {
-      mQueryServerLog.init(true,mQueryServerLogFile.c_str(),mQueryServerLogMaxSize,mQueryServerLogTruncateSize);
-      qServer->setProcessingLog(&mQueryServerLog);
+      mDataServerProcessingLog.init(true,mDataServerProcessingLogFile.c_str(),mDataServerProcessingLogMaxSize,mDataServerProcessingLogTruncateSize);
+      dServer->setProcessingLog(&mDataServerProcessingLog);
+    }
+
+    if (mDataServerDebugLogFile.length() > 0)
+    {
+      mDataServerDebugLog.init(true,mDataServerDebugLogFile.c_str(),mDataServerDebugLogMaxSize,mDataServerDebugLogTruncateSize);
+      dServer->setDebugLog(&mDataServerDebugLog);
+    }
+
+    if (mQueryServerProcessingLogFile.length() > 0)
+    {
+      mQueryServerProcessingLog.init(true,mQueryServerProcessingLogFile.c_str(),mQueryServerProcessingLogMaxSize,mQueryServerProcessingLogTruncateSize);
+      qServer->setProcessingLog(&mQueryServerProcessingLog);
+    }
+
+    if (mQueryServerDebugLogFile.length() > 0)
+    {
+      mQueryServerDebugLog.init(true,mQueryServerDebugLogFile.c_str(),mQueryServerDebugLogMaxSize,mQueryServerDebugLogTruncateSize);
+      qServer->setDebugLog(&mQueryServerDebugLog);
     }
   }
   catch (...)

@@ -25,7 +25,7 @@ function ABS(numOfParams,params)
       result.value = ParamValueMissing;
     end
   else
-    result.message = 'ABS() : Invalid number of parameters given ('..numOfParams..')!';
+    result.message = 'Invalid number of parameters given ('..numOfParams..')!';
     result.value = 0;  
   end
   
@@ -59,7 +59,7 @@ function AVG(numOfParams,params)
     result.message = 'OK';
     result.value = sum / count;
   else
-    result.message = 'AVG(): No parameters given!';
+    result.message = 'No parameters given!';
     result.value = 0;  
   end
     
@@ -89,7 +89,7 @@ function DIV(numOfParams,params)
       result.value = ParamValueMissing;  
     end
   else
-    result.message = 'DIV() : Invalid number of parameters given ('..numOfParams..')!';
+    result.message = 'Invalid number of parameters given ('..numOfParams..')!';
     result.value = 0;  
   end
     
@@ -121,7 +121,7 @@ function MAX(numOfParams,params)
     result.message = 'OK';
     result.value = max;
   else
-    result.message = 'MAX(): No parameters given!';
+    result.message = 'No parameters given!';
     result.value = 0;  
   end
     
@@ -154,7 +154,7 @@ function MIN(numOfParams,params)
     result.message = 'OK';
     result.value = min;
   else
-    result.message = 'MIN(): No parameters given!';
+    result.message = 'No parameters given!';
     result.value = 0;  
   end
     
@@ -184,7 +184,7 @@ function MUL(numOfParams,params)
       result.value = ParamValueMissing;  
     end
   else
-    result.message = 'MUL() : Invalid number of parameters given ('..numOfParams..')!';
+    result.message = 'Invalid number of parameters given ('..numOfParams..')!';
     result.value = 0;  
   end
     
@@ -215,7 +215,37 @@ function NEG(numOfParams,params)
       result.value = ParamValueMissing;
     end    
   else
-    result.message = 'NEG() : Invalid number of parameters given ('..numOfParams..')!';
+    result.message = 'Invalid number of parameters given ('..numOfParams..')!';
+    result.value = 0;  
+  end
+  
+  return result.value,result.message;
+  
+end
+
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : SQRT
+-- ***********************************************************************
+--  The function returns the sqrt value of the given parameter.
+-- ***********************************************************************
+
+function SQRT(numOfParams,params)
+
+  local result = {};
+
+  if (numOfParams == 1) then
+    result.message = 'OK';
+    if (params[1] ~= ParamValueMissing) then    
+      result.value = math.sqrt(params[1]);
+    else
+      result.value = ParamValueMissing;
+    end    
+  else
+    result.message = 'Invalid number of parameters given ('..numOfParams..')!';
     result.value = 0;  
   end
   
@@ -247,7 +277,7 @@ function SUM(numOfParams,params)
     result.message = 'OK';
     result.value = sum;
   else
-    result.message = 'SUM(): No parameters given!';
+    result.message = 'No parameters given!';
     result.value = 0;  
   end
     
@@ -270,19 +300,50 @@ function DIFF(numOfParams,params)
 
   if (numOfParams == 2) then
     result.message = 'OK';
-    if (params[1] ~= ParamValueMissing) then    
+    if (params[1] ~= ParamValueMissing and params[2] ~= ParamValueMissing) then    
       result.value = params[1]-params[2];
     else
       result.value = ParamValueMissing;
     end    
   else
-    result.message = 'NEG() : Invalid number of parameters given ('..numOfParams..')!';
+    result.message = 'Invalid number of parameters given ('..numOfParams..')!';
     result.value = 0;  
   end
   
   return result.value,result.message;
 
 end
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : HYPOT
+-- ***********************************************************************
+--  The function returns the hypotenuse of the given parameters.
+-- ***********************************************************************
+
+function HYPOT(numOfParams,params)
+
+  local result = {};
+
+  if (numOfParams == 2) then
+    result.message = 'OK';
+    if (params[1] ~= ParamValueMissing and params[2] ~= ParamValueMissing) then    
+      result.value = math.sqrt(params[1]*params[1] + params[2]*params[2]);
+    else
+      result.value = ParamValueMissing;
+    end    
+  else
+    result.message = 'Invalid number of parameters given ('..numOfParams..')!';
+    result.value = 0;  
+  end
+  
+  return result.value,result.message;
+
+end
+
+
 
 
 
@@ -314,7 +375,7 @@ function getFunctionNames(type)
   local functionNames = '';
 
   if (type == 1) then 
-    functionNames = 'ABS,AVG,DIV,MAX,MIN,MUL,NEG,SUM,DIFF';
+    functionNames = 'ABS,AVG,DIV,MAX,MIN,MUL,NEG,SUM,DIFF,HYPOT,SQRT';
   end
   
   return functionNames;

@@ -67,26 +67,39 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::string         mGridConfigDirectory;
     std::string         mDataServerGridDirectory;
 
-    std::string         mContentServerLogFile;
-    int                 mContentServerLogMaxSize;
-    int                 mContentServerLogTruncateSize;
-    Log                 mContentServerLog;
+    std::string         mContentServerProcessingLogFile;
+    int                 mContentServerProcessingLogMaxSize;
+    int                 mContentServerProcessingLogTruncateSize;
+    Log                 mContentServerProcessingLog;
+    std::string         mContentServerDebugLogFile;
+    int                 mContentServerDebugLogMaxSize;
+    int                 mContentServerDebugLogTruncateSize;
+    Log                 mContentServerDebugLog;
 
-    std::string         mDataServerLogFile;
-    int                 mDataServerLogMaxSize;
-    int                 mDataServerLogTruncateSize;
-    Log                 mDataServerLog;
+    std::string         mDataServerProcessingLogFile;
+    int                 mDataServerProcessingLogMaxSize;
+    int                 mDataServerProcessingLogTruncateSize;
+    Log                 mDataServerProcessingLog;
+    std::string         mDataServerDebugLogFile;
+    int                 mDataServerDebugLogMaxSize;
+    int                 mDataServerDebugLogTruncateSize;
+    Log                 mDataServerDebugLog;
 
-    std::string         mQueryServerLogFile;
-    int                 mQueryServerLogMaxSize;
-    int                 mQueryServerLogTruncateSize;
-    Log                 mQueryServerLog;
+    std::string         mQueryServerProcessingLogFile;
+    int                 mQueryServerProcessingLogMaxSize;
+    int                 mQueryServerProcessingLogTruncateSize;
+    Log                 mQueryServerProcessingLog;
+    std::string         mQueryServerDebugLogFile;
+    int                 mQueryServerDebugLogMaxSize;
+    int                 mQueryServerDebugLogTruncateSize;
+    Log                 mQueryServerDebugLog;
 
     uint                mNumOfCachedGrids;
     uint                mMaxCompressedMegaBytesOfCachedGrids;
     uint                mMaxUncompressedMegaBytesOfCachedGrids;
 
     std::string         mProducerFile;
+    std::string         mProducerAliasFile;
     std::string         mVirtualFilesEnabled;
     std::string         mVirtualFileDefinitions;
 

@@ -1,4 +1,5 @@
 
+PI = 3.1415926;
 ParamValueMissing = -16777216;
 debug = 0;
 
@@ -46,13 +47,13 @@ end
 
 
 -- ***********************************************************************
---  FUNCTION : HYPOTENUSE
+--  FUNCTION : WIND_SPEED
 -- ***********************************************************************
 --  Counts the size of the hypotenuse assuming that params1 and params2
 --  represents vectors and the angle between them is 90 degrees.
 -- ***********************************************************************
 
-function HYPOTENUSE(columns,rows,params1,params2)
+function WIND_SPEED(columns,rows,params1,params2)
 
   local result = {};
 
@@ -70,6 +71,202 @@ function HYPOTENUSE(columns,rows,params1,params2)
   return result;
   
 end
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : WIND_DIR
+-- ***********************************************************************
+--  Counts the direction of the wind (wind blows FROM this direction, not
+--  TO this direction). 
+-- ***********************************************************************
+
+function WIND_DIR(columns,rows,u,v,angles)
+
+  local result = {};
+  
+  for index, value in pairs(v) do
+
+    a = angles[index];
+    b = math.atan(v[index]/u[index]);      
+            
+    if (u[index] >= 0  and  v[index] >= 0) then
+      c = b;
+    end
+	      
+    if (u[index] < 0  and  v[index] >= 0) then
+      c = b + PI;
+    end
+	      
+    if (u[index] < 0  and  v[index] < 0) then
+      c = b + PI;
+    end
+	            
+    if (u[index] >= 0  and  v[index] < 0) then
+      c = b;      
+    end
+	                
+    if (a < (PI/2)) then
+      d = c - a
+	else
+      d = c - (PI-a);
+	end   
+	
+	result[index] = 270-((d*180)/PI);
+	
+  end
+   
+  return result;
+  
+end
+
+
+
+-- ***********************************************************************
+--  FUNCTION : WIND_TO_DIR
+-- ***********************************************************************
+--  Counts the direction of the wind (wind blows TO this direction, not
+--  FROM this direction). 
+
+-- ***********************************************************************
+
+function WIND_TO_DIR(columns,rows,u,v,angles)
+
+  local result = {};
+  
+  for index, value in pairs(v) do
+
+    a = angles[index];
+    b = math.atan(v[index]/u[index]);      
+            
+    if (u[index] >= 0  and  v[index] >= 0) then
+      c = b;
+    end
+	      
+    if (u[index] < 0  and  v[index] >= 0) then
+      c = b + PI;
+    end
+	      
+    if (u[index] < 0  and  v[index] < 0) then
+      c = b + PI;
+    end
+	            
+    if (u[index] >= 0  and  v[index] < 0) then
+      c = b;      
+    end
+	                
+    if (a < (PI/2)) then
+      d = c - a
+	else
+      d = c - (PI-a);
+	end   
+	
+	result[index] = ((d*180)/PI);
+	
+  end
+   
+  return result;
+  
+end
+
+
+
+-- ***********************************************************************
+--  FUNCTION : WIND_V
+-- ***********************************************************************
+-- ***********************************************************************
+
+function WIND_V(columns,rows,u,v,angles)
+
+  local result = {};
+  
+  for index, value in pairs(v) do
+
+    a = angles[index];
+    b = math.atan(v[index]/u[index]);      
+    hh = math.sqrt(u[index]*u[index] + v[index]*v[index]);     
+            
+    if (u[index] >= 0  and  v[index] >= 0) then
+      c = b;
+    end
+	      
+    if (u[index] < 0  and  v[index] >= 0) then
+      c = b + PI;
+    end
+	      
+    if (u[index] < 0  and  v[index] < 0) then
+      c = b + PI;
+    end
+	            
+    if (u[index] >= 0  and  v[index] < 0) then
+      c = b;      
+    end
+	                
+    if (a < (PI/2)) then
+      d = c - a
+	else
+      d = c - (PI-a);
+	end   
+	
+    val = hh * math.sin(d);         
+	result[index] = val;
+	
+  end
+    
+  return result;
+  
+end
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : WIND_U
+-- ***********************************************************************
+-- ***********************************************************************
+
+function WIND_U(columns,rows,u,v,angles)
+
+  local result = {};
+  
+  for index, value in pairs(v) do
+
+    a = angles[index];
+    b = math.atan(v[index]/u[index]);      
+    hh = math.sqrt(u[index]*u[index] + v[index]*v[index]);     
+            
+    if (u[index] >= 0  and  v[index] >= 0) then
+      c = b;
+    end
+	      
+    if (u[index] < 0  and  v[index] >= 0) then
+      c = b + PI;
+    end
+	      
+    if (u[index] < 0  and  v[index] < 0) then
+      c = b + PI;
+    end
+	            
+    if (u[index] >= 0  and  v[index] < 0) then
+      c = b;      
+    end
+	                
+    if (a < (PI/2)) then
+      d = c - a
+	else
+      d = c - (PI-a);
+	end   
+	
+    val = hh * math.cos(d);         
+	result[index] = val;
+	
+  end
+    
+  return result;
+  
+end
+
 
 
 
@@ -219,7 +416,6 @@ end
 function DEG2RAD(columns,rows,params)
 
   local result = {};
-  local PI = 3.1415926;
 
   for index, value in pairs(params) do
     if (value ~= ParamValueMissing) then
@@ -246,7 +442,6 @@ end
 function RAD2DEG(columns,rows,params)
 
   local result = {};
-  local PI = 3.1415926;
 
   for index, value in pairs(params) do
     if (value ~= ParamValueMissing) then
@@ -301,7 +496,7 @@ end
 --                           number of values as the input 'params1'.               
 --  
 -- ***********************************************************************
-
+ 
 
 function getFunctionNames(type)
 
@@ -311,7 +506,10 @@ function getFunctionNames(type)
     functionNames = 'C2F,C2K,F2C,F2K,K2C,K2F,DEG2RAD,RAD2DEG';
   end
   if (type == 3) then 
-    functionNames = 'HYPOTENUSE';
+    functionNames = 'WIND_SPEED';
+  end
+  if (type == 4) then 
+    functionNames = 'WIND_V,WIND_U,WIND_DIR,WIND_TO_DIR';
   end
   
   return functionNames;

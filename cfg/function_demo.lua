@@ -51,7 +51,7 @@ function VALID(numOfParams,params)
     result.message = 'No valid value found!';
     result.value = ParamValueMissing;
   else
-    result.message = 'VALID(): No parameters given!';
+    result.message = 'No parameters given!';
     result.value = 0;  
   end
     
@@ -59,36 +59,6 @@ function VALID(numOfParams,params)
 
 end
 
-
-
--- ***********************************************************************
---  FUNCTION : VALID2
--- ***********************************************************************
---  The function returns the first valid value in the list.
--- ***********************************************************************
-
-function VALID2(numOfParams,params)
-
-  local result = {};
-  
-  if (numOfParams > 0) then   
-    for index, value in pairs(params) do
-      if (value ~= ParamValueMissing) then
-        result.message = 'OK';
-        result.value = value + 2000;
-		return result.value,result.message;
-      end
-    end
-    result.message = 'No valid value found!';
-    result.value = ParamValueMissing;
-  else
-    result.message = 'VALID(): No parameters given!';
-    result.value = 0;  
-  end
-    
-  return result.value,result.message;
-
-end
 
 
 
@@ -120,7 +90,7 @@ function getFunctionNames(type)
   local functionNames = '';
 
   if (type == 1) then 
-    functionNames = 'COUNT,VALID,VALID2';
+    functionNames = 'COUNT,VALID';
   end
   
   return functionNames;
