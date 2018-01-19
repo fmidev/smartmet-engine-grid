@@ -3,7 +3,7 @@
 #include <spine/Exception.h>
 #include <grid-files/common/GeneralFunctions.h>
 #include <grid-files/grid/ValueCache.h>
-#include <grid-files/identification/GribDef.h>
+#include <grid-files/identification/GridDef.h>
 #include <grid-content/contentServer/corba/client/ClientImplementation.h>
 #include <grid-content/dataServer/corba/client/ClientImplementation.h>
 #include <grid-content/dataServer/implementation/VirtualContentFactory_type1.h>
@@ -100,7 +100,7 @@ Engine::Engine(const char* theConfigFile)
     }
 
 
-    mConfig.lookupValue("grid-files.configDirectory", mGridConfigDirectory);
+    mConfig.lookupValue("grid-files.configFile", mGridConfigFile);
 
     mConfig.lookupValue("remote-content-server.enabled", mRemoteContentServerEnabled);
     mConfig.lookupValue("remote-content-server.ior", mRemoteContentServerIor);
@@ -195,7 +195,7 @@ Engine::Engine(const char* theConfigFile)
 
     // Initializing information that is needed for identifying the content of the grid files.
 
-    SmartMet::Identification::gribDef.init(mGridConfigDirectory.c_str());
+    SmartMet::Identification::gridDef.init(mGridConfigFile.c_str());
   }
   catch (...)
   {
@@ -305,7 +305,7 @@ void Engine::init()
     else
     {
       QueryServer::ServiceImplementation *server = new QueryServer::ServiceImplementation();
-      server->init(cServer,dServer,mGridConfigDirectory,mParameterMappingFiles,mParameterAliasFiles,mProducerFile,mProducerAliasFile,mQueryServerLuaFiles);
+      server->init(cServer,dServer,mGridConfigFile,mParameterMappingFiles,mParameterAliasFiles,mProducerFile,mProducerAliasFile,mQueryServerLuaFiles);
       qServer = server;
 
       mQueryServer.reset(server);

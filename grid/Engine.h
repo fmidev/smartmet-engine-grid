@@ -64,7 +64,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::string         mRemoteQueryServerEnabled;
     std::string         mRemoteQueryServerIor;
 
-    std::string         mGridConfigDirectory;
+    std::string         mGridConfigFile;
     std::string         mDataServerGridDirectory;
 
     std::string         mContentServerProcessingLogFile;
