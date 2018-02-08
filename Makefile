@@ -67,13 +67,14 @@ else
 	-Winline \
 	-Wno-multichar \
 	-Wno-pmf-conversions \
-	-Woverloaded-virtual  \
 	-Wpointer-arith \
 	-Wcast-qual \
 	-Wredundant-decls \
 	-Wconversion \
 	-Wwrite-strings \
 	-Wsign-promo \
+
+#	-Woverloaded-virtual
 
  FLAGS_RELEASE = -Wuninitialized
 
