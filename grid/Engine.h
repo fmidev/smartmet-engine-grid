@@ -34,6 +34,11 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     DataServer_sptr     getDataServer_sptr();
     QueryServer_sptr    getQueryServer_sptr();
 
+    T::ParamLevelId     getFmiParameterLevelId(uint producerId,int level);
+    std::string         getProducerName(std::string aliasName);
+    void                getProducerList(string_vec& producerList);
+
+
   protected:
 
     void                init();
@@ -105,6 +110,12 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     String_vec          mParameterAliasFiles;
     String_vec          mParameterMappingFiles;
+
+    T::LevelInfoList    mLevelInfoList;
+    time_t              mLevelInfoList_lastUpdate;
+    ThreadLock          mThreadLock;
+
+    QueryServer::AliasFile mProducerAliases;
 };
 
 }  // namespace Grid

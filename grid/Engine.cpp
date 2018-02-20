@@ -83,6 +83,7 @@ Engine::Engine(const char* theConfigFile)
       throw exception;
     }
 
+    mLevelInfoList_lastUpdate = 0;
     mRedisAddress = "127.0.0.1";
     mRedisPort = 6379;
 
@@ -347,6 +348,8 @@ void Engine::init()
       mQueryServerDebugLog.init(true,mQueryServerDebugLogFile.c_str(),mQueryServerDebugLogMaxSize,mQueryServerDebugLogTruncateSize);
       qServer->setDebugLog(&mQueryServerDebugLog);
     }
+
+    mProducerAliases.init(mProducerAliasFile);
   }
   catch (...)
   {
@@ -445,6 +448,83 @@ QueryServer_sptr Engine::getQueryServer_sptr()
     throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
   }
 }
+
+
+
+
+
+std::string Engine::getProducerName(std::string aliasName)
+{
+  try
+  {
+    mProducerAliases.checkUpdates();
+
+    std::string name;
+    if (mProducerAliases.getAlias(aliasName,name))
+      return name;
+
+    return aliasName;
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
+
+
+
+T::ParamLevelId Engine::getFmiParameterLevelId(uint producerId,int level)
+{
+  try
+  {
+    AutoThreadLock lock(&mThreadLock);
+
+    if (mLevelInfoList.getLength() == 0  ||  (mLevelInfoList_lastUpdate + 300) < time(0))
+    {
+      ContentServer_sptr  contentServer = getContentServer_sptr();
+      contentServer->getLevelInfoList(0,mLevelInfoList);
+      mLevelInfoList_lastUpdate = time(0);
+    }
+
+    uint len = mLevelInfoList.getLength();
+    for (uint t=0; t<len; t++)
+    {
+      T::LevelInfo *levelInfo = mLevelInfoList.getLevelInfoByIndex(t);
+      if (levelInfo != NULL  &&  levelInfo->mProducerId == producerId)
+      {
+        if (levelInfo->mParameterLevel == level)
+          return levelInfo->mFmiParameterLevelId;
+      }
+    }
+    return 0;
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
+
+
+void Engine::getProducerList(string_vec& producerList)
+{
+  try
+  {
+    mQueryServer->getProducerList(0,producerList);
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
 
 
 

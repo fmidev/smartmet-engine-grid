@@ -671,6 +671,31 @@ end
 
 
 
+-- ***********************************************************************
+--  Cloudiness8th
+-- ***********************************************************************
+
+function NB_Cloudiness8th(numOfParams,params)
+
+  local result = {};
+
+  if (numOfParams ~= 1) then
+    result.message = 'Invalid number of parameters!';
+    result.value = 0;  
+    return result.value,result.message;
+  end
+
+  local totalCloudCover = params[1];
+
+  local n = math.ceil(totalCloudCover / 12.5);
+
+  result.message = 'OK';
+  result.value = n;  
+  return result.value,result.message;
+end
+
+
+
 
 -- ***********************************************************************
 --  FUNCTION : getFunctionNames
@@ -708,7 +733,7 @@ function getFunctionNames(type)
   local functionNames = '';
 
   if (type == 1) then 
-    functionNames = 'NB_SummerSimmerIndex,NB_FeelsLikeTemperature,NB_WindChill,NB_Snow1h';
+    functionNames = 'NB_SummerSimmerIndex,NB_FeelsLikeTemperature,NB_WindChill,NB_Snow1h,NB_Cloudiness8th';
   end
   
   if (type == 5) then 
