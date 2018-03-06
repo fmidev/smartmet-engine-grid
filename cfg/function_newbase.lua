@@ -417,6 +417,10 @@ function NB_WindCompass8(language,numOfParams,params)
 
   local result = {};
 
+    -- for index, value in pairs(params) do
+    --   print(index.." : "..value);
+    -- end
+
   if (numOfParams ~= 1) then
     result.message = 'Invalid number of parameters!';
     result.value = 0;  
@@ -426,7 +430,7 @@ function NB_WindCompass8(language,numOfParams,params)
   local windDir = params[1];
 
   if (windDir == ParamValueMissing) then
-    result.message = "Parameter value missing!"
+    result.message = "OK"
   	result.value = ParamValueMissing;
     return result.value,result.message;
   end
@@ -467,7 +471,7 @@ function NB_WindCompass16(language,numOfParams,params)
   local windDir = params[1];
 
   if (windDir == ParamValueMissing) then
-    result.message = "Parameter value missing!"
+    result.message = "OK"
   	result.value = ParamValueMissing;
     return result.value,result.message;
   end
@@ -508,7 +512,7 @@ function NB_WindCompass32(language,numOfParams,params)
   local windDir = params[1];
 
   if (windDir == ParamValueMissing) then
-    result.message = "Parameter value missing!"
+    result.message = "OK"
   	result.value = ParamValueMissing;
     return result.value,result.message;
   end

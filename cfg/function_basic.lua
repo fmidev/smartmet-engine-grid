@@ -348,6 +348,38 @@ end
 
 
 -- ***********************************************************************
+--  FUNCTION : ITEM
+-- ***********************************************************************
+--  The function returns the item of the given index.
+-- ***********************************************************************
+
+function ITEM(numOfParams,params)
+
+  local result = {};
+  
+  if (numOfParams > 0) then    
+    local idx = params[1] + 1;
+    for index, value in pairs(params) do
+      if (idx == index) then
+        result.message = 'OK';
+        result.value = value;
+        return result.value,result.message;
+      end
+    end
+
+  end
+    
+  result.message = 'OK';
+  result.value = ParamValueMissing;
+  return result.value,result.message;
+  
+end
+
+
+
+
+
+-- ***********************************************************************
 --  FUNCTION : getFunctionNames
 -- ***********************************************************************
 --  The function returns the list of available functions in this file.
@@ -375,7 +407,7 @@ function getFunctionNames(type)
   local functionNames = '';
 
   if (type == 1) then 
-    functionNames = 'ABS,AVG,DIV,MAX,MIN,MUL,NEG,SUM,DIFF,HYPOT,SQRT';
+    functionNames = 'ABS,AVG,DIV,ITEM,MAX,MIN,MUL,NEG,SUM,DIFF,HYPOT,SQRT';
   end
   
   return functionNames;
