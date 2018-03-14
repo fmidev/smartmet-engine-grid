@@ -6,7 +6,7 @@
 #include <grid-content/dataServer/implementation/ServiceImplementation.h>
 #include <grid-content/dataServer/cache/CacheImplementation.h>
 #include <grid-content/queryServer/implementation/ServiceImplementation.h>
-#include <libconfig.h++>
+#include <grid-files/common/ConfigurationFile.h>
 
 
 namespace SmartMet
@@ -46,7 +46,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
   private:
 
-    libconfig::Config   mConfig;
+    ConfigurationFile   mConfigurationFile;
 
     std::string         mRedisAddress;
     int                 mRedisPort;
@@ -54,19 +54,19 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     ContentServer_sptr  mContentServerCache;
     ContentServer_sptr  mContentServerRedis;
-    std::string         mRemoteContentServerEnabled;
+    bool                mRemoteContentServerEnabled;
     std::string         mRemoteContentServerIor;
 
     DataServer_sptr     mDataServer;
     DataServer_sptr     mDataServerClient;
     String_vec          mDataServerLuaFiles;
-    std::string         mRemoteDataServerEnabled;
-    std::string         mRemoteDataServerCache;
+    bool                mRemoteDataServerEnabled;
+    bool                mRemoteDataServerCache;
     std::string         mRemoteDataServerIor;
 
     QueryServer_sptr    mQueryServer;
     String_vec          mQueryServerLuaFiles;
-    std::string         mRemoteQueryServerEnabled;
+    bool                mRemoteQueryServerEnabled;
     std::string         mRemoteQueryServerIor;
 
     std::string         mGridConfigFile;
@@ -105,7 +105,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     std::string         mProducerFile;
     std::string         mProducerAliasFile;
-    std::string         mVirtualFilesEnabled;
+    bool                mVirtualFilesEnabled;
     std::string         mVirtualFileDefinitions;
 
     String_vec          mParameterAliasFiles;

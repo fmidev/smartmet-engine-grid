@@ -1,16 +1,5 @@
 # Producer & geometryId search order. If no producer is given in
 # the query then the producers are used in the following order.
-pal_skandinavia;2000
-pal_skandinavia2;2008
-ecmwf_eurooppa_pinta;2003
-ecmwf_skandinavia_painepinta;2001
-hirlam;2101
-tosummertime;2000
-towintertime;2000
-tutka_suomi_rr;2007
-weeklyclimatology;2102
-ECMWF;1800
-
 ECG;1007
 ECG;1008
 ECG;1045

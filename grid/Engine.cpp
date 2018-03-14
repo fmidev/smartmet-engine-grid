@@ -69,29 +69,21 @@ Engine::Engine(const char* theConfigFile)
         NULL
     };
 
-    try
-    {
-      mConfig.readFile(theConfigFile);
-    }
-    catch (libconfig::ParseException& e)
-    {
-      SmartMet::Spine::Exception exception(BCP, "Configuration file parsing error!");
-      exception.addParameter("What",e.what());
-      exception.addParameter("Error",e.getError());
-      exception.addParameter("File",theConfigFile);
-      exception.addParameter("Line",std::to_string(e.getLine()));
-      throw exception;
-    }
-
     mLevelInfoList_lastUpdate = 0;
     mRedisAddress = "127.0.0.1";
     mRedisPort = 6379;
+    mRemoteContentServerEnabled = false;
+    mRemoteDataServerEnabled = false;
+    mRemoteQueryServerEnabled = false;
+    mRemoteDataServerCache = false;
+    mVirtualFilesEnabled = false;
 
+    mConfigurationFile.readFile(theConfigFile);
 
     uint t=0;
     while (configAttribute[t] != NULL)
     {
-      if (!mConfig.exists(configAttribute[t]))
+      if (!mConfigurationFile.findAttribute(configAttribute[t]))
       {
         SmartMet::Spine::Exception exception(BCP, "Missing configuration attribute!");
         exception.addParameter("File",theConfigFile);
@@ -101,96 +93,57 @@ Engine::Engine(const char* theConfigFile)
     }
 
 
-    mConfig.lookupValue("grid-files.configFile", mGridConfigFile);
+    mConfigurationFile.getAttributeValue("grid-files.configFile", mGridConfigFile);
 
-    mConfig.lookupValue("remote-content-server.enabled", mRemoteContentServerEnabled);
-    mConfig.lookupValue("remote-content-server.ior", mRemoteContentServerIor);
+    mConfigurationFile.getAttributeValue("remote-content-server.enabled", mRemoteContentServerEnabled);
+    mConfigurationFile.getAttributeValue("remote-content-server.ior", mRemoteContentServerIor);
 
-    mConfig.lookupValue("local-content-server.redis.address", mRedisAddress);
-    mConfig.lookupValue("local-content-server.redis.port", mRedisPort);
-    mConfig.lookupValue("local-content-server.redis.tablePrefix", mRedisTablePrefix);
+    mConfigurationFile.getAttributeValue("local-content-server.redis.address", mRedisAddress);
+    mConfigurationFile.getAttributeValue("local-content-server.redis.port", mRedisPort);
+    mConfigurationFile.getAttributeValue("local-content-server.redis.tablePrefix", mRedisTablePrefix);
 
-    mConfig.lookupValue("remote-data-server.enabled", mRemoteDataServerEnabled);
-    mConfig.lookupValue("remote-data-server.cache", mRemoteDataServerCache);
-    mConfig.lookupValue("remote-data-server.ior", mRemoteDataServerIor);
+    mConfigurationFile.getAttributeValue("remote-data-server.enabled", mRemoteDataServerEnabled);
+    mConfigurationFile.getAttributeValue("remote-data-server.cache", mRemoteDataServerCache);
+    mConfigurationFile.getAttributeValue("remote-data-server.ior", mRemoteDataServerIor);
 
-    mConfig.lookupValue("remote-query-server.enabled", mRemoteQueryServerEnabled);
-    mConfig.lookupValue("remote-query-server.ior", mRemoteQueryServerIor);
+    mConfigurationFile.getAttributeValue("remote-query-server.enabled", mRemoteQueryServerEnabled);
+    mConfigurationFile.getAttributeValue("remote-query-server.ior", mRemoteQueryServerIor);
 
-    mConfig.lookupValue("local-data-server.gridDirectory", mDataServerGridDirectory);
-    mConfig.lookupValue("local-data-server.virtualFiles.enabled",mVirtualFilesEnabled);
-    mConfig.lookupValue("local-data-server.virtualFiles.definitionFile",mVirtualFileDefinitions);
+    mConfigurationFile.getAttributeValue("local-data-server.gridDirectory", mDataServerGridDirectory);
+    mConfigurationFile.getAttributeValue("local-data-server.virtualFiles.enabled",mVirtualFilesEnabled);
+    mConfigurationFile.getAttributeValue("local-data-server.virtualFiles.definitionFile",mVirtualFileDefinitions);
 
-    mConfig.lookupValue("local-data-server.cache.numOfGrids", mNumOfCachedGrids);
-    mConfig.lookupValue("local-data-server.cache.maxUncompressedSizeInMegaBytes", mMaxUncompressedMegaBytesOfCachedGrids);
-    mConfig.lookupValue("local-data-server.cache.maxCompressedSizeInMegaBytes", mMaxCompressedMegaBytesOfCachedGrids);
+    mConfigurationFile.getAttributeValue("local-data-server.cache.numOfGrids", mNumOfCachedGrids);
+    mConfigurationFile.getAttributeValue("local-data-server.cache.maxUncompressedSizeInMegaBytes", mMaxUncompressedMegaBytesOfCachedGrids);
+    mConfigurationFile.getAttributeValue("local-data-server.cache.maxCompressedSizeInMegaBytes", mMaxCompressedMegaBytesOfCachedGrids);
 
-    mConfig.lookupValue("local-query-server.producerFile",mProducerFile);
-    mConfig.lookupValue("local-query-server.producerAliasFile",mProducerAliasFile);
+    mConfigurationFile.getAttributeValue("local-query-server.producerFile",mProducerFile);
+    mConfigurationFile.getAttributeValue("local-query-server.producerAliasFile",mProducerAliasFile);
 
-    mConfig.lookupValue("local-content-server.processing-log.file", mContentServerProcessingLogFile);
-    mConfig.lookupValue("local-content-server.processing-log.maxSize", mContentServerProcessingLogMaxSize);
-    mConfig.lookupValue("local-content-server.processing-log.truncateSize", mContentServerProcessingLogTruncateSize);
-    mConfig.lookupValue("local-content-server.debug-log.file", mContentServerDebugLogFile);
-    mConfig.lookupValue("local-content-server.debug-log.maxSize", mContentServerDebugLogMaxSize);
-    mConfig.lookupValue("local-content-server.debug-log.truncateSize", mContentServerDebugLogTruncateSize);
+    mConfigurationFile.getAttributeValue("local-content-server.processing-log.file", mContentServerProcessingLogFile);
+    mConfigurationFile.getAttributeValue("local-content-server.processing-log.maxSize", mContentServerProcessingLogMaxSize);
+    mConfigurationFile.getAttributeValue("local-content-server.processing-log.truncateSize", mContentServerProcessingLogTruncateSize);
+    mConfigurationFile.getAttributeValue("local-content-server.debug-log.file", mContentServerDebugLogFile);
+    mConfigurationFile.getAttributeValue("local-content-server.debug-log.maxSize", mContentServerDebugLogMaxSize);
+    mConfigurationFile.getAttributeValue("local-content-server.debug-log.truncateSize", mContentServerDebugLogTruncateSize);
 
-    mConfig.lookupValue("local-data-server.processing-log.file", mDataServerProcessingLogFile);
-    mConfig.lookupValue("local-data-server.processing-log.maxSize", mDataServerProcessingLogMaxSize);
-    mConfig.lookupValue("local-data-server.processing-log.truncateSize", mDataServerProcessingLogTruncateSize);
-    mConfig.lookupValue("local-data-server.debug-log.file", mDataServerDebugLogFile);
-    mConfig.lookupValue("local-data-server.debug-log.maxSize", mDataServerDebugLogMaxSize);
-    mConfig.lookupValue("local-data-server.debug-log.truncateSize", mDataServerDebugLogTruncateSize);
+    mConfigurationFile.getAttributeValue("local-data-server.processing-log.file", mDataServerProcessingLogFile);
+    mConfigurationFile.getAttributeValue("local-data-server.processing-log.maxSize", mDataServerProcessingLogMaxSize);
+    mConfigurationFile.getAttributeValue("local-data-server.processing-log.truncateSize", mDataServerProcessingLogTruncateSize);
+    mConfigurationFile.getAttributeValue("local-data-server.debug-log.file", mDataServerDebugLogFile);
+    mConfigurationFile.getAttributeValue("local-data-server.debug-log.maxSize", mDataServerDebugLogMaxSize);
+    mConfigurationFile.getAttributeValue("local-data-server.debug-log.truncateSize", mDataServerDebugLogTruncateSize);
 
-    mConfig.lookupValue("local-query-server.processing-log.file", mQueryServerProcessingLogFile);
-    mConfig.lookupValue("local-query-server.processing-log.maxSize", mQueryServerProcessingLogMaxSize);
-    mConfig.lookupValue("local-query-server.processing-log.truncateSize", mQueryServerProcessingLogTruncateSize);
-    mConfig.lookupValue("local-query-server.debug-log.file", mQueryServerDebugLogFile);
-    mConfig.lookupValue("local-query-server.debug-log.maxSize", mQueryServerDebugLogMaxSize);
-    mConfig.lookupValue("local-query-server.debug-log.truncateSize", mQueryServerDebugLogTruncateSize);
-
-    const libconfig::Setting& mappingFiles = mConfig.lookup("local-query-server.mappingFiles");
-
-    if (!mappingFiles.isArray())
-      throw Spine::Exception(BCP, "Configured value of 'local-query-server.mappingFiles' must be an array");
-
-    for (int i = 0; i < mappingFiles.getLength(); ++i)
-    {
-      mParameterMappingFiles.push_back(mappingFiles[i]);
-    }
-
-
-    const libconfig::Setting& aliasFiles = mConfig.lookup("local-query-server.aliasFiles");
-
-    if (!aliasFiles.isArray())
-      throw Spine::Exception(BCP, "Configured value of 'local-query-server.aliasFiles' must be an array");
-
-    for (int i = 0; i < aliasFiles.getLength(); ++i)
-    {
-      mParameterAliasFiles.push_back(aliasFiles[i]);
-    }
-
-
-    const libconfig::Setting& qsLuaFiles = mConfig.lookup("local-query-server.luaFiles");
-
-    if (!qsLuaFiles.isArray())
-      throw Spine::Exception(BCP, "Configured value of 'local-query-server.luaFiles' must be an array");
-
-    for (int i = 0; i < qsLuaFiles.getLength(); ++i)
-    {
-      mQueryServerLuaFiles.push_back(qsLuaFiles[i]);
-    }
-
-
-    const libconfig::Setting& dsLuaFiles = mConfig.lookup("local-data-server.luaFiles");
-
-    if (!dsLuaFiles.isArray())
-      throw Spine::Exception(BCP, "Configured value of 'local-data-server.luaFiles' must be an array");
-
-    for (int i = 0; i < dsLuaFiles.getLength(); ++i)
-    {
-      mDataServerLuaFiles.push_back(dsLuaFiles[i]);
-    }
+    mConfigurationFile.getAttributeValue("local-query-server.processing-log.file", mQueryServerProcessingLogFile);
+    mConfigurationFile.getAttributeValue("local-query-server.processing-log.maxSize", mQueryServerProcessingLogMaxSize);
+    mConfigurationFile.getAttributeValue("local-query-server.processing-log.truncateSize", mQueryServerProcessingLogTruncateSize);
+    mConfigurationFile.getAttributeValue("local-query-server.debug-log.file", mQueryServerDebugLogFile);
+    mConfigurationFile.getAttributeValue("local-query-server.debug-log.maxSize", mQueryServerDebugLogMaxSize);
+    mConfigurationFile.getAttributeValue("local-query-server.debug-log.truncateSize", mQueryServerDebugLogTruncateSize);
+    mConfigurationFile.getAttributeValue("local-query-server.mappingFiles",mParameterMappingFiles);
+    mConfigurationFile.getAttributeValue("local-query-server.aliasFiles",mParameterAliasFiles);
+    mConfigurationFile.getAttributeValue("local-query-server.luaFiles",mQueryServerLuaFiles);
+    mConfigurationFile.getAttributeValue("local-data-server.luaFiles",mDataServerLuaFiles);
 
 
 
@@ -203,7 +156,6 @@ Engine::Engine(const char* theConfigFile)
     throw SmartMet::Spine::Exception(BCP, "Constructor failed!", NULL);
   }
 }
-
 
 
 
@@ -236,7 +188,7 @@ void Engine::init()
     QueryServer::ServiceInterface *qServer = NULL;
 
 
-    if (mRemoteContentServerEnabled == "true"  &&  mRemoteContentServerIor.length() > 50)
+    if (mRemoteContentServerEnabled  &&  mRemoteContentServerIor.length() > 50)
     {
       ContentServer::Corba::ClientImplementation *client = new ContentServer::Corba::ClientImplementation();
       client->init(mRemoteContentServerIor.c_str());
@@ -252,12 +204,12 @@ void Engine::init()
       cServer = cache;
     }
 
-    if (mRemoteDataServerEnabled == "true"  &&  mRemoteDataServerIor.length() > 50)
+    if (mRemoteDataServerEnabled  &&  mRemoteDataServerIor.length() > 50)
     {
       DataServer::Corba::ClientImplementation *client = new DataServer::Corba::ClientImplementation();
       client->init(mRemoteDataServerIor);
 
-      if (mRemoteDataServerCache == "true")
+      if (mRemoteDataServerCache)
       {
         DataServer::CacheImplementation *serverCache = new DataServer::CacheImplementation();
         serverCache->init(client);
@@ -277,7 +229,7 @@ void Engine::init()
       server->init(0,0,"NotRegistered","NotRegistered",mDataServerGridDirectory,cServer,mDataServerLuaFiles);
       //dServer->init(0,0,"NotRegistered","NotRegistered",mDataServerGridDirectory,cache);
 
-      if (mVirtualFilesEnabled == "true")
+      if (mVirtualFilesEnabled)
       {
         server->enableVirtualContent(true);
         DataServer::VirtualContentFactory_type1 *factory = new DataServer::VirtualContentFactory_type1();
@@ -296,7 +248,7 @@ void Engine::init()
       SmartMet::GRID::valueCache.init(mNumOfCachedGrids,mMaxUncompressedMegaBytesOfCachedGrids,mMaxCompressedMegaBytesOfCachedGrids);
     }
 
-    if (mRemoteQueryServerEnabled == "true"  &&  mRemoteQueryServerIor.length() > 50)
+    if (mRemoteQueryServerEnabled  &&  mRemoteQueryServerIor.length() > 50)
     {
       QueryServer::Corba::ClientImplementation *client = new QueryServer::Corba::ClientImplementation();
       client->init(mRemoteQueryServerIor);
