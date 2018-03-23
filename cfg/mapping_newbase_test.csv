@@ -1,3 +1,57 @@
+# FIELDS:
+#  1) Producer name
+#  2) Mapping name
+#  3) Parameter id type:
+#         1 = FMI_ID
+#         2 = FMI_NAME
+#         3 = GRIB_ID
+#         4 = NEWBASE_ID
+#         5 = NEWBASE_NAME
+#         6 = CDM_ID
+#         7 = CDM_NAME
+#  4) Parameter id / name
+#  5) Parameter level id type:
+#         1 = FMI
+#         2 = GRIB1
+#         3 = GRIB2
+#  6) Level id
+#         FMI level identifiers:
+#            1 Gound or water surface
+#            2 Pressure level
+#            3 Hybrid level
+#            4 Altitude
+#            5 Top of atmosphere
+#            6 Height above ground in meters
+#            7 Mean sea level
+#            8 Entire atmosphere
+#            9 Depth below land surface
+#            10 Depth below some surface
+#            11 Level at specified pressure difference from ground to level
+#            12 Max equivalent potential temperature level
+#            13 Layer between two metric heights above ground
+#            14 Layer between two depths below land surface
+#            15 Isothermal level, temperature in 1/100 K
+#  7) Area interpolation method
+#         0 = None
+#         1 = Linear
+#         2 = Nearest
+#         100..254 = External (interpolated by an external function)
+#  8) Time interpolation method
+#         0 = None
+#         1 = Linear
+#         2 = Nearest
+#         10..254 = External (interpolated by an external function)
+#  9) Level interpolation method
+#         0 = None
+#         1 = Linear
+#         2 = Nearest
+#         3 = Logarithmic
+#         10..254 = External (interpolated by an external function)
+# 10) Search match (Can this mapping used when searching mappings for incomplete parameters)
+#         E = Enabled
+#         D = Disabled
+# 11) Mapping function (enables data conversions during the mapping)
+# 
 ecmwf_eurooppa_pinta;DewPoint;2;TD-C;1;0;00000;1;1;1;E;;
 ecmwf_eurooppa_pinta;FogIntensity;2;FOGINT-N;1;0;00000;2;2;2;E;;
 ecmwf_eurooppa_pinta;HighCloudCover;2;NH-PRCNT;1;0;00000;1;1;1;E;;
@@ -13,7 +67,7 @@ ecmwf_eurooppa_pinta;Temperature;2;T-C;1;0;00000;1;1;1;E;;
 ecmwf_eurooppa_pinta;TotalCloudCover;2;N-PRCNT;1;0;00000;1;1;1;E;;
 ecmwf_eurooppa_pinta;WeatherSymbol1;2;HSADE1-N;1;0;00000;2;2;2;E;;
 ecmwf_eurooppa_pinta;WeatherSymbol3;2;HESSAA-N;1;0;00000;2;2;2;E;;
-ecmwf_eurooppa_pinta;WindDirection;2;DD-D;1;0;00000;1;1;1;E;;
+ecmwf_eurooppa_pinta;WindDirection;2;DD-D;1;0;00000;1200;1;1;E;;
 ecmwf_eurooppa_pinta;WindSpeedMS;2;FF-MS;1;0;00000;1;1;1;E;;
 ecmwf_eurooppa_pinta;WindUMS;2;U-MS;1;0;00000;1;1;1;E;;
 ecmwf_eurooppa_pinta;WindVMS;2;V-MS;1;0;00000;1;1;1;E;;
@@ -54,12 +108,12 @@ ecmwf_skandinavia_painepinta;VerticalVelocityMMS;2;VV-MMS;1;2;50000;1;1;1;E;;
 ecmwf_skandinavia_painepinta;VerticalVelocityMMS;2;VV-MMS;1;2;70000;1;1;1;E;;
 ecmwf_skandinavia_painepinta;VerticalVelocityMMS;2;VV-MMS;1;2;85000;1;1;1;E;;
 ecmwf_skandinavia_painepinta;VerticalVelocityMMS;2;VV-MMS;1;2;92500;1;1;1;E;;
-ecmwf_skandinavia_painepinta;WindDirection;2;DD-D;1;2;100000;1;1;1;E;;
-ecmwf_skandinavia_painepinta;WindDirection;2;DD-D;1;2;30000;1;1;1;E;;
-ecmwf_skandinavia_painepinta;WindDirection;2;DD-D;1;2;50000;1;1;1;E;;
-ecmwf_skandinavia_painepinta;WindDirection;2;DD-D;1;2;70000;1;1;1;E;;
-ecmwf_skandinavia_painepinta;WindDirection;2;DD-D;1;2;85000;1;1;1;E;;
-ecmwf_skandinavia_painepinta;WindDirection;2;DD-D;1;2;92500;1;1;1;E;;
+ecmwf_skandinavia_painepinta;WindDirection;2;DD-D;1;2;100000;1200;1;1;E;;
+ecmwf_skandinavia_painepinta;WindDirection;2;DD-D;1;2;30000;1200;1;1;E;;
+ecmwf_skandinavia_painepinta;WindDirection;2;DD-D;1;2;50000;1200;1;1;E;;
+ecmwf_skandinavia_painepinta;WindDirection;2;DD-D;1;2;70000;1200;1;1;E;;
+ecmwf_skandinavia_painepinta;WindDirection;2;DD-D;1;2;85000;1200;1;1;E;;
+ecmwf_skandinavia_painepinta;WindDirection;2;DD-D;1;2;92500;1200;1;1;E;;
 ecmwf_skandinavia_painepinta;WindSpeedMS;2;FF-MS;1;2;100000;1;1;1;E;;
 ecmwf_skandinavia_painepinta;WindSpeedMS;2;FF-MS;1;2;30000;1;1;1;E;;
 ecmwf_skandinavia_painepinta;WindSpeedMS;2;FF-MS;1;2;50000;1;1;1;E;;
@@ -87,7 +141,7 @@ ecmwf_skandinavia_painepinta;WindVectorMS;2;DF-MS;1;2;92500;1;1;1;E;;
 hirlam;CloudSymbol;2;CLDSYM-N;1;0;00000;1;1;1;E;;
 hirlam;DewPoint;2;TD-C;1;0;00000;1;1;1;E;;
 hirlam;FogIntensity;2;FOGINT-N;1;0;00000;2;2;2;E;;
-hirlam;GeopHeight;2;Z-M2S2;1;0;00000;1;1;1;E;MUL{$,0.102000};
+hirlam;GeopHeight;2;Z-M2S2;1;0;00000;1;1;1;E;;
 hirlam;HighCloudCover;2;NH-PRCNT;1;0;00000;1;1;1;E;;
 hirlam;Humidity;2;RH-PRCNT;1;0;00000;1;1;1;E;;
 hirlam;KIndex;2;KINDEX-N;1;0;00000;1;1;1;E;;
@@ -104,17 +158,17 @@ hirlam;ProbabilityThunderstorm;2;POT-PRCNT;1;0;00000;1;1;1;E;;
 hirlam;RadiationGlobal;2;RADGLO-WM2;1;0;00000;1;1;1;E;;
 hirlam;RadiationLW;2;RADLW-WM2;1;0;00000;1;1;1;E;;
 hirlam;RadiationNetTopAtmLW;2;RTOPLW-WM2;1;0;00000;1;1;1;E;;
-hirlam;Temperature;2;T-C;1;0;00000;1;1;1;E;;
+hirlam;Temperature;2;T-C;1;0;00000;1100;1;1;E;;
 hirlam;TotalCloudCover;2;N-PRCNT;1;0;00000;1;1;1;E;;
 hirlam;Visibility;2;VV-M;1;0;00000;1;1;1;E;;
 hirlam;WeatherSymbol1;2;HSADE1-N;1;0;00000;2;2;2;E;;
 hirlam;WeatherSymbol3;2;HESSAA-N;1;0;00000;2;2;2;E;;
-hirlam;WindDirection;2;DD-D;1;0;00000;1;1;1;E;;
+hirlam;WindDirection;2;DD-D;1;0;00000;1200;1;1;E;;
 hirlam;WindSpeedMS;2;FF-MS;1;0;00000;1;1;1;E;;
 hirlam;WindUMS;2;U-MS;1;0;00000;1;1;1;E;;
 hirlam;WindVMS;2;V-MS;1;0;00000;1;1;1;E;;
 hirlam;WindVectorMS;2;DF-MS;1;0;00000;1;1;1;E;;
-pal_skandinavia2;Temperature;2;T-C;1;0;00000;1;1;1;E;;
+pal_skandinavia2;Temperature;2;T-C;1;0;00000;1100;1;1;E;;
 pal_skandinavia;DewPoint;2;TD-C;1;0;00000;1;1;1;E;;
 pal_skandinavia;FogIntensity;2;FOGINT-N;1;0;00000;2;2;2;E;;
 pal_skandinavia;HighCloudCover;2;NH-PRCNT;1;0;00000;1;1;1;E;;
@@ -135,7 +189,7 @@ pal_skandinavia;Temperature;2;T-C;1;0;00000;1;1;1;E;;
 pal_skandinavia;TotalCloudCover;2;N-PRCNT;1;0;00000;1;1;1;E;;
 pal_skandinavia;WeatherSymbol1;2;HSADE1-N;1;0;00000;2;2;2;E;;
 pal_skandinavia;WeatherSymbol3;2;HESSAA-N;1;0;00000;2;2;2;E;;
-pal_skandinavia;WindDirection;2;DD-D;1;0;00000;1;1;1;E;;
+pal_skandinavia;WindDirection;2;DD-D;1;0;00000;1200;1;1;E;;
 pal_skandinavia;WindSpeedMS;2;FF-MS;1;0;00000;1;1;1;E;;
 pal_skandinavia;WindUMS;2;U-MS;1;0;00000;1;1;1;E;;
 pal_skandinavia;WindVMS;2;V-MS;1;0;00000;1;1;1;E;;
@@ -160,7 +214,7 @@ tosummertime;Temperature;2;T-C;1;0;00000;1;1;1;E;;
 tosummertime;TotalCloudCover;2;N-PRCNT;1;0;00000;1;1;1;E;;
 tosummertime;WeatherSymbol1;2;HSADE1-N;1;0;00000;2;2;2;E;;
 tosummertime;WeatherSymbol3;2;HESSAA-N;1;0;00000;2;2;2;E;;
-tosummertime;WindDirection;2;DD-D;1;0;00000;1;1;1;E;;
+tosummertime;WindDirection;2;DD-D;1;0;00000;1200;1;1;E;;
 tosummertime;WindSpeedMS;2;FF-MS;1;0;00000;1;1;1;E;;
 tosummertime;WindUMS;2;U-MS;1;0;00000;1;1;1;E;;
 tosummertime;WindVMS;2;V-MS;1;0;00000;1;1;1;E;;
@@ -185,7 +239,7 @@ towintertime;Temperature;2;T-C;1;0;00000;1;1;1;E;;
 towintertime;TotalCloudCover;2;N-PRCNT;1;0;00000;1;1;1;E;;
 towintertime;WeatherSymbol1;2;HSADE1-N;1;0;00000;2;2;2;E;;
 towintertime;WeatherSymbol3;2;HESSAA-N;1;0;00000;2;2;2;E;;
-towintertime;WindDirection;2;DD-D;1;0;00000;1;1;1;E;;
+towintertime;WindDirection;2;DD-D;1;0;00000;1200;1;1;E;;
 towintertime;WindSpeedMS;2;FF-MS;1;0;00000;1;1;1;E;;
 towintertime;WindUMS;2;U-MS;1;0;00000;1;1;1;E;;
 towintertime;WindVMS;2;V-MS;1;0;00000;1;1;1;E;;

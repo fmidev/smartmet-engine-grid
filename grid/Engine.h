@@ -7,6 +7,7 @@
 #include <grid-content/dataServer/cache/CacheImplementation.h>
 #include <grid-content/queryServer/implementation/ServiceImplementation.h>
 #include <grid-files/common/ConfigurationFile.h>
+#include <pthread.h>
 
 
 namespace SmartMet
@@ -35,18 +36,28 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     QueryServer_sptr    getQueryServer_sptr();
 
     T::ParamLevelId     getFmiParameterLevelId(uint producerId,int level);
-    std::string         getProducerName(std::string aliasName);
+    void                getProducerNameList(std::string aliasName,std::vector<std::string>& nameList);
     void                getProducerList(string_vec& producerList);
+    void                getProducerParameterLevelList(std::string producerName,T::ParamLevelId fmiParamLevelId,double multiplier,std::vector<double>& levels);
+    void                getProducerParameterLevelIdList(std::string producerName,std::set<T::ParamLevelId>& levelIdList);
 
+    void                updateProcessing();
 
   protected:
 
     void                init();
     void                shutdown();
+    void                startUpdateProcessing();
+    void                loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings);
+    FILE*               openMappingFile(std::string mappingFile);
+    void                updateMappings();
+    void                updateMappings(T::ParamKeyType parameterKeyType,std::string mappingFile,QueryServer::ParamMappingFile_vec& parameterMappings);
+
 
   private:
 
     ConfigurationFile   mConfigurationFile;
+    bool                mShutdownRequested;
 
     std::string         mRedisAddress;
     int                 mRedisPort;
@@ -110,6 +121,11 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     String_vec          mParameterAliasFiles;
     String_vec          mParameterMappingFiles;
+
+    pthread_t           mThread;
+    std::string         mParameterMappingUpdateFile_fmi;
+    std::string         mParameterMappingUpdateFile_newbase;
+    time_t              mParameterMappingUpdateTime;
 
     T::LevelInfoList    mLevelInfoList;
     time_t              mLevelInfoList_lastUpdate;

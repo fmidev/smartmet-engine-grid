@@ -8,6 +8,7 @@
 #include <grid-content/dataServer/corba/client/ClientImplementation.h>
 #include <grid-content/dataServer/implementation/VirtualContentFactory_type1.h>
 #include <grid-content/queryServer/corba/client/ClientImplementation.h>
+#include <unistd.h>
 
 
 
@@ -17,6 +18,25 @@ namespace Engine
 {
 namespace Grid
 {
+
+
+static void* gridEngine_updateThread(void *arg)
+{
+  try
+  {
+    Engine *engine = (Engine*)arg;
+    engine->updateProcessing();
+    return NULL;
+  }
+  catch (...)
+  {
+    SmartMet::Spine::Exception exception(BCP,exception_operation_failed,NULL);
+    exception.printError();
+    exit(-1);
+  }
+}
+
+
 
 
 Engine::Engine(const char* theConfigFile)
@@ -52,6 +72,8 @@ Engine::Engine(const char* theConfigFile)
         "local-query-server.producerAliasFile",
         "local-query-server.luaFiles",
         "local-query-server.mappingFiles",
+        "local-query-server.mappingUpdateFile.fmi",
+        "local-query-server.mappingUpdateFile.newbase",
         "local-query-server.aliasFiles",
         "local-query-server.processing-log.file",
         "local-query-server.processing-log.maxSize",
@@ -77,6 +99,8 @@ Engine::Engine(const char* theConfigFile)
     mRemoteQueryServerEnabled = false;
     mRemoteDataServerCache = false;
     mVirtualFilesEnabled = false;
+    mParameterMappingUpdateTime = 0;
+    mShutdownRequested = false;
 
     mConfigurationFile.readFile(theConfigFile);
 
@@ -140,10 +164,13 @@ Engine::Engine(const char* theConfigFile)
     mConfigurationFile.getAttributeValue("local-query-server.debug-log.file", mQueryServerDebugLogFile);
     mConfigurationFile.getAttributeValue("local-query-server.debug-log.maxSize", mQueryServerDebugLogMaxSize);
     mConfigurationFile.getAttributeValue("local-query-server.debug-log.truncateSize", mQueryServerDebugLogTruncateSize);
+    mConfigurationFile.getAttributeValue("local-query-server.mappingUpdateFile.fmi",mParameterMappingUpdateFile_fmi);
+    mConfigurationFile.getAttributeValue("local-query-server.mappingUpdateFile.newbase",mParameterMappingUpdateFile_newbase);
     mConfigurationFile.getAttributeValue("local-query-server.mappingFiles",mParameterMappingFiles);
     mConfigurationFile.getAttributeValue("local-query-server.aliasFiles",mParameterAliasFiles);
     mConfigurationFile.getAttributeValue("local-query-server.luaFiles",mQueryServerLuaFiles);
     mConfigurationFile.getAttributeValue("local-data-server.luaFiles",mDataServerLuaFiles);
+
 
 
 
@@ -301,7 +328,9 @@ void Engine::init()
       qServer->setDebugLog(&mQueryServerDebugLog);
     }
 
-    mProducerAliases.init(mProducerAliasFile);
+    mProducerAliases.init(mProducerAliasFile,true);
+
+    startUpdateProcessing();
   }
   catch (...)
   {
@@ -318,6 +347,7 @@ void Engine::shutdown()
   try
   {
     std::cout << "  -- Shutdown requested (grid engine)\n";
+    mShutdownRequested = true;
 
     if (!mContentServerRedis)
       mContentServerRedis->shutdown();
@@ -405,17 +435,19 @@ QueryServer_sptr Engine::getQueryServer_sptr()
 
 
 
-std::string Engine::getProducerName(std::string aliasName)
+void Engine::getProducerNameList(std::string aliasName,std::vector<std::string>& nameList)
 {
   try
   {
     mProducerAliases.checkUpdates();
+    mProducerAliases.getAliasList(aliasName,nameList);
 
-    std::string name;
-    if (mProducerAliases.getAlias(aliasName,name))
-      return name;
+    std::cout << "ALIAS " << aliasName << "\n";
+    for (auto it = nameList.begin(); it != nameList.end(); ++it)
+      std::cout << " - name : " << *it << "\n";
 
-    return aliasName;
+    if (nameList.size() == 0)
+      nameList.push_back(aliasName);
   }
   catch (...)
   {
@@ -477,6 +509,377 @@ void Engine::getProducerList(string_vec& producerList)
 
 
 
+
+
+void Engine::getProducerParameterLevelList(std::string producerName,T::ParamLevelId fmiParamLevelId,double multiplier,std::vector<double>& levels)
+{
+  try
+  {
+    AutoThreadLock lock(&mThreadLock);
+
+    ContentServer_sptr  contentServer = getContentServer_sptr();
+    if (mLevelInfoList.getLength() == 0  ||  (mLevelInfoList_lastUpdate + 300) < time(0))
+    {
+      contentServer->getLevelInfoList(0,mLevelInfoList);
+      mLevelInfoList_lastUpdate = time(0);
+    }
+
+    std::vector<std::string> nameList;
+    getProducerNameList(producerName,nameList);
+
+    for (auto pname = nameList.begin(); pname != nameList.end(); ++pname)
+    {
+      T::ProducerInfo producerInfo;
+      if (contentServer->getProducerInfoByName(0,*pname,producerInfo) == 0)
+      {
+        std::string fmiParameterName;
+        uint len = mLevelInfoList.getLength();
+        for (uint t=0; t<len; t++)
+        {
+          T::LevelInfo *levelInfo = mLevelInfoList.getLevelInfoByIndex(t);
+          if (levelInfo != NULL  &&  levelInfo->mProducerId == producerInfo.mProducerId  &&  levelInfo->mFmiParameterLevelId == fmiParamLevelId  &&
+              (fmiParameterName.empty() || levelInfo->mFmiParameterName == fmiParameterName))
+          {
+            fmiParameterName = levelInfo->mFmiParameterName;
+            levels.push_back(levelInfo->mParameterLevel*multiplier);
+          }
+        }
+
+        if (levels.size() > 0)
+          return;
+      }
+    }
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
+
+
+void Engine::getProducerParameterLevelIdList(std::string producerName,std::set<T::ParamLevelId>& levelIdList)
+{
+  try
+  {
+    AutoThreadLock lock(&mThreadLock);
+
+    ContentServer_sptr  contentServer = getContentServer_sptr();
+    if (mLevelInfoList.getLength() == 0  ||  (mLevelInfoList_lastUpdate + 300) < time(0))
+    {
+      contentServer->getLevelInfoList(0,mLevelInfoList);
+      mLevelInfoList_lastUpdate = time(0);
+    }
+
+    std::vector<std::string> nameList;
+    getProducerNameList(producerName,nameList);
+
+    for (auto pname = nameList.begin(); pname != nameList.end(); ++pname)
+    {
+      T::ProducerInfo producerInfo;
+      if (contentServer->getProducerInfoByName(0,*pname,producerInfo) == 0)
+      {
+        std::string fmiParameterName;
+        uint len = mLevelInfoList.getLength();
+        for (uint t=0; t<len; t++)
+        {
+          T::LevelInfo *levelInfo = mLevelInfoList.getLevelInfoByIndex(t);
+          if (levelInfo != NULL  &&  levelInfo->mProducerId == producerInfo.mProducerId)
+          {
+            if (levelIdList.find(levelInfo->mFmiParameterLevelId) == levelIdList.end())
+              levelIdList.insert(levelInfo->mFmiParameterLevelId);
+          }
+        }
+
+        if (levelIdList.size() > 0)
+          return;
+      }
+    }
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
+
+void Engine::loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings)
+{
+  try
+  {
+    for (auto it = mParameterMappingFiles.begin(); it != mParameterMappingFiles.end(); ++it)
+    {
+      QueryServer::ParameterMappingFile mapping(*it);
+      parameterMappings.push_back(mapping);
+    }
+
+    for (auto it = parameterMappings.begin(); it != parameterMappings.end(); ++it)
+    {
+      it->init();
+    }
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
+
+
+void Engine::updateMappings()
+{
+  try
+  {
+    if ((time(0) - mParameterMappingUpdateTime) > 20)
+    {
+      mParameterMappingUpdateTime = time(0);
+
+      QueryServer::ParamMappingFile_vec parameterMappings;
+      loadMappings(parameterMappings);
+      updateMappings(T::ParamKeyType::FMI_NAME,mParameterMappingUpdateFile_fmi,parameterMappings);
+      updateMappings(T::ParamKeyType::NEWBASE_NAME,mParameterMappingUpdateFile_newbase,parameterMappings);
+    }
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
+
+
+FILE* Engine::openMappingFile(std::string mappingFile)
+{
+  try
+  {
+    FILE *file = fopen(mappingFile.c_str(),"w");
+    if (file == NULL)
+    {
+      SmartMet::Spine::Exception exception(BCP, "Cannot open a mapping file for writing!");
+      exception.addParameter("Filaname",mappingFile);
+      throw exception;
+    }
+
+    fprintf(file,"# This file is automatically generated by the grid engine. The file contains\n");
+    fprintf(file,"# mappings for the parameters found from the content server, which do not have\n");
+    fprintf(file,"# mappings already defined. The point is that the query server cannot find \n");
+    fprintf(file,"# requested parameters without mappings. On the other hand, the order of the mappings\n");
+    fprintf(file,"# is also the search order of the parameters that do not contain complete search \n");
+    fprintf(file,"# information (parameterIdType,levelIdType,levelId,level,etc.)\n");
+    fprintf(file,"# \n");
+    fprintf(file,"# If you want to change some of the mappings or their order, then you should move\n");
+    fprintf(file,"# them to a permanent mapping file (which is not automatically overridden.\n");
+    fprintf(file,"# \n");
+    fprintf(file,"# FIELDS:\n");
+    fprintf(file,"#  1) Producer name\n");
+    fprintf(file,"#  2) Mapping name\n");
+    fprintf(file,"#  3) Parameter id type:\n");
+    fprintf(file,"#         1 = FMI_ID\n");
+    fprintf(file,"#         2 = FMI_NAME\n");
+    fprintf(file,"#         3 = GRIB_ID\n");
+    fprintf(file,"#         4 = NEWBASE_ID\n");
+    fprintf(file,"#         5 = NEWBASE_NAME\n");
+    fprintf(file,"#         6 = CDM_ID\n");
+    fprintf(file,"#         7 = CDM_NAME\n");
+    fprintf(file,"#  4) Parameter id / name\n");
+    fprintf(file,"#  5) Parameter level id type:\n");
+    fprintf(file,"#         1 = FMI\n");
+    fprintf(file,"#         2 = GRIB1\n");
+    fprintf(file,"#         3 = GRIB2\n");
+    fprintf(file,"#  6) Level id\n");
+    fprintf(file,"#         FMI level identifiers:\n");
+    fprintf(file,"#            1 Gound or water surface\n");
+    fprintf(file,"#            2 Pressure level\n");
+    fprintf(file,"#            3 Hybrid level\n");
+    fprintf(file,"#            4 Altitude\n");
+    fprintf(file,"#            5 Top of atmosphere\n");
+    fprintf(file,"#            6 Height above ground in meters\n");
+    fprintf(file,"#            7 Mean sea level\n");
+    fprintf(file,"#            8 Entire atmosphere\n");
+    fprintf(file,"#            9 Depth below land surface\n");
+    fprintf(file,"#            10 Depth below some surface\n");
+    fprintf(file,"#            11 Level at specified pressure difference from ground to level\n");
+    fprintf(file,"#            12 Max equivalent potential temperature level\n");
+    fprintf(file,"#            13 Layer between two metric heights above ground\n");
+    fprintf(file,"#            14 Layer between two depths below land surface\n");
+    fprintf(file,"#            15 Isothermal level, temperature in 1/100 K\n");
+    fprintf(file,"#  7) Area interpolation method\n");
+    fprintf(file,"#         0 = None\n");
+    fprintf(file,"#         1 = Linear\n");
+    fprintf(file,"#         2 = Nearest\n");
+    fprintf(file,"#         50..99 = List\n");
+    fprintf(file,"#         100..65535 = External (interpolated by an external function)\n");
+    fprintf(file,"#  8) Time interpolation method\n");
+    fprintf(file,"#         0 = None\n");
+    fprintf(file,"#         1 = Linear\n");
+    fprintf(file,"#         2 = Nearest\n");
+    fprintf(file,"#         100..65535 = External (interpolated by an external function)\n");
+    fprintf(file,"#  9) Level interpolation method\n");
+    fprintf(file,"#         0 = None\n");
+    fprintf(file,"#         1 = Linear\n");
+    fprintf(file,"#         2 = Nearest\n");
+    fprintf(file,"#         3 = Logarithmic\n");
+    fprintf(file,"#         100..65535 = External (interpolated by an external function)\n");
+    fprintf(file,"# 10) Search match (Can this mapping used when searching mappings for incomplete parameters)\n");
+    fprintf(file,"#         E = Enabled\n");
+    fprintf(file,"#         D = Disabled\n");
+    fprintf(file,"# 11) Mapping function (enables data conversions during the mapping)\n");
+    fprintf(file,"# \n");
+
+    return file;
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
+
+
+void Engine::updateMappings(T::ParamKeyType parameterKeyType,std::string mappingFile,QueryServer::ParamMappingFile_vec& parameterMappings)
+{
+  try
+  {
+    ContentServer_sptr  contentServer = getContentServer_sptr();
+
+    T::SessionId sessionId = 0;
+
+    std::set<std::string> infoList;
+    int result = 0;
+
+    result = contentServer->getProducerParameterList(sessionId,parameterKeyType,infoList);
+    if (result != 0)
+    {
+      std::cerr << CODE_LOCATION << "The 'contentServer.getProducerParameterList()' service call returns an error!  Result : " << result << " : " << ContentServer::getResultString(result).c_str() << "\n";
+      return;
+    }
+
+    FILE *file = NULL;
+
+    uint numOfMappings = 0;
+
+    for (auto it=infoList.begin(); it != infoList.end(); ++it)
+    {
+      std::vector<std::string> pl;
+      splitString(it->c_str(),';',pl);
+      if (pl.size() >= 7)
+      {
+        QueryServer::ParameterMapping m;
+        m.mProducerName = pl[0];
+        m.mParameterName = pl[1];
+        m.mParameterKeyType = (T::ParamKeyType)atoi(pl[2].c_str());
+        m.mParameterKey = pl[3];
+        m.mParameterLevelIdType = (T::ParamLevelIdType)atoi(pl[4].c_str());
+        m.mParameterLevelId = atoi(pl[5].c_str());
+        m.mParameterLevel = atoi(pl[6].c_str());
+
+        bool found = false;
+        for (auto it = parameterMappings.begin(); it != parameterMappings.end() && !found; ++it)
+        {
+          if (it->getFilename() != mappingFile)
+          {
+            if (it->getMapping(m) != NULL)
+              found = true;
+          }
+          else
+          {
+            numOfMappings = it->getNumberOfMappings();
+          }
+        }
+
+        if (!found)
+        {
+          if (file == NULL)
+            file = openMappingFile(mappingFile);
+
+          fprintf(file,"%s;%s;%s;%s;%s;%s;%s;",pl[0].c_str(),pl[1].c_str(),pl[2].c_str(),pl[3].c_str(),pl[4].c_str(),pl[5].c_str(),pl[6].c_str());
+
+          Identification::FmiParameterDef paramDef;
+          if (Identification::gridDef.getFmiParameterDefByName(pl[3],paramDef))
+          {
+            fprintf(file,"%d;%d;%d;E;",(int)paramDef.mAreaInterpolationMethod,(int)paramDef.mTimeInterpolationMethod,(int)paramDef.mLevelInterpolationMethod);
+
+            if (parameterKeyType == T::ParamKeyType::NEWBASE_ID || parameterKeyType == T::ParamKeyType::NEWBASE_NAME)
+            {
+              Identification::FmiParameterId_newbase paramMapping;
+              if (Identification::gridDef.getNewbaseParameterMappingByFmiId(paramDef.mFmiParameterId,paramMapping))
+              {
+                fprintf(file,"%s",paramMapping.mConversionFunction.c_str());
+              }
+            }
+            fprintf(file,";\n");
+          }
+          else
+          {
+            fprintf(file,"1;1;1;E;;\n");
+          }
+        }
+      }
+    }
+
+    if (file == NULL  &&  numOfMappings > 0)
+    {
+      // We found all mappings from the other files. That's why we should remove them
+      // from the update file.
+
+      file = openMappingFile(mappingFile);
+    }
+
+    if (file != NULL)
+      fclose(file);
+
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
+
+
+void Engine::updateProcessing()
+{
+  try
+  {
+    while (!mShutdownRequested)
+    {
+      updateMappings();
+      sleep(10);
+    }
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP,exception_operation_failed,NULL);
+  }
+}
+
+
+
+
+
+void Engine::startUpdateProcessing()
+{
+  try
+  {
+    pthread_create(&mThread,NULL,gridEngine_updateThread,this);
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP,exception_operation_failed,NULL);
+  }
+}
 
 
 
