@@ -45,7 +45,7 @@ Engine::Engine(const char* theConfigFile)
   {
     const char *configAttribute[] =
     {
-        "grid-files.configDirectory",
+        "grid-files.configFile",
         "local-content-server.redis.address",
         "local-content-server.redis.port",
         "local-content-server.redis.tablePrefix",
@@ -112,6 +112,7 @@ Engine::Engine(const char* theConfigFile)
         SmartMet::Spine::Exception exception(BCP, "Missing configuration attribute!");
         exception.addParameter("File",theConfigFile);
         exception.addParameter("Attribute",configAttribute[t]);
+        throw exception;
       }
       t++;
     }
@@ -371,11 +372,11 @@ void Engine::shutdown()
 
 
 
-void Engine::executeQuery(QueryServer::Query& query)
+int Engine::executeQuery(QueryServer::Query& query)
 {
   try
   {
-    mQueryServer->executeQuery(0,query);
+    return mQueryServer->executeQuery(0,query);
   }
   catch (...)
   {
@@ -442,9 +443,9 @@ void Engine::getProducerNameList(std::string aliasName,std::vector<std::string>&
     mProducerAliases.checkUpdates();
     mProducerAliases.getAliasList(aliasName,nameList);
 
-    std::cout << "ALIAS " << aliasName << "\n";
-    for (auto it = nameList.begin(); it != nameList.end(); ++it)
-      std::cout << " - name : " << *it << "\n";
+    //std::cout << "ALIAS " << aliasName << "\n";
+    //for (auto it = nameList.begin(); it != nameList.end(); ++it)
+    //  std::cout << " - name : " << *it << "\n";
 
     if (nameList.size() == 0)
       nameList.push_back(aliasName);
@@ -642,8 +643,16 @@ void Engine::updateMappings()
 
       QueryServer::ParamMappingFile_vec parameterMappings;
       loadMappings(parameterMappings);
-      updateMappings(T::ParamKeyType::FMI_NAME,mParameterMappingUpdateFile_fmi,parameterMappings);
-      updateMappings(T::ParamKeyType::NEWBASE_NAME,mParameterMappingUpdateFile_newbase,parameterMappings);
+
+      if (!mParameterMappingUpdateFile_fmi.empty())
+      {
+        updateMappings(T::ParamKeyType::FMI_NAME,mParameterMappingUpdateFile_fmi,parameterMappings);
+      }
+
+      if (!mParameterMappingUpdateFile_newbase.empty())
+      {
+        updateMappings(T::ParamKeyType::NEWBASE_NAME,mParameterMappingUpdateFile_newbase,parameterMappings);
+      }
     }
   }
   catch (...)
@@ -715,23 +724,25 @@ FILE* Engine::openMappingFile(std::string mappingFile)
     fprintf(file,"#         0 = None\n");
     fprintf(file,"#         1 = Linear\n");
     fprintf(file,"#         2 = Nearest\n");
-    fprintf(file,"#         50..99 = List\n");
-    fprintf(file,"#         100..65535 = External (interpolated by an external function)\n");
+    fprintf(file,"#         500..999 = List\n");
+    fprintf(file,"#         1000..65535 = External (interpolated by an external function)\n");
     fprintf(file,"#  8) Time interpolation method\n");
     fprintf(file,"#         0 = None\n");
     fprintf(file,"#         1 = Linear\n");
     fprintf(file,"#         2 = Nearest\n");
-    fprintf(file,"#         100..65535 = External (interpolated by an external function)\n");
+    fprintf(file,"#         1000..65535 = External (interpolated by an external function)\n");
     fprintf(file,"#  9) Level interpolation method\n");
     fprintf(file,"#         0 = None\n");
     fprintf(file,"#         1 = Linear\n");
     fprintf(file,"#         2 = Nearest\n");
     fprintf(file,"#         3 = Logarithmic\n");
-    fprintf(file,"#         100..65535 = External (interpolated by an external function)\n");
-    fprintf(file,"# 10) Search match (Can this mapping used when searching mappings for incomplete parameters)\n");
+    fprintf(file,"#         1000..65535 = External (interpolated by an external function)\n");
+    fprintf(file,"# 10) Group flags\n");
+    fprintf(file,"#         bit 0 = Climatological parameter (=> ignore year when searching) \n");
+    fprintf(file,"# 11) Search match (Can this mapping used when searching mappings for incomplete parameters)\n");
     fprintf(file,"#         E = Enabled\n");
     fprintf(file,"#         D = Disabled\n");
-    fprintf(file,"# 11) Mapping function (enables data conversions during the mapping)\n");
+    fprintf(file,"# 12) Mapping function (enables data conversions during the mapping)\n");
     fprintf(file,"# \n");
 
     return file;
@@ -807,7 +818,22 @@ void Engine::updateMappings(T::ParamKeyType parameterKeyType,std::string mapping
           Identification::FmiParameterDef paramDef;
           if (Identification::gridDef.getFmiParameterDefByName(pl[3],paramDef))
           {
-            fprintf(file,"%d;%d;%d;E;",(int)paramDef.mAreaInterpolationMethod,(int)paramDef.mTimeInterpolationMethod,(int)paramDef.mLevelInterpolationMethod);
+            if (paramDef.mAreaInterpolationMethod >= 0)
+              fprintf(file,"%d;",(int)paramDef.mAreaInterpolationMethod);
+            else
+              fprintf(file,";");
+
+            if (paramDef.mTimeInterpolationMethod >= 0)
+              fprintf(file,"%d;",(int)paramDef.mTimeInterpolationMethod);
+            else
+              fprintf(file,";");
+
+            if (paramDef.mLevelInterpolationMethod >= 0)
+              fprintf(file,"%d;",(int)paramDef.mLevelInterpolationMethod);
+            else
+              fprintf(file,";");
+
+            fprintf(file,"0;E;");
 
             if (parameterKeyType == T::ParamKeyType::NEWBASE_ID || parameterKeyType == T::ParamKeyType::NEWBASE_NAME)
             {
@@ -821,7 +847,7 @@ void Engine::updateMappings(T::ParamKeyType parameterKeyType,std::string mapping
           }
           else
           {
-            fprintf(file,"1;1;1;E;;\n");
+            fprintf(file,"1;1;1;0;E;;\n");
           }
         }
       }
@@ -856,7 +882,7 @@ void Engine::updateProcessing()
     while (!mShutdownRequested)
     {
       updateMappings();
-      sleep(10);
+      sleep(300);
     }
   }
   catch (...)

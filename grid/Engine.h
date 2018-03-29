@@ -29,7 +29,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                         Engine(const char *theConfigFile);
     virtual             ~Engine();
 
-    void                executeQuery(QueryServer::Query& query);
+    int                 executeQuery(QueryServer::Query& query);
 
     ContentServer_sptr  getContentServer_sptr();
     DataServer_sptr     getDataServer_sptr();
