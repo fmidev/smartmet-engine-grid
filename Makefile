@@ -142,7 +142,7 @@ release: all
 profile: all
 
 configtest:
-	@if [ -x "$$(command -v cfgvalidate)" ]; then cfgvalidate -v test/cnf/grid.conf; fi
+	@if [ -x "$$(command -v cfgvalidate)" ]; then cfgvalidate -v test/cnf/grid-engine.conf; fi
 
 $(LIBFILE): $(OBJS)
 	$(CXX) $(CFLAGS) -shared -rdynamic -o $(LIBFILE) $(OBJS) $(LIBS)

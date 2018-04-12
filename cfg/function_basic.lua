@@ -272,6 +272,10 @@ function SUM(numOfParams,params)
     for index, value in pairs(params) do
       if (value ~= ParamValueMissing) then
         sum = sum + value;
+      else
+        result.message = 'OK';
+        result.value = ParamValueMissing;
+        return result.value,result.message;
       end
     end
     result.message = 'OK';

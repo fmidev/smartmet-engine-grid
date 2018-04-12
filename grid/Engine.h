@@ -65,46 +65,53 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     ContentServer_sptr  mContentServerCache;
     ContentServer_sptr  mContentServerRedis;
-    bool                mRemoteContentServerEnabled;
-    std::string         mRemoteContentServerIor;
 
     DataServer_sptr     mDataServer;
     DataServer_sptr     mDataServerClient;
     String_vec          mDataServerLuaFiles;
-    bool                mRemoteDataServerEnabled;
-    bool                mRemoteDataServerCache;
-    std::string         mRemoteDataServerIor;
+    bool                mDataServerRemote;
+    bool                mDataServerCacheEnabled;
+    std::string         mDataServerIor;
 
     QueryServer_sptr    mQueryServer;
     String_vec          mQueryServerLuaFiles;
-    bool                mRemoteQueryServerEnabled;
-    std::string         mRemoteQueryServerIor;
 
     std::string         mGridConfigFile;
     std::string         mDataServerGridDirectory;
 
+    bool                mContentServerRemote;
+    std::string         mContentServerIor;
+    bool                mContentServerProcessingLogEnabled;
     std::string         mContentServerProcessingLogFile;
     int                 mContentServerProcessingLogMaxSize;
     int                 mContentServerProcessingLogTruncateSize;
     Log                 mContentServerProcessingLog;
+    bool                mContentServerDebugLogEnabled;
     std::string         mContentServerDebugLogFile;
     int                 mContentServerDebugLogMaxSize;
     int                 mContentServerDebugLogTruncateSize;
     Log                 mContentServerDebugLog;
+    uint                mContentSortingFlags;
 
+    bool                mDataServerProcessingLogEnabled;
     std::string         mDataServerProcessingLogFile;
     int                 mDataServerProcessingLogMaxSize;
     int                 mDataServerProcessingLogTruncateSize;
     Log                 mDataServerProcessingLog;
+    bool                mDataServerDebugLogEnabled;
     std::string         mDataServerDebugLogFile;
     int                 mDataServerDebugLogMaxSize;
     int                 mDataServerDebugLogTruncateSize;
     Log                 mDataServerDebugLog;
 
+    bool                mQueryServerRemote;
+    std::string         mQueryServerIor;
+    bool                mQueryServerProcessingLogEnabled;
     std::string         mQueryServerProcessingLogFile;
     int                 mQueryServerProcessingLogMaxSize;
     int                 mQueryServerProcessingLogTruncateSize;
     Log                 mQueryServerProcessingLog;
+    bool                mQueryServerDebugLogEnabled;
     std::string         mQueryServerDebugLogFile;
     int                 mQueryServerDebugLogMaxSize;
     int                 mQueryServerDebugLogTruncateSize;
@@ -118,6 +125,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::string         mProducerAliasFile;
     bool                mVirtualFilesEnabled;
     std::string         mVirtualFileDefinitions;
+    bool                mContentPreloadEnabled;
 
     String_vec          mParameterAliasFiles;
     String_vec          mParameterMappingFiles;

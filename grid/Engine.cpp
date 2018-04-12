@@ -45,64 +45,81 @@ Engine::Engine(const char* theConfigFile)
   {
     const char *configAttribute[] =
     {
-        "grid-files.configFile",
-        "local-content-server.redis.address",
-        "local-content-server.redis.port",
-        "local-content-server.redis.tablePrefix",
-        "local-content-server.processing-log.file",
-        "local-content-server.processing-log.maxSize",
-        "local-content-server.processing-log.truncateSize",
-        "local-content-server.debug-log.file",
-        "local-content-server.debug-log.maxSize",
-        "local-content-server.debug-log.truncateSize",
-        "local-data-server.gridDirectory",
-        "local-data-server.virtualFiles.enabled",
-        "local-data-server.virtualFiles.definitionFile",
-        "local-data-server.luaFiles",
-        "local-data-server.cache.numOfGrids",
-        "local-data-server.cache.maxUncompressedSizeInMegaBytes",
-        "local-data-server.cache.maxCompressedSizeInMegaBytes",
-        "local-data-server.processing-log.file",
-        "local-data-server.processing-log.maxSize",
-        "local-data-server.processing-log.truncateSize",
-        "local-data-server.debug-log.file",
-        "local-data-server.debug-log.maxSize",
-        "local-data-server.debug-log.truncateSize",
-        "local-query-server.producerFile",
-        "local-query-server.producerAliasFile",
-        "local-query-server.luaFiles",
-        "local-query-server.mappingFiles",
-        "local-query-server.mappingUpdateFile.fmi",
-        "local-query-server.mappingUpdateFile.newbase",
-        "local-query-server.aliasFiles",
-        "local-query-server.processing-log.file",
-        "local-query-server.processing-log.maxSize",
-        "local-query-server.processing-log.truncateSize",
-        "local-query-server.debug-log.file",
-        "local-query-server.debug-log.maxSize",
-        "local-query-server.debug-log.truncateSize",
-        "remote-content-server.enabled",
-        "remote-content-server.ior",
-        "remote-data-server.enabled",
-        "remote-data-server.cache",
-        "remote-data-server.ior",
-        "remote-query-server.enabled",
-        "remote-query-server.ior",
+        "smartmet.engine.grid.grid-files.configFile",
+
+        "smartmet.engine.grid.content-server.remote",
+        "smartmet.engine.grid.content-server.ior",
+        "smartmet.engine.grid.content-server.redis.address",
+        "smartmet.engine.grid.content-server.redis.port",
+        "smartmet.engine.grid.content-server.redis.tablePrefix",
+        "smartmet.engine.grid.content-server.processing-log.enabled",
+        "smartmet.engine.grid.content-server.processing-log.file",
+        "smartmet.engine.grid.content-server.processing-log.maxSize",
+        "smartmet.engine.grid.content-server.processing-log.truncateSize",
+        "smartmet.engine.grid.content-server.debug-log.enabled",
+        "smartmet.engine.grid.content-server.debug-log.file",
+        "smartmet.engine.grid.content-server.debug-log.maxSize",
+        "smartmet.engine.grid.content-server.debug-log.truncateSize",
+        "smartmet.engine.grid.content-server.cache.contentSortingFlags",
+
+        "smartmet.engine.grid.data-server.remote",
+        "smartmet.engine.grid.data-server.ior",
+        "smartmet.engine.grid.data-server.caching",
+        "smartmet.engine.grid.data-server.gridDirectory",
+        "smartmet.engine.grid.data-server.contentPreload.enabled",
+        "smartmet.engine.grid.data-server.virtualFiles.enabled",
+        "smartmet.engine.grid.data-server.virtualFiles.definitionFile",
+        "smartmet.engine.grid.data-server.luaFiles",
+        "smartmet.engine.grid.data-server.file-cache.numOfGrids",
+        "smartmet.engine.grid.data-server.file-cache.maxUncompressedSizeInMegaBytes",
+        "smartmet.engine.grid.data-server.file-cache.maxCompressedSizeInMegaBytes",
+        "smartmet.engine.grid.data-server.processing-log.enabled",
+        "smartmet.engine.grid.data-server.processing-log.file",
+        "smartmet.engine.grid.data-server.processing-log.maxSize",
+        "smartmet.engine.grid.data-server.processing-log.truncateSize",
+        "smartmet.engine.grid.data-server.debug-log.enabled",
+        "smartmet.engine.grid.data-server.debug-log.file",
+        "smartmet.engine.grid.data-server.debug-log.maxSize",
+        "smartmet.engine.grid.data-server.debug-log.truncateSize",
+
+        "smartmet.engine.grid.query-server.remote",
+        "smartmet.engine.grid.query-server.ior",
+        "smartmet.engine.grid.query-server.producerFile",
+        "smartmet.engine.grid.query-server.producerAliasFile",
+        "smartmet.engine.grid.query-server.luaFiles",
+        "smartmet.engine.grid.query-server.mappingFiles",
+        "smartmet.engine.grid.query-server.mappingUpdateFile.fmi",
+        "smartmet.engine.grid.query-server.mappingUpdateFile.newbase",
+        "smartmet.engine.grid.query-server.aliasFiles",
+        "smartmet.engine.grid.query-server.processing-log.enabled",
+        "smartmet.engine.grid.query-server.processing-log.file",
+        "smartmet.engine.grid.query-server.processing-log.maxSize",
+        "smartmet.engine.grid.query-server.processing-log.truncateSize",
+        "smartmet.engine.grid.query-server.debug-log.enabled",
+        "smartmet.engine.grid.query-server.debug-log.file",
+        "smartmet.engine.grid.query-server.debug-log.maxSize",
+        "smartmet.engine.grid.query-server.debug-log.truncateSize",
         NULL
     };
 
     mLevelInfoList_lastUpdate = 0;
     mRedisAddress = "127.0.0.1";
     mRedisPort = 6379;
-    mRemoteContentServerEnabled = false;
-    mRemoteDataServerEnabled = false;
-    mRemoteQueryServerEnabled = false;
-    mRemoteDataServerCache = false;
+    mDataServerCacheEnabled = false;
+    mContentServerProcessingLogEnabled = false;
+    mContentServerDebugLogEnabled = false;
+    mDataServerProcessingLogEnabled = false;
+    mDataServerDebugLogEnabled = false;
+    mQueryServerProcessingLogEnabled = false;
+    mQueryServerDebugLogEnabled = false;
     mVirtualFilesEnabled = false;
     mParameterMappingUpdateTime = 0;
     mShutdownRequested = false;
+    mContentPreloadEnabled = true;
+    mContentSortingFlags = 0;
 
     mConfigurationFile.readFile(theConfigFile);
+    //mConfigurationFile.print(std::cout,0,0);
 
     uint t=0;
     while (configAttribute[t] != NULL)
@@ -118,61 +135,68 @@ Engine::Engine(const char* theConfigFile)
     }
 
 
-    mConfigurationFile.getAttributeValue("grid-files.configFile", mGridConfigFile);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.grid-files.configFile", mGridConfigFile);
 
-    mConfigurationFile.getAttributeValue("remote-content-server.enabled", mRemoteContentServerEnabled);
-    mConfigurationFile.getAttributeValue("remote-content-server.ior", mRemoteContentServerIor);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.remote", mContentServerRemote);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.ior", mContentServerIor);
 
-    mConfigurationFile.getAttributeValue("local-content-server.redis.address", mRedisAddress);
-    mConfigurationFile.getAttributeValue("local-content-server.redis.port", mRedisPort);
-    mConfigurationFile.getAttributeValue("local-content-server.redis.tablePrefix", mRedisTablePrefix);
+    // These settings are used when the content server is embedded into the grid engine.
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.redis.address", mRedisAddress);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.redis.port", mRedisPort);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.redis.tablePrefix", mRedisTablePrefix);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.enabled", mContentServerProcessingLogEnabled);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.file", mContentServerProcessingLogFile);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.maxSize", mContentServerProcessingLogMaxSize);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.truncateSize", mContentServerProcessingLogTruncateSize);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.enabled", mContentServerDebugLogEnabled);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.file", mContentServerDebugLogFile);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.maxSize", mContentServerDebugLogMaxSize);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.truncateSize", mContentServerDebugLogTruncateSize);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.contentSortingFlags", mContentSortingFlags);
 
-    mConfigurationFile.getAttributeValue("remote-data-server.enabled", mRemoteDataServerEnabled);
-    mConfigurationFile.getAttributeValue("remote-data-server.cache", mRemoteDataServerCache);
-    mConfigurationFile.getAttributeValue("remote-data-server.ior", mRemoteDataServerIor);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.remote", mDataServerRemote);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.ior", mDataServerIor);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.caching", mDataServerCacheEnabled);
 
-    mConfigurationFile.getAttributeValue("remote-query-server.enabled", mRemoteQueryServerEnabled);
-    mConfigurationFile.getAttributeValue("remote-query-server.ior", mRemoteQueryServerIor);
-
-    mConfigurationFile.getAttributeValue("local-data-server.gridDirectory", mDataServerGridDirectory);
-    mConfigurationFile.getAttributeValue("local-data-server.virtualFiles.enabled",mVirtualFilesEnabled);
-    mConfigurationFile.getAttributeValue("local-data-server.virtualFiles.definitionFile",mVirtualFileDefinitions);
-
-    mConfigurationFile.getAttributeValue("local-data-server.cache.numOfGrids", mNumOfCachedGrids);
-    mConfigurationFile.getAttributeValue("local-data-server.cache.maxUncompressedSizeInMegaBytes", mMaxUncompressedMegaBytesOfCachedGrids);
-    mConfigurationFile.getAttributeValue("local-data-server.cache.maxCompressedSizeInMegaBytes", mMaxCompressedMegaBytesOfCachedGrids);
-
-    mConfigurationFile.getAttributeValue("local-query-server.producerFile",mProducerFile);
-    mConfigurationFile.getAttributeValue("local-query-server.producerAliasFile",mProducerAliasFile);
-
-    mConfigurationFile.getAttributeValue("local-content-server.processing-log.file", mContentServerProcessingLogFile);
-    mConfigurationFile.getAttributeValue("local-content-server.processing-log.maxSize", mContentServerProcessingLogMaxSize);
-    mConfigurationFile.getAttributeValue("local-content-server.processing-log.truncateSize", mContentServerProcessingLogTruncateSize);
-    mConfigurationFile.getAttributeValue("local-content-server.debug-log.file", mContentServerDebugLogFile);
-    mConfigurationFile.getAttributeValue("local-content-server.debug-log.maxSize", mContentServerDebugLogMaxSize);
-    mConfigurationFile.getAttributeValue("local-content-server.debug-log.truncateSize", mContentServerDebugLogTruncateSize);
-
-    mConfigurationFile.getAttributeValue("local-data-server.processing-log.file", mDataServerProcessingLogFile);
-    mConfigurationFile.getAttributeValue("local-data-server.processing-log.maxSize", mDataServerProcessingLogMaxSize);
-    mConfigurationFile.getAttributeValue("local-data-server.processing-log.truncateSize", mDataServerProcessingLogTruncateSize);
-    mConfigurationFile.getAttributeValue("local-data-server.debug-log.file", mDataServerDebugLogFile);
-    mConfigurationFile.getAttributeValue("local-data-server.debug-log.maxSize", mDataServerDebugLogMaxSize);
-    mConfigurationFile.getAttributeValue("local-data-server.debug-log.truncateSize", mDataServerDebugLogTruncateSize);
-
-    mConfigurationFile.getAttributeValue("local-query-server.processing-log.file", mQueryServerProcessingLogFile);
-    mConfigurationFile.getAttributeValue("local-query-server.processing-log.maxSize", mQueryServerProcessingLogMaxSize);
-    mConfigurationFile.getAttributeValue("local-query-server.processing-log.truncateSize", mQueryServerProcessingLogTruncateSize);
-    mConfigurationFile.getAttributeValue("local-query-server.debug-log.file", mQueryServerDebugLogFile);
-    mConfigurationFile.getAttributeValue("local-query-server.debug-log.maxSize", mQueryServerDebugLogMaxSize);
-    mConfigurationFile.getAttributeValue("local-query-server.debug-log.truncateSize", mQueryServerDebugLogTruncateSize);
-    mConfigurationFile.getAttributeValue("local-query-server.mappingUpdateFile.fmi",mParameterMappingUpdateFile_fmi);
-    mConfigurationFile.getAttributeValue("local-query-server.mappingUpdateFile.newbase",mParameterMappingUpdateFile_newbase);
-    mConfigurationFile.getAttributeValue("local-query-server.mappingFiles",mParameterMappingFiles);
-    mConfigurationFile.getAttributeValue("local-query-server.aliasFiles",mParameterAliasFiles);
-    mConfigurationFile.getAttributeValue("local-query-server.luaFiles",mQueryServerLuaFiles);
-    mConfigurationFile.getAttributeValue("local-data-server.luaFiles",mDataServerLuaFiles);
+    // These settings are used when the data server is embedded into the grid engine.
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.contentPreload.enabled",mContentPreloadEnabled);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.gridDirectory", mDataServerGridDirectory);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.virtualFiles.enabled",mVirtualFilesEnabled);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.virtualFiles.definitionFile",mVirtualFileDefinitions);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.file-cache.numOfGrids", mNumOfCachedGrids);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.file-cache.maxUncompressedSizeInMegaBytes", mMaxUncompressedMegaBytesOfCachedGrids);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.file-cache.maxCompressedSizeInMegaBytes", mMaxCompressedMegaBytesOfCachedGrids);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.enabled", mDataServerProcessingLogEnabled);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.file", mDataServerProcessingLogFile);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.maxSize", mDataServerProcessingLogMaxSize);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.truncateSize", mDataServerProcessingLogTruncateSize);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.enabled", mDataServerDebugLogEnabled);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.file", mDataServerDebugLogFile);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.maxSize", mDataServerDebugLogMaxSize);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.truncateSize", mDataServerDebugLogTruncateSize);
 
 
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.enabled", mQueryServerRemote);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.ior", mQueryServerIor);
+
+    // These settings are used when the query server is embedded into the grid engine.
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.producerFile",mProducerFile);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.producerAliasFile",mProducerAliasFile);
+
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.enabled", mQueryServerProcessingLogEnabled);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.file", mQueryServerProcessingLogFile);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.maxSize", mQueryServerProcessingLogMaxSize);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.truncateSize", mQueryServerProcessingLogTruncateSize);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.enabled", mQueryServerDebugLogEnabled);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.file", mQueryServerDebugLogFile);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.maxSize", mQueryServerDebugLogMaxSize);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.truncateSize", mQueryServerDebugLogTruncateSize);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingUpdateFile.fmi",mParameterMappingUpdateFile_fmi);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingUpdateFile.newbase",mParameterMappingUpdateFile_newbase);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingFiles",mParameterMappingFiles);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.aliasFiles",mParameterAliasFiles);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.luaFiles",mQueryServerLuaFiles);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.luaFiles",mDataServerLuaFiles);
 
 
     // Initializing information that is needed for identifying the content of the grid files.
@@ -216,28 +240,28 @@ void Engine::init()
     QueryServer::ServiceInterface *qServer = NULL;
 
 
-    if (mRemoteContentServerEnabled  &&  mRemoteContentServerIor.length() > 50)
+    if (mContentServerRemote  &&  mContentServerIor.length() > 50)
     {
       ContentServer::Corba::ClientImplementation *client = new ContentServer::Corba::ClientImplementation();
-      client->init(mRemoteContentServerIor.c_str());
+      client->init(mContentServerIor.c_str());
       mContentServerCache.reset(client);
       cServer = client;
     }
     else
     {
       ContentServer::CacheImplementation *cache = new ContentServer::CacheImplementation();
-      cache->init(0,redis);
+      cache->init(0,redis,mContentSortingFlags);
       mContentServerCache.reset(cache);
       cache->startEventProcessing();
       cServer = cache;
     }
 
-    if (mRemoteDataServerEnabled  &&  mRemoteDataServerIor.length() > 50)
+    if (mDataServerRemote  &&  mDataServerIor.length() > 50)
     {
       DataServer::Corba::ClientImplementation *client = new DataServer::Corba::ClientImplementation();
-      client->init(mRemoteDataServerIor);
+      client->init(mDataServerIor);
 
-      if (mRemoteDataServerCache)
+      if (mDataServerCacheEnabled)
       {
         DataServer::CacheImplementation *serverCache = new DataServer::CacheImplementation();
         serverCache->init(client);
@@ -255,6 +279,7 @@ void Engine::init()
     {
       DataServer::ServiceImplementation *server = new DataServer::ServiceImplementation();
       server->init(0,0,"NotRegistered","NotRegistered",mDataServerGridDirectory,cServer,mDataServerLuaFiles);
+      server->enableContentPreload(mContentPreloadEnabled);
       //dServer->init(0,0,"NotRegistered","NotRegistered",mDataServerGridDirectory,cache);
 
       if (mVirtualFilesEnabled)
@@ -276,10 +301,10 @@ void Engine::init()
       SmartMet::GRID::valueCache.init(mNumOfCachedGrids,mMaxUncompressedMegaBytesOfCachedGrids,mMaxCompressedMegaBytesOfCachedGrids);
     }
 
-    if (mRemoteQueryServerEnabled  &&  mRemoteQueryServerIor.length() > 50)
+    if (mQueryServerRemote  &&  mQueryServerIor.length() > 50)
     {
       QueryServer::Corba::ClientImplementation *client = new QueryServer::Corba::ClientImplementation();
-      client->init(mRemoteQueryServerIor);
+      client->init(mQueryServerIor);
       mQueryServer.reset(client);
       qServer = client;
     }
@@ -293,37 +318,37 @@ void Engine::init()
     }
 
 
-    if (mContentServerProcessingLogFile.length() > 0)
+    if (mContentServerProcessingLogEnabled &&  mContentServerProcessingLogFile.length() > 0)
     {
       mContentServerProcessingLog.init(true,mContentServerProcessingLogFile.c_str(),mContentServerProcessingLogMaxSize,mContentServerProcessingLogTruncateSize);
       cServer->setProcessingLog(&mContentServerProcessingLog);
     }
 
-    if (mContentServerDebugLogFile.length() > 0)
+    if (mContentServerDebugLogEnabled && mContentServerDebugLogFile.length() > 0)
     {
       mContentServerDebugLog.init(true,mContentServerDebugLogFile.c_str(),mContentServerDebugLogMaxSize,mContentServerDebugLogTruncateSize);
       cServer->setDebugLog(&mContentServerDebugLog);
     }
 
-    if (mDataServerProcessingLogFile.length() > 0)
+    if (mDataServerProcessingLogEnabled && mDataServerProcessingLogFile.length() > 0)
     {
       mDataServerProcessingLog.init(true,mDataServerProcessingLogFile.c_str(),mDataServerProcessingLogMaxSize,mDataServerProcessingLogTruncateSize);
       dServer->setProcessingLog(&mDataServerProcessingLog);
     }
 
-    if (mDataServerDebugLogFile.length() > 0)
+    if (mDataServerDebugLogEnabled && mDataServerDebugLogFile.length() > 0)
     {
       mDataServerDebugLog.init(true,mDataServerDebugLogFile.c_str(),mDataServerDebugLogMaxSize,mDataServerDebugLogTruncateSize);
       dServer->setDebugLog(&mDataServerDebugLog);
     }
 
-    if (mQueryServerProcessingLogFile.length() > 0)
+    if (mQueryServerProcessingLogEnabled && mQueryServerProcessingLogFile.length() > 0)
     {
       mQueryServerProcessingLog.init(true,mQueryServerProcessingLogFile.c_str(),mQueryServerProcessingLogMaxSize,mQueryServerProcessingLogTruncateSize);
       qServer->setProcessingLog(&mQueryServerProcessingLog);
     }
 
-    if (mQueryServerDebugLogFile.length() > 0)
+    if (mQueryServerDebugLogEnabled && mQueryServerDebugLogFile.length() > 0)
     {
       mQueryServerDebugLog.init(true,mQueryServerDebugLogFile.c_str(),mQueryServerDebugLogMaxSize,mQueryServerDebugLogTruncateSize);
       qServer->setDebugLog(&mQueryServerDebugLog);
@@ -777,7 +802,9 @@ void Engine::updateMappings(T::ParamKeyType parameterKeyType,std::string mapping
 
     FILE *file = NULL;
 
-    uint numOfMappings = 0;
+    uint numOfNewMappings = 0;
+    std::set<std::string> mapList;
+    std::set<std::string> searchList;
 
     for (auto it=infoList.begin(); it != infoList.end(); ++it)
     {
@@ -794,66 +821,102 @@ void Engine::updateMappings(T::ParamKeyType parameterKeyType,std::string mapping
         m.mParameterLevelId = atoi(pl[5].c_str());
         m.mParameterLevel = atoi(pl[6].c_str());
 
-        bool found = false;
-        for (auto it = parameterMappings.begin(); it != parameterMappings.end() && !found; ++it)
+        char key[200];
+        sprintf(key,"%s;%s;%s;%s;%s;%s;%s;",pl[0].c_str(),pl[1].c_str(),pl[2].c_str(),pl[3].c_str(),pl[4].c_str(),pl[5].c_str(),pl[6].c_str());
+        std::string searchKey = m.mProducerName + ":" + m.mParameterName;
+
+        if (mapList.find(std::string(key)) == mapList.end())
         {
-          if (it->getFilename() != mappingFile)
+          mapList.insert(std::string(key));
+
+          bool found = false;
+          bool searchEnabled = false;
+          for (auto it = parameterMappings.begin(); it != parameterMappings.end() && !found; ++it)
           {
-            if (it->getMapping(m) != NULL)
-              found = true;
-          }
-          else
-          {
-            numOfMappings = it->getNumberOfMappings();
-          }
-        }
-
-        if (!found)
-        {
-          if (file == NULL)
-            file = openMappingFile(mappingFile);
-
-          fprintf(file,"%s;%s;%s;%s;%s;%s;%s;",pl[0].c_str(),pl[1].c_str(),pl[2].c_str(),pl[3].c_str(),pl[4].c_str(),pl[5].c_str(),pl[6].c_str());
-
-          Identification::FmiParameterDef paramDef;
-          if (Identification::gridDef.getFmiParameterDefByName(pl[3],paramDef))
-          {
-            if (paramDef.mAreaInterpolationMethod >= 0)
-              fprintf(file,"%d;",(int)paramDef.mAreaInterpolationMethod);
-            else
-              fprintf(file,";");
-
-            if (paramDef.mTimeInterpolationMethod >= 0)
-              fprintf(file,"%d;",(int)paramDef.mTimeInterpolationMethod);
-            else
-              fprintf(file,";");
-
-            if (paramDef.mLevelInterpolationMethod >= 0)
-              fprintf(file,"%d;",(int)paramDef.mLevelInterpolationMethod);
-            else
-              fprintf(file,";");
-
-            fprintf(file,"0;E;");
-
-            if (parameterKeyType == T::ParamKeyType::NEWBASE_ID || parameterKeyType == T::ParamKeyType::NEWBASE_NAME)
+            if (it->getFilename() != mappingFile)
             {
-              Identification::FmiParameterId_newbase paramMapping;
-              if (Identification::gridDef.getNewbaseParameterMappingByFmiId(paramDef.mFmiParameterId,paramMapping))
+              if (it->getMapping(m) != NULL)
               {
-                fprintf(file,"%s",paramMapping.mConversionFunction.c_str());
+                found = true;
+              }
+              else
+              {
+                if (searchList.find(searchKey) != searchList.end())
+                {
+                  searchEnabled = true;
+                }
+                else
+                {
+                  QueryServer::ParameterMapping_vec vec;
+                  it->getMappings(m.mProducerName,m.mParameterName,true,vec);
+                  if (vec.size() > 0)
+                  {
+                    searchEnabled = true;
+                  }
+                }
               }
             }
-            fprintf(file,";\n");
           }
-          else
+
+          if (!found)
           {
-            fprintf(file,"1;1;1;0;E;;\n");
+            numOfNewMappings++;
+
+            char s = 'D';
+            if (!searchEnabled  ||  (m.mParameterLevelId == 6   &&  m.mParameterLevel <= 10) ||  (m.mParameterLevelId == 1  &&  m.mParameterLevel == 0))
+            {
+              if (m.mParameterLevelId != 2  &&  m.mParameterLevelId != 3  &&  m.mParameterLevelId != 4)
+                s = 'E';
+            }
+
+            if (searchList.find(searchKey) == searchList.end())
+              searchList.insert(searchKey);
+
+            if (file == NULL)
+              file = openMappingFile(mappingFile);
+
+            fprintf(file,"%s;%s;%s;%s;%s;%s;%s;",pl[0].c_str(),pl[1].c_str(),pl[2].c_str(),pl[3].c_str(),pl[4].c_str(),pl[5].c_str(),pl[6].c_str());
+
+            Identification::FmiParameterDef paramDef;
+            if (Identification::gridDef.getFmiParameterDefByName(pl[3],paramDef))
+            {
+              if (paramDef.mAreaInterpolationMethod >= 0)
+                fprintf(file,"%d;",(int)paramDef.mAreaInterpolationMethod);
+              else
+                fprintf(file,";");
+
+              if (paramDef.mTimeInterpolationMethod >= 0)
+                fprintf(file,"%d;",(int)paramDef.mTimeInterpolationMethod);
+              else
+                fprintf(file,";");
+
+              if (paramDef.mLevelInterpolationMethod >= 0)
+                fprintf(file,"%d;",(int)paramDef.mLevelInterpolationMethod);
+              else
+                fprintf(file,";");
+
+              fprintf(file,"0;%c;",s);
+
+              if (parameterKeyType == T::ParamKeyType::NEWBASE_ID || parameterKeyType == T::ParamKeyType::NEWBASE_NAME)
+              {
+                Identification::FmiParameterId_newbase paramMapping;
+                if (Identification::gridDef.getNewbaseParameterMappingByFmiId(paramDef.mFmiParameterId,paramMapping))
+                {
+                  fprintf(file,"%s",paramMapping.mConversionFunction.c_str());
+                }
+              }
+              fprintf(file,";\n");
+            }
+            else
+            {
+              fprintf(file,"1;1;1;0;D;;\n");
+            }
           }
         }
       }
     }
 
-    if (file == NULL  &&  numOfMappings > 0)
+    if (file == NULL  &&  numOfNewMappings == 0)
     {
       // We found all mappings from the other files. That's why we should remove them
       // from the update file.

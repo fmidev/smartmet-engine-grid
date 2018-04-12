@@ -95,7 +95,7 @@ ecmwf_skandinavia_painepinta;Humidity;2;RH-PRCNT;1;2;50000;1;1;;0;E;;
 ecmwf_skandinavia_painepinta;Humidity;2;RH-PRCNT;1;2;70000;1;1;;0;E;;
 ecmwf_skandinavia_painepinta;Humidity;2;RH-PRCNT;1;2;85000;1;1;;0;E;;
 ecmwf_skandinavia_painepinta;Humidity;2;RH-PRCNT;1;2;92500;1;1;;0;E;;
-ecmwf_skandinavia_painepinta;PotentialTemperature;2;TP-K;1;2;100000;1;1;;0;E;SUM{$,-273.15};
+ecmwf_skandinavia_painepinta;PotentialTemperature;2;TP-K;1;2;100000;2;1;;0;E;SUM{$,-273.15};
 ecmwf_skandinavia_painepinta;PotentialTemperature;2;TP-K;1;2;30000;1;1;;0;E;SUM{$,-273.15};
 ecmwf_skandinavia_painepinta;PotentialTemperature;2;TP-K;1;2;50000;1;1;;0;E;SUM{$,-273.15};
 ecmwf_skandinavia_painepinta;PotentialTemperature;2;TP-K;1;2;70000;1;1;;0;E;SUM{$,-273.15};
