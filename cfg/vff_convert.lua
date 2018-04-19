@@ -16,6 +16,9 @@ function printTable(params)
 end
 
 
+
+
+
 -- ***********************************************************************
 --  FUNCTION : C2F
 -- ***********************************************************************
@@ -209,7 +212,7 @@ function WIND_V(columns,rows,u,v,angles)
       d = c - (PI-a);
 	end   
 	
-    val = hh * math.sin(d);         
+  val = hh * math.sin(d);         
 	result[index] = val;
 	
   end
@@ -223,7 +226,6 @@ end
 
 -- ***********************************************************************
 --  FUNCTION : WIND_U
--- ***********************************************************************
 -- ***********************************************************************
 
 function WIND_U(columns,rows,u,v,angles)
@@ -482,7 +484,7 @@ end
 --        - rows          => Number of the rows in the grid
 --        - params        => Grid values (= Array of float values)
 --      Function return one parameter:
---        - result array  => Array of float values (must hava the same 
+--        - result array  => Array of float values (must have the same 
 --                           number of values as the input 'params'.               
 --
 --    Type 3 : 
@@ -492,8 +494,43 @@ end
 --        - params1       => Grid 1 values (= Array of float values)
 --        - params2       => Grid 2 values (= Array of float values)
 --      Function return one parameter:
---        - result array  => Array of float values (must hava the same 
+--        - result array  => Array of float values (must have the same 
 --                           number of values as the input 'params1'.               
+--  
+--    Type 4 : 
+--      Function takes five parameters as input:
+--        - columns       => Number of the columns in the grid
+--        - rows          => Number of the rows in the grid
+--        - params1       => Grid 1 values (= Array of float values)
+--        - params2       => Grid 2 values (= Array of float values)
+--        - params3       => Grid point angles to latlon-north (= Array of float values)
+--      Function return one parameter:
+--        - result array  => Array of float values (must have the same 
+--                           number of values as the input 'params1'.
+--      Can be use for example in order to calculate new Wind U- and V-
+--      vectors when the input vectors point to grid-north instead of
+--      latlon-north.               
+--
+--    Type 5 : 
+--      Function takes three parameters as input:
+--        - language    => defines the used language
+--        - numOfParams => defines how many values is in the params array
+--        - params      => Array of float values
+--      Function return two parameters:
+--        - result value (string)
+--        - result string (=> 'OK' or an error message)
+--      Can be use for example for translating a numeric value to a string
+--      by using the given language.  
+--  
+--    Type 6 : 
+--      Function takes two parameters as input:
+--        - numOfParams => defines how many values is in the params array
+--        - params      => Array of string values
+--      Function return one parameters:
+--        - result value (string)
+--      This function takes an array of strings and returns a string. It
+--      is used for example in order to get additional instructions for
+--      complex interpolation operations.  
 --  
 -- ***********************************************************************
  

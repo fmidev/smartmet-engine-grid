@@ -385,7 +385,7 @@ function NB_WindChill(numOfParams,params)
 
   if (wind == ParamValueMissing or temp == ParamValueMissing or wind < 0) then
     result.message = "Parameter value missing!"
-  	result.value = ParamValueMissing;
+    result.value = ParamValueMissing;
     return result.value,result.message;
   end
 
@@ -431,7 +431,7 @@ function NB_WindCompass8(language,numOfParams,params)
 
   if (windDir == ParamValueMissing) then
     result.message = "OK"
-  	result.value = ParamValueMissing;
+    result.value = ParamValueMissing;
     return result.value,result.message;
   end
 
@@ -441,9 +441,9 @@ function NB_WindCompass8(language,numOfParams,params)
   if (windCompass8[language] ~= nil  and  windCompass8[language][i] ~= nil) then 
     result.value = windCompass8[language][i];
   else
-  	if (windCompass8['default'] ~= nil  and  windCompass8['default'][i] ~= nil) then 
-	  result.value = windCompass8['default'][i]
-	 end
+    if (windCompass8['default'] ~= nil  and  windCompass8['default'][i] ~= nil) then 
+    result.value = windCompass8['default'][i]
+   end
   end
   
   return result.value,result.message;
@@ -472,7 +472,7 @@ function NB_WindCompass16(language,numOfParams,params)
 
   if (windDir == ParamValueMissing) then
     result.message = "OK"
-  	result.value = ParamValueMissing;
+    result.value = ParamValueMissing;
     return result.value,result.message;
   end
 
@@ -482,9 +482,9 @@ function NB_WindCompass16(language,numOfParams,params)
   if (windCompass16[language] ~= nil  and  windCompass16[language][i] ~= nil) then 
     result.value = windCompass16[language][i];
   else
-  	if (windCompass16['default'] ~= nil  and  windCompass16['default'][i] ~= nil) then 
-	  result.value = windCompass16['default'][i]
-	 end
+    if (windCompass16['default'] ~= nil  and  windCompass16['default'][i] ~= nil) then 
+    result.value = windCompass16['default'][i]
+   end
   end
 
   return result.value,result.message;
@@ -513,7 +513,7 @@ function NB_WindCompass32(language,numOfParams,params)
 
   if (windDir == ParamValueMissing) then
     result.message = "OK"
-  	result.value = ParamValueMissing;
+    result.value = ParamValueMissing;
     return result.value,result.message;
   end
 
@@ -523,9 +523,9 @@ function NB_WindCompass32(language,numOfParams,params)
   if (windCompass32[language] ~= nil  and  windCompass32[language][i] ~= nil) then 
     result.value = windCompass32[language][i];
   else
-  	if (windCompass32['default'] ~= nil  and  windCompass32['default'][i] ~= nil) then 
-	  result.value = windCompass32['default'][i]
-	 end
+    if (windCompass32['default'] ~= nil  and  windCompass32['default'][i] ~= nil) then 
+    result.value = windCompass32['default'][i]
+   end
   end
 
   return result.value,result.message;
@@ -715,9 +715,42 @@ end
 --      Function takes two parameters as input:
 --        - numOfParams => defines how many values is in the params array
 --        - params      => Array of float values
---      Function return two parameters:
---        - result value (double)
+--      Function returns two parameters:
+--        - result value (function result or ParamValueMissing)
 --        - result string (=> 'OK' or an error message)
+--
+--    Type 2 : 
+--      Function takes three parameters as input:
+--        - columns       => Number of the columns in the grid
+--        - rows          => Number of the rows in the grid
+--        - params        => Grid values (= Array of float values)
+--      Function return one parameter:
+--        - result array  => Array of float values (must have the same 
+--                           number of values as the input 'params'.               
+--
+--    Type 3 : 
+--      Function takes four parameters as input:
+--        - columns       => Number of the columns in the grid
+--        - rows          => Number of the rows in the grid
+--        - params1       => Grid 1 values (= Array of float values)
+--        - params2       => Grid 2 values (= Array of float values)
+--      Function return one parameter:
+--        - result array  => Array of float values (must have the same 
+--                           number of values as the input 'params1'.               
+--  
+--    Type 4 : 
+--      Function takes five parameters as input:
+--        - columns       => Number of the columns in the grid
+--        - rows          => Number of the rows in the grid
+--        - params1       => Grid 1 values (= Array of float values)
+--        - params2       => Grid 2 values (= Array of float values)
+--        - params3       => Grid point angles to latlon-north (= Array of float values)
+--      Function return one parameter:
+--        - result array  => Array of float values (must have the same 
+--                           number of values as the input 'params1'.
+--      Can be use for example in order to calculate new Wind U- and V-
+--      vectors when the input vectors point to grid-north instead of
+--      latlon-north.               
 --
 --    Type 5 : 
 --      Function takes three parameters as input:
@@ -727,8 +760,18 @@ end
 --      Function return two parameters:
 --        - result value (string)
 --        - result string (=> 'OK' or an error message)
---
---  So far there are no other types defined.
+--      Can be use for example for translating a numeric value to a string
+--      by using the given language.  
+--  
+--    Type 6 : 
+--      Function takes two parameters as input:
+--        - numOfParams => defines how many values is in the params array
+--        - params      => Array of string values
+--      Function return one parameters:
+--        - result value (string)
+--      This function takes an array of strings and returns a string. It
+--      is used for example in order to get additional instructions for
+--      complex interpolation operations.  
 --  
 -- ***********************************************************************
  
@@ -741,7 +784,7 @@ function getFunctionNames(type)
   end
   
   if (type == 5) then 
-	functionNames = 'NB_WindCompass8,NB_WindCompass16,NB_WindCompass32,NB_WeatherText';
+    functionNames = 'NB_WindCompass8,NB_WindCompass16,NB_WindCompass32,NB_WeatherText';
   end
 
   return functionNames;

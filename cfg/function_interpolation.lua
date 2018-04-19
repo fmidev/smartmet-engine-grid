@@ -1,6 +1,6 @@
 ParamValueMissing = -16777216;
 PI = 3.1415926;
-DEBUG = 1;
+DEBUG = 0;
 
 
 -- ***********************************************************************
@@ -395,7 +395,7 @@ function interpolate_landscape(height,coverType,x,y,
     return interpolate_linear(x,y,val_bl,val_br,val_tr,val_tl);
   end
 
-  print("val_bl="..val_bl.." val_br="..val_br.." val_tl="..val_tl.." val_tr="..val_tr);
+  -- print("val_bl="..val_bl.." val_br="..val_br.." val_tl="..val_tl.." val_tr="..val_tr);
 
   -- Do height corrections if possible
 
@@ -426,7 +426,7 @@ function interpolate_landscape(height,coverType,x,y,
     local fix_tl = lapseratefix(lapserate_tl, height, height_tl, waterFlag);
     local fix_tr = lapseratefix(lapserate_tr, height, height_tr, waterFlag);
 
-    print("fix_bl="..fix_bl.." fix_br="..fix_br.." fix_tl="..fix_tl.." fix_tr="..fix_tr);
+    -- print("fix_bl="..fix_bl.." fix_br="..fix_br.." fix_tl="..fix_tl.." fix_tr="..fix_tr);
 
     val_bl = val_bl + lapseratefix(lapserate_bl, height, height_bl, waterFlag);
     val_br = val_br + lapseratefix(lapserate_br, height, height_br, waterFlag);
@@ -939,7 +939,7 @@ function getAreaInterpolationInfo_ext_landscape(qp)
   p[4] = getQueryParamStr(qp.parameterKey,qp.parameterLevelId,qp.parameterLevel,qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List);
   
   -- It also needs values of the GeopHeight -parameter.
-  p[5] = getQueryParamStr("GeopHeight","","",qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List);
+  p[5] = getQueryParamStr("Z-M2S2","0","0",qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List);
    
   return mergeInstructionParameters(p);
 
@@ -979,13 +979,81 @@ end
 
 
 -- ***********************************************************************
---  FUNCTION : getgetAreaInterpolationInfo
+--  FUNCTION : getAreaInterpolationInfo
 -- ***********************************************************************
 --  This function returns "instructions" how to interpolate the current
---  parameter according to the current interpolaton method.
+--  parameter according to the current interpolation method.
 -- ***********************************************************************
 
-function getAreaInterpolationInfo(producerName,parameterName,parameterKeyType,parameterKey,parameterLevelIdType,parameterLevelId,parameterLevel,forecastType,forecastNumber,areaInterpolationMethod)
+function getAreaInterpolationInfo(numOfParams,params)
+
+  if (DEBUG == 1) then
+    print("getAreaInterpolationInfo()");
+    for index, value in pairs(params) do
+      print(index.." : "..value);
+    end
+  end
+
+  local qp = {};
+  qp.producerName = params[1];
+  qp.parameterName = params[2];
+  qp.parameterKeyType = tonumber(params[3]);
+  qp.parameterKey = params[4];
+  qp.parameterLevelIdType = tonumber(params[5]);
+  qp.parameterLevelId = tonumber(params[6]);
+  qp.parameterLevel = tonumber(params[7]);
+  qp.forecastType = tonumber(params[8]);
+  qp.forecastNumber = tonumber(params[9]);
+  qp.areaInterpolationMethod = tonumber(params[10]);
+
+  -- if (DEBUG == 1) then
+  --  for index, value in pairs(qp) do
+  --    print(index.." : "..value);
+  --  end
+  -- end
+
+  local instructions = "";
+  
+  if (qp.areaInterpolationMethod == AreaInterpolationMethod.ExtNone) then
+    instructions = getAreaInterpolationInfo_ext_none(qp);
+  end
+  
+  if (qp.areaInterpolationMethod == AreaInterpolationMethod.ExtLinear) then
+    instructions = getAreaInterpolationInfo_ext_linear(qp);
+  end
+  
+  if (qp.areaInterpolationMethod == AreaInterpolationMethod.ExtNearest) then
+    instructions = getAreaInterpolationInfo_ext_nearest(qp);
+  end
+  
+  if (qp.areaInterpolationMethod == AreaInterpolationMethod.ExtLandscape) then
+    instructions = getAreaInterpolationInfo_ext_landscape(qp);
+  end;
+    
+  if (qp.areaInterpolationMethod == AreaInterpolationMethod.ExtWindDirection) then
+    instructions = getAreaInterpolationInfo_ext_windDirection(qp);
+  end;
+    
+  if (DEBUG == 1) then
+    print("  "..instructions);
+  end
+
+  return instructions;
+
+end
+
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : getAreaInterpolationInfo2
+-- ***********************************************************************
+--  This function returns "instructions" how to interpolate the current
+--  parameter according to the current interpolation method.
+-- ***********************************************************************
+
+function getAreaInterpolationInfo2(producerName,parameterName,parameterKeyType,parameterKey,parameterLevelIdType,parameterLevelId,parameterLevel,forecastType,forecastNumber,areaInterpolationMethod)
 
   if (DEBUG == 1) then
     print("getAreaInterpolationInfo("..producerName..","..parameterName..","..parameterKeyType..","..parameterKey..","..parameterLevelIdType..","..parameterLevelId..","..parameterLevel..","..forecastType..","..forecastNumber..","..areaInterpolationMethod..")");
@@ -1043,6 +1111,7 @@ end
 
 
 
+
 -- ***********************************************************************
 --  FUNCTION : getFunctionNames
 -- ***********************************************************************
@@ -1057,10 +1126,64 @@ end
 --      Function takes two parameters as input:
 --        - numOfParams => defines how many values is in the params array
 --        - params      => Array of float values
---      Function return two parameters:
---        - result string (=> 'OK' or an error message)
+--      Function returns two parameters:
 --        - result value (function result or ParamValueMissing)
+--        - result string (=> 'OK' or an error message)
 --
+--    Type 2 : 
+--      Function takes three parameters as input:
+--        - columns       => Number of the columns in the grid
+--        - rows          => Number of the rows in the grid
+--        - params        => Grid values (= Array of float values)
+--      Function return one parameter:
+--        - result array  => Array of float values (must have the same 
+--                           number of values as the input 'params'.               
+--
+--    Type 3 : 
+--      Function takes four parameters as input:
+--        - columns       => Number of the columns in the grid
+--        - rows          => Number of the rows in the grid
+--        - params1       => Grid 1 values (= Array of float values)
+--        - params2       => Grid 2 values (= Array of float values)
+--      Function return one parameter:
+--        - result array  => Array of float values (must have the same 
+--                           number of values as the input 'params1'.               
+--  
+--    Type 4 : 
+--      Function takes five parameters as input:
+--        - columns       => Number of the columns in the grid
+--        - rows          => Number of the rows in the grid
+--        - params1       => Grid 1 values (= Array of float values)
+--        - params2       => Grid 2 values (= Array of float values)
+--        - params3       => Grid point angles to latlon-north (= Array of float values)
+--      Function return one parameter:
+--        - result array  => Array of float values (must have the same 
+--                           number of values as the input 'params1'.
+--      Can be use for example in order to calculate new Wind U- and V-
+--      vectors when the input vectors point to grid-north instead of
+--      latlon-north.               
+--
+--    Type 5 : 
+--      Function takes three parameters as input:
+--        - language    => defines the used language
+--        - numOfParams => defines how many values is in the params array
+--        - params      => Array of float values
+--      Function return two parameters:
+--        - result value (string)
+--        - result string (=> 'OK' or an error message)
+--      Can be use for example for translating a numeric value to a string
+--      by using the given language.  
+--  
+--    Type 6 : 
+--      Function takes two parameters as input:
+--        - numOfParams => defines how many values is in the params array
+--        - params      => Array of string values
+--      Function return one parameters:
+--        - result value (string)
+--      This function takes an array of strings and returns a string. It
+--      is used for example in order to get additional instructions for
+--      complex interpolation operations.  
+--  
 -- ***********************************************************************
 
 
@@ -1072,7 +1195,7 @@ function getFunctionNames(type)
     functionNames = 'IPL_NONE,IPL_LINEAR,IPL_NEAREST,IPL_WIND_DIR,IPL_LANDSCAPE';
   end
   
-  if (type == 7) then 
+  if (type == 6) then 
     functionNames = 'getAreaInterpolationInfo';
   end
       

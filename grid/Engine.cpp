@@ -45,7 +45,10 @@ Engine::Engine(const char* theConfigFile)
   {
     const char *configAttribute[] =
     {
-        "smartmet.engine.grid.grid-files.configFile",
+        "smartmet.library.grid-files.configFile",
+        "smartmet.library.grid-files.cache.numOfGrids",
+        "smartmet.library.grid-files.cache.maxUncompressedSizeInMegaBytes",
+        "smartmet.library.grid-files.cache.maxCompressedSizeInMegaBytes",
 
         "smartmet.engine.grid.content-server.remote",
         "smartmet.engine.grid.content-server.ior",
@@ -65,14 +68,11 @@ Engine::Engine(const char* theConfigFile)
         "smartmet.engine.grid.data-server.remote",
         "smartmet.engine.grid.data-server.ior",
         "smartmet.engine.grid.data-server.caching",
-        "smartmet.engine.grid.data-server.gridDirectory",
-        "smartmet.engine.grid.data-server.contentPreload.enabled",
+        "smartmet.engine.grid.data-server.grid-storage.directory",
+        "smartmet.engine.grid.data-server.grid-storage.preloadEnabled",
         "smartmet.engine.grid.data-server.virtualFiles.enabled",
         "smartmet.engine.grid.data-server.virtualFiles.definitionFile",
         "smartmet.engine.grid.data-server.luaFiles",
-        "smartmet.engine.grid.data-server.file-cache.numOfGrids",
-        "smartmet.engine.grid.data-server.file-cache.maxUncompressedSizeInMegaBytes",
-        "smartmet.engine.grid.data-server.file-cache.maxCompressedSizeInMegaBytes",
         "smartmet.engine.grid.data-server.processing-log.enabled",
         "smartmet.engine.grid.data-server.processing-log.file",
         "smartmet.engine.grid.data-server.processing-log.maxSize",
@@ -135,7 +135,10 @@ Engine::Engine(const char* theConfigFile)
     }
 
 
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.grid-files.configFile", mGridConfigFile);
+    mConfigurationFile.getAttributeValue("smartmet.library.grid-files.configFile", mGridConfigFile);
+    mConfigurationFile.getAttributeValue("smartmet.library.grid-files.cache.numOfGrids", mNumOfCachedGrids);
+    mConfigurationFile.getAttributeValue("smartmet.library.grid-files.cache.maxUncompressedSizeInMegaBytes", mMaxUncompressedMegaBytesOfCachedGrids);
+    mConfigurationFile.getAttributeValue("smartmet.library.grid-files.cache.maxCompressedSizeInMegaBytes", mMaxCompressedMegaBytesOfCachedGrids);
 
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.remote", mContentServerRemote);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.ior", mContentServerIor);
@@ -159,13 +162,11 @@ Engine::Engine(const char* theConfigFile)
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.caching", mDataServerCacheEnabled);
 
     // These settings are used when the data server is embedded into the grid engine.
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.contentPreload.enabled",mContentPreloadEnabled);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.gridDirectory", mDataServerGridDirectory);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadEnabled",mContentPreloadEnabled);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.directory", mDataServerGridDirectory);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.virtualFiles.enabled",mVirtualFilesEnabled);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.virtualFiles.definitionFile",mVirtualFileDefinitions);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.file-cache.numOfGrids", mNumOfCachedGrids);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.file-cache.maxUncompressedSizeInMegaBytes", mMaxUncompressedMegaBytesOfCachedGrids);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.file-cache.maxCompressedSizeInMegaBytes", mMaxCompressedMegaBytesOfCachedGrids);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.luaFiles",mDataServerLuaFiles);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.enabled", mDataServerProcessingLogEnabled);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.file", mDataServerProcessingLogFile);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.maxSize", mDataServerProcessingLogMaxSize);
@@ -196,7 +197,6 @@ Engine::Engine(const char* theConfigFile)
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingFiles",mParameterMappingFiles);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.aliasFiles",mParameterAliasFiles);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.luaFiles",mQueryServerLuaFiles);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.luaFiles",mDataServerLuaFiles);
 
 
     // Initializing information that is needed for identifying the content of the grid files.
