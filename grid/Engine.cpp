@@ -2,6 +2,7 @@
 
 #include <spine/Exception.h>
 #include <grid-files/common/GeneralFunctions.h>
+#include <grid-files/common/ShowFunction.h>
 #include <grid-files/grid/ValueCache.h>
 #include <grid-files/identification/GridDef.h>
 #include <grid-content/contentServer/corba/client/ClientImplementation.h>
@@ -10,6 +11,8 @@
 #include <grid-content/queryServer/corba/client/ClientImplementation.h>
 #include <unistd.h>
 
+
+#define FUNCTION_TRACE FUNCTION_TRACE_OFF
 
 
 namespace SmartMet
@@ -41,6 +44,7 @@ static void* gridEngine_updateThread(void *arg)
 
 Engine::Engine(const char* theConfigFile)
 {
+  FUNCTION_TRACE
   try
   {
     const char *configAttribute[] =
@@ -177,7 +181,7 @@ Engine::Engine(const char* theConfigFile)
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.truncateSize", mDataServerDebugLogTruncateSize);
 
 
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.enabled", mQueryServerRemote);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.remote", mQueryServerRemote);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.ior", mQueryServerIor);
 
     // These settings are used when the query server is embedded into the grid engine.
@@ -214,6 +218,7 @@ Engine::Engine(const char* theConfigFile)
 
 Engine::~Engine()
 {
+  FUNCTION_TRACE
   try
   {
   }
@@ -229,6 +234,7 @@ Engine::~Engine()
 
 void Engine::init()
 {
+  FUNCTION_TRACE
   try
   {
     ContentServer::RedisImplementation *redis = new ContentServer::RedisImplementation();
@@ -370,6 +376,7 @@ void Engine::init()
 
 void Engine::shutdown()
 {
+  FUNCTION_TRACE
   try
   {
     std::cout << "  -- Shutdown requested (grid engine)\n";
@@ -399,6 +406,7 @@ void Engine::shutdown()
 
 int Engine::executeQuery(QueryServer::Query& query)
 {
+  FUNCTION_TRACE
   try
   {
     return mQueryServer->executeQuery(0,query);
@@ -415,6 +423,7 @@ int Engine::executeQuery(QueryServer::Query& query)
 
 ContentServer_sptr Engine::getContentServer_sptr()
 {
+  FUNCTION_TRACE
   try
   {
     return mContentServerCache;
@@ -431,6 +440,7 @@ ContentServer_sptr Engine::getContentServer_sptr()
 
 DataServer_sptr Engine::getDataServer_sptr()
 {
+  FUNCTION_TRACE
   try
   {
     return mDataServer;
@@ -447,6 +457,7 @@ DataServer_sptr Engine::getDataServer_sptr()
 
 QueryServer_sptr Engine::getQueryServer_sptr()
 {
+  FUNCTION_TRACE
   try
   {
     return mQueryServer;
@@ -463,6 +474,7 @@ QueryServer_sptr Engine::getQueryServer_sptr()
 
 void Engine::getProducerNameList(std::string aliasName,std::vector<std::string>& nameList)
 {
+  FUNCTION_TRACE
   try
   {
     mProducerAliases.checkUpdates();
@@ -488,6 +500,7 @@ void Engine::getProducerNameList(std::string aliasName,std::vector<std::string>&
 
 T::ParamLevelId Engine::getFmiParameterLevelId(uint producerId,int level)
 {
+  FUNCTION_TRACE
   try
   {
     AutoThreadLock lock(&mThreadLock);
@@ -523,6 +536,7 @@ T::ParamLevelId Engine::getFmiParameterLevelId(uint producerId,int level)
 
 void Engine::getProducerList(string_vec& producerList)
 {
+  FUNCTION_TRACE
   try
   {
     mQueryServer->getProducerList(0,producerList);
@@ -539,6 +553,7 @@ void Engine::getProducerList(string_vec& producerList)
 
 void Engine::getProducerParameterLevelList(std::string producerName,T::ParamLevelId fmiParamLevelId,double multiplier,std::vector<double>& levels)
 {
+  FUNCTION_TRACE
   try
   {
     AutoThreadLock lock(&mThreadLock);
@@ -588,6 +603,7 @@ void Engine::getProducerParameterLevelList(std::string producerName,T::ParamLeve
 
 void Engine::getProducerParameterLevelIdList(std::string producerName,std::set<T::ParamLevelId>& levelIdList)
 {
+  FUNCTION_TRACE
   try
   {
     AutoThreadLock lock(&mThreadLock);
@@ -635,6 +651,7 @@ void Engine::getProducerParameterLevelIdList(std::string producerName,std::set<T
 
 void Engine::loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings)
 {
+  FUNCTION_TRACE
   try
   {
     for (auto it = mParameterMappingFiles.begin(); it != mParameterMappingFiles.end(); ++it)
@@ -660,6 +677,7 @@ void Engine::loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings)
 
 void Engine::updateMappings()
 {
+  FUNCTION_TRACE
   try
   {
     if ((time(0) - mParameterMappingUpdateTime) > 20)
@@ -692,6 +710,7 @@ void Engine::updateMappings()
 
 FILE* Engine::openMappingFile(std::string mappingFile)
 {
+  FUNCTION_TRACE
   try
   {
     FILE *file = fopen(mappingFile.c_str(),"w");
@@ -784,6 +803,7 @@ FILE* Engine::openMappingFile(std::string mappingFile)
 
 void Engine::updateMappings(T::ParamKeyType parameterKeyType,std::string mappingFile,QueryServer::ParamMappingFile_vec& parameterMappings)
 {
+  FUNCTION_TRACE
   try
   {
     ContentServer_sptr  contentServer = getContentServer_sptr();

@@ -7,6 +7,7 @@
 #include <grid-content/dataServer/cache/CacheImplementation.h>
 #include <grid-content/queryServer/implementation/ServiceImplementation.h>
 #include <grid-files/common/ConfigurationFile.h>
+#include <grid-files/common/Typedefs.h>
 #include <pthread.h>
 
 
@@ -20,7 +21,6 @@ namespace Grid
 typedef std::shared_ptr<ContentServer::ServiceInterface> ContentServer_sptr;
 typedef std::shared_ptr<DataServer::ServiceInterface> DataServer_sptr;
 typedef std::shared_ptr<QueryServer::ServiceInterface> QueryServer_sptr;
-typedef std::vector<std::string> String_vec;
 
 class Engine : public SmartMet::Spine::SmartMetEngine
 {
@@ -68,13 +68,13 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     DataServer_sptr     mDataServer;
     DataServer_sptr     mDataServerClient;
-    String_vec          mDataServerLuaFiles;
+    string_vec          mDataServerLuaFiles;
     bool                mDataServerRemote;
     bool                mDataServerCacheEnabled;
     std::string         mDataServerIor;
 
     QueryServer_sptr    mQueryServer;
-    String_vec          mQueryServerLuaFiles;
+    string_vec          mQueryServerLuaFiles;
 
     std::string         mGridConfigFile;
     std::string         mDataServerGridDirectory;
@@ -127,8 +127,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::string         mVirtualFileDefinitions;
     bool                mContentPreloadEnabled;
 
-    String_vec          mParameterAliasFiles;
-    String_vec          mParameterMappingFiles;
+    string_vec          mParameterAliasFiles;
+    string_vec          mParameterMappingFiles;
 
     pthread_t           mThread;
     std::string         mParameterMappingUpdateFile_fmi;
