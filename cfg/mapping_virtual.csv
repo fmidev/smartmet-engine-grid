@@ -35,18 +35,24 @@
 #         0 = None
 #         1 = Linear
 #         2 = Nearest
+#         3 = Min
+#         4 = Max
 #         500..999 = List
 #         1000..65535 = External (interpolated by an external function)
 #  8) Time interpolation method
 #         0 = None
 #         1 = Linear
 #         2 = Nearest
+#         3 = Min
+#         4 = Max
 #         1000..65535 = External (interpolated by an external function)
 #  9) Level interpolation method
 #         0 = None
 #         1 = Linear
 #         2 = Nearest
-#         3 = Logarithmic
+#         3 = Min
+#         4 = Max
+#         5 = Logarithmic
 #         1000..65535 = External (interpolated by an external function)
 # 10) Group flags
 #         bit 0 = Climatological parameter (=> ignore year when searching) 

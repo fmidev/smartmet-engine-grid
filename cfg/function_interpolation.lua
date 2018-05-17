@@ -1,6 +1,6 @@
 ParamValueMissing = -16777216;
 PI = 3.1415926;
-DEBUG = 0;
+DEBUG = 1;
 
 
 -- ***********************************************************************
@@ -12,6 +12,8 @@ AreaInterpolationMethod = {};
 AreaInterpolationMethod.None             = 0;
 AreaInterpolationMethod.Linear           = 1;
 AreaInterpolationMethod.Nearest          = 2;
+AreaInterpolationMethod.Min              = 3;
+AreaInterpolationMethod.Max              = 4;
 AreaInterpolationMethod.List             = 500;
 
 AreaInterpolationMethod.ExtNone          = 1000;
@@ -792,7 +794,7 @@ end
 --  This method merges query parameters into a string. 
 -- ***********************************************************************
 
-function getQueryParamStr(parameterKey,parameterLevelId,parameterLevel,forecastType,forecastNumber,areaInterpolationMethod)
+function getQueryParamStr(parameterKey,parameterLevelId,parameterLevel,forecastType,forecastNumber,areaInterpolationMethod,anyTime,anyProducer)
 
   local p = "Q:"..parameterKey;
   p = p..","..parameterLevelId;
@@ -800,6 +802,8 @@ function getQueryParamStr(parameterKey,parameterLevelId,parameterLevel,forecastT
   p = p..","..forecastType;
   p = p..","..forecastNumber;
   p = p..","..areaInterpolationMethod;
+  p = p..","..anyTime;
+  p = p..","..anyProducer;
     
   return p;
 
@@ -843,7 +847,7 @@ function getAreaInterpolationInfo_ext_none(qp)
   p[1] = "F:IPL_NONE";    
   
   -- It needs the values of the original parameter (all grid corners). 
-  p[2] = getQueryParamStr(qp.parameterKey,qp.parameterLevelId,qp.parameterLevel,qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List);
+  p[2] = getQueryParamStr(qp.parameterKey,qp.parameterLevelId,qp.parameterLevel,qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List,0,0);
   
   return mergeInstructionParameters(p);
   
@@ -868,7 +872,7 @@ function getAreaInterpolationInfo_ext_linear(qp)
   p[1] = "F:IPL_LINEAR";    
   
   -- It needs the values of the original parameter (all grid corners). 
-  p[2] = getQueryParamStr(qp.parameterKey,qp.parameterLevelId,qp.parameterLevel,qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List);
+  p[2] = getQueryParamStr(qp.parameterKey,qp.parameterLevelId,qp.parameterLevel,qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List,0,0);
   
   return mergeInstructionParameters(p);
 
@@ -894,7 +898,7 @@ function getAreaInterpolationInfo_ext_nearest(qp)
   p[1] = "F:IPL_NEAREST";    
   
   -- It needs the values of the original parameter (all grid corners). 
-  p[2] = getQueryParamStr(qp.parameterKey,qp.parameterLevelId,qp.parameterLevel,qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List);
+  p[2] = getQueryParamStr(qp.parameterKey,qp.parameterLevelId,qp.parameterLevel,qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List,0,0);
   
   
   return mergeInstructionParameters(p);
@@ -936,11 +940,18 @@ function getAreaInterpolationInfo_ext_landscape(qp)
   p[3] = "V:coverType";      
 
   -- It also needs the values of the original parameter (all grid corners). 
-  p[4] = getQueryParamStr(qp.parameterKey,qp.parameterLevelId,qp.parameterLevel,qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List);
+  p[4] = getQueryParamStr(qp.parameterKey,qp.parameterLevelId,qp.parameterLevel,qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List,0,0);
   
   -- It also needs values of the GeopHeight -parameter.
-  p[5] = getQueryParamStr("Z-M2S2","0","0",qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List);
+  p[5] = getQueryParamStr("Z-M2S2","0","0",qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List,0,0);
    
+  -- It also needs values of the LapseRate -parameter.
+  p[6] = getQueryParamStr("LR-KM","0","0",qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List,0,1);
+  
+  -- It also needs values of the LandSeaMask -parameter.
+  p[7] = getQueryParamStr("LC-0TO1","1","0",qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List,1,0);
+
+
   return mergeInstructionParameters(p);
 
 end
