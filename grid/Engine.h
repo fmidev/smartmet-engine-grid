@@ -51,7 +51,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings);
     FILE*               openMappingFile(std::string mappingFile);
     void                updateMappings();
-    void                updateMappings(T::ParamKeyType parameterKeyType,std::string mappingFile,QueryServer::ParamMappingFile_vec& parameterMappings);
+    void                updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyType targetParameterKeyType,std::string mappingFile,QueryServer::ParamMappingFile_vec& parameterMappings);
 
 
   private:
@@ -131,6 +131,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     string_vec          mParameterMappingFiles;
 
     pthread_t           mThread;
+    T::ParamKeyType     mMappingTargetKeyType;
     std::string         mParameterMappingUpdateFile_fmi;
     std::string         mParameterMappingUpdateFile_newbase;
     time_t              mParameterMappingUpdateTime;

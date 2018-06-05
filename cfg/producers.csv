@@ -1,5 +1,11 @@
 # Producer & geometryId search order. If no producer is given in
 # the query then the producers are used in the following order.
+SMARTMET;1073;7.6km x 7.5km;
+SMARTMETMTA;1073;7.6km x 7.5km;
+HL2;173;7.9km x 7.2km;
+HL2;174;8.0km x 7.1km;
+HL2;175;7.9km x 7.1km;
+HL2MTA;173;7.9km x 7.2km;
 ECG;1007;11.1km x 11.1km;
 ECG;1008;8.9km x 12.9km;
 ECG;1045;8.9km x 12.9km;
@@ -35,10 +41,6 @@ GLAMEPS;1054;4.2km x 10.9km;
 GLAMEPSCAL;1054;4.2km x 10.9km;
 GLAMEPSMTA;1054;4.2km x 10.9km;
 HELMI;609;1.8km x 1.9km;
-HL2;173;7.9km x 7.2km;
-HL2;174;8.0km x 7.1km;
-HL2;175;7.9km x 7.1km;
-HL2MTA;173;7.9km x 7.2km;
 IASIL2;1079;10.8km x 10.8km;
 ICON_GLO;1082;4.5km x 6.9km;
 ICON_GLO;1085;13.9km x 13.9km;
@@ -52,8 +54,6 @@ MEPS_PREOP;1078;2.6km x 2.4km;
 MEPS_PREOPMTA;1078;2.6km x 2.4km;
 MESAN;13;9.4km x 11.1km;
 PEPSSCAN;1071;2.5km x 2.5km;
-SMARTMET;1073;7.6km x 7.5km;
-SMARTMETMTA;1073;7.6km x 7.5km;
 SMHIMESAN;1066;2.7km x 2.8km;
 TIENHOITO;13;9.4km x 11.1km;
 WAM_MBE;606;7.5km x 7.5km;
