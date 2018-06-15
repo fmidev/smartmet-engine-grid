@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 18.2.8
+Version: 18.6.14
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -19,6 +19,8 @@ BuildRequires: smartmet-library-grid-files-devel >= 18.1.25
 BuildRequires: smartmet-library-spine-devel >= 18.1.15
 BuildRequires: make
 BuildRequires: omniORB-devel
+BuildRequires: boost-devel
+BuildRequires: gdal-devel
 Requires: boost-thread
 Requires: libconfig
 Requires: libpqxx-devel
@@ -42,7 +44,7 @@ SmartMet %{SPECNAME} development headers.
 rm -rf $RPM_BUILD_ROOT
 
 %setup -q -n %{SPECNAME}
- 
+
 %build -q -n %{SPECNAME}
 make %{_smp_mflags}
 
@@ -62,5 +64,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Thu Jun 14 2018 Roope Tervo <roope.tervo@fmi.fi> - 18.6.14-1.fmi
+- Build for testing
 * Thu Feb  8 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.2.8-1.fmi
 - Initial build
