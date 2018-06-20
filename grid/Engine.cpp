@@ -669,7 +669,9 @@ void Engine::loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings)
 
     for (auto it = parameterMappings.begin(); it != parameterMappings.end(); ++it)
     {
-      it->init();
+      // Loading parameter mappings if the mapping file exists and it is not empty.
+      if (getFileSize(it->getFilename().c_str()) > 0)
+        it->init();
     }
   }
   catch (...)

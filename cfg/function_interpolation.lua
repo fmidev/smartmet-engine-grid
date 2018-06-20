@@ -611,6 +611,125 @@ end
 
 
 -- ***********************************************************************
+--  FUNCTION : IPL_MAX
+-- ***********************************************************************
+--  The function returns the interpolate value.
+-- ***********************************************************************
+
+function IPL_MAX(numOfParams,params)
+
+  if (DEBUG == 1) then
+    print("IPL_MAX()");
+    for index, value in pairs(params) do
+      print(index.." : "..value);
+    end
+  end
+
+  local result = {};
+  
+  if (numOfParams ~= 7) then   
+    result.message = 'Invalid number of parameters given ('..numOfParams..')!';
+    result.value = 0;  
+    return result.value,result.message;
+  end
+
+  local max = ParamValueMissing;
+  for index, value in pairs(params) do
+    if (index > 3 and ((value > max and value ~= ParamValueMissing) or (max == ParamValueMissing))) then
+      max = value;     
+    end
+  end
+    
+  result.message = 'OK';
+  result.value = max;  
+  return result.value,result.message;
+  
+end
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : IPL_MIN
+-- ***********************************************************************
+--  The function returns the interpolate value.
+-- ***********************************************************************
+
+function IPL_MIN(numOfParams,params)
+
+  if (DEBUG == 1) then
+    print("IPL_MIN()");
+    for index, value in pairs(params) do
+      print(index.." : "..value);
+    end
+  end
+
+  local result = {};
+  
+  if (numOfParams ~= 7) then   
+    result.message = 'Invalid number of parameters given ('..numOfParams..')!';
+    result.value = 0;  
+    return result.value,result.message;
+  end
+
+  local min = ParamValueMissing;
+  for index, value in pairs(params) do
+    if (index > 3 and ((value < min and value ~= ParamValueMissing) or min == ParamValueMissing)) then
+      min = value;     
+    end
+  end
+    
+  result.message = 'OK';
+  result.value = min;  
+  return result.value,result.message;
+  
+end
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : IPL_AVG
+-- ***********************************************************************
+--  The function returns the interpolate value.
+-- ***********************************************************************
+
+function IPL_AVG(numOfParams,params)
+
+  if (DEBUG == 1) then
+    print("IPL_AVG()");
+    for index, value in pairs(params) do
+      print(index.." : "..value);
+    end
+  end
+
+  local result = {};
+  
+  if (numOfParams ~= 7) then   
+    result.message = 'Invalid number of parameters given ('..numOfParams..')!';
+    result.value = 0;  
+    return result.value,result.message;
+  end
+
+  local cnt = 0;
+  local sum = 0;
+  for index, value in pairs(params) do
+    if (index > 3 and (value ~= ParamValueMissing)) then
+      sum = sum + value;
+      cnt = cnt + 1;     
+    end
+  end
+    
+  result.message = 'OK';
+  result.value = sum/cnt;  
+  return result.value,result.message;
+  
+end
+
+
+
+
+-- ***********************************************************************
 --  FUNCTION : IPL_WIND_DIR
 -- ***********************************************************************
 --  The function returns the interpolate value.
@@ -1203,7 +1322,7 @@ function getFunctionNames(type)
   local functionNames = '';
 
   if (type == 1) then 
-    functionNames = 'IPL_NONE,IPL_LINEAR,IPL_NEAREST,IPL_WIND_DIR,IPL_LANDSCAPE';
+    functionNames = 'IPL_NONE,IPL_LINEAR,IPL_NEAREST,IPL_MAX,IPL_MIN,IPL_AVG,IPL_WIND_DIR,IPL_LANDSCAPE';
   end
   
   if (type == 6) then 
