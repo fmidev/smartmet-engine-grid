@@ -847,7 +847,7 @@ void Engine::updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyTy
         m.mParameterKeyType = (T::ParamKeyType)atoi(pl[2].c_str());
         m.mParameterKey = pl[3];
         m.mParameterLevelIdType = (T::ParamLevelIdType)atoi(pl[4].c_str());
-        m.mParameterLevelId = atoi(pl[5].c_str());
+        m.mParameterLevelId = static_cast<char>(atoi(pl[5].c_str()));
         m.mParameterLevel = atoi(pl[6].c_str());
 
         char key[200];
