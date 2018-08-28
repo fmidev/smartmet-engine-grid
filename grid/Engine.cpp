@@ -29,11 +29,11 @@ static void* gridEngine_updateThread(void *arg)
   {
     Engine *engine = (Engine*)arg;
     engine->updateProcessing();
-    return NULL;
+    return nullptr;
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP,exception_operation_failed,NULL);
+    SmartMet::Spine::Exception exception(BCP,exception_operation_failed,nullptr);
     exception.printError();
     exit(-1);
   }
@@ -104,7 +104,7 @@ Engine::Engine(const char* theConfigFile)
         "smartmet.engine.grid.query-server.debug-log.file",
         "smartmet.engine.grid.query-server.debug-log.maxSize",
         "smartmet.engine.grid.query-server.debug-log.truncateSize",
-        NULL
+        nullptr
     };
 
     mLevelInfoList_lastUpdate = 0;
@@ -128,7 +128,7 @@ Engine::Engine(const char* theConfigFile)
     //mConfigurationFile.print(std::cout,0,0);
 
     uint t=0;
-    while (configAttribute[t] != NULL)
+    while (configAttribute[t] != nullptr)
     {
       if (!mConfigurationFile.findAttribute(configAttribute[t]))
       {
@@ -216,7 +216,7 @@ Engine::Engine(const char* theConfigFile)
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Constructor failed!", NULL);
+    throw SmartMet::Spine::Exception(BCP, "Constructor failed!", nullptr);
   }
 }
 
@@ -231,7 +231,7 @@ Engine::~Engine()
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
   }
 }
 
@@ -248,9 +248,9 @@ void Engine::init()
     redis->init(mRedisAddress.c_str(),mRedisPort,mRedisTablePrefix.c_str());
     mContentServerRedis.reset(redis);
 
-    ContentServer::ServiceInterface *cServer = NULL;
-    DataServer::ServiceInterface *dServer = NULL;
-    QueryServer::ServiceInterface *qServer = NULL;
+    ContentServer::ServiceInterface *cServer = nullptr;
+    DataServer::ServiceInterface *dServer = nullptr;
+    QueryServer::ServiceInterface *qServer = nullptr;
 
 
     if (mContentServerRemote  &&  mContentServerIor.length() > 50)
@@ -373,7 +373,7 @@ void Engine::init()
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
   }
 }
 
@@ -403,7 +403,7 @@ void Engine::shutdown()
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
   }
 }
 
@@ -420,7 +420,7 @@ int Engine::executeQuery(QueryServer::Query& query)
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
   }
 }
 
@@ -437,7 +437,7 @@ ContentServer_sptr Engine::getContentServer_sptr()
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
   }
 }
 
@@ -454,7 +454,7 @@ DataServer_sptr Engine::getDataServer_sptr()
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
   }
 }
 
@@ -471,7 +471,7 @@ QueryServer_sptr Engine::getQueryServer_sptr()
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
   }
 }
 
@@ -496,7 +496,7 @@ void Engine::getProducerNameList(std::string aliasName,std::vector<std::string>&
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
   }
 }
 
@@ -523,7 +523,7 @@ T::ParamLevelId Engine::getFmiParameterLevelId(uint producerId,int level)
     for (uint t=0; t<len; t++)
     {
       T::LevelInfo *levelInfo = mLevelInfoList.getLevelInfoByIndex(t);
-      if (levelInfo != NULL  &&  levelInfo->mProducerId == producerId)
+      if (levelInfo != nullptr  &&  levelInfo->mProducerId == producerId)
       {
         if (levelInfo->mParameterLevel == level)
           return levelInfo->mFmiParameterLevelId;
@@ -533,7 +533,7 @@ T::ParamLevelId Engine::getFmiParameterLevelId(uint producerId,int level)
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
   }
 }
 
@@ -550,7 +550,7 @@ void Engine::getProducerList(string_vec& producerList)
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
   }
 }
 
@@ -585,7 +585,7 @@ void Engine::getProducerParameterLevelList(std::string producerName,T::ParamLeve
         for (uint t=0; t<len; t++)
         {
           T::LevelInfo *levelInfo = mLevelInfoList.getLevelInfoByIndex(t);
-          if (levelInfo != NULL  &&  levelInfo->mProducerId == producerInfo.mProducerId  &&  levelInfo->mFmiParameterLevelId == fmiParamLevelId  &&
+          if (levelInfo != nullptr  &&  levelInfo->mProducerId == producerInfo.mProducerId  &&  levelInfo->mFmiParameterLevelId == fmiParamLevelId  &&
               (fmiParameterName.empty() || levelInfo->mFmiParameterName == fmiParameterName))
           {
             fmiParameterName = levelInfo->mFmiParameterName;
@@ -600,7 +600,7 @@ void Engine::getProducerParameterLevelList(std::string producerName,T::ParamLeve
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
   }
 }
 
@@ -635,7 +635,7 @@ void Engine::getProducerParameterLevelIdList(std::string producerName,std::set<T
         for (uint t=0; t<len; t++)
         {
           T::LevelInfo *levelInfo = mLevelInfoList.getLevelInfoByIndex(t);
-          if (levelInfo != NULL  &&  levelInfo->mProducerId == producerInfo.mProducerId)
+          if (levelInfo != nullptr  &&  levelInfo->mProducerId == producerInfo.mProducerId)
           {
             if (levelIdList.find(levelInfo->mFmiParameterLevelId) == levelIdList.end())
               levelIdList.insert(levelInfo->mFmiParameterLevelId);
@@ -649,7 +649,7 @@ void Engine::getProducerParameterLevelIdList(std::string producerName,std::set<T
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
   }
 }
 
@@ -676,7 +676,7 @@ void Engine::loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings)
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
   }
 }
 
@@ -709,7 +709,7 @@ void Engine::updateMappings()
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
   }
 }
 
@@ -723,7 +723,7 @@ FILE* Engine::openMappingFile(std::string mappingFile)
   try
   {
     FILE *file = fopen(mappingFile.c_str(),"w");
-    if (file == NULL)
+    if (file == nullptr)
     {
       SmartMet::Spine::Exception exception(BCP, "Cannot open a mapping file for writing!");
       exception.addParameter("Filaname",mappingFile);
@@ -802,7 +802,7 @@ FILE* Engine::openMappingFile(std::string mappingFile)
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
   }
 }
 
@@ -829,7 +829,7 @@ void Engine::updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyTy
       return;
     }
 
-    FILE *file = NULL;
+    FILE *file = nullptr;
 
     uint numOfNewMappings = 0;
     std::set<std::string> mapList;
@@ -864,7 +864,7 @@ void Engine::updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyTy
           {
             if (it->getFilename() != mappingFile)
             {
-              if (it->getMapping(m) != NULL)
+              if (it->getMapping(m) != nullptr)
               {
                 found = true;
               }
@@ -901,7 +901,7 @@ void Engine::updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyTy
             if (searchList.find(searchKey) == searchList.end())
               searchList.insert(searchKey);
 
-            if (file == NULL)
+            if (file == nullptr)
               file = openMappingFile(mappingFile);
 
             fprintf(file,"%s;%s;%s;%s;%s;%s;%s;",pl[0].c_str(),pl[1].c_str(),pl[2].c_str(),pl[3].c_str(),pl[4].c_str(),pl[5].c_str(),pl[6].c_str());
@@ -956,7 +956,7 @@ void Engine::updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyTy
       }
     }
 
-    if (file == NULL  &&  numOfNewMappings == 0)
+    if (file == nullptr  &&  numOfNewMappings == 0)
     {
       // We found all mappings from the other files. That's why we should remove them
       // from the update file.
@@ -964,13 +964,13 @@ void Engine::updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyTy
       file = openMappingFile(mappingFile);
     }
 
-    if (file != NULL)
+    if (file != nullptr)
       fclose(file);
 
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", NULL);
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
   }
 }
 
@@ -990,7 +990,7 @@ void Engine::updateProcessing()
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP,exception_operation_failed,NULL);
+    throw SmartMet::Spine::Exception(BCP,exception_operation_failed,nullptr);
   }
 }
 
@@ -1002,11 +1002,11 @@ void Engine::startUpdateProcessing()
 {
   try
   {
-    pthread_create(&mThread,NULL,gridEngine_updateThread,this);
+    pthread_create(&mThread,nullptr,gridEngine_updateThread,this);
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP,exception_operation_failed,NULL);
+    throw SmartMet::Spine::Exception(BCP,exception_operation_failed,nullptr);
   }
 }
 
