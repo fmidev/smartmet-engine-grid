@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 18.6.14
+Version: 18.8.27
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -14,9 +14,9 @@ BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: libconfig-devel
 BuildRequires: libpqxx-devel
-BuildRequires: smartmet-library-grid-content-devel >= 18.2.8
-BuildRequires: smartmet-library-grid-files-devel >= 18.1.25
-BuildRequires: smartmet-library-spine-devel >= 18.1.15
+BuildRequires: smartmet-library-grid-content-devel >= 18.8.27
+BuildRequires: smartmet-library-grid-files-devel >= 18.8.27
+BuildRequires: smartmet-library-spine-devel >= 18.8.20
 BuildRequires: make
 BuildRequires: omniORB-devel
 BuildRequires: boost-devel
@@ -24,9 +24,9 @@ BuildRequires: gdal-devel
 Requires: boost-thread
 Requires: libconfig
 Requires: libpqxx-devel
-Requires: smartmet-library-grid-content >= 18.2.8
-Requires: smartmet-library-grid-files >= 18.1.25
-Requires: smartmet-library-spine >= 18.1.15
+Requires: smartmet-library-grid-content >= 18.8.27
+Requires: smartmet-library-grid-files >= 18.8.27
+Requires: smartmet-library-spine >= 18.8.20
 Requires: omniORB-devel
 Provides: %{SPECNAME}
 
@@ -64,6 +64,8 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Mon Aug 27 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.8.27-1.fmi
+- Packaged latest version
 * Thu Jun 14 2018 Roope Tervo <roope.tervo@fmi.fi> - 18.6.14-1.fmi
 - Build for testing
 * Thu Feb  8 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.2.8-1.fmi
