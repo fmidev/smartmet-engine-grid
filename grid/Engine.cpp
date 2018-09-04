@@ -201,7 +201,7 @@ Engine::Engine(const char* theConfigFile)
 
     int tmp = 0;
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingTargetKeyType",tmp);
-    mMappingTargetKeyType = tmp;
+    mMappingTargetKeyType = C_UCHAR(tmp);
 
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingUpdateFile.fmi",mParameterMappingUpdateFile_fmi);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingUpdateFile.newbase",mParameterMappingUpdateFile_newbase);
@@ -844,11 +844,11 @@ void Engine::updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyTy
         QueryServer::ParameterMapping m;
         m.mProducerName = pl[0];
         m.mParameterName = pl[1];
-        m.mParameterKeyType = toInt64(pl[2].c_str());
+        m.mParameterKeyType = toUInt8(pl[2].c_str());
         m.mParameterKey = pl[3];
-        m.mParameterLevelIdType = toInt64(pl[4].c_str());
+        m.mParameterLevelIdType = toUInt8(pl[4].c_str());
         m.mParameterLevelId = static_cast<char>(toInt64(pl[5].c_str()));
-        m.mParameterLevel = toInt64(pl[6].c_str());
+        m.mParameterLevel = toInt32(pl[6].c_str());
 
         char key[200];
         sprintf(key,"%s;%s;%s;%s;%s;%s;%s;",pl[0].c_str(),pl[1].c_str(),pl[2].c_str(),pl[3].c_str(),pl[4].c_str(),pl[5].c_str(),pl[6].c_str());
