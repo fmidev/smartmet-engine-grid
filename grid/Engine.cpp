@@ -27,7 +27,7 @@ static void* gridEngine_updateThread(void *arg)
 {
   try
   {
-    Engine *engine = (Engine*)arg;
+    Engine *engine = static_cast<Engine*>(arg);
     engine->updateProcessing();
     return nullptr;
   }
@@ -123,6 +123,25 @@ Engine::Engine(const char* theConfigFile)
     mContentPreloadEnabled = true;
     mContentSortingFlags = 0;
     mMappingTargetKeyType = T::ParamKeyTypeValue::FMI_NAME;
+
+    mDataServerRemote = false;
+    mContentServerRemote = false;
+    mContentServerProcessingLogMaxSize = 10000000;
+    mContentServerProcessingLogTruncateSize = 5000000;
+    mContentServerDebugLogMaxSize = 10000000;
+    mContentServerDebugLogTruncateSize = 5000000;
+    mDataServerProcessingLogMaxSize = 10000000;
+    mDataServerProcessingLogTruncateSize = 5000000;
+    mDataServerDebugLogMaxSize = 10000000;
+    mDataServerDebugLogTruncateSize = 5000000;
+    mQueryServerRemote = false;
+    mQueryServerProcessingLogMaxSize = 10000000;
+    mQueryServerProcessingLogTruncateSize = 50000000;
+    mQueryServerDebugLogMaxSize = 10000000;
+    mQueryServerDebugLogTruncateSize = 5000000;
+    mNumOfCachedGrids = 10000;
+    mMaxCompressedMegaBytesOfCachedGrids = 10000;
+    mMaxUncompressedMegaBytesOfCachedGrids = 10000;
 
     mConfigurationFile.readFile(theConfigFile);
     //mConfigurationFile.print(std::cout,0,0);
@@ -479,7 +498,7 @@ QueryServer_sptr Engine::getQueryServer_sptr()
 
 
 
-void Engine::getProducerNameList(std::string aliasName,std::vector<std::string>& nameList)
+void Engine::getProducerNameList(const std::string& aliasName,std::vector<std::string>& nameList)
 {
   FUNCTION_TRACE
   try
@@ -512,11 +531,11 @@ T::ParamLevelId Engine::getFmiParameterLevelId(uint producerId,int level)
   {
     AutoThreadLock lock(&mThreadLock);
 
-    if (mLevelInfoList.getLength() == 0  ||  (mLevelInfoList_lastUpdate + 300) < time(0))
+    if (mLevelInfoList.getLength() == 0  ||  (mLevelInfoList_lastUpdate + 300) < time(nullptr))
     {
       ContentServer_sptr  contentServer = getContentServer_sptr();
       contentServer->getLevelInfoList(0,mLevelInfoList);
-      mLevelInfoList_lastUpdate = time(0);
+      mLevelInfoList_lastUpdate = time(nullptr);
     }
 
     uint len = mLevelInfoList.getLength();
@@ -558,7 +577,7 @@ void Engine::getProducerList(string_vec& producerList)
 
 
 
-void Engine::getProducerParameterLevelList(std::string producerName,T::ParamLevelId fmiParamLevelId,double multiplier,std::vector<double>& levels)
+void Engine::getProducerParameterLevelList(const std::string& producerName,T::ParamLevelId fmiParamLevelId,double multiplier,std::vector<double>& levels)
 {
   FUNCTION_TRACE
   try
@@ -566,10 +585,10 @@ void Engine::getProducerParameterLevelList(std::string producerName,T::ParamLeve
     AutoThreadLock lock(&mThreadLock);
 
     ContentServer_sptr  contentServer = getContentServer_sptr();
-    if (mLevelInfoList.getLength() == 0  ||  (mLevelInfoList_lastUpdate + 300) < time(0))
+    if (mLevelInfoList.getLength() == 0  ||  (mLevelInfoList_lastUpdate + 300) < time(nullptr))
     {
       contentServer->getLevelInfoList(0,mLevelInfoList);
-      mLevelInfoList_lastUpdate = time(0);
+      mLevelInfoList_lastUpdate = time(nullptr);
     }
 
     std::vector<std::string> nameList;
@@ -608,7 +627,7 @@ void Engine::getProducerParameterLevelList(std::string producerName,T::ParamLeve
 
 
 
-void Engine::getProducerParameterLevelIdList(std::string producerName,std::set<T::ParamLevelId>& levelIdList)
+void Engine::getProducerParameterLevelIdList(const std::string& producerName,std::set<T::ParamLevelId>& levelIdList)
 {
   FUNCTION_TRACE
   try
@@ -616,10 +635,10 @@ void Engine::getProducerParameterLevelIdList(std::string producerName,std::set<T
     AutoThreadLock lock(&mThreadLock);
 
     ContentServer_sptr  contentServer = getContentServer_sptr();
-    if (mLevelInfoList.getLength() == 0  ||  (mLevelInfoList_lastUpdate + 300) < time(0))
+    if (mLevelInfoList.getLength() == 0  ||  (mLevelInfoList_lastUpdate + 300) < time(nullptr))
     {
       contentServer->getLevelInfoList(0,mLevelInfoList);
-      mLevelInfoList_lastUpdate = time(0);
+      mLevelInfoList_lastUpdate = time(nullptr);
     }
 
     std::vector<std::string> nameList;
@@ -689,9 +708,9 @@ void Engine::updateMappings()
   FUNCTION_TRACE
   try
   {
-    if ((time(0) - mParameterMappingUpdateTime) > 20)
+    if ((time(nullptr) - mParameterMappingUpdateTime) > 20)
     {
-      mParameterMappingUpdateTime = time(0);
+      mParameterMappingUpdateTime = time(nullptr);
 
       QueryServer::ParamMappingFile_vec parameterMappings;
       loadMappings(parameterMappings);
@@ -717,7 +736,7 @@ void Engine::updateMappings()
 
 
 
-FILE* Engine::openMappingFile(std::string mappingFile)
+FILE* Engine::openMappingFile(const std::string& mappingFile)
 {
   FUNCTION_TRACE
   try
@@ -810,7 +829,7 @@ FILE* Engine::openMappingFile(std::string mappingFile)
 
 
 
-void Engine::updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyType targetParameterKeyType,std::string mappingFile,QueryServer::ParamMappingFile_vec& parameterMappings)
+void Engine::updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyType targetParameterKeyType,const std::string& mappingFile,QueryServer::ParamMappingFile_vec& parameterMappings)
 {
   FUNCTION_TRACE
   try
@@ -921,17 +940,17 @@ void Engine::updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyTy
             if (found)
             {
               if (paramDef.mAreaInterpolationMethod >= 0)
-                fprintf(file,"%d;",(int)paramDef.mAreaInterpolationMethod);
+                fprintf(file,"%d;",paramDef.mAreaInterpolationMethod);
               else
                 fprintf(file,";");
 
               if (paramDef.mTimeInterpolationMethod >= 0)
-                fprintf(file,"%d;",(int)paramDef.mTimeInterpolationMethod);
+                fprintf(file,"%d;",paramDef.mTimeInterpolationMethod);
               else
                 fprintf(file,";");
 
               if (paramDef.mLevelInterpolationMethod >= 0)
-                fprintf(file,"%d;",(int)paramDef.mLevelInterpolationMethod);
+                fprintf(file,"%d;",paramDef.mLevelInterpolationMethod);
               else
                 fprintf(file,";");
 

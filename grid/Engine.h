@@ -36,10 +36,10 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     QueryServer_sptr    getQueryServer_sptr();
 
     T::ParamLevelId     getFmiParameterLevelId(uint producerId,int level);
-    void                getProducerNameList(std::string aliasName,std::vector<std::string>& nameList);
+    void                getProducerNameList(const std::string& aliasName,std::vector<std::string>& nameList);
     void                getProducerList(string_vec& producerList);
-    void                getProducerParameterLevelList(std::string producerName,T::ParamLevelId fmiParamLevelId,double multiplier,std::vector<double>& levels);
-    void                getProducerParameterLevelIdList(std::string producerName,std::set<T::ParamLevelId>& levelIdList);
+    void                getProducerParameterLevelList(const std::string& producerName,T::ParamLevelId fmiParamLevelId,double multiplier,std::vector<double>& levels);
+    void                getProducerParameterLevelIdList(const std::string& producerName,std::set<T::ParamLevelId>& levelIdList);
 
     void                updateProcessing();
 
@@ -49,9 +49,9 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                shutdown();
     void                startUpdateProcessing();
     void                loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings);
-    FILE*               openMappingFile(std::string mappingFile);
+    FILE*               openMappingFile(const std::string& mappingFile);
     void                updateMappings();
-    void                updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyType targetParameterKeyType,std::string mappingFile,QueryServer::ParamMappingFile_vec& parameterMappings);
+    void                updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyType targetParameterKeyType,const std::string& mappingFile,QueryServer::ParamMappingFile_vec& parameterMappings);
 
 
   private:
