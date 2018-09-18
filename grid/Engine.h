@@ -32,6 +32,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     int                 executeQuery(QueryServer::Query& query);
 
     ContentServer_sptr  getContentServer_sptr();
+    ContentServer_sptr  getContentSourceServer_sptr();
     DataServer_sptr     getDataServer_sptr();
     QueryServer_sptr    getQueryServer_sptr();
 
@@ -48,6 +49,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                init();
     void                shutdown();
     void                startUpdateProcessing();
+    void                clearMappings();
     void                loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings);
     FILE*               openMappingFile(const std::string& mappingFile);
     void                updateMappings();
@@ -59,12 +61,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     ConfigurationFile   mConfigurationFile;
     bool                mShutdownRequested;
 
-    std::string         mRedisAddress;
-    int                 mRedisPort;
-    std::string         mRedisTablePrefix;
-
+    ContentServer_sptr  mContentServer;
     ContentServer_sptr  mContentServerCache;
-    ContentServer_sptr  mContentServerRedis;
 
     DataServer_sptr     mDataServer;
     DataServer_sptr     mDataServerClient;
@@ -79,8 +77,16 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::string         mGridConfigFile;
     std::string         mDataServerGridDirectory;
 
-    bool                mContentServerRemote;
-    std::string         mContentServerIor;
+    std::string         mContentSourceType;
+    std::string         mContentSourceRedisAddress;
+    int                 mContentSourceRedisPort;
+    std::string         mContentSourceRedisTablePrefix;
+    std::string         mContentSourceCorbaIor;
+    std::string         mContentSourceHttpUrl;
+
+    bool                mContentCacheEnabled;
+    uint                mContentCacheSortingFlags;
+
     bool                mContentServerProcessingLogEnabled;
     std::string         mContentServerProcessingLogFile;
     int                 mContentServerProcessingLogMaxSize;
@@ -91,7 +97,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     int                 mContentServerDebugLogMaxSize;
     int                 mContentServerDebugLogTruncateSize;
     Log                 mContentServerDebugLog;
-    uint                mContentSortingFlags;
+
 
     bool                mDataServerProcessingLogEnabled;
     std::string         mDataServerProcessingLogFile;

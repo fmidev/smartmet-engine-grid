@@ -6,6 +6,7 @@
 #include <grid-files/grid/ValueCache.h>
 #include <grid-files/identification/GridDef.h>
 #include <grid-content/contentServer/corba/client/ClientImplementation.h>
+#include <grid-content/contentServer/http/client/ClientImplementation.h>
 #include <grid-content/dataServer/corba/client/ClientImplementation.h>
 #include <grid-content/dataServer/implementation/VirtualContentFactory_type1.h>
 #include <grid-content/queryServer/corba/client/ClientImplementation.h>
@@ -54,11 +55,15 @@ Engine::Engine(const char* theConfigFile)
         "smartmet.library.grid-files.cache.maxUncompressedSizeInMegaBytes",
         "smartmet.library.grid-files.cache.maxCompressedSizeInMegaBytes",
 
-        "smartmet.engine.grid.content-server.remote",
-        "smartmet.engine.grid.content-server.ior",
-        "smartmet.engine.grid.content-server.redis.address",
-        "smartmet.engine.grid.content-server.redis.port",
-        "smartmet.engine.grid.content-server.redis.tablePrefix",
+        "smartmet.engine.grid.content-server.content-source.type",
+        "smartmet.engine.grid.content-server.content-source.redis.address",
+        "smartmet.engine.grid.content-server.content-source.redis.port",
+        "smartmet.engine.grid.content-server.content-source.redis.tablePrefix",
+        "smartmet.engine.grid.content-server.content-source.http.url",
+        "smartmet.engine.grid.content-server.content-source.corba.ior",
+        "smartmet.engine.grid.content-server.cache.enabled",
+        "smartmet.engine.grid.content-server.cache.contentSortingFlags",
+
         "smartmet.engine.grid.content-server.processing-log.enabled",
         "smartmet.engine.grid.content-server.processing-log.file",
         "smartmet.engine.grid.content-server.processing-log.maxSize",
@@ -67,7 +72,6 @@ Engine::Engine(const char* theConfigFile)
         "smartmet.engine.grid.content-server.debug-log.file",
         "smartmet.engine.grid.content-server.debug-log.maxSize",
         "smartmet.engine.grid.content-server.debug-log.truncateSize",
-        "smartmet.engine.grid.content-server.cache.contentSortingFlags",
 
         "smartmet.engine.grid.data-server.remote",
         "smartmet.engine.grid.data-server.ior",
@@ -108,9 +112,15 @@ Engine::Engine(const char* theConfigFile)
     };
 
     mLevelInfoList_lastUpdate = 0;
-    mRedisAddress = "127.0.0.1";
-    mRedisPort = 6379;
-    mDataServerCacheEnabled = false;
+
+    mContentSourceRedisAddress = "127.0.0.1";
+    mContentSourceRedisPort = 6379;
+    mContentSourceRedisTablePrefix = "";
+    mContentSourceHttpUrl = "";
+    mContentSourceCorbaIor = "";
+    mContentCacheEnabled = true;
+    mContentCacheSortingFlags = 5;
+
     mContentServerProcessingLogEnabled = false;
     mContentServerDebugLogEnabled = false;
     mDataServerProcessingLogEnabled = false;
@@ -121,11 +131,10 @@ Engine::Engine(const char* theConfigFile)
     mParameterMappingUpdateTime = 0;
     mShutdownRequested = false;
     mContentPreloadEnabled = true;
-    mContentSortingFlags = 0;
     mMappingTargetKeyType = T::ParamKeyTypeValue::FMI_NAME;
 
+    mDataServerCacheEnabled = false;
     mDataServerRemote = false;
-    mContentServerRemote = false;
     mContentServerProcessingLogMaxSize = 10000000;
     mContentServerProcessingLogTruncateSize = 5000000;
     mContentServerDebugLogMaxSize = 10000000;
@@ -159,19 +168,24 @@ Engine::Engine(const char* theConfigFile)
       t++;
     }
 
-
     mConfigurationFile.getAttributeValue("smartmet.library.grid-files.configFile", mGridConfigFile);
     mConfigurationFile.getAttributeValue("smartmet.library.grid-files.cache.numOfGrids", mNumOfCachedGrids);
     mConfigurationFile.getAttributeValue("smartmet.library.grid-files.cache.maxUncompressedSizeInMegaBytes", mMaxUncompressedMegaBytesOfCachedGrids);
     mConfigurationFile.getAttributeValue("smartmet.library.grid-files.cache.maxCompressedSizeInMegaBytes", mMaxCompressedMegaBytesOfCachedGrids);
 
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.remote", mContentServerRemote);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.ior", mContentServerIor);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.type", mContentSourceType);
 
-    // These settings are used when the content server is embedded into the grid engine.
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.redis.address", mRedisAddress);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.redis.port", mRedisPort);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.redis.tablePrefix", mRedisTablePrefix);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.address", mContentSourceRedisAddress);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.port", mContentSourceRedisPort);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.tablePrefix", mContentSourceRedisTablePrefix);
+
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.http.url", mContentSourceHttpUrl);
+
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.corba.ior", mContentSourceCorbaIor);
+
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.enabled", mContentCacheEnabled);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.contentSortingFlags", mContentCacheSortingFlags);
+
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.enabled", mContentServerProcessingLogEnabled);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.file", mContentServerProcessingLogFile);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.maxSize", mContentServerProcessingLogMaxSize);
@@ -180,7 +194,6 @@ Engine::Engine(const char* theConfigFile)
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.file", mContentServerDebugLogFile);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.maxSize", mContentServerDebugLogMaxSize);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.truncateSize", mContentServerDebugLogTruncateSize);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.contentSortingFlags", mContentSortingFlags);
 
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.remote", mDataServerRemote);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.ior", mDataServerIor);
@@ -263,26 +276,43 @@ void Engine::init()
   FUNCTION_TRACE
   try
   {
-    ContentServer::RedisImplementation *redis = new ContentServer::RedisImplementation();
-    redis->init(mRedisAddress.c_str(),mRedisPort,mRedisTablePrefix.c_str());
-    mContentServerRedis.reset(redis);
-
     ContentServer::ServiceInterface *cServer = nullptr;
     DataServer::ServiceInterface *dServer = nullptr;
     QueryServer::ServiceInterface *qServer = nullptr;
 
-
-    if (mContentServerRemote  &&  mContentServerIor.length() > 50)
+    if (mContentSourceType == "redis")
+    {
+      ContentServer::RedisImplementation *redis = new ContentServer::RedisImplementation();
+      redis->init(mContentSourceRedisAddress.c_str(),mContentSourceRedisPort,mContentSourceRedisTablePrefix.c_str());
+      mContentServer.reset(redis);
+      cServer = redis;
+    }
+    else
+    if (mContentSourceType == "corba")
     {
       ContentServer::Corba::ClientImplementation *client = new ContentServer::Corba::ClientImplementation();
-      client->init(mContentServerIor.c_str());
-      mContentServerCache.reset(client);
+      client->init(mContentSourceCorbaIor.c_str());
+      mContentServer.reset(client);
+      cServer = client;
+    }
+    else
+    if (mContentSourceType == "http")
+    {
+      ContentServer::HTTP::ClientImplementation *client = new ContentServer::HTTP::ClientImplementation();
+      client->init(mContentSourceHttpUrl.c_str());
+      mContentServer.reset(client);
       cServer = client;
     }
     else
     {
+      SmartMet::Spine::Exception exception(BCP, "Unknow content source type!");
+      exception.addParameter("Content source type",mContentSourceType);
+    }
+
+    if (mContentCacheEnabled)
+    {
       ContentServer::CacheImplementation *cache = new ContentServer::CacheImplementation();
-      cache->init(0,redis,mContentSortingFlags);
+      cache->init(0,cServer,mContentCacheSortingFlags);
       mContentServerCache.reset(cache);
       cache->startEventProcessing();
       cServer = cache;
@@ -388,6 +418,8 @@ void Engine::init()
 
     mProducerAliases.init(mProducerAliasFile,true);
 
+    clearMappings();
+
     startUpdateProcessing();
   }
   catch (...)
@@ -408,8 +440,8 @@ void Engine::shutdown()
     std::cout << "  -- Shutdown requested (grid engine)\n";
     mShutdownRequested = true;
 
-    if (!mContentServerRedis)
-      mContentServerRedis->shutdown();
+    if (!mContentServer)
+      mContentServer->shutdown();
 
     if (!mContentServerCache)
       mContentServerCache->shutdown();
@@ -452,7 +484,27 @@ ContentServer_sptr Engine::getContentServer_sptr()
   FUNCTION_TRACE
   try
   {
-    return mContentServerCache;
+    if (mContentCacheEnabled)
+      return mContentServerCache;
+    else
+      return mContentServer;
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+
+
+ContentServer_sptr Engine::getContentSourceServer_sptr()
+{
+  FUNCTION_TRACE
+  try
+  {
+    return mContentServer;
   }
   catch (...)
   {
@@ -691,6 +743,37 @@ void Engine::loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings)
       // Loading parameter mappings if the mapping file exists and it is not empty.
       if (getFileSize(it->getFilename().c_str()) > 0)
         it->init();
+    }
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+
+
+void Engine::clearMappings()
+{
+  FUNCTION_TRACE
+  try
+  {
+    QueryServer::ParamMappingFile_vec parameterMappings;
+
+    if (!mParameterMappingUpdateFile_fmi.empty())
+    {
+      FILE *file = openMappingFile(mParameterMappingUpdateFile_fmi);
+      if (file != NULL)
+        fclose(file);
+    }
+
+    if (!mParameterMappingUpdateFile_newbase.empty())
+    {
+      FILE *file = openMappingFile(mParameterMappingUpdateFile_newbase);
+      if (file != NULL)
+        fclose(file);
     }
   }
   catch (...)
