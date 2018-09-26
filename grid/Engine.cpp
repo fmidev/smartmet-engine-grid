@@ -550,6 +550,40 @@ QueryServer_sptr Engine::getQueryServer_sptr()
 
 
 
+bool Engine::isGridProducer(const std::string& producer)
+{
+  FUNCTION_TRACE
+  try
+  {
+    if ((time(nullptr) - mProducerList_updateTime) > 60)
+    {
+      mProducerList_updateTime = time(nullptr);
+      getProducerList(mProducerList);
+    }
+
+    std::vector<std::string> nameList;
+    getProducerNameList(producer,nameList);
+    for (auto it=nameList.begin(); it!=nameList.end(); ++it)
+    {
+      for (auto itm = mProducerList.begin(); itm != mProducerList.end(); ++itm)
+      {
+        if (strcasecmp(it->c_str(),itm->c_str()) == 0)
+          return true;
+      }
+    }
+
+    return false;
+  }
+  catch (...)
+  {
+    throw Spine::Exception(BCP, "Operation failed!", NULL);
+  }
+}
+
+
+
+
+
 void Engine::getProducerNameList(const std::string& aliasName,std::vector<std::string>& nameList)
 {
   FUNCTION_TRACE

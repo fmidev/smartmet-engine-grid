@@ -292,19 +292,19 @@ function NB_FeelsLikeTemperature(numOfParams,params)
   local rad = params[4];
 
   if (wind == ParamValueMissing) then 
-    result.message = 'The wind parameter missing';
+    result.message = 'OK';
     result.value = ParamValueMissing;
     return result.value,result.message;
   end
 
   if (temp == ParamValueMissing) then 
-    result.message = 'The temperature parameter missing';
+    result.message = 'OK';
     result.value = ParamValueMissing;
     return result.value,result.message;
   end
   
   if (rh == ParamValueMissing) then 
-    result.message = 'The humidity parameter missing';
+    result.message = 'OK';
     result.value = ParamValueMissing;
     return result.value,result.message;
   end

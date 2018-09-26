@@ -42,6 +42,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                getProducerParameterLevelList(const std::string& producerName,T::ParamLevelId fmiParamLevelId,double multiplier,std::vector<double>& levels);
     void                getProducerParameterLevelIdList(const std::string& producerName,std::set<T::ParamLevelId>& levelIdList);
 
+    bool                isGridProducer(const std::string& producer);
+
     void                updateProcessing();
 
   protected:
@@ -142,6 +144,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::string         mParameterMappingUpdateFile_newbase;
     time_t              mParameterMappingUpdateTime;
 
+    string_vec          mProducerList;
+    time_t              mProducerList_updateTime;
     T::LevelInfoList    mLevelInfoList;
     time_t              mLevelInfoList_lastUpdate;
     ThreadLock          mThreadLock;
