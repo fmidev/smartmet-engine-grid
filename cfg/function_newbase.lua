@@ -239,13 +239,13 @@ function NB_SummerSimmerIndex(numOfParams,params)
   end
 
   if (rh == ParamValueMissing) then 
-    result.message = 'Parameter value missing';
+    result.message = 'OK';
     result.value = ParamValueMissing;
     return result.value,result.message;
   end
 
   if (t == ParamValueMissing) then 
-    result.message = 'Parameter value missing';
+    result.message = 'OK';
     result.value = ParamValueMissing;
     return result.value,result.message;
   end
@@ -384,7 +384,7 @@ function NB_WindChill(numOfParams,params)
   local temp = params[2];
 
   if (wind == ParamValueMissing or temp == ParamValueMissing or wind < 0) then
-    result.message = "Parameter value missing!"
+    result.message = "OK!"
     result.value = ParamValueMissing;
     return result.value,result.message;
   end
@@ -660,7 +660,7 @@ function NB_Snow1h(numOfParams,params)
   end
   
   if (t == kFloatMissing or wspd == kFloatMissing or prec1h == kFloatMissing) then
-    result.message = 'Parameter value missing';
+    result.message = 'OK';
     result.value = ParamValueMissing;
     return result.value,result.message;
   end
