@@ -38,6 +38,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     T::ParamLevelId     getFmiParameterLevelId(uint producerId,int level);
     void                getProducerNameList(const std::string& aliasName,std::vector<std::string>& nameList);
+    void                getProducerNameAndLevelIdList(const std::string& aliasName,std::vector<std::string>& nameList,std::vector<std::string>& levelIdList);
     void                getProducerList(string_vec& producerList);
     void                getProducerParameterLevelList(const std::string& producerName,T::ParamLevelId fmiParamLevelId,double multiplier,std::vector<double>& levels);
     void                getProducerParameterLevelIdList(const std::string& producerName,std::set<T::ParamLevelId>& levelIdList);

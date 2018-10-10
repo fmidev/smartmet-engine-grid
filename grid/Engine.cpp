@@ -590,7 +590,18 @@ void Engine::getProducerNameList(const std::string& aliasName,std::vector<std::s
   try
   {
     mProducerAliases.checkUpdates();
-    mProducerAliases.getAliasList(aliasName,nameList);
+
+    std::vector<std::string> aliasStrings;
+    mProducerAliases.getAliasList(aliasName,aliasStrings);
+
+    // Removing the level type information from the alias names.
+
+    for (auto it=aliasStrings.begin(); it != aliasStrings.end(); it++)
+    {
+      std::vector<std::string> partList;
+      splitString(*it,';',partList);
+      nameList.push_back(partList[0]);
+    }
 
     //std::cout << "ALIAS " << aliasName << "\n";
     //for (auto it = nameList.begin(); it != nameList.end(); ++it)
@@ -598,6 +609,47 @@ void Engine::getProducerNameList(const std::string& aliasName,std::vector<std::s
 
     if (nameList.size() == 0)
       nameList.push_back(aliasName);
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+
+
+void Engine::getProducerNameAndLevelIdList(const std::string& aliasName,std::vector<std::string>& nameList,std::vector<std::string>& levelIdList)
+{
+  FUNCTION_TRACE
+  try
+  {
+    mProducerAliases.checkUpdates();
+
+    std::vector<std::string> aliasStrings;
+    mProducerAliases.getAliasList(aliasName,aliasStrings);
+
+    for (auto it=aliasStrings.begin(); it != aliasStrings.end(); it++)
+    {
+      std::vector<std::string> partList;
+      splitString(*it,';',partList);
+      nameList.push_back(partList[0]);
+      if (partList.size() > 1)
+        levelIdList.push_back(partList[1]);
+      else
+        levelIdList.push_back(std::string(""));
+    }
+
+    //std::cout << "ALIAS " << aliasName << "\n";
+    //for (auto it = aliasStrings.begin(); it != aliasStrings.end(); ++it)
+    //  std::cout << " - name : " << *it << "\n";
+
+    if (nameList.size() == 0)
+    {
+      nameList.push_back(aliasName);
+      levelIdList.push_back(std::string(""));
+    }
   }
   catch (...)
   {
