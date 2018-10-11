@@ -382,6 +382,42 @@ end
 
 
 
+-- ***********************************************************************
+--  FUNCTION : LIST
+-- ***********************************************************************
+--  The function returns values in a string
+-- ***********************************************************************
+
+function LIST(language,numOfParams,params)
+  
+  local result = {};
+  local str = "";
+  
+  -- for index, value in pairs(params) do
+  --   print(index.." : "..value);
+  -- end
+
+  if (numOfParams > 0) then    
+    for index, value in pairs(params) do
+      if (value ~= ParamValueMissing) then
+        str = str..value;
+      else
+        str = str..";"
+      end
+      if (index < numOfParams) then
+        str = str..";"
+      end
+    end
+  end
+    
+  result.message = 'OK';
+  result.value = str;
+  return result.value,result.message;
+
+end
+
+
+
 
 -- ***********************************************************************
 --  FUNCTION : getFunctionNames
@@ -464,6 +500,10 @@ function getFunctionNames(type)
 
   if (type == 1) then 
     functionNames = 'ABS,AVG,DIV,ITEM,MAX,MIN,MUL,NEG,SUM,DIFF,HYPOT,SQRT';
+  end
+
+  if (type == 5) then 
+    functionNames = 'LIST';
   end
   
   return functionNames;
