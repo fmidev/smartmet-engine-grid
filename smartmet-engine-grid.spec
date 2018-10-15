@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 18.9.26
+Version: 18.10.15
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -14,9 +14,9 @@ BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: libconfig-devel
 BuildRequires: libpqxx-devel
-BuildRequires: smartmet-library-grid-content-devel >= 18.9.26
-BuildRequires: smartmet-library-grid-files-devel >= 18.9.26
-BuildRequires: smartmet-library-spine-devel >= 18.9.24
+BuildRequires: smartmet-library-grid-content-devel >= 18.10.15
+BuildRequires: smartmet-library-grid-files-devel >= 18.10.15
+BuildRequires: smartmet-library-spine-devel >= 18.11.1
 BuildRequires: make
 BuildRequires: omniORB-devel
 BuildRequires: boost-devel
@@ -24,9 +24,9 @@ BuildRequires: gdal-devel
 Requires: boost-thread
 Requires: libconfig
 Requires: libpqxx-devel
-Requires: smartmet-library-grid-content >= 18.9.26
-Requires: smartmet-library-grid-files >= 18.9.26
-Requires: smartmet-library-spine >= 18.9.24
+Requires: smartmet-library-grid-content >= 18.10.15
+Requires: smartmet-library-grid-files >= 18.10.15
+Requires: smartmet-library-spine >= 18.11.1
 Requires: omniORB-devel
 Provides: %{SPECNAME}
 
@@ -64,6 +64,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Mon Oct 15 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.10.15-1.fmi
+- Added a LIST-function that is needed when information is queried by forecast number range
+- Optional level-id field added into the producer alias definitions
 * Wed Sep 26 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.9.26-1.fmi
 - Version update
 * Mon Sep 10 2018 Mika Heiskanen <mika.heiskanen@fmi.fi> - 18.9.10-1.fmi
