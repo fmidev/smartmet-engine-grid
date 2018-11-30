@@ -984,6 +984,7 @@ FILE* Engine::openMappingFile(const std::string& mappingFile)
     fprintf(file,"#         E = Enabled\n");
     fprintf(file,"#         D = Disabled\n");
     fprintf(file,"# 12) Mapping function (enables data conversions during the mapping)\n");
+    fprintf(file,"# 13) Reverse mapping function\n");
     fprintf(file,"# \n");
 
     return file;
@@ -1130,14 +1131,15 @@ void Engine::updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyTy
                 Identification::FmiParameterId_newbase paramMapping;
                 if (Identification::gridDef.getNewbaseParameterMappingByFmiId(paramDef.mFmiParameterId,paramMapping))
                 {
-                  fprintf(file,"%s",paramMapping.mConversionFunction.c_str());
+                  fprintf(file,"%s;",paramMapping.mConversionFunction.c_str());
+                  fprintf(file,"%s",paramMapping.mReverseConversionFunction.c_str());
                 }
               }
               fprintf(file,";\n");
             }
             else
             {
-              fprintf(file,"1;1;1;0;D;;\n");
+              fprintf(file,"1;1;1;0;D;;;\n");
             }
           }
         }
