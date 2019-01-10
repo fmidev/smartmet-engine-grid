@@ -1,7 +1,16 @@
 # Producer & geometryId search order. If no producer is given in
 # the query then the producers are used in the following order.
-SMARTMET;1073;7.6km x 7.5km;
-SMARTMETMTA;1073;7.6km x 7.5km;
+#pal;5900
+#pal_skandinavia;5900;15.3km x 15.1km;
+climate_tmax;5909;9.7km x 10.3km;
+ecmwf_eurooppa_pinta;5903;25.4km x 28.1km;
+ecmwf_skandinavia_painepinta;5901;39.7km x 40.1km;
+hirlam;5201;10.0km x 3.7km;
+pal_skandinavia2;5908;16.3km x 13.8km;
+tosummertime;5900;15.3km x 15.1km;
+towintertime;5900;15.3km x 15.1km;
+tutka_suomi_rr;5907;1.0km x 1.0km;
+weeklyclimatology;5202;206.5km x 119.8km;
 HL2;173;7.9km x 7.2km;
 HL2;174;8.0km x 7.1km;
 HL2;175;7.9km x 7.1km;
@@ -49,12 +58,27 @@ LAPSFIN;40;3.4km x 2.7km;
 LAPSSCAN;41;2.9km x 3.2km;
 LAPSSCAN;1067;3.0km x 3.0km;
 MEPS;1078;2.6km x 2.4km;
+MEPS;1095;2.6km x 2.4km;
 MEPSMTA;1078;2.6km x 2.4km;
 MEPS_PREOP;1078;2.6km x 2.4km;
+MEPS_PREOP;1095;2.6km x 2.4km;
+MEPS_PREOPMTA;1095;2.6km x 2.4km;
 MEPS_PREOPMTA;1078;2.6km x 2.4km;
 MESAN;13;9.4km x 11.1km;
+METAN;1092;1.0km x 1.0km;
+MNWC;1078;2.6km x 2.4km;
+MNWCMTA;1078;2.6km x 2.4km;
 PEPSSCAN;1071;2.5km x 2.5km;
 SMHIMESAN;1066;2.7km x 2.8km;
 TIENHOITO;13;9.4km x 11.1km;
 WAM_MBE;606;7.5km x 7.5km;
 BLENDR;1086;3.0km x 3.0km;
+BLENDB;1086;3.0km x 3.0km;
+BLENDW;1086;3.0km x 3.0km;
+SMARTMET;1073;7.6km x 7.5km;
+SMARTMETMTA;1073;7.6km x 7.5km;
+SMARTMETNWC;1073;7.6km x 7.5km;
+HARMONIE;999;;
+
+
+
