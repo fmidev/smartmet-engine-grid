@@ -1,6 +1,7 @@
 #pragma once
 
 #include <spine/SmartMetEngine.h>
+#include <gis/DEM.h>
 #include <grid-content/contentServer/cache/CacheImplementation.h>
 #include <grid-content/contentServer/redis/RedisImplementation.h>
 #include <grid-content/dataServer/implementation/ServiceImplementation.h>
@@ -38,13 +39,17 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     T::ParamLevelId     getFmiParameterLevelId(uint producerId,int level);
     void                getProducerNameList(const std::string& aliasName,std::vector<std::string>& nameList);
-    void                getProducerNameAndLevelIdList(const std::string& aliasName,std::vector<std::string>& nameList,std::vector<std::string>& levelIdList);
+    std::string         getProducerAlias(const std::string& producerName,int levelId);
+    void                getProducerNameAndLevelIdList(const std::string& aliasName,std::vector<std::string>& nameList,std::vector<std::string>& geometryIdList,std::vector<std::string>& levelIdList,std::vector<std::string>& levelList);
+    void                getProducerNameAndLevelIdList(const std::string& producerName,const std::string& parameterName,std::vector<std::string>& nameList,std::vector<std::string>& geometryIdList,std::vector<std::string>& levelIdList,std::vector<std::string>& levelList);
+    void                getProducerNameAndLevelIdList(const std::string& producerName,const std::string& parameterName,int levelId,std::vector<std::string>& nameList,std::vector<std::string>& geometryIdList,std::vector<std::string>& levelIdList,std::vector<std::string>& levelList);
     void                getProducerList(string_vec& producerList);
-    void                getProducerParameterLevelList(const std::string& producerName,T::ParamLevelId fmiParamLevelId,double multiplier,std::vector<double>& levels);
+    void                getProducerParameterLevelList(const std::string& producerName,T::ParamLevelId fmiParamLevelId,double multiplier,std::set<double>& levels);
     void                getProducerParameterLevelIdList(const std::string& producerName,std::set<T::ParamLevelId>& levelIdList);
 
     bool                isGridProducer(const std::string& producer);
 
+    void                setDem(boost::shared_ptr<Fmi::DEM> dem);
     void                updateProcessing();
 
   protected:
@@ -151,7 +156,10 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     time_t              mLevelInfoList_lastUpdate;
     ThreadLock          mThreadLock;
 
-    QueryServer::AliasFile mProducerAliases;
+    boost::shared_ptr<Fmi::DEM>       mDem;
+    QueryServer::AliasFile            mProducerAliases;
+    QueryServer::AliasFileCollection  mParameterAliasFileCollection;
+
 };
 
 }  // namespace Grid

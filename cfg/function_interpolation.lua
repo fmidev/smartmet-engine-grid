@@ -1,6 +1,6 @@
 ParamValueMissing = -16777216;
 PI = 3.1415926;
-DEBUG = 1;
+DEBUG = 0;
 
 
 -- ***********************************************************************
@@ -23,6 +23,22 @@ AreaInterpolationMethod.ExtNearest       = 1002;
 AreaInterpolationMethod.ExtLandscape     = 1100;
 
 AreaInterpolationMethod.ExtWindDirection = 1200;
+AreaInterpolationMethod.ExtWindVector    = 1210;
+
+
+
+function round(num)
+  under = math.floor(num)
+  upper = math.floor(num) + 1
+  underV = -(under - num)
+  upperV = upper - num
+  if (upperV > underV) then
+      return under
+  else
+      return upper
+  end
+end
+
 
 
 -- ***********************************************************************
@@ -209,6 +225,291 @@ function interpolate_linear(x,y,val_bl,val_br,val_tr,val_tl)
   return ParamValueMissing;
   
 end
+
+
+
+
+function interpolate_linear_1D(factor,left,right)
+
+  if (left == ParamValueMissing) then
+    if (factor == 1) then
+      return right;
+    else
+      return ParamValueMissing;
+    end   
+  end
+  
+  if (right == ParamValueMissing) then 
+    if (theFactor == 0) then
+      return left;
+    else
+      return ParamValueMissing;   
+    end
+  end
+  
+  return (1 - factor) * left + factor * right;
+end
+
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : interpolate_windVector
+-- ***********************************************************************
+--  The function returns the interpolate value.
+-- ***********************************************************************
+
+function interpolate_windVector(x,y,val_bl,val_br,val_tr,val_tl)
+
+  if (DEBUG == 1) then
+    print("interpolate_windVector("..x..","..y..","..val_bl..","..val_br..","..val_tr..","..val_tl..")");
+  end
+
+  local dx = x;
+  local dy = y;
+  
+  local windDirection = {};
+  local windSpeed = {};
+  local weight = {};
+
+  if (val_tl ~= ParamValueMissing  and  val_tr ~= ParamValueMissing and val_bl ~= ParamValueMissing  and  val_br ~= ParamValueMissing) then
+
+    -- bottomLeft
+    windDirection[1] = (val_bl % 100) * 10;
+    windSpeed[1] = (val_bl / 100);
+    weight[1] = (1 - dx) * (1 - dy);
+
+    -- bottomRight
+    windDirection[2] = (val_br % 100) * 10;
+    windSpeed[2] = (val_br / 100);
+    weight[2] = dx *(1 - dy);
+
+    -- topLeft
+    windDirection[3] = (val_tl % 100) * 10;
+    windSpeed[3] = (val_tl / 100);
+    weight[3] = (1 - dx) * dy;
+
+    -- topRight
+    windDirection[4] = (val_tr % 100) * 10;
+    windSpeed[4] = (val_tr / 100);
+    weight[4] = dx *dy;
+
+    local speedSum = 0;
+    local speedSumX = 0;
+    local speedSumY = 0;
+    local weightSum = 0;
+    local bestWeight = 0;
+    local bestDirection = 0;
+    
+    for i=1,4 do
+
+      if (windSpeed[i] ~= ParamValueMissing and windDirection[i] ~= ParamValueMissing and weight[i] > 0) then
+
+        if (i == 1 or weight[i] > bestWeight) then          
+          bestDirection = windDirection[i];          
+          bestWeight = weight[i];
+        end
+
+        weightSum = weightSum + weight[i];
+        speedSum = speedSum + weight[i] * windSpeed[i];
+
+        -- Note that wind direction is measured against the Y-axis,
+        -- not the X-axis. Hence sin and cos are not in the usual order.
+
+        local dir = winDirection[i] / 2*PI;
+  
+        speedSumX = speedSumX + weight[i] * math.cos(dir);
+        speedSumY = speedSumY + weight[i] * math.sin(dir);
+      end;
+    end
+    
+    -- Direction
+    local wdInterp = 0;   
+    local xx = speedSumX / weightSum;
+    local yy = speedSumY / weightSum;
+
+    -- If there is almost exact cancellation, return best weighted direction instead.
+    if (math.sqrt(xx * xx + yy * yy) < 0.01) then    
+      wdInterp = bestDirection;
+    end
+
+    -- Otherwise use the 2D mean
+    local d = math.atan2(yy, xx) * 2*PI;  
+    if (d < 0) then
+      d = d + 360;
+    end
+      
+    wdInterp = d;
+    
+    -- Speed   
+    local wsInterp = speedSum / weightSum;
+    
+    if (wdInterp ~= ParamValueMissing and wsInterp ~= ParamValueMissing) then
+      return round(wsInterp) * 100 + round(wdInterp / 10);
+    else
+      return ParamValueMissing;
+    end
+  
+  end
+
+  -- Grid cell edges
+
+  if (dy == 0) then
+    return interpolate_linear_1D(dx, val_bl, val_br);
+  end
+  
+  if (dy == 1) then
+    return interpolate_linear_1D(dx, val_tl, val_tr);
+  end
+  
+  if (dx == 0) then
+    return interpolate_linear_1D(dy, val_bl, val_tl);
+  end
+  
+  if (dx == 1) then
+    return interpolate_linear_1D(dy, val_br, val_tr);
+  end
+
+  return ParamValueMissing;
+
+end
+
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : interpolate_windVector2
+-- ***********************************************************************
+--  The function returns the interpolate value.
+-- ***********************************************************************
+
+function interpolate_windVector2(x,y,wd_bl,wd_br,wd_tr,wd_tl,ws_bl,ws_br,ws_tr,ws_tl)
+
+  if (DEBUG == 1) then
+    print("interpolate_windVector2("..x..","..y..","..wd_bl..","..wd_br..","..wd_tr..","..wd_tl..","..ws_bl..","..ws_br..","..ws_tr..","..ws_tl..")");
+  end
+
+  local dx = x;
+  local dy = y;
+  
+  local windDirection = {};
+  local windSpeed = {};
+  local weight = {};
+
+  if (val_tl ~= ParamValueMissing  and  val_tr ~= ParamValueMissing and val_bl ~= ParamValueMissing  and  val_br ~= ParamValueMissing) then
+
+    -- bottomLeft
+    windDirection[1] = wd_bl;
+    windSpeed[1] = ws_bl
+    weight[1] = (1 - dx) * (1 - dy);
+
+    -- bottomRight
+    windDirection[2] = wd_br;
+    windSpeed[2] = ws_br;
+    weight[2] = dx *(1 - dy);
+
+    -- topLeft
+    windDirection[3] = wd_tl;
+    windSpeed[3] = ws_tl;
+    weight[3] = (1 - dx) * dy;
+
+    -- topRight
+    windDirection[4] = wd_tr;
+    windSpeed[4] = ws_tr;
+    weight[4] = dx *dy;
+
+    local speedSum = 0;
+    local speedSumX = 0;
+    local speedSumY = 0;
+    local weightSum = 0;
+    local bestWeight = 0;
+    local bestDirection = 0;
+    
+    for i=1,4 do
+
+      if (windSpeed[i] ~= ParamValueMissing and windDirection[i] ~= ParamValueMissing and weight[i] > 0) then
+
+        if (i == 1 or weight[i] > bestWeight) then          
+          bestDirection = windDirection[i];          
+          bestWeight = weight[i];
+        end
+
+        weightSum = weightSum + weight[i];
+        speedSum = speedSum + weight[i] * windSpeed[i];
+
+        -- Note that wind direction is measured against the Y-axis,
+        -- not the X-axis. Hence sin and cos are not in the usual order.
+
+        local dir = 2 * PI * windDirection[i] / 360 ;
+        -- print("DIR="..dir.." WEIGHT="..weight[i].." SPEED="..windSpeed[i].." WINDIR="..windDirection[i]);
+  
+        speedSumX = speedSumX + weight[i] * math.cos(dir);
+        speedSumY = speedSumY + weight[i] * math.sin(dir);
+     
+      end
+    
+    end
+    
+    -- Direction
+    local wdInterp = 0;   
+    local xx = speedSumX / weightSum;
+    local yy = speedSumY / weightSum;
+    
+    -- print("DIRECTION "..xx.." "..yy.." "..speedSumX.." " ..weightSum);
+
+    -- If there is almost exact cancellation, return best weighted direction instead.
+    if (math.sqrt(xx * xx + yy * yy) < 0.01) then
+      wdInterp = bestDirection;
+    else
+
+      -- Otherwise use the 2D mean
+      local d = 180 * math.atan2(yy, xx) / PI;
+      
+      --local d = math.atan2(yy, xx) / 2*PI * 360;  
+      if (d < 0) then
+        d = d + 360;
+      end
+      wdInterp = d;
+    end
+      
+    
+    -- Speed   
+    local wsInterp = speedSum / weightSum;
+
+    --print("INTP "..wsInterp.." "..wdInterp);
+    
+    if (wdInterp ~= ParamValueMissing and wsInterp ~= ParamValueMissing) then
+      return (wsInterp * 100) + (wdInterp / 10);
+    else
+      return ParamValueMissing;
+    end
+  
+  end
+
+  -- Grid cell edges
+
+  if (dy == 0) then
+    return interpolate_linear_1D(dx, ws_bl * 100 + (wd_bl/10), ws_br * 100 + (wd_br/10));
+  end
+  
+  if (dy == 1) then
+    return interpolate_linear_1D(dx, ws_tl * 100 + (wd_tl/10), ws_tr * 100 + (wd_tr/10));
+  end
+  
+  if (dx == 0) then
+    return interpolate_linear_1D(dy, ws_bl * 100 + (wd_bl/10), ws_tl * 100 + (wd_tl/10));
+  end
+  
+  if (dx == 1) then
+    return interpolate_linear_1D(dy, ws_br * 100 + (wd_br/10), ws_tr * 100 + (wd_tr/10));
+  end
+
+  return ParamValueMissing;
+
+end
+
 
 
 
@@ -787,6 +1088,52 @@ end
 
 
 -- ***********************************************************************
+--  FUNCTION : IPL_WIND_VECTOR
+-- ***********************************************************************
+--  The function returns the interpolate value.
+-- ***********************************************************************
+
+function IPL_WIND_VECTOR(numOfParams,params)
+
+  if (DEBUG == 1) then
+    print("IPL_WIND_VECTOR()");
+    for index, value in pairs(params) do
+      print(index.." : "..value);
+    end
+  end
+
+  local result = {};
+  
+  if (numOfParams ~= 16) then   
+    result.message = 'Invalid number of parameters given ('..numOfParams..')!';
+    result.value = 0;  
+    return result.value,result.message;
+  end
+    
+  result.message = 'OK';
+    
+  local n = params[2];
+  local x = params[3];
+  local y = params[4];
+  local ws_bl = params[5];
+  local ws_br = params[6];
+  local ws_tr = params[7];
+  local ws_tl = params[8];        
+  local wd_bl = params[13];
+  local wd_br = params[14];
+  local wd_tr = params[15];
+  local wd_tl = params[16];       
+  result.value = interpolate_windVector2(x,y,wd_bl,wd_br,wd_tr,wd_tl,ws_bl,ws_br,ws_tr,ws_tl);
+      
+  return result.value,result.message;
+  
+end
+
+
+
+
+
+-- ***********************************************************************
 --  FUNCTION : IPL_LANDSCAPE
 -- ***********************************************************************
 --  The function returns the interpolate value.
@@ -857,10 +1204,10 @@ function IPL_LANDSCAPE(numOfParams,params)
     n2 = params[p+1];
     x2 = params[p+2];
     y2 = params[p+3];
-    height_bl = params[p+4];
-    height_br = params[p+5];
-    height_tr = params[p+6];
-    height_tl = params[p+7];
+    height_bl = params[p+4] / 9.81;
+    height_br = params[p+5] / 9.81;
+    height_tr = params[p+6] / 9.81;
+    height_tl = params[p+7] / 9.81;
     p = p + 8;
   else
     p = p + 1;
@@ -932,7 +1279,7 @@ end
 
 
 -- ***********************************************************************
---  FUNCTION : getQueryParamStr
+--  FUNCTION : mergeInstructionParameters
 -- ***********************************************************************
   -- Merging the instructions parts to a single string.
 -- ***********************************************************************
@@ -1093,17 +1440,46 @@ function getAreaInterpolationInfo_ext_windDirection(qp)
 
   -- This is the actual Lua interpolation function.  
   p[1] = "F:IPL_WIND_DIR";    
-  
+ 
   -- It needs the values of the original parameter (all grid corners). 
-  p[2] = getQueryParamStr(qp.parameterKey,qp.parameterLevelId,qp.parameterLevel,qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List);
-  
+  p[2] = getQueryParamStr(qp.parameterKey,qp.parameterLevelId,qp.parameterLevel,qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List,0,0);
+    
   -- It needs the values of the 'WindSpeedMS' parameter (all grid corners). 
-  p[3] = getQueryParamStr("WindSpeedMS",qp.parameterLevelId,qp.parameterLevel,qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List);
+  p[3] = getQueryParamStr("WindSpeedMS",qp.parameterLevelId,qp.parameterLevel,qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List,0,0);
   
   return mergeInstructionParameters(p);
 
 end
 
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : getAreaInterpolationInfo_ext_windVector
+-- ***********************************************************************
+--  This function returns "instructions" how to interpolate the current
+--  parameter. 
+
+-- ***********************************************************************
+
+function getAreaInterpolationInfo_ext_windVector(qp)
+
+  local p = {};
+
+  -- This is the actual Lua interpolation function.  
+  p[1] = "F:IPL_WIND_VECTOR";    
+ 
+  -- It needs the values of the original parameter (all grid corners). Assuming that the
+  -- parameter is "WindSpeedMS" 
+  p[2] = getQueryParamStr(qp.parameterKey,qp.parameterLevelId,qp.parameterLevel,qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List,0,0);
+    
+  -- It needs the values of the 'WindDirection' parameter (all grid corners). 
+  p[3] = getQueryParamStr("WindDirection",qp.parameterLevelId,qp.parameterLevel,qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List,0,0);
+  
+  return mergeInstructionParameters(p);
+
+end
 
 
 
@@ -1136,11 +1512,11 @@ function getAreaInterpolationInfo(numOfParams,params)
   qp.forecastNumber = tonumber(params[9]);
   qp.areaInterpolationMethod = tonumber(params[10]);
 
-  -- if (DEBUG == 1) then
-  --  for index, value in pairs(qp) do
-  --    print(index.." : "..value);
-  --  end
-  -- end
+  if (DEBUG == 1) then
+    for index, value in pairs(qp) do
+      print(index.." : "..value);
+    end
+  end
 
   local instructions = "";
   
@@ -1164,6 +1540,10 @@ function getAreaInterpolationInfo(numOfParams,params)
     instructions = getAreaInterpolationInfo_ext_windDirection(qp);
   end;
     
+  if (qp.areaInterpolationMethod == AreaInterpolationMethod.ExtWindVector) then
+    instructions = getAreaInterpolationInfo_ext_windVector(qp);
+  end;
+
   if (DEBUG == 1) then
     print("  "..instructions);
   end
@@ -1227,6 +1607,10 @@ function getAreaInterpolationInfo2(producerName,parameterName,parameterKeyType,p
     
   if (areaInterpolationMethod == AreaInterpolationMethod.ExtWindDirection) then
     instructions = getAreaInterpolationInfo_ext_windDirection(qp);
+  end;
+    
+  if (areaInterpolationMethod == AreaInterpolationMethod.ExtWindVector) then
+    instructions = getAreaInterpolationInfo_ext_windVector(qp);
   end;
     
   if (DEBUG == 1) then
@@ -1322,7 +1706,7 @@ function getFunctionNames(type)
   local functionNames = '';
 
   if (type == 1) then 
-    functionNames = 'IPL_NONE,IPL_LINEAR,IPL_NEAREST,IPL_MAX,IPL_MIN,IPL_AVG,IPL_WIND_DIR,IPL_LANDSCAPE';
+    functionNames = 'IPL_NONE,IPL_LINEAR,IPL_NEAREST,IPL_MAX,IPL_MIN,IPL_AVG,IPL_WIND_DIR,IPL_WIND_VECTOR,IPL_LANDSCAPE';
   end
   
   if (type == 6) then 

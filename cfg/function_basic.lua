@@ -267,6 +267,10 @@ function SUM(numOfParams,params)
 
   local result = {};
   
+  -- for index, value in pairs(params) do
+  --  print("SUM "..index.." : "..value);
+  -- end
+
   if (numOfParams > 0) then   
     local sum = 0;
     for index, value in pairs(params) do

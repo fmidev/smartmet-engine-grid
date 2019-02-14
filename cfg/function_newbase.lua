@@ -431,7 +431,7 @@ function NB_WindCompass8(language,numOfParams,params)
 
   if (windDir == ParamValueMissing) then
     result.message = "OK"
-    result.value = ParamValueMissing;
+    result.value = "nan"; --ParamValueMissing;
     return result.value,result.message;
   end
 
@@ -472,7 +472,7 @@ function NB_WindCompass16(language,numOfParams,params)
 
   if (windDir == ParamValueMissing) then
     result.message = "OK"
-    result.value = ParamValueMissing;
+    result.value = "nan"; --ParamValueMissing;
     return result.value,result.message;
   end
 
@@ -513,7 +513,7 @@ function NB_WindCompass32(language,numOfParams,params)
 
   if (windDir == ParamValueMissing) then
     result.message = "OK"
-    result.value = ParamValueMissing;
+    result.value = "nan"; --ParamValueMissing;
     return result.value,result.message;
   end
 
@@ -700,6 +700,36 @@ end
 
 
 
+function MY_TEXT(language,numOfParams,params)
+
+  local result = {};
+
+  if (numOfParams ~= 1) then
+    result.message = 'Invalid number of parameters!';
+    result.value = 0;  
+    return result.value,result.message;
+  end
+
+  if (params[1] <= 280) then
+    if (language == "en") then
+      result.value = "COLD";
+    else
+      result.value = "KYLMÄÄ";
+    end
+  else
+    if (language == "en") then
+      result.value = "NOT SO COLD";
+    else
+      result.value = "EI NIIN KYLMÄÄ";
+    end
+  end
+
+  result.message = "OK"
+  return result.value,result.message;
+  
+end
+
+
 
 -- ***********************************************************************
 --  FUNCTION : getFunctionNames
@@ -784,7 +814,7 @@ function getFunctionNames(type)
   end
   
   if (type == 5) then 
-    functionNames = 'NB_WindCompass8,NB_WindCompass16,NB_WindCompass32,NB_WeatherText';
+    functionNames = 'NB_WindCompass8,NB_WindCompass16,NB_WindCompass32,NB_WeatherText,MY_TEXT';
   end
 
   return functionNames;

@@ -62,6 +62,36 @@ end
 
 
 
+function PROB_GT(numOfParams,params)
+
+  local cnt = 0;
+  local match = 0;
+  local result = {};  
+  local val = params[1];
+  print("PARAMS "..numOfParams);
+
+  for index, value in pairs(params) do
+    print("PROB "..index.." : "..value);
+  end
+    
+  for index, value in pairs(params) do
+    if (index > 1) then
+      cnt = cnt + 1;    
+      if (value > val) then
+        match = match + 1;
+      end
+    end
+  end
+  print("MATCH "..match.." COUNT "..cnt);
+  result.message = 'OK';
+  result.value = match / cnt;
+    
+  return result.value,result.message;
+  
+end
+
+
+
 -- ***********************************************************************
 --  FUNCTION : getFunctionNames
 -- ***********************************************************************
@@ -142,7 +172,7 @@ function getFunctionNames(type)
   local functionNames = '';
 
   if (type == 1) then 
-    functionNames = 'COUNT,VALID';
+    functionNames = 'COUNT,VALID,PROB_GT';
   end
   
   return functionNames;
