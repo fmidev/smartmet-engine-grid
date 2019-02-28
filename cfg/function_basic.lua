@@ -3,6 +3,23 @@ ParamValueMissing = -16777216;
 debug = 0;
 
 
+local yesno = {};
+yesno['en'] = {};
+yesno['en'][1] = "No";
+yesno['en'][2] = "Yes";
+
+yesno['fi'] = {};
+yesno['fi'][1] = "Ei";
+yesno['fi'][2] = "Kyllä";
+
+yesno['sv'] = {};
+yesno['sv'][1] = "Nej";
+yesno['sv'][2] = "Ja";
+
+yesno['default'] = yesno['en'];
+
+
+
 -- ***********************************************************************
 --  FUNCTION : ABS
 -- ***********************************************************************
@@ -424,6 +441,460 @@ end
 
 
 -- ***********************************************************************
+--  FUNCTION : IF
+-- ***********************************************************************
+--  The if the first parameter is 1 then function returns the second 
+--  parameter. Otherwise it returns the third parameter.
+-- ***********************************************************************
+
+function IF(numOfParams,params)
+
+  local result = {};
+  
+  if (numOfParams == 3) then
+    if (params[1] == 1) then
+      result.value = params[2];
+    else
+      result.value = params[3];
+    end
+      
+    result.message = 'OK';
+    return result.value,result.message;
+  else
+    result.message = 'Invalid number of parameters!';
+    result.value = 0;  
+  end
+    
+  return result.value,result.message;
+
+end
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : EQ
+-- ***********************************************************************
+--  The function returns 1 if the first parameter is equal with the seocnd 
+--  parameter. Otherwise it returns 0.
+-- ***********************************************************************
+
+function EQ(numOfParams,params)
+
+  local result = {};
+  
+  if (numOfParams == 2) then
+    if (params[1] == params[2]) then
+      result.value = 1;
+    else
+      result.value = 0;
+    end
+      
+    result.message = 'OK';
+    return result.value,result.message;
+  else
+    result.message = 'Invalid number of parameters!';
+    result.value = 0;  
+  end
+    
+  return result.value,result.message;
+
+end
+
+
+
+-- ***********************************************************************
+--  FUNCTION : NEQ
+-- ***********************************************************************
+--  The function returns 1 if the first parameter is not equal with the seocnd 
+--  parameter. Otherwise it returns 0.
+-- ***********************************************************************
+
+function EQ(numOfParams,params)
+
+  local result = {};
+  
+  if (numOfParams == 2) then
+    if (params[1] ~= params[2]) then
+      result.value = 1;
+    else
+      result.value = 0;
+    end
+      
+    result.message = 'OK';
+    return result.value,result.message;
+  else
+    result.message = 'Invalid number of parameters!';
+    result.value = 0;  
+  end
+    
+  return result.value,result.message;
+
+end
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : NOT
+-- ***********************************************************************
+--  The function returns 1 if the first parameter is 0. Otherwise it returns 0.
+-- ***********************************************************************
+
+function NOT(numOfParams,params)
+
+  local result = {};
+  
+  if (numOfParams == 1) then
+    if (params[1] == 0) then
+      result.value = 1;
+    else
+      result.value = 0;
+    end
+      
+    result.message = 'OK';
+    return result.value,result.message;
+  else
+    result.message = 'Invalid number of parameters!';
+    result.value = 0;  
+  end
+    
+  return result.value,result.message;
+
+end
+
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : GT
+-- ***********************************************************************
+--  The function returns 1 if the first parameter is greater than the seocnd 
+--  parameter. Otherwise it returns 0.
+-- ***********************************************************************
+
+function GT(numOfParams,params)
+
+  local result = {};
+  
+  if (numOfParams == 2) then
+    if (params[1] > params[2]) then
+      result.value = 1;
+    else
+      result.value = 0;
+    end
+      
+    result.message = 'OK';
+    return result.value,result.message;
+  else
+    result.message = 'Invalid number of parameters!';
+    result.value = 0;  
+  end
+    
+  return result.value,result.message;
+
+end
+
+
+
+-- ***********************************************************************
+--  FUNCTION : GTE
+-- ***********************************************************************
+--  The function returns 1 if the first parameter is greater or equal than 
+--  the seocnd parameter. Otherwise it returns 0.
+-- ***********************************************************************
+
+function GTE(numOfParams,params)
+
+  local result = {};
+  
+  if (numOfParams == 2) then
+    if (params[1] >= params[2]) then
+      result.value = 1;
+    else
+      result.value = 0;
+    end
+      
+    result.message = 'OK';
+    return result.value,result.message;
+  else
+    result.message = 'Invalid number of parameters!';
+    result.value = 0;  
+  end
+    
+  return result.value,result.message;
+
+end
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : LT
+-- ***********************************************************************
+--  The function returns 1 if the first parameter is less than the seocnd 
+--  parameter. Otherwise it returns 0.
+-- ***********************************************************************
+
+function LT(numOfParams,params)
+
+  local result = {};
+  
+  if (numOfParams == 2) then
+    if (params[1] < params[2]) then
+      result.value = 1;
+    else
+      result.value = 0;
+    end
+      
+    result.message = 'OK';
+    return result.value,result.message;
+  else
+    result.message = 'Invalid number of parameters!';
+    result.value = 0;  
+  end
+    
+  return result.value,result.message;
+
+end
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : LTE
+-- ***********************************************************************
+--  The function returns 1 if the first parameter is less or equal than 
+--  the seocnd parameter. Otherwise it returns 0.
+-- ***********************************************************************
+
+function LTE(numOfParams,params)
+
+  local result = {};
+  
+  if (numOfParams == 2) then
+    if (params[1] <= params[2]) then
+      result.value = 1;
+    else
+      result.value = 0;
+    end
+      
+    result.message = 'OK';
+    return result.value,result.message;
+  else
+    result.message = 'Invalid number of parameters!';
+    result.value = 0;  
+  end
+    
+  return result.value,result.message;
+
+end
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : AND
+-- ***********************************************************************
+--  The function returns 1 if all parameters are 1. Otherwise it returns 0.
+-- ***********************************************************************
+
+function AND(numOfParams,params)
+
+  local result = {};
+
+  if (numOfParams > 0) then   
+    for index, value in pairs(params) do
+      if (value ~= 1) then
+        result.message = 'OK';
+        result.value = 0;
+        return result.value,result.message;        
+      end
+    end
+    result.value = 1;
+    result.message = 'OK';
+    result.value = sum;
+  else
+    result.message = 'No parameters given!';
+    result.value = 0;  
+  end
+    
+  return result.value,result.message;
+
+end
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : OR
+-- ***********************************************************************
+--  The function returns 1 if all parameters are 1. Otherwise it returns 0.
+-- ***********************************************************************
+
+function OR(numOfParams,params)
+
+  local result = {};
+
+  if (numOfParams > 0) then   
+    for index, value in pairs(params) do
+      if (value == 1) then
+        result.message = 'OK';
+        result.value = 1;
+        return result.value,result.message;        
+      end
+    end
+    result.value = 0;
+    result.message = 'OK';
+    result.value = sum;
+  else
+    result.message = 'No parameters given!';
+    result.value = 0;  
+  end
+    
+  return result.value,result.message;
+
+end
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : IN
+-- ***********************************************************************
+--  The function returns 1 if the first parameter can be found from the
+--  the rest of the parameters. Otherwise it returns 0.
+-- ***********************************************************************
+
+function IN(numOfParams,params)
+
+  local result = {};
+
+  if (numOfParams > 1) then   
+    local s = params[1];
+    for index, value in pairs(params) do
+      if (index > 1  and  value == s) then
+        result.message = 'OK';
+        result.value = 1;
+        return result.value,result.message;        
+      end
+    end
+    result.value = 0;
+    result.message = 'OK';
+    result.value = sum;
+  else
+    result.message = 'Invalid number of parameters given!';
+    result.value = 0;  
+  end
+    
+  return result.value,result.message;
+
+end
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : INSIDE
+-- ***********************************************************************
+--  The function returns 1 if the first parameter is inside the value range
+--  defined by the second and the third parameter. Otherwise it returns 0.
+-- ***********************************************************************
+
+function INSIDE(numOfParams,params)
+
+  local result = {};
+
+  if (numOfParams == 3) then
+    if (params[1] >= params[2] and  params[1] <= params[3]) then
+      result.value = 1;
+    else
+      result.value = 0;
+    end
+      
+    result.message = 'OK';
+    return result.value,result.message;
+  else
+    result.message = 'Invalid number of parameters!';
+    result.value = 0;  
+  end
+    
+  return result.value,result.message;
+
+end
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : OUTSIDE
+-- ***********************************************************************
+--  The function returns 1 if the first parameter is outside the value range
+--  defined by the second and the third parameter. Otherwise it returns 0.
+-- ***********************************************************************
+
+function OUTSIDE(numOfParams,params)
+
+  local result = {};
+
+  if (numOfParams == 3) then
+    if (params[1] < params[2] and  params[1] > params[3]) then
+      result.value = 1;
+    else
+      result.value = 0;
+    end
+      
+    result.message = 'OK';
+    return result.value,result.message;
+  else
+    result.message = 'Invalid number of parameters!';
+    result.value = 0;  
+  end
+    
+  return result.value,result.message;
+
+end
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : YESNO
+-- ***********************************************************************
+
+function YESNO(language,numOfParams,params)
+
+  local result = {};
+
+  if (numOfParams ~= 1) then
+    result.message = 'Invalid number of parameters!';
+    result.value = 0;  
+    return result.value,result.message;
+  end
+
+  local idx = params[1] + 1;
+
+  result.message = "OK"
+  
+  if (yesno[language] ~= nil  and  yesno[language][idx] ~= nil)  then 
+    result.value = yesno[language][idx];
+  else
+    if (yesno['default'] ~= nil and yesno['default'][idx] ~= nil) then  
+      result.value = yesno['default'][idx];
+    end
+  end
+
+  return result.value,result.message;
+
+end
+
+
+
+
+
+
+-- ***********************************************************************
 --  FUNCTION : getFunctionNames
 -- ***********************************************************************
 --  The function returns the list of available functions in this file.
@@ -503,12 +974,14 @@ function getFunctionNames(type)
   local functionNames = '';
 
   if (type == 1) then 
-    functionNames = 'ABS,AVG,DIV,ITEM,MAX,MIN,MUL,NEG,SUM,DIFF,HYPOT,SQRT';
+    functionNames = 'ABS,AVG,DIV,ITEM,MAX,MIN,MUL,NEG,SUM,DIFF,HYPOT,SQRT,IF,EQ,NEG,GT,GTE,LT,LTE,AND,OR,NOT,IN,INSIDE,OUTSIDE';
   end
 
   if (type == 5) then 
-    functionNames = 'LIST';
+    functionNames = 'LIST,YESNO';
   end
+ 
+  
   
   return functionNames;
 

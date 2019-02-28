@@ -1,6 +1,6 @@
 ParamValueMissing = -16777216;
 PI = 3.1415926;
-DEBUG = 0;
+DEBUG = 1;
 
 
 -- ***********************************************************************
@@ -729,7 +729,7 @@ function interpolate_landscape(height,coverType,x,y,
     local fix_tl = lapseratefix(lapserate_tl, height, height_tl, waterFlag);
     local fix_tr = lapseratefix(lapserate_tr, height, height_tr, waterFlag);
 
-    -- print("fix_bl="..fix_bl.." fix_br="..fix_br.." fix_tl="..fix_tl.." fix_tr="..fix_tr);
+    print("fix_bl="..fix_bl.." fix_br="..fix_br.." fix_tl="..fix_tl.." fix_tr="..fix_tr);
 
     val_bl = val_bl + lapseratefix(lapserate_bl, height, height_bl, waterFlag);
     val_br = val_br + lapseratefix(lapserate_br, height, height_br, waterFlag);
@@ -744,7 +744,7 @@ function interpolate_landscape(height,coverType,x,y,
   local wtl = (1 - x) * y;
   local wtr = x * y;
 
-  -- print("wbl="..wbl.." wbr="..wbr.." wtl="..wtl.." wtr="..wtr);
+  print("wbl="..wbl.." wbr="..wbr.." wtl="..wtl.." wtr="..wtr);
 
   -- Modify the coefficients based on the land sea mask
 
@@ -772,8 +772,8 @@ function interpolate_landscape(height,coverType,x,y,
   
   end
   
-  -- print("** val_bl="..val_bl.." val_br="..val_br.." val_tl="..val_tl.." val_tr="..val_tr);
-  -- print("** wbl="..wbl.." wbr="..wbr.." wtl="..wtl.." wtr="..wtr);
+  print("** val_bl="..val_bl.." val_br="..val_br.." val_tl="..val_tl.." val_tr="..val_tr);
+  print("** wbl="..wbl.." wbr="..wbr.." wtl="..wtl.." wtr="..wtr);
     
   -- Perform combined interpolation
 

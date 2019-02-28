@@ -132,8 +132,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     Log                 mQueryServerDebugLog;
 
     uint                mNumOfCachedGrids;
-    uint                mMaxCompressedMegaBytesOfCachedGrids;
-    uint                mMaxUncompressedMegaBytesOfCachedGrids;
+    uint                mMaxSizeOfCachedGridsInMegaBytes;
 
     std::string         mProducerFile;
     std::string         mProducerAliasFile;

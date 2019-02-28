@@ -52,8 +52,7 @@ Engine::Engine(const char* theConfigFile)
     {
         "smartmet.library.grid-files.configFile",
         "smartmet.library.grid-files.cache.numOfGrids",
-        "smartmet.library.grid-files.cache.maxUncompressedSizeInMegaBytes",
-        "smartmet.library.grid-files.cache.maxCompressedSizeInMegaBytes",
+        "smartmet.library.grid-files.cache.maxSizeInMegaBytes",
 
         "smartmet.engine.grid.content-server.content-source.type",
         "smartmet.engine.grid.content-server.content-source.redis.address",
@@ -149,8 +148,7 @@ Engine::Engine(const char* theConfigFile)
     mQueryServerDebugLogMaxSize = 10000000;
     mQueryServerDebugLogTruncateSize = 5000000;
     mNumOfCachedGrids = 10000;
-    mMaxCompressedMegaBytesOfCachedGrids = 10000;
-    mMaxUncompressedMegaBytesOfCachedGrids = 10000;
+    mMaxSizeOfCachedGridsInMegaBytes = 10000;
 
     mConfigurationFile.readFile(theConfigFile);
     //mConfigurationFile.print(std::cout,0,0);
@@ -170,8 +168,7 @@ Engine::Engine(const char* theConfigFile)
 
     mConfigurationFile.getAttributeValue("smartmet.library.grid-files.configFile", mGridConfigFile);
     mConfigurationFile.getAttributeValue("smartmet.library.grid-files.cache.numOfGrids", mNumOfCachedGrids);
-    mConfigurationFile.getAttributeValue("smartmet.library.grid-files.cache.maxUncompressedSizeInMegaBytes", mMaxUncompressedMegaBytesOfCachedGrids);
-    mConfigurationFile.getAttributeValue("smartmet.library.grid-files.cache.maxCompressedSizeInMegaBytes", mMaxCompressedMegaBytesOfCachedGrids);
+    mConfigurationFile.getAttributeValue("smartmet.library.grid-files.cache.maxSizeInMegaBytes", mMaxSizeOfCachedGridsInMegaBytes);
 
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.type", mContentSourceType);
 
@@ -363,7 +360,7 @@ void Engine::init()
       server->startEventProcessing();
       dServer = server;
 
-      SmartMet::GRID::valueCache.init(mNumOfCachedGrids,mMaxUncompressedMegaBytesOfCachedGrids,mMaxCompressedMegaBytesOfCachedGrids);
+      SmartMet::GRID::valueCache.init(mNumOfCachedGrids,mMaxSizeOfCachedGridsInMegaBytes);
     }
 
     if (mQueryServerRemote  &&  mQueryServerIor.length() > 50)

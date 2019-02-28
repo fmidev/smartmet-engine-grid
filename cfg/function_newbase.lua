@@ -131,6 +131,15 @@ weather['fi'][92] = "sumua";
 weather['default'] = weather['fi'];
 
 
+local temp = {};
+temp['en'] = {};
+temp['en'][1] = "cold";
+temp['en'][2] = "hot";
+
+temp['default'] = temp['en'];
+
+
+
 ----------------------------------------------------------------------
 -- WindCompass8 texts in different languages:
 ----------------------------------------------------------------------
@@ -572,6 +581,39 @@ end
 
 
 -- ***********************************************************************
+--  FUNCTION : NB_TemperatureText
+-- ***********************************************************************
+
+function NB_TemperatureText(language,numOfParams,params)
+
+  local result = {};
+
+  if (numOfParams ~= 1) then
+    result.message = 'Invalid number of parameters!';
+    result.value = 0;  
+    return result.value,result.message;
+  end
+
+  local tempIdx = params[1];
+
+  result.message = "OK"
+  
+  if (temp[language] ~= nil  and  temp[language][tempIdx] ~= nil)  then 
+    result.value = temp[language][tempIdx];
+  else
+    if (temp['default'] ~= nil and temp['default'][tempIdx] ~= nil) then  
+      result.value = temp['default'][tempIdx];
+    end
+  end
+
+  return result.value,result.message;
+
+end
+
+
+
+
+-- ***********************************************************************
 --  FUNCTION : SnowWaterRatio
 -- ***********************************************************************
 --  Calculate water to snow conversion factor
@@ -731,6 +773,589 @@ end
 
 
 
+
+
+function getSmartSymbol(wawa,cloudiness,temperature)
+
+  local wawa_group1 = {0, 4, 5, 10, 20, 21, 22, 23, 24, 25};
+  local wawa_group2 = {30, 31, 32, 33, 34};
+
+  local cloudiness_limit1 = 0;
+  local cloudiness_limit2 = 1;
+  local cloudiness_limit3 = 5;
+  local cloudiness_limit4 = 7;
+  local cloudiness_limit5 = 9;
+
+  for index, w in pairs(wawa_group1) do
+    --print(index.." : "..w);
+
+    if (w == wawa) then
+  
+      if (cloudiness <= cloudiness_limit1) then
+        return 1;
+      end
+               
+      if (cloudiness <= cloudiness_limit2) then
+        return 2;
+      end
+
+      if (cloudiness <= cloudiness_limit3) then
+        return 4;
+      end
+
+      if (cloudiness <= cloudiness_limit4) then
+        return 6;
+      end
+      
+      if (cloudiness <= cloudiness_limit5) then
+        return 7;
+      end
+    end
+  end
+  
+  
+  for index, w in pairs(wawa_group2) do
+    -- print(index.." : "..w);
+
+    if (w == wawa) then
+
+      if (cloudiness <= cloudiness_limit1) then
+        return 1;
+      end
+               
+      if (cloudiness <= cloudiness_limit2) then
+        return 2;
+      end
+
+      if (cloudiness <= cloudiness_limit3) then
+        return 4;
+      end
+
+      if (cloudiness <= cloudiness_limit4) then
+        return 6;
+      end
+      
+      if (cloudiness <= cloudiness_limit5) then
+        return 9;
+      end
+    
+    end
+  
+  end
+
+  if (wawa == 40 or wawa == 41) then
+  
+    if (temperature <= 0) then
+    
+      if (cloudiness <= 5) then
+        return 51;
+      end
+
+      if (cloudiness <= 7) then
+        return 54;
+      end
+
+      if (cloudiness <= 9) then
+        return 57;
+      end
+    
+    else
+    
+      if (cloudiness <= 5) then
+        return 31;
+      end
+
+      if (cloudiness <= 7) then
+        return 34;
+      end
+
+      if (cloudiness <= 9) then
+        return 37;
+      end
+    
+    end
+  
+  end
+  
+  
+  if (wawa == 42) then
+  
+    if (temperature <= 0) then
+    
+      if (cloudiness <= 5) then
+        return 53;
+      end
+        
+      if (cloudiness <= 7) then
+        return 56;
+      end
+
+      if (cloudiness <= 9) then
+        return 37;
+      end
+    
+    else
+
+      if (cloudiness <= 5) then
+        return 33;
+      end
+
+      if (cloudiness <= 7) then
+        return 36;
+      end
+
+      if (cloudiness <= 9) then
+        return 39;
+      end
+  
+    end
+  
+  end
+  
+  
+  if (wawa >= 50 and wawa <= 53) then 
+  
+    if (cloudiness <= 9) then
+      return 11;
+    end
+  
+  end
+  
+  
+  if (wawa >= 54 and wawa <= 56) then 
+  
+    if (cloudiness <= 9) then
+      return 14;
+    end
+  
+  end
+  
+  
+  if (wawa == 60) then
+  
+    if (cloudiness <= 5) then
+      return 31;
+    end
+    
+    if (cloudiness <= 7) then
+      return 34;
+    end
+    
+    if (cloudiness <= 9) then
+      return 37;
+    end
+  end
+  
+  
+  if (wawa == 61) then
+
+    if (cloudiness <= 5) then
+      return 31;
+    end
+    
+    if (cloudiness <= 7) then
+      return 34;
+    end
+
+    if (cloudiness <= 9) then
+      return 37;
+    end
+
+  end
+  
+  
+  if (wawa == 62) then
+
+    if (cloudiness <= 5) then
+      return 32;
+    end
+    
+    if (cloudiness <= 7) then
+      return 35;
+    end
+    
+    if (cloudiness <= 9) then
+      return 38;
+    end
+  end
+
+  
+  if (wawa == 63) then
+  
+    if (cloudiness <= 5) then
+      return 33;
+    end
+    
+    if (cloudiness <= 7) then
+      return 36;
+    end
+    
+    if (cloudiness <= 9) then
+      return 39;
+    end
+
+  end
+
+  
+  if (wawa >= 64 and wawa <= 66) then
+
+    if (cloudiness <= 9) then
+      return 17;
+    end
+
+  end
+  
+
+  if (wawa == 67) then
+
+    if (cloudiness <= 5) then
+      return 41;
+    end
+    
+    if (cloudiness <= 7) then
+      return 44;
+    end
+
+    if (cloudiness <= 9) then
+      return 47;
+    end
+
+  end
+  
+
+  if (wawa == 68) then
+  
+    if (cloudiness <= 5) then
+      return 42;
+    end
+
+    if (cloudiness <= 7) then
+      return 45;
+    end
+
+    if (cloudiness <= 9) then
+      return 48;
+    end
+
+  end
+  
+
+  if (wawa == 70) then
+
+    if (cloudiness <= 5) then
+      return 51;
+    end
+
+    if (cloudiness <= 7) then
+      return 54;
+    end
+
+    if (cloudiness <= 9) then
+      return 57;
+    end
+
+  end
+  
+
+  if (wawa == 71) then
+  
+    if (cloudiness <= 5) then
+      return 51;
+    end
+
+    if (cloudiness <= 7)  then
+      return 54;
+    end
+    
+    if (cloudiness <= 9) then
+      return 57;
+    end
+
+  end
+  
+  if (wawa == 72) then
+  
+    if (cloudiness <= 5) then
+      return 52;
+    end
+
+    if (cloudiness <= 7) then
+      return 55;
+    end
+    
+    if (cloudiness <= 9) then
+      return 58;
+    end
+  end
+
+  
+  if (wawa == 73) then
+  
+    if (cloudiness <= 5) then
+      return 53;
+    end
+
+    if (cloudiness <= 7) then
+      return 56;
+    end
+
+    if (cloudiness <= 9) then
+      return 59;
+    end
+
+  end
+
+  
+  if (wawa == 74) then
+
+    if (cloudiness <= 5) then
+      return 51;
+    end
+
+
+    if (cloudiness <= 7) then
+      return 54;
+    end
+
+
+    if (cloudiness <= 9) then
+      return 57;
+    end
+
+  end
+
+  
+  if (wawa == 75) then
+  
+    if (cloudiness <= 5) then
+      return 52;
+    end
+
+
+    if (cloudiness <= 7) then
+      return 55;
+    end
+
+    if (cloudiness <= 9) then
+      return 58;
+    end
+  end
+  
+
+  if (wawa == 76) then
+
+    if (cloudiness <= 5) then
+      return 53;
+    end
+
+    if (cloudiness <= 7) then
+      return 56;
+    end
+
+    if (cloudiness <= 9) then
+      return 59;
+    end
+
+  end
+  
+  
+  if (wawa == 77) then
+  
+    if (cloudiness <= 9) then
+      return 57;
+    end
+
+  end
+  
+
+  if (wawa == 78) then
+  
+    if (cloudiness <= 9) then
+      return 57;
+    end
+
+  end
+  
+
+  if (wawa == 80) then
+  
+    if (temperature <= 0) then
+    
+      if (cloudiness <= 5) then
+        return 51;
+      end
+      
+      if (cloudiness <= 7) then
+        return 54;
+      end
+
+      if (cloudiness <= 9) then
+        return 57;
+      end
+    
+    else
+    
+      if (cloudiness <= 5) then
+        return 21;
+      end
+      
+      if (cloudiness <= 7) then
+        return 24;
+      end
+
+      if (cloudiness <= 9) then
+        return 27;
+      end
+
+    end
+
+  end
+
+  
+  if (wawa >= 81 and wawa <= 84) then
+  
+    if (cloudiness <= 5) then
+      return 21;
+    end
+
+    if (cloudiness <= 7) then
+      return 24;
+    end
+
+    if (cloudiness <= 9) then
+      return 27;
+    end
+
+  end
+  
+
+  if (wawa == 85) then
+  
+    if (cloudiness <= 5) then
+      return 51;
+    end
+
+    if (cloudiness <= 7) then
+      return 54;
+    end
+
+    if (cloudiness <= 9) then
+      return 57;
+    end
+
+  end
+
+  
+  if (wawa == 86) then
+  
+    if (cloudiness <= 5) then
+      return 52;
+    end
+
+    if (cloudiness <= 7) then
+      return 55;
+    end
+
+    if (cloudiness <= 9) then
+      return 58;
+    end
+
+  end
+  
+  if (wawa == 87) then
+  
+    if (cloudiness <= 5) then
+      return 53;
+    end
+    
+    if (cloudiness <= 7) then
+      return 56;
+    end
+    
+    if (cloudiness <= 9) then
+      return 59;
+    end
+  end
+  
+  if (wawa == 89) then 
+
+    if (cloudiness <= 5) then
+      return 61;
+    end
+
+    if (cloudiness <= 7) then
+      return 64;
+    end
+
+    if (cloudiness <= 9) then
+      return 67;
+    end
+
+  end
+  
+  return wawa;
+
+end
+
+
+
+
+function NB_smartSymbolNumber(numOfParams,params)
+
+  for index, value in pairs(params) do
+    print(index.." : "..value);
+  end
+
+  local result = {};
+
+  if (numOfParams ~= 4) then
+    result.message = 'Invalid number of parameters!';
+    result.value = 0;  
+    return result.value,result.message;
+  end
+  
+  local wawa = params[1];
+  local cloudiness = params[2];
+  local temperature = params[3];
+  local dark = params[4];
+
+  local smartsymbol = getSmartSymbol(wawa,cloudiness,temperature);
+  
+  print("SMART :"..smartsymbol);
+
+  -- Add day/night information
+  if (smartsymbol ~= ParamValueMissing) then
+  
+    if (dark == 0) then
+      result.value = 100 + smartsymbol;
+    else      
+      result.value = smartsymbol;
+    end
+    
+    result.message = "OK";
+    result.value = 100 + smartsymbol;
+      
+    return result.value,result.message;
+    
+  end
+
+  -- No valid combination found, return empty value
+  
+  result.message = "OK"
+  result.value = ParamValueMissing;
+  
+  return result.value,result.message;
+  
+end
+
+
+
+
+
+
+
+
+
 -- ***********************************************************************
 --  FUNCTION : getFunctionNames
 -- ***********************************************************************
@@ -810,11 +1435,11 @@ function getFunctionNames(type)
   local functionNames = '';
 
   if (type == 1) then 
-    functionNames = 'NB_SummerSimmerIndex,NB_FeelsLikeTemperature,NB_WindChill,NB_Snow1h,NB_Cloudiness8th';
+    functionNames = 'NB_SummerSimmerIndex,NB_FeelsLikeTemperature,NB_WindChill,NB_Snow1h,NB_Cloudiness8th,NB_smartSymbolNumber';
   end
   
   if (type == 5) then 
-    functionNames = 'NB_WindCompass8,NB_WindCompass16,NB_WindCompass32,NB_WeatherText,MY_TEXT';
+    functionNames = 'NB_WindCompass8,NB_WindCompass16,NB_WindCompass32,NB_WeatherText,NB_TemperatureText,MY_TEXT';
   end
 
   return functionNames;
