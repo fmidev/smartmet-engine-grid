@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 19.1.17
+Version: 19.2.15
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -14,8 +14,8 @@ BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: libconfig-devel
 BuildRequires: libpqxx-devel
-BuildRequires: smartmet-library-grid-content-devel >= 19.1.17
-BuildRequires: smartmet-library-grid-files-devel >= 19.1.17
+BuildRequires: smartmet-library-grid-content-devel >= 19.2.15
+BuildRequires: smartmet-library-grid-files-devel >= 19.2.15
 BuildRequires: smartmet-library-spine-devel >= 18.12.13
 BuildRequires: make
 BuildRequires: omniORB-devel
@@ -24,8 +24,8 @@ BuildRequires: gdal-devel
 Requires: boost-thread
 Requires: libconfig
 Requires: libpqxx-devel
-Requires: smartmet-library-grid-content >= 19.1.17
-Requires: smartmet-library-grid-files >= 19.1.17
+Requires: smartmet-library-grid-content >= 19.2.15
+Requires: smartmet-library-grid-files >= 19.2.15
 Requires: smartmet-library-spine >= 18.12.13
 Requires: omniORB-devel
 Provides: %{SPECNAME}
@@ -64,6 +64,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Fri Feb 15 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.2.15-1.fmi
+- Version update
+
 * Thu Jan 17 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.1.17-1.fmi
 - Version update
 
