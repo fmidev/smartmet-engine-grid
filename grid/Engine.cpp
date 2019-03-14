@@ -54,6 +54,12 @@ Engine::Engine(const char* theConfigFile)
         "smartmet.library.grid-files.cache.numOfGrids",
         "smartmet.library.grid-files.cache.maxSizeInMegaBytes",
 
+        "smartmet.library.grid-files.pointCache.enabled",
+        "smartmet.library.grid-files.pointCache.hitsRequired",
+        "smartmet.library.grid-files.pointCache.timePeriod",
+        "smartmet.library.grid-files.requestCounter.enabled",
+        "smartmet.library.grid-files.requestCounter.filename",
+
         "smartmet.engine.grid.content-server.content-source.type",
         "smartmet.engine.grid.content-server.content-source.redis.address",
         "smartmet.engine.grid.content-server.content-source.redis.port",
@@ -119,6 +125,10 @@ Engine::Engine(const char* theConfigFile)
     mContentSourceCorbaIor = "";
     mContentCacheEnabled = true;
     mContentCacheSortingFlags = 5;
+    mPointCacheEnabled = false;
+    mPointCacheHitsRequired = 20; // 20 hits required during the last 20 minutes
+    mPointCacheTimePeriod = 1200;
+    mRequestCounterEnabled = false;
 
     mContentServerProcessingLogEnabled = false;
     mContentServerDebugLogEnabled = false;
@@ -169,6 +179,13 @@ Engine::Engine(const char* theConfigFile)
     mConfigurationFile.getAttributeValue("smartmet.library.grid-files.configFile", mGridConfigFile);
     mConfigurationFile.getAttributeValue("smartmet.library.grid-files.cache.numOfGrids", mNumOfCachedGrids);
     mConfigurationFile.getAttributeValue("smartmet.library.grid-files.cache.maxSizeInMegaBytes", mMaxSizeOfCachedGridsInMegaBytes);
+
+    mConfigurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.enabled", mPointCacheEnabled);
+    mConfigurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.hitsRequired", mPointCacheHitsRequired);
+    mConfigurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.timePeriod", mPointCacheTimePeriod);
+
+    mConfigurationFile.getAttributeValue("smartmet.library.grid-files.requestCounter.enabled", mRequestCounterEnabled);
+    mConfigurationFile.getAttributeValue("smartmet.library.grid-files.requestCounter.filename", mRequestCounterFilename);
 
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.type", mContentSourceType);
 
@@ -341,23 +358,29 @@ void Engine::init()
     {
       DataServer::ServiceImplementation *server = new DataServer::ServiceImplementation();
       server->init(0,0,"NotRegistered","NotRegistered",mDataServerGridDirectory,cServer,mDataServerLuaFiles);
-      server->enableContentPreload(mContentPreloadEnabled);
+      server->setPointCacheEnabled(mPointCacheEnabled,mPointCacheHitsRequired,mPointCacheTimePeriod);
+      server->setRequestCounterEnabled(mRequestCounterFilename,mRequestCounterEnabled);
+      server->setContentPreloadEnabled(mContentPreloadEnabled);
       //dServer->init(0,0,"NotRegistered","NotRegistered",mDataServerGridDirectory,cache);
 
       if (mVirtualFilesEnabled)
       {
-        server->enableVirtualContent(true);
+        server->setVirtualContentEnabled(true);
         DataServer::VirtualContentFactory_type1 *factory = new DataServer::VirtualContentFactory_type1();
         factory->init(mVirtualFileDefinitions);
         server->addVirtualContentFactory(factory);
       }
       else
       {
-        server->enableVirtualContent(false);
+        server->setVirtualContentEnabled(false);
       }
 
       mDataServer.reset(server);
       server->startEventProcessing();
+
+      if (mRequestCounterEnabled)
+        server->startRequestCounting();
+
       dServer = server;
 
       SmartMet::GRID::valueCache.init(mNumOfCachedGrids,mMaxSizeOfCachedGridsInMegaBytes);

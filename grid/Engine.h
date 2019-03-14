@@ -83,6 +83,11 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     string_vec          mQueryServerLuaFiles;
 
     std::string         mGridConfigFile;
+    bool                mPointCacheEnabled;
+    uint                mPointCacheHitsRequired;
+    uint                mPointCacheTimePeriod;
+    bool                mRequestCounterEnabled;
+    std::string         mRequestCounterFilename;
     std::string         mDataServerGridDirectory;
 
     std::string         mContentSourceType;
