@@ -117,7 +117,7 @@ Engine::Engine(const char* theConfigFile)
     };
 
     mLevelInfoList_lastUpdate = 0;
-
+    mProducerList_updateTime = 0;
     mContentSourceRedisAddress = "127.0.0.1";
     mContentSourceRedisPort = 6379;
     mContentSourceRedisTablePrefix = "";
