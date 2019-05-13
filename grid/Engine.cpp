@@ -662,6 +662,162 @@ void Engine::getProducerNameList(const std::string& aliasName,std::vector<std::s
 
 
 
+void Engine::getParameterDetails(const std::string& aliasName,ParameterDetails_vec& parameterDetails)
+{
+  FUNCTION_TRACE
+  try
+  {
+    mProducerAliases.checkUpdates();
+
+    std::vector<std::string> aliasStrings;
+    mProducerAliases.getAliasList(aliasName,aliasStrings);
+
+    for (auto it=aliasStrings.begin(); it != aliasStrings.end(); it++)
+    {
+      std::vector<std::string> partList;
+      splitString(*it,';',partList);
+
+      ParameterDetails p;
+
+      uint len = partList.size();
+      for (uint t=0; t<len; t++)
+      {
+        switch (t)
+        {
+          case 0:
+            p.mProducerName = partList[t];
+            break;
+
+          case 1:
+            p.mGeometryId = partList[t];
+            break;
+
+          case 2:
+            p.mLevelId = partList[t];
+            break;
+
+          case 3:
+            p.mLevel = partList[t];
+            break;
+
+          case 4:
+            p.mForecastType = partList[t];
+            break;
+
+          case 5:
+            p.mForecastNumber = partList[t];
+            break;
+        }
+      }
+
+      parameterDetails.push_back(p);
+      p.print(std::cout,0,0);
+    }
+
+
+    if (parameterDetails.size() == 0)
+    {
+      ParameterDetails p;
+      p.mProducerName = aliasName;
+      parameterDetails.push_back(p);
+    }
+  }
+  catch (...)
+  {
+    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    throw exception;
+  }
+}
+
+
+
+
+void Engine::getParameterDetails(const std::string& producerName,const std::string& parameterName,ParameterDetails_vec& parameterDetails)
+{
+  FUNCTION_TRACE
+  try
+  {
+    mProducerAliases.checkUpdates();
+    mParameterAliasFileCollection.checkUpdates(false);
+
+
+    std::string prod = producerName;
+    printf("GET PRODUCER [%s;%s]\n",prod.c_str(),parameterName.c_str());
+    mParameterAliasFileCollection.getAlias(producerName,prod);
+
+
+    std::string param = parameterName;
+    mParameterAliasFileCollection.getAlias(parameterName,param);
+
+    std::string key = prod + ";" + param;
+
+    std::vector<std::string> aliasStrings;
+    mProducerAliases.getAliasList(key,aliasStrings);
+
+    for (auto it=aliasStrings.begin(); it != aliasStrings.end(); it++)
+    {
+      std::vector<std::string> partList;
+      splitString(*it,';',partList);
+
+      ParameterDetails p;
+
+      uint len = partList.size();
+      for (uint t=0; t<len; t++)
+      {
+        switch (t)
+        {
+          case 0:
+            p.mProducerName = partList[t];
+            break;
+
+          case 1:
+            p.mGeometryId = partList[t];
+            break;
+
+          case 2:
+            p.mLevelId = partList[t];
+            break;
+
+          case 3:
+            p.mLevel = partList[t];
+            break;
+
+          case 4:
+            p.mForecastType = partList[t];
+            break;
+
+          case 5:
+            p.mForecastNumber = partList[t];
+            break;
+        }
+      }
+
+      parameterDetails.push_back(p);
+      p.print(std::cout,0,0);
+    }
+
+
+    if (parameterDetails.size() == 0)
+    {
+      ParameterDetails p;
+      p.mProducerName = key;
+      parameterDetails.push_back(p);
+    }
+  }
+  catch (...)
+  {
+    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    throw exception;
+  }
+}
+
+
+
+#if 0
+
+
 void Engine::getProducerNameAndLevelIdList(const std::string& aliasName,std::vector<std::string>& nameList,std::vector<std::string>& geometryIdList,std::vector<std::string>& levelIdList,std::vector<std::string>& levelList)
 {
   FUNCTION_TRACE
@@ -713,7 +869,6 @@ void Engine::getProducerNameAndLevelIdList(const std::string& aliasName,std::vec
     throw exception;
   }
 }
-
 
 
 
@@ -852,7 +1007,7 @@ void Engine::getProducerNameAndLevelIdList(const std::string& producerName,const
 }
 
 
-
+#endif
 
 
 

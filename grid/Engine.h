@@ -10,6 +10,7 @@
 #include <grid-files/common/ConfigurationFile.h>
 #include <grid-files/common/Typedefs.h>
 #include <pthread.h>
+#include "ParameterDetails.h"
 
 
 namespace SmartMet
@@ -40,9 +41,15 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     T::ParamLevelId     getFmiParameterLevelId(uint producerId,int level);
     void                getProducerNameList(const std::string& aliasName,std::vector<std::string>& nameList);
     std::string         getProducerAlias(const std::string& producerName,int levelId);
+
+    void                getParameterDetails(const std::string& aliasName,ParameterDetails_vec& parameterDetails);
+    void                getParameterDetails(const std::string& producerName,const std::string& parameterName,ParameterDetails_vec& parameterDetails);
+
+/*
     void                getProducerNameAndLevelIdList(const std::string& aliasName,std::vector<std::string>& nameList,std::vector<std::string>& geometryIdList,std::vector<std::string>& levelIdList,std::vector<std::string>& levelList);
     void                getProducerNameAndLevelIdList(const std::string& producerName,const std::string& parameterName,std::vector<std::string>& nameList,std::vector<std::string>& geometryIdList,std::vector<std::string>& levelIdList,std::vector<std::string>& levelList);
     void                getProducerNameAndLevelIdList(const std::string& producerName,const std::string& parameterName,int levelId,std::vector<std::string>& nameList,std::vector<std::string>& geometryIdList,std::vector<std::string>& levelIdList,std::vector<std::string>& levelList);
+*/
     void                getProducerList(string_vec& producerList);
     void                getProducerParameterLevelList(const std::string& producerName,T::ParamLevelId fmiParamLevelId,double multiplier,std::set<double>& levels);
     void                getProducerParameterLevelIdList(const std::string& producerName,std::set<T::ParamLevelId>& levelIdList);
