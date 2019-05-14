@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 19.5.10
+Version: 19.5.15
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -14,8 +14,8 @@ BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: libconfig-devel
 BuildRequires: libpqxx-devel
-BuildRequires: smartmet-library-grid-content-devel >= 19.5.10
-BuildRequires: smartmet-library-grid-files-devel >= 19.5.10
+BuildRequires: smartmet-library-grid-content-devel >= 19.5.15
+BuildRequires: smartmet-library-grid-files-devel >= 19.5.14
 BuildRequires: smartmet-library-spine-devel >= 19.5.8
 BuildRequires: make
 BuildRequires: omniORB-devel
@@ -24,8 +24,8 @@ BuildRequires: gdal-devel
 Requires: boost-thread
 Requires: libconfig
 Requires: libpqxx-devel
-Requires: smartmet-library-grid-content >= 19.5.10
-Requires: smartmet-library-grid-files >= 19.5.10
+Requires: smartmet-library-grid-content >= 19.5.15
+Requires: smartmet-library-grid-files >= 19.5.14
 Requires: smartmet-library-spine >= 19.5.8
 Requires: omniORB-devel
 Provides: %{SPECNAME}
@@ -64,6 +64,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Tue May 14 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.5.15-1.fmi
+- Using original parameter values in new grib files
+
 * Fri May 10 2019 Mika Heiskanen <mika.heiskanen@fmi.fi> - 19.5.10-1.fmi
 - Fixed missing member initialization
 
