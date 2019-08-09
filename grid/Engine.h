@@ -42,6 +42,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                getProducerNameList(const std::string& aliasName,std::vector<std::string>& nameList);
     std::string         getProducerAlias(const std::string& producerName,int levelId);
 
+    std::string         getParameterString(std::string producer,std::string parameter);
     void                getParameterDetails(const std::string& aliasName,ParameterDetails_vec& parameterDetails);
     void                getParameterDetails(const std::string& producerName,const std::string& parameterName,ParameterDetails_vec& parameterDetails);
 

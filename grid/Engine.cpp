@@ -624,6 +624,70 @@ bool Engine::isGridProducer(const std::string& producer)
 
 
 
+std::string Engine::getParameterString(std::string producer,std::string parameter)
+{
+  FUNCTION_TRACE
+  try
+  {
+    std::string key = producer + ";" + parameter;
+
+    ParameterDetails_vec parameters;
+    getParameterDetails(producer,parameter,parameters);
+
+    std::string prod;
+    std::string geomId;
+    std::string level;
+    std::string levelId;
+    std::string forecastType;
+    std::string forecastNumber;
+
+    size_t len = parameters.size();
+
+    if (len > 0  &&  strcasecmp(parameters[0].mProducerName.c_str(),key.c_str()) != 0)
+    {
+      for (size_t t = 0; t < len; t++)
+      {
+        //parameters[t].print(std::cout,0,0);
+
+        if (parameters[t].mLevelId > "")
+          levelId = parameters[t].mLevelId;
+
+        if (parameters[t].mLevel > "")
+          level = parameters[t].mLevel;
+
+        if (parameters[t].mForecastType > "")
+          forecastType = parameters[t].mForecastType;
+
+        if (parameters[t].mForecastNumber > "")
+          forecastNumber = parameters[t].mForecastNumber;
+
+        if (parameters[t].mProducerName > "")
+          prod = parameters[t].mProducerName;
+
+        if (parameters[t].mGeometryId > "")
+        {
+          prod = parameters[t].mProducerName;
+          geomId = parameters[t].mGeometryId;
+        }
+      }
+      std::string paramStr = parameter + ":" + prod + ":" + geomId + ":" + levelId + ":" + level+ ":" + forecastType + ":" + forecastNumber;
+      return paramStr;
+    }
+
+    return parameter;
+  }
+  catch (...)
+  {
+    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    throw exception;
+  }
+}
+
+
+
+
+
 void Engine::getProducerNameList(const std::string& aliasName,std::vector<std::string>& nameList)
 {
   FUNCTION_TRACE
