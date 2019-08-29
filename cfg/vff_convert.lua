@@ -18,6 +18,248 @@ end
 
 
 
+-- ***********************************************************************
+--  FUNCTION : SSI / SummerSimmerIndex
+-- ***********************************************************************
+-- ***********************************************************************
+
+function SSI(columns,rows,rhArray,tempArray)
+
+  local result = {};
+  local simmer_limit = 14.5;
+
+
+  for index, rh in pairs(rhArray) do
+
+    local t = tempArray[index]-273.15;
+
+    if (t <= simmer_limit) then
+      result[index] = t;
+    end
+
+    if (rh == ParamValueMissing) then 
+      result[index] = ParamValueMissing;
+    end
+
+    if (t == ParamValueMissing) then 
+      result[index] = ParamValueMissing;
+    end
+
+    local rh_ref = 50.0 / 100.0;
+    local r = rh / 100.0;
+
+    result[index] =  (1.8 * t - 0.55 * (1 - r) * (1.8 * t - 26) - 0.55 * (1 - rh_ref) * 26) / (1.8 * (1 - 0.55 * (1 - rh_ref)));
+  end
+           
+  return result;
+
+end
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : SSI_COUNT / SummerSimmerIndex
+-- ***********************************************************************
+--  This is an internal function used by FEELS_LIKE function.
+-- ***********************************************************************
+
+function SSI_COUNT(rh,t)
+
+  local simmer_limit = 14.5;
+
+  if (t <= simmer_limit) then 
+    return t;
+  end
+
+  if (rh == ParamValueMissing) then 
+    return ParamValueMissing;
+  end
+
+  if (t == ParamValueMissing) then 
+    return ParamValueMissing;
+  end
+
+  local rh_ref = 50.0 / 100.0;
+  local r = rh / 100.0;
+
+  local value =  (1.8 * t - 0.55 * (1 - r) * (1.8 * t - 26) - 0.55 * (1 - rh_ref) * 26) / (1.8 * (1 - 0.55 * (1 - rh_ref)));         
+  return value;
+
+end
+
+
+
+-- ***********************************************************************
+--  FUNCTION : FEELS_LIKE
+-- ***********************************************************************
+
+function FEELS_LIKE(columns,rows,tempArray,windArray,rhArray,radArray)
+
+  local result = {};
+
+  --if (numOfParams ~= 4) then
+  --  result.message = 'Invalid number of parameters!';
+  --  result.value = 0;  
+  --  return result.value,result.message;
+  --end
+
+  for index, wind in pairs(windArray) do
+
+    local temp = tempArray[index]-273.15;
+    local rh = rhArray[index];      
+    local rad = radArray[index];      
+            
+    -- Calculate adjusted wind chill portion. Note that even though
+    -- the Canadien formula uses km/h, we use m/s and have fitted
+    -- the coefficients accordingly. Note that (a*w)^0.16 = c*w^16,
+    -- i.e. just get another coefficient c for the wind reduced to 1.5 meters.
+
+    local a = 15.0;   -- using this the two wind chills are good match at T=0
+    local t0 = 37.0;  -- wind chill is horizontal at this T
+
+    local chill = a + (1 - a / t0) * temp + a / t0 * math.pow(wind + 1, 0.16) * (temp - t0);
+
+    -- Heat index
+
+    local heat = SSI_COUNT(rh, temp);
+
+    -- Add the two corrections together
+
+    local feels = temp + (chill - temp) + (heat - temp);
+
+    -- Radiation correction done only when radiation is available
+    -- Based on the Steadman formula for Apparent temperature,
+    -- we just inore the water vapour pressure adjustment
+
+    if (rad ~= ParamValueMissing) then
+  
+      -- Chosen so that at wind=0 and rad=800 the effect is 4 degrees
+      -- At rad=50 the effect is then zero degrees
+    
+      local absorption = 0.07;
+      feels = feels + 0.7 * absorption * rad / (wind + 10) - 0.25;
+
+    end
+    
+    result[index] = feels;
+    
+  end
+
+  return result;
+  
+end
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : FEELS_LIKE_HL2
+-- ***********************************************************************
+
+function FEELS_LIKE_HL2(columns,rows,tempArray,windArray,rhArray,radArray)
+
+  local result = {};
+
+  --if (numOfParams ~= 4) then
+  --  result.message = 'Invalid number of parameters!';
+  --  result.value = 0;  
+  --  return result.value,result.message;
+  --end
+
+  for index, wind in pairs(windArray) do
+
+    local temp = tempArray[index]-273.15;
+    local rh = rhArray[index] * 100;      
+    local rad = radArray[index];      
+            
+    -- Calculate adjusted wind chill portion. Note that even though
+    -- the Canadien formula uses km/h, we use m/s and have fitted
+    -- the coefficients accordingly. Note that (a*w)^0.16 = c*w^16,
+    -- i.e. just get another coefficient c for the wind reduced to 1.5 meters.
+
+    local a = 15.0;   -- using this the two wind chills are good match at T=0
+    local t0 = 37.0;  -- wind chill is horizontal at this T
+
+    local chill = a + (1 - a / t0) * temp + a / t0 * math.pow(wind + 1, 0.16) * (temp - t0);
+
+    -- Heat index
+
+    local heat = SSI_COUNT(rh, temp);
+
+    -- Add the two corrections together
+
+    local feels = temp + (chill - temp) + (heat - temp);
+
+    -- Radiation correction done only when radiation is available
+    -- Based on the Steadman formula for Apparent temperature,
+    -- we just inore the water vapour pressure adjustment
+
+    if (rad ~= ParamValueMissing) then
+  
+      -- Chosen so that at wind=0 and rad=800 the effect is 4 degrees
+      -- At rad=50 the effect is then zero degrees
+    
+      local absorption = 0.07;
+      feels = feels + 0.7 * absorption * rad / (wind + 10) - 0.25;
+
+    end
+    
+    result[index] = feels;
+    
+  end
+
+  return result;
+  
+end
+
+
+
+-- ***********************************************************************
+--  FUNCTION : WIND_CHILL
+-- ***********************************************************************
+-- Return the wind chill, e.g., the equivalent no-wind temperature
+-- felt by a human for the given wind speed.
+--
+-- The formula is the new official one at FMI taken into use in 12.2003.
+-- See: http://climate.weather.gc.ca/climate_normals/normals_documentation_e.html
+--
+-- Note that Canadian formula uses km/h:
+--
+-- W = 13.12 + 0.6215 × Tair - 11.37 × V10^0.16 + 0.3965 × Tair × V10^0.16
+-- W = Tair + [(-1.59 + 0.1345 × Tair)/5] × V10m, when V10m < 5 km/h
+--
+-- \param wind The observed wind speed in m/s
+-- \param temp The observed temperature in degrees Celsius
+-- \return Equivalent no-wind temperature
+-- ***********************************************************************
+
+function WIND_CHILL(columns,rows,tempArray,windArray)
+
+  local result = {};
+
+  for index, wind in pairs(windArray) do
+
+    local temp = tempArray[index]-273.15;
+    if (wind == ParamValueMissing or temp == ParamValueMissing or wind < 0) then
+      result[index] = ParamValueMissing;
+    else
+      local kmh = wind * 3.6;
+
+      if (kmh < 5.0) then
+        result[index] = temp + (-1.59 + 0.1345 * temp) / 5.0 * kmh;
+      else
+        local wpow = math.pow(kmh, 0.16);
+        result[index] = 13.12 + 0.6215 * temp - 11.37 * wpow + 0.3965 * temp * wpow;
+      end
+    end
+  end
+  
+  return result;
+end
+
+
+
 
 -- ***********************************************************************
 --  FUNCTION : C2F
@@ -531,6 +773,18 @@ end
 --      This function takes an array of strings and returns a string. It
 --      is used for example in order to get additional instructions for
 --      complex interpolation operations.  
+--
+--    Type 7 : 
+--      Function takes four parameters as input:
+--        - columns       => Number of the columns in the grid
+--        - rows          => Number of the rows in the grid
+--        - params1       => Grid 1 values (= Array of float values)
+--        - params2       => Grid 2 values (= Array of float values)
+--        - params3       => Grid 3 values (= Array of float values)
+--      Function return one parameter:
+--        - result array  => Array of float values (must have the same 
+--                           number of values as the input 'params1'.               
+--  
 --  
 -- ***********************************************************************
  
@@ -543,10 +797,13 @@ function getFunctionNames(type)
     functionNames = 'C2F,C2K,F2C,F2K,K2C,K2F,DEG2RAD,RAD2DEG';
   end
   if (type == 3) then 
-    functionNames = 'WIND_SPEED';
+    functionNames = 'SSI,WIND_CHILL,WIND_SPEED';
   end
   if (type == 4) then 
     functionNames = 'WIND_V,WIND_U,WIND_DIR,WIND_TO_DIR';
+  end
+  if (type == 8) then 
+    functionNames = 'FEELS_LIKE,FEELS_LIKE_HL2';
   end
   
   return functionNames;
