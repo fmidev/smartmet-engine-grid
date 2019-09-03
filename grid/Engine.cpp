@@ -442,6 +442,7 @@ void Engine::init()
     mProducerAliases.init(mProducerAliasFile,true);
     mParameterAliasFileCollection.init(mParameterAliasFiles);
 
+
     clearMappings();
 
     startUpdateProcessing();
@@ -593,10 +594,15 @@ bool Engine::isGridProducer(const std::string& producer)
   FUNCTION_TRACE
   try
   {
+    AutoThreadLock lock(&mThreadLock);
     if ((time(nullptr) - mProducerList_updateTime) > 60)
     {
       mProducerList_updateTime = time(nullptr);
       getProducerList(mProducerList);
+
+      ContentServer_sptr contentServer = getContentServer_sptr();
+      contentServer->getGenerationInfoList(0,mGenerationList);
+      mGenerationList.sort(T::GenerationInfo::ComparisonMethod::generationId);
     }
 
     std::vector<std::string> nameList;
@@ -742,6 +748,7 @@ void Engine::getParameterDetails(const std::string& aliasName,ParameterDetails_v
       splitString(*it,';',partList);
 
       ParameterDetails p;
+      p.mOriginalProducer = aliasName;
 
       uint len = partList.size();
       for (uint t=0; t<len; t++)
@@ -782,6 +789,7 @@ void Engine::getParameterDetails(const std::string& aliasName,ParameterDetails_v
     if (parameterDetails.size() == 0)
     {
       ParameterDetails p;
+      p.mOriginalProducer = aliasName;
       p.mProducerName = aliasName;
       parameterDetails.push_back(p);
     }
@@ -825,6 +833,8 @@ void Engine::getParameterDetails(const std::string& producerName,const std::stri
       splitString(*it,';',partList);
 
       ParameterDetails p;
+      p.mOriginalProducer = producerName;
+      p.mOriginalParameter = parameterName;
 
       uint len = partList.size();
       for (uint t=0; t<len; t++)
@@ -865,8 +875,163 @@ void Engine::getParameterDetails(const std::string& producerName,const std::stri
     if (parameterDetails.size() == 0)
     {
       ParameterDetails p;
+      p.mOriginalProducer = producerName;
+      p.mOriginalParameter = parameterName;
       p.mProducerName = key;
       parameterDetails.push_back(p);
+    }
+  }
+  catch (...)
+  {
+    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    throw exception;
+  }
+}
+
+
+
+
+
+void Engine::getParameterDetails(const std::string& producerName,const std::string& parameterName,std::string& level,ParameterDetails_vec& parameterDetails)
+{
+  FUNCTION_TRACE
+  try
+  {
+    getParameterDetails(producerName,parameterName,parameterDetails);
+    for (auto it = parameterDetails.begin(); it != parameterDetails.end(); ++it)
+      it->mLevel = level;
+  }
+  catch (...)
+  {
+    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    throw exception;
+  }
+}
+
+
+
+
+
+void Engine::getParameterMappings(std::string producerName,std::string parameterName,T::GeometryId geometryId, bool onlySearchEnabled, QueryServer::ParameterMapping_vec& mappings)
+{
+  try
+  {
+    AutoThreadLock lock(&mThreadLock);
+
+    for (auto m = mParameterMappings.begin(); m != mParameterMappings.end(); ++m)
+    {
+      m->getMappings(producerName, parameterName, geometryId, onlySearchEnabled, mappings);
+      //printf("Get mappings [%s][%s][%d] %lu\n",producerName.c_str(),parameterName.c_str(),geometryId,mappings.size());
+    }
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+
+
+void Engine::getParameterMappings(
+    std::string producerName,
+    std::string parameterName,
+    T::GeometryId geometryId,
+    T::ParamLevelIdType levelIdType,
+    T::ParamLevelId levelId,
+    T::ParamLevel level,
+    bool onlySearchEnabled,
+    QueryServer::ParameterMapping_vec& mappings)
+{
+  try
+  {
+    AutoThreadLock lock(&mThreadLock);
+
+    for (auto m = mParameterMappings.begin(); m != mParameterMappings.end(); ++m)
+    {
+      m->getMappings(producerName, parameterName, geometryId, levelIdType, levelId, level, onlySearchEnabled, mappings);
+      //printf("Get mappings [%s][%s][%d] [%d][%d][%d] %lu\n",producerName.c_str(),parameterName.c_str(),geometryId,levelIdType, levelId, level,mappings.size());
+    }
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+
+
+void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails)
+{
+  try
+  {
+    ContentServer_sptr contentServer = getContentServer_sptr();
+
+    if (mGenerationList.getLength() == 0)
+    {
+      contentServer->getGenerationInfoList(0,mGenerationList);
+      mGenerationList.sort(T::GenerationInfo::ComparisonMethod::generationId);
+    }
+
+    for (auto rec = parameterDetails.begin(); rec != parameterDetails.end(); ++rec)
+    {
+      QueryServer::ParameterMapping_vec mappings;
+      if (rec->mLevelId > " " || rec->mLevel > " ")
+      {
+        getParameterMappings(rec->mProducerName, rec->mOriginalParameter, atoi(rec->mGeometryId.c_str()), T::ParamLevelIdTypeValue::ANY, atoi(rec->mLevelId.c_str()), atoi(rec->mLevel.c_str()), false, mappings);
+        if (mappings.size() == 0  &&  rec->mLevel < " ")
+        {
+          getParameterMappings(rec->mProducerName, rec->mOriginalParameter, atoi(rec->mGeometryId.c_str()), T::ParamLevelIdTypeValue::ANY, atoi(rec->mLevelId.c_str()), -1, false, mappings);
+          //getParameterMappings(producerInfo.mName, parameterKey, producerGeometryId, T::ParamLevelIdTypeValue::ANY, paramLevelId, -1, false, mappings);
+        }
+      }
+      else
+      {
+        getParameterMappings(rec->mProducerName, rec->mOriginalParameter, atoi(rec->mGeometryId.c_str()), true, mappings);
+        //getParameterMappings(producerInfo.mName, parameterKey, producerGeometryId, true, mappings);
+      }
+
+      for (auto m = mappings.begin(); m != mappings.end(); ++m)
+      {
+        MappingDetails details;
+        details.mMapping = *m;
+
+        T::ContentInfoList contentInfoList;
+        int result = contentServer->getContentListByParameterAndProducerName(0,m->mProducerName,m->mParameterKeyType,m->mParameterKey,m->mParameterLevelIdType,m->mParameterLevelId,m->mParameterLevel,m->mParameterLevel,-1,-1,m->mGeometryId,std::string("19000101T000000"),std::string("21000101T0000"),0,contentInfoList);
+        if (result == 0)
+        {
+          uint len = contentInfoList.getLength();
+          for (uint t=0; t<len; t++)
+          {
+            T::ContentInfo *cInfo = contentInfoList.getContentInfoByIndex(t);
+            if (cInfo != nullptr)
+            {
+              T::GenerationInfo *gInfo = mGenerationList.getGenerationInfoById(cInfo->mGenerationId);
+              if (gInfo != nullptr)
+              {
+                auto tt = details.mTimes.find(gInfo->mAnalysisTime);
+                if (tt != details.mTimes.end())
+                {
+                  tt->second.insert(cInfo->mForecastTime);
+                }
+                else
+                {
+                  std::set<std::string> ttt;
+                  ttt.insert(cInfo->mForecastTime);
+                  details.mTimes.insert(std::pair<std::string,std::set<std::string>>(gInfo->mAnalysisTime,ttt));
+                }
+              }
+            }
+          }
+        }
+
+        rec->mMappings.push_back(details);
+      }
     }
   }
   catch (...)
@@ -921,6 +1086,7 @@ T::ParamLevelId Engine::getFmiParameterLevelId(uint producerId,int level)
     {
       ContentServer_sptr  contentServer = getContentServer_sptr();
       contentServer->getLevelInfoList(0,mLevelInfoList);
+
       mLevelInfoList_lastUpdate = time(nullptr);
     }
 
@@ -1143,6 +1309,12 @@ void Engine::updateMappings()
 
       QueryServer::ParamMappingFile_vec parameterMappings;
       loadMappings(parameterMappings);
+
+      if (parameterMappings.size() > 0)
+      {
+        AutoThreadLock lock(&mThreadLock);
+        mParameterMappings = parameterMappings;
+      }
 
       if (!mParameterMappingUpdateFile_fmi.empty())
       {

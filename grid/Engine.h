@@ -45,6 +45,12 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::string         getParameterString(std::string producer,std::string parameter);
     void                getParameterDetails(const std::string& aliasName,ParameterDetails_vec& parameterDetails);
     void                getParameterDetails(const std::string& producerName,const std::string& parameterName,ParameterDetails_vec& parameterDetails);
+    void                getParameterDetails(const std::string& producerName,const std::string& parameterName,std::string& level,ParameterDetails_vec& parameterDetails);
+
+    void                mapParameterDetails(ParameterDetails_vec& parameterDetails);
+
+    void                getParameterMappings(std::string producerName,std::string parameterName,T::GeometryId geometryId, bool onlySearchEnabled, QueryServer::ParameterMapping_vec& mappings);
+    void                getParameterMappings(std::string producerName,std::string parameterName,T::GeometryId geometryId,T::ParamLevelIdType levelIdType,T::ParamLevelId levelId,T::ParamLevel level,bool onlySearchEnabled,QueryServer::ParameterMapping_vec& mappings);
 
     void                getProducerList(string_vec& producerList);
     void                getProducerParameterLevelList(const std::string& producerName,T::ParamLevelId fmiParamLevelId,double multiplier,std::set<double>& levels);
@@ -157,6 +163,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::string         mParameterMappingUpdateFile_newbase;
     time_t              mParameterMappingUpdateTime;
 
+
     string_vec          mProducerList;
     time_t              mProducerList_updateTime;
     T::LevelInfoList    mLevelInfoList;
@@ -166,7 +173,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     boost::shared_ptr<Fmi::DEM>       mDem;
     QueryServer::AliasFile            mProducerAliases;
     QueryServer::AliasFileCollection  mParameterAliasFileCollection;
-
+    QueryServer::ParamMappingFile_vec mParameterMappings;
+    T::GenerationInfoList             mGenerationList;
 };
 
 }  // namespace Grid
