@@ -46,7 +46,7 @@ DEFINES = -DUNIX -D_REENTRANT
 ifeq ($(CXX), clang++)
 
  FLAGS = \
-	-std=c++11 -fPIC -MD \
+	-std=c++11 -fPIC -MD -fno-omit-frame-pointer \
 	-Weverything \
 	-Wno-c++98-compat \
 	-Wno-float-equal \
