@@ -31,32 +31,32 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                         Engine(const char *theConfigFile);
     virtual             ~Engine();
 
-    int                 executeQuery(QueryServer::Query& query);
+    int                 executeQuery(QueryServer::Query& query) const;
 
-    ContentServer_sptr  getContentServer_sptr();
-    ContentServer_sptr  getContentSourceServer_sptr();
-    DataServer_sptr     getDataServer_sptr();
-    QueryServer_sptr    getQueryServer_sptr();
+    ContentServer_sptr  getContentServer_sptr() const;
+    ContentServer_sptr  getContentSourceServer_sptr() const;
+    DataServer_sptr     getDataServer_sptr() const;
+    QueryServer_sptr    getQueryServer_sptr() const;
 
-    T::ParamLevelId     getFmiParameterLevelId(uint producerId,int level);
-    void                getProducerNameList(const std::string& aliasName,std::vector<std::string>& nameList);
-    std::string         getProducerAlias(const std::string& producerName,int levelId);
+    T::ParamLevelId     getFmiParameterLevelId(uint producerId,int level) const;
+    void                getProducerNameList(const std::string& aliasName,std::vector<std::string>& nameList) const;
+    std::string         getProducerAlias(const std::string& producerName,int levelId) const;
 
-    std::string         getParameterString(std::string producer,std::string parameter);
-    void                getParameterDetails(const std::string& aliasName,ParameterDetails_vec& parameterDetails);
-    void                getParameterDetails(const std::string& producerName,const std::string& parameterName,ParameterDetails_vec& parameterDetails);
-    void                getParameterDetails(const std::string& producerName,const std::string& parameterName,std::string& level,ParameterDetails_vec& parameterDetails);
+    std::string         getParameterString(std::string producer,std::string parameter) const;
+    void                getParameterDetails(const std::string& aliasName,ParameterDetails_vec& parameterDetails) const;
+    void                getParameterDetails(const std::string& producerName,const std::string& parameterName,ParameterDetails_vec& parameterDetails) const;
+    void                getParameterDetails(const std::string& producerName,const std::string& parameterName,std::string& level,ParameterDetails_vec& parameterDetails) const;
 
-    void                mapParameterDetails(ParameterDetails_vec& parameterDetails);
+    void                mapParameterDetails(ParameterDetails_vec& parameterDetails) const;
 
-    void                getParameterMappings(std::string producerName,std::string parameterName,T::GeometryId geometryId, bool onlySearchEnabled, QueryServer::ParameterMapping_vec& mappings);
-    void                getParameterMappings(std::string producerName,std::string parameterName,T::GeometryId geometryId,T::ParamLevelIdType levelIdType,T::ParamLevelId levelId,T::ParamLevel level,bool onlySearchEnabled,QueryServer::ParameterMapping_vec& mappings);
+    void                getParameterMappings(std::string producerName,std::string parameterName,T::GeometryId geometryId, bool onlySearchEnabled, QueryServer::ParameterMapping_vec& mappings) const;
+    void                getParameterMappings(std::string producerName,std::string parameterName,T::GeometryId geometryId,T::ParamLevelIdType levelIdType,T::ParamLevelId levelId,T::ParamLevel level,bool onlySearchEnabled,QueryServer::ParameterMapping_vec& mappings) const;
 
-    void                getProducerList(string_vec& producerList);
-    void                getProducerParameterLevelList(const std::string& producerName,T::ParamLevelId fmiParamLevelId,double multiplier,std::set<double>& levels);
-    void                getProducerParameterLevelIdList(const std::string& producerName,std::set<T::ParamLevelId>& levelIdList);
+    void                getProducerList(string_vec& producerList) const;
+    void                getProducerParameterLevelList(const std::string& producerName,T::ParamLevelId fmiParamLevelId,double multiplier,std::set<double>& levels) const;
+    void                getProducerParameterLevelIdList(const std::string& producerName,std::set<T::ParamLevelId>& levelIdList) const;
 
-    bool                isGridProducer(const std::string& producer);
+    bool                isGridProducer(const std::string& producer) const;
 
     void                setDem(boost::shared_ptr<Fmi::DEM> dem);
     void                updateProcessing();
@@ -74,9 +74,6 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
 
   private:
-
-    ConfigurationFile   mConfigurationFile;
-    bool                mShutdownRequested;
 
     ContentServer_sptr  mContentServer;
     ContentServer_sptr  mContentServerCache;
@@ -120,7 +117,6 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     int                 mContentServerDebugLogTruncateSize;
     Log                 mContentServerDebugLog;
 
-
     bool                mDataServerProcessingLogEnabled;
     std::string         mDataServerProcessingLogFile;
     int                 mDataServerProcessingLogMaxSize;
@@ -161,20 +157,20 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     T::ParamKeyType     mMappingTargetKeyType;
     std::string         mParameterMappingUpdateFile_fmi;
     std::string         mParameterMappingUpdateFile_newbase;
-    time_t              mParameterMappingUpdateTime;
 
-
-    string_vec          mProducerList;
-    time_t              mProducerList_updateTime;
-    T::LevelInfoList    mLevelInfoList;
-    time_t              mLevelInfoList_lastUpdate;
-    ThreadLock          mThreadLock;
-
-    boost::shared_ptr<Fmi::DEM>       mDem;
-    QueryServer::AliasFile            mProducerAliases;
-    QueryServer::AliasFileCollection  mParameterAliasFileCollection;
-    QueryServer::ParamMappingFile_vec mParameterMappings;
-    T::GenerationInfoList             mGenerationList;
+    boost::shared_ptr<Fmi::DEM>               mDem;
+    mutable ConfigurationFile                 mConfigurationFile;
+    mutable bool                              mShutdownRequested;
+    mutable ThreadLock                        mThreadLock;
+    mutable time_t                            mParameterMappingUpdateTime;
+    mutable string_vec                        mProducerList;
+    mutable time_t                            mProducerList_updateTime;
+    mutable T::LevelInfoList                  mLevelInfoList;
+    mutable time_t                            mLevelInfoList_lastUpdate;
+    mutable QueryServer::AliasFile            mProducerAliases;
+    mutable QueryServer::AliasFileCollection  mParameterAliasFileCollection;
+    mutable QueryServer::ParamMappingFile_vec mParameterMappings;
+    mutable T::GenerationInfoList             mGenerationList;
 };
 
 }  // namespace Grid

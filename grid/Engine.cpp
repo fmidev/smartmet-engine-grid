@@ -491,7 +491,7 @@ void Engine::shutdown()
 
 
 
-int Engine::executeQuery(QueryServer::Query& query)
+int Engine::executeQuery(QueryServer::Query& query) const
 {
   FUNCTION_TRACE
   try
@@ -510,7 +510,7 @@ int Engine::executeQuery(QueryServer::Query& query)
 
 
 
-ContentServer_sptr Engine::getContentServer_sptr()
+ContentServer_sptr Engine::getContentServer_sptr() const
 {
   FUNCTION_TRACE
   try
@@ -532,7 +532,7 @@ ContentServer_sptr Engine::getContentServer_sptr()
 
 
 
-ContentServer_sptr Engine::getContentSourceServer_sptr()
+ContentServer_sptr Engine::getContentSourceServer_sptr() const
 {
   FUNCTION_TRACE
   try
@@ -551,7 +551,7 @@ ContentServer_sptr Engine::getContentSourceServer_sptr()
 
 
 
-DataServer_sptr Engine::getDataServer_sptr()
+DataServer_sptr Engine::getDataServer_sptr() const
 {
   FUNCTION_TRACE
   try
@@ -570,7 +570,7 @@ DataServer_sptr Engine::getDataServer_sptr()
 
 
 
-QueryServer_sptr Engine::getQueryServer_sptr()
+QueryServer_sptr Engine::getQueryServer_sptr() const
 {
   FUNCTION_TRACE
   try
@@ -589,7 +589,7 @@ QueryServer_sptr Engine::getQueryServer_sptr()
 
 
 
-bool Engine::isGridProducer(const std::string& producer)
+bool Engine::isGridProducer(const std::string& producer) const
 {
   FUNCTION_TRACE
   try
@@ -630,7 +630,7 @@ bool Engine::isGridProducer(const std::string& producer)
 
 
 
-std::string Engine::getParameterString(std::string producer,std::string parameter)
+std::string Engine::getParameterString(std::string producer,std::string parameter) const
 {
   FUNCTION_TRACE
   try
@@ -694,7 +694,7 @@ std::string Engine::getParameterString(std::string producer,std::string paramete
 
 
 
-void Engine::getProducerNameList(const std::string& aliasName,std::vector<std::string>& nameList)
+void Engine::getProducerNameList(const std::string& aliasName,std::vector<std::string>& nameList) const
 {
   FUNCTION_TRACE
   try
@@ -732,7 +732,7 @@ void Engine::getProducerNameList(const std::string& aliasName,std::vector<std::s
 
 
 
-void Engine::getParameterDetails(const std::string& aliasName,ParameterDetails_vec& parameterDetails)
+void Engine::getParameterDetails(const std::string& aliasName,ParameterDetails_vec& parameterDetails) const
 {
   FUNCTION_TRACE
   try
@@ -805,7 +805,7 @@ void Engine::getParameterDetails(const std::string& aliasName,ParameterDetails_v
 
 
 
-void Engine::getParameterDetails(const std::string& producerName,const std::string& parameterName,ParameterDetails_vec& parameterDetails)
+void Engine::getParameterDetails(const std::string& producerName,const std::string& parameterName,ParameterDetails_vec& parameterDetails) const
 {
   FUNCTION_TRACE
   try
@@ -893,7 +893,7 @@ void Engine::getParameterDetails(const std::string& producerName,const std::stri
 
 
 
-void Engine::getParameterDetails(const std::string& producerName,const std::string& parameterName,std::string& level,ParameterDetails_vec& parameterDetails)
+void Engine::getParameterDetails(const std::string& producerName,const std::string& parameterName,std::string& level,ParameterDetails_vec& parameterDetails) const
 {
   FUNCTION_TRACE
   try
@@ -914,7 +914,7 @@ void Engine::getParameterDetails(const std::string& producerName,const std::stri
 
 
 
-void Engine::getParameterMappings(std::string producerName,std::string parameterName,T::GeometryId geometryId, bool onlySearchEnabled, QueryServer::ParameterMapping_vec& mappings)
+void Engine::getParameterMappings(std::string producerName,std::string parameterName,T::GeometryId geometryId, bool onlySearchEnabled, QueryServer::ParameterMapping_vec& mappings) const
 {
   try
   {
@@ -944,7 +944,7 @@ void Engine::getParameterMappings(
     T::ParamLevelId levelId,
     T::ParamLevel level,
     bool onlySearchEnabled,
-    QueryServer::ParameterMapping_vec& mappings)
+    QueryServer::ParameterMapping_vec& mappings) const
 {
   try
   {
@@ -966,7 +966,7 @@ void Engine::getParameterMappings(
 
 
 
-void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails)
+void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails) const
 {
   try
   {
@@ -1046,7 +1046,7 @@ void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails)
 
 
 
-std::string Engine::getProducerAlias(const std::string& producerName,int levelId)
+std::string Engine::getProducerAlias(const std::string& producerName,int levelId) const
 {
   FUNCTION_TRACE
   try
@@ -1075,7 +1075,7 @@ std::string Engine::getProducerAlias(const std::string& producerName,int levelId
 
 
 
-T::ParamLevelId Engine::getFmiParameterLevelId(uint producerId,int level)
+T::ParamLevelId Engine::getFmiParameterLevelId(uint producerId,int level) const
 {
   FUNCTION_TRACE
   try
@@ -1114,7 +1114,7 @@ T::ParamLevelId Engine::getFmiParameterLevelId(uint producerId,int level)
 
 
 
-void Engine::getProducerList(string_vec& producerList)
+void Engine::getProducerList(string_vec& producerList) const
 {
   FUNCTION_TRACE
   try
@@ -1133,7 +1133,7 @@ void Engine::getProducerList(string_vec& producerList)
 
 
 
-void Engine::getProducerParameterLevelList(const std::string& producerName,T::ParamLevelId fmiParamLevelId,double multiplier,std::set<double>& levels)
+void Engine::getProducerParameterLevelList(const std::string& producerName,T::ParamLevelId fmiParamLevelId,double multiplier,std::set<double>& levels) const
 {
   FUNCTION_TRACE
   try
@@ -1185,7 +1185,7 @@ void Engine::getProducerParameterLevelList(const std::string& producerName,T::Pa
 
 
 
-void Engine::getProducerParameterLevelIdList(const std::string& producerName,std::set<T::ParamLevelId>& levelIdList)
+void Engine::getProducerParameterLevelIdList(const std::string& producerName,std::set<T::ParamLevelId>& levelIdList) const
 {
   FUNCTION_TRACE
   try
