@@ -38,26 +38,105 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     DataServer_sptr     getDataServer_sptr() const;
     QueryServer_sptr    getQueryServer_sptr() const;
 
-    T::ParamLevelId     getFmiParameterLevelId(uint producerId,int level) const;
-    void                getProducerNameList(const std::string& aliasName,std::vector<std::string>& nameList) const;
-    std::string         getProducerAlias(const std::string& producerName,int levelId) const;
+    T::ParamLevelId     getFmiParameterLevelId(
+                          uint producerId,
+                          int level) const;
 
-    std::string         getParameterString(std::string producer,std::string parameter) const;
-    void                getParameterDetails(const std::string& aliasName,ParameterDetails_vec& parameterDetails) const;
-    void                getParameterDetails(const std::string& producerName,const std::string& parameterName,ParameterDetails_vec& parameterDetails) const;
-    void                getParameterDetails(const std::string& producerName,const std::string& parameterName,std::string& level,ParameterDetails_vec& parameterDetails) const;
+    void                getProducerNameList(
+                          const std::string& aliasName,
+                          std::vector<std::string>& nameList) const;
+
+    std::string         getProducerAlias(
+                          const std::string& producerName,
+                          int levelId) const;
+
+    std::string         getParameterString(
+                          std::string producer,
+                          std::string parameter) const;
+
+    void                getParameterDetails(
+                          const std::string& aliasName,
+                          ParameterDetails_vec& parameterDetails) const;
+
+    void                getParameterDetails(
+                          const std::string& producerName,
+                          const std::string& parameterName,
+                          ParameterDetails_vec& parameterDetails) const;
+
+    void                getParameterDetails(
+                          const std::string& producerName,
+                          const std::string& parameterName,
+                          std::string& level,
+                          ParameterDetails_vec& parameterDetails) const;
 
     void                mapParameterDetails(ParameterDetails_vec& parameterDetails) const;
 
-    void                getParameterMappings(std::string producerName,std::string parameterName,T::GeometryId geometryId, bool onlySearchEnabled, QueryServer::ParameterMapping_vec& mappings) const;
-    void                getParameterMappings(std::string producerName,std::string parameterName,T::GeometryId geometryId,T::ParamLevelIdType levelIdType,T::ParamLevelId levelId,T::ParamLevel level,bool onlySearchEnabled,QueryServer::ParameterMapping_vec& mappings) const;
+    void                getParameterMappings(
+                          std::string producerName,
+                          std::string parameterName,
+                          T::GeometryId geometryId,
+                          bool onlySearchEnabled,
+                          QueryServer::ParameterMapping_vec& mappings) const;
+
+    void                getParameterMappings(
+                          std::string producerName,
+                          std::string parameterName,
+                          bool onlySearchEnabled,
+                          QueryServer::ParameterMapping_vec& mappings) const;
+
+    void                getParameterMappings(
+                          std::string producerName,
+                          std::string parameterName,
+                          T::GeometryId geometryId,
+                          T::ParamLevelIdType levelIdType,
+                          T::ParamLevelId levelId,
+                          T::ParamLevel level,
+                          bool onlySearchEnabled,
+                          QueryServer::ParameterMapping_vec& mappings) const;
+
+    void                getParameterMappings(
+                          std::string producerName,
+                          std::string parameterName,
+                          T::ParamLevelIdType levelIdType,
+                          T::ParamLevelId levelId,
+                          T::ParamLevel level,
+                          bool onlySearchEnabled,
+                          QueryServer::ParameterMapping_vec& mappings) const;
 
     void                getProducerList(string_vec& producerList) const;
-    void                getProducerParameterLevelList(const std::string& producerName,T::ParamLevelId fmiParamLevelId,double multiplier,std::set<double>& levels) const;
-    void                getProducerParameterLevelIdList(const std::string& producerName,std::set<T::ParamLevelId>& levelIdList) const;
+
+    void                getProducerParameterLevelList(
+                          const std::string& producerName,
+                          T::ParamLevelId fmiParamLevelId,
+                          double multiplier,
+                          std::set<double>& levels) const;
+
+    void                getProducerParameterLevelIdList(
+                          const std::string& producerName,
+                          std::set<T::ParamLevelId>& levelIdList) const;
+
+    void                getVerticalGrid(
+                            double lon1,
+                            double lat1,
+                            double lon2,
+                            double lat2,
+                            int steps,
+                            std::string utcTime,
+                            std::string valueProducerName,
+                            std::string valueParameter,
+                            std::string heightProducerName,
+                            std::string heightParameter,
+                            int geometryId,
+                            int forecastType,
+                            int forecastNumber,
+                            short areaInterpolationMethod,
+                            short timeInterpolationMethod,
+                            std::vector<T::Coordinate>& coordinates,
+                            std::vector<float>& gridData,
+                            uint& gridWidth,
+                            uint& gridHeight) const;
 
     bool                isGridProducer(const std::string& producer) const;
-
     void                setDem(boost::shared_ptr<Fmi::DEM> dem);
     void                updateProcessing();
 
@@ -70,7 +149,12 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings);
     FILE*               openMappingFile(const std::string& mappingFile);
     void                updateMappings();
-    void                updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyType targetParameterKeyType,const std::string& mappingFile,QueryServer::ParamMappingFile_vec& parameterMappings);
+
+    void                updateMappings(
+                          T::ParamKeyType sourceParameterKeyType,
+                          T::ParamKeyType targetParameterKeyType,
+                          const std::string& mappingFile,
+                          QueryServer::ParamMappingFile_vec& parameterMappings);
 
 
   private:

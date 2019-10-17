@@ -5,6 +5,10 @@
 #include <grid-files/common/ShowFunction.h>
 #include <grid-files/grid/ValueCache.h>
 #include <grid-files/identification/GridDef.h>
+#include <grid-files/common/CoordinateConversions.h>
+#include <grid-files/common/ImageFunctions.h>
+#include <grid-files/common/ImagePaint.h>
+#include <grid-files/common/GraphFunctions.h>
 #include <grid-content/contentServer/corba/client/ClientImplementation.h>
 #include <grid-content/contentServer/http/client/ClientImplementation.h>
 #include <grid-content/dataServer/corba/client/ClientImplementation.h>
@@ -936,6 +940,27 @@ void Engine::getParameterMappings(std::string producerName,std::string parameter
 
 
 
+void Engine::getParameterMappings(std::string producerName,std::string parameterName,bool onlySearchEnabled, QueryServer::ParameterMapping_vec& mappings) const
+{
+  try
+  {
+    AutoThreadLock lock(&mThreadLock);
+
+    for (auto m = mParameterMappings.begin(); m != mParameterMappings.end(); ++m)
+    {
+      m->getMappings(producerName, parameterName, onlySearchEnabled, mappings);
+      //printf("Get mappings [%s][%s][%d] %lu\n",producerName.c_str(),parameterName.c_str(),geometryId,mappings.size());
+    }
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+
 void Engine::getParameterMappings(
     std::string producerName,
     std::string parameterName,
@@ -953,6 +978,35 @@ void Engine::getParameterMappings(
     for (auto m = mParameterMappings.begin(); m != mParameterMappings.end(); ++m)
     {
       m->getMappings(producerName, parameterName, geometryId, levelIdType, levelId, level, onlySearchEnabled, mappings);
+      //printf("Get mappings [%s][%s][%d] [%d][%d][%d] %lu\n",producerName.c_str(),parameterName.c_str(),geometryId,levelIdType, levelId, level,mappings.size());
+    }
+  }
+  catch (...)
+  {
+    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+
+
+void Engine::getParameterMappings(
+    std::string producerName,
+    std::string parameterName,
+    T::ParamLevelIdType levelIdType,
+    T::ParamLevelId levelId,
+    T::ParamLevel level,
+    bool onlySearchEnabled,
+    QueryServer::ParameterMapping_vec& mappings) const
+{
+  try
+  {
+    AutoThreadLock lock(&mThreadLock);
+
+    for (auto m = mParameterMappings.begin(); m != mParameterMappings.end(); ++m)
+    {
+      m->getMappings(producerName, parameterName, levelIdType, levelId, level, onlySearchEnabled, mappings);
       //printf("Get mappings [%s][%s][%d] [%d][%d][%d] %lu\n",producerName.c_str(),parameterName.c_str(),geometryId,levelIdType, levelId, level,mappings.size());
     }
   }
@@ -1640,6 +1694,343 @@ void Engine::updateProcessing()
       updateMappings();
       sleep(300);
     }
+  }
+  catch (...)
+  {
+    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    throw exception;
+  }
+}
+
+
+
+
+
+void Engine::getVerticalGrid(
+    double lon1,
+    double lat1,
+    double lon2,
+    double lat2,
+    int steps,
+    std::string utcTime,
+    std::string valueProducerName,
+    std::string valueParameter,
+    std::string heightProducerName,
+    std::string heightParameter,
+    int geometryId,
+    int forecastType,
+    int forecastNumber,
+    short areaInterpolationMethod,
+    short timeInterpolationMethod,
+    std::vector<T::Coordinate>& coordinates,
+    std::vector<float>& gridData,
+    uint& gridWidth,
+    uint& gridHeight) const
+{
+  try
+  {
+    ContentServer_sptr  contentServer = getContentServer_sptr();
+    DataServer_sptr  dataServer = getDataServer_sptr();
+    QueryServer_sptr  queryServer = getQueryServer_sptr();
+
+
+    std::set<double> levels1;
+    std::set<double> levels2;
+
+    T::SessionId sessionId = 0;
+    T::GenerationInfoList gInfoList1;
+    T::GenerationInfoList gInfoList2;
+
+    int result = contentServer->getGenerationInfoListByProducerName(sessionId,valueProducerName,gInfoList1);
+    if (result != 0)
+    {
+      SmartMet::Spine::Exception exception(BCP, ContentServer::getResultString(result).c_str(), nullptr);
+      throw exception;
+    }
+
+    //gInfoList1.print(std::cout,0,0);
+
+    result = contentServer->getGenerationInfoListByProducerName(sessionId,heightProducerName,gInfoList2);
+    if (result != 0)
+    {
+      SmartMet::Spine::Exception exception(BCP, ContentServer::getResultString(result).c_str());
+      throw exception;
+    }
+
+    //gInfoList2.print(std::cout,0,0);
+
+    T::GenerationInfo *gInfo1 = gInfoList1.getLastGenerationInfoByAnalysisTime();
+    T::GenerationInfo *gInfo2 = gInfoList2.getLastGenerationInfoByAnalysisTime();
+
+    if (gInfo1 != nullptr  &&  gInfo2 != nullptr  &&  gInfo1->mAnalysisTime != gInfo2->mAnalysisTime)
+    {
+      if (gInfo1->mAnalysisTime < gInfo2->mAnalysisTime)
+        gInfo2 = gInfoList2.getGenerationInfoByAnalysisTime(gInfo1->mAnalysisTime);
+      else
+      if (gInfo1->mAnalysisTime > gInfo2->mAnalysisTime)
+        gInfo1 = gInfoList1.getGenerationInfoByAnalysisTime(gInfo2->mAnalysisTime);
+    }
+
+    if (gInfo1 != nullptr  &&  gInfo2 != nullptr  &&  gInfo1->mAnalysisTime != gInfo2->mAnalysisTime)
+    {
+      SmartMet::Spine::Exception exception(BCP,"Cannot find the same analysis time for values and heights!");
+      throw exception;
+    }
+
+    getProducerParameterLevelList(valueProducerName,3,1,levels1);
+    if (levels1.size() == 0)
+    {
+      SmartMet::Spine::Exception exception(BCP,"Cannot find valid levels for the value parameter!");
+      throw exception;
+    }
+
+    getProducerParameterLevelList(heightProducerName,3,1,levels2);
+    if (levels2.size() == 0)
+    {
+      SmartMet::Spine::Exception exception(BCP,"Cannot find valid levels for the height parameter!");
+      throw exception;
+    }
+
+    if (levels1.size() != levels2.size())
+    {
+      SmartMet::Spine::Exception exception(BCP,"The number of value parameter levels is different than the number of height parameter levels!");
+      throw exception;
+    }
+
+    auto points = getIsocirclePoints(lon1,lat1,lon2,lat2,steps);
+
+    for (auto level = levels1.rbegin(); level != levels1.rend(); ++level)
+    {
+      int lev = C_INT(*level);
+      char param[100];
+      char *p = param;
+      p += sprintf(p,"%s:%s",valueParameter.c_str(),valueProducerName.c_str());
+      if (geometryId > 0)
+        p += sprintf(p,":%u:3:%u",geometryId,lev);
+      else
+        p += sprintf(p,"::3:%u",lev);
+
+      std::vector<T::ParamValue> valueVec;
+      std::vector<T::ParamValue> heightVec;
+
+      int result1 = queryServer->getParameterValuesByPointListAndTime(sessionId,valueProducerName,std::string(param),T::CoordinateTypeValue::LATLON_COORDINATES,points.first,utcTime,areaInterpolationMethod,timeInterpolationMethod,1,valueVec);
+
+      p = param;
+      p += sprintf(p,"%s:%s",heightParameter.c_str(),heightProducerName.c_str());
+      if (geometryId > 0)
+        p += sprintf(p,":%u:3:%u",geometryId,lev);
+      else
+        p += sprintf(p,"::3:%u",lev);
+
+      int result2 = queryServer->getParameterValuesByPointListAndTime(sessionId,heightProducerName,std::string(param),T::CoordinateTypeValue::LATLON_COORDINATES,points.first,utcTime,areaInterpolationMethod,timeInterpolationMethod,1,heightVec);
+
+      //printf("SIZES %lu,%lu,%lu\n",points.first.size(),valueVec.size(),heightVec.size());
+
+      uint sz = points.first.size();
+      if (result1 == 0  &&  result2 == 0  &&  valueVec.size() == sz  &&  heightVec.size() == sz)
+      {
+        for (uint t=0; t<sz; t++)
+        {
+          auto dist = points.second[t];
+          coordinates.push_back(T::Coordinate(dist,heightVec[t]));
+
+          // printf("%f,%f (%f,%f) = %f\n",dist,heightVec[t],points.first[t].x(),points.first[t].y(),valueVec[t]);
+          gridData.push_back(valueVec[t]);
+        }
+      }
+    }
+
+/*
+
+    for (auto level = levels1.rbegin(); level != levels1.rend(); ++level)
+    {
+      uint c = 0;
+      for (auto it = points.first.begin(); it != points.first.end(); ++it)
+      {
+        T::ParamValue value = 0;
+        T::ParamValue height = 0;
+
+        int lev = C_INT(*level);
+        char param[100];
+        char *p = param;
+        p += sprintf(p,"%s:%s",valueParameter.c_str(),valueProducerName.c_str());
+        if (geometryId > 0)
+          p += sprintf(p,":%u:3:%u",geometryId,lev);
+        else
+          p += sprintf(p,"::3:%u",lev);
+
+
+        int result1 = queryServer->getParameterValueByPointAndTime(sessionId,std::string(param),T::CoordinateTypeValue::LATLON_COORDINATES,it->x(),it->y(),utcTime,areaInterpolationMethod,timeInterpolationMethod,1,value);
+
+        p = param;
+        p += sprintf(p,"%s:%s",heightParameter.c_str(),heightProducerName.c_str());
+        if (geometryId > 0)
+          p += sprintf(p,":%u:3:%u",geometryId,lev);
+        else
+          p += sprintf(p,"::3:%u",lev);
+
+        int result2 = queryServer->getParameterValueByPointAndTime(sessionId,std::string(param),T::CoordinateTypeValue::LATLON_COORDINATES,it->x(),it->y(),utcTime,areaInterpolationMethod,timeInterpolationMethod,1,height);
+
+        auto dist = points.second[c];
+        if (result1 == 0  &&  result2 == 0)
+        {
+          coordinates.push_back(T::Coordinate(dist,height));
+          gridData.push_back(value);
+          printf("%f,%f (%f,%f) = %f\n",dist,height,it->x(),it->y(),value);
+        }
+        else
+        {
+          coordinates.push_back(T::Coordinate(dist,height));
+          gridData.push_back(ParamValueMissing);
+        }
+        c++;
+      }
+    }
+
+    for (auto level = levels1.rbegin(); level != levels1.rend(); ++level)
+    {
+      T::ContentInfoList contentList1;
+      result = contentServer->getContentListByParameterGenerationIdAndForecastTime(sessionId, gInfo1->mGenerationId,T::ParamKeyTypeValue::FMI_NAME,valueParameter,T::ParamLevelIdTypeValue::FMI,3,C_INT(*level),forecastType,forecastNumber,geometryId, utcTime,contentList1);
+      uint len1 = contentList1.getLength();
+
+      if (len1 == 0)
+      {
+        SmartMet::Spine::Exception exception(BCP,"Parameter values not found!");
+        throw exception;
+      }
+
+      T::ContentInfoList contentList2;
+      result = contentServer->getContentListByParameterGenerationIdAndForecastTime(sessionId, gInfo2->mGenerationId,T::ParamKeyTypeValue::FMI_NAME,heightParameter,T::ParamLevelIdTypeValue::FMI,3,C_INT(*level),-1,-1,geometryId, utcTime,contentList2);
+      uint len2 = contentList2.getLength();
+      if (len2 == 0)
+      {
+        SmartMet::Spine::Exception exception(BCP,"Height values not found!");
+        throw exception;
+      }
+
+      if (len1 != len2)
+      {
+        SmartMet::Spine::Exception exception(BCP,"The number of values is different than the number of heights!");
+        throw exception;
+      }
+
+      if (len1 > 2)
+      {
+        SmartMet::Spine::Exception exception(BCP,"We should get maximum two contentInfo records!");
+        throw exception;
+      }
+
+      T::ContentInfo *cInfo1 = contentList1.getContentInfoByIndex(0);
+      T::ContentInfo *cInfo2 = contentList1.getContentInfoByIndex(1);
+      T::ContentInfo *hInfo1 = contentList2.getContentInfoByIndex(0);
+      T::ContentInfo *hInfo2 = contentList2.getContentInfoByIndex(1);
+
+      printf("RECORDS %u  %u  %s\n",len1,len2,utcTime.c_str());
+      cInfo1->print(std::cout,0,0);
+      hInfo1->print(std::cout,0,0);
+
+      uint c = 0;
+      for (auto it = points.first.begin(); it != points.first.end(); ++it)
+      {
+        T::ParamValue value = 0;
+        T::ParamValue height = 0;
+        int result1 = -1;
+        int result2 = -1;
+
+
+        if (len1 == 1  &&  cInfo1->mForecastTime == utcTime  &&  hInfo1->mForecastTime == utcTime)
+        {
+          result1 = dataServer->getGridValueByPoint(sessionId,cInfo1->mFileId,cInfo1->mMessageIndex,T::CoordinateTypeValue::LATLON_COORDINATES,it->x(),it->y(),areaInterpolationMethod,value);
+          result2 = dataServer->getGridValueByPoint(sessionId,hInfo1->mFileId,hInfo1->mMessageIndex,T::CoordinateTypeValue::LATLON_COORDINATES,it->x(),it->y(),areaInterpolationMethod,height);
+        }
+        else
+        if (cInfo1->mForecastTime < utcTime  &&  cInfo2->mForecastTime > utcTime  &&  hInfo1->mForecastTime < utcTime &&  hInfo2->mForecastTime > utcTime)
+        {
+          result1 = dataServer->getGridValueByTimeAndPoint(sessionId,cInfo1->mFileId,cInfo1->mMessageIndex,cInfo2->mFileId,cInfo2->mMessageIndex,utcTime,T::CoordinateTypeValue::LATLON_COORDINATES,it->x(),it->y(),areaInterpolationMethod,timeInterpolationMethod,value);
+          result2 = dataServer->getGridValueByTimeAndPoint(sessionId,hInfo1->mFileId,hInfo1->mMessageIndex,hInfo2->mFileId,hInfo2->mMessageIndex,utcTime,T::CoordinateTypeValue::LATLON_COORDINATES,it->x(),it->y(),areaInterpolationMethod,timeInterpolationMethod,height);
+        }
+
+        auto dist = points.second[c];
+        if (result1 == 0  &&  result2 == 0)
+        {
+          coordinates.push_back(T::Coordinate(dist,height));
+          gridData.push_back(value);
+          printf("%f,%f = %f\n",dist,height,value);
+        }
+        else
+        {
+          coordinates.push_back(T::Coordinate(dist,height));
+          gridData.push_back(ParamValueMissing);
+        }
+        c++;
+      }
+    }
+*/
+    gridWidth = points.first.size();
+    gridHeight = levels1.size();
+
+#if 0
+    int imageWidth = 1000; // points.first.size()*mp;
+    int imageHeight = 1000; // len1*mp;
+    bool rotate = true;
+    double mpy = (double)imageHeight / maxHeight;
+    double mpx = (double)imageWidth / maxDistance;
+
+    std::vector<float> contourLowValues;
+    std::vector<float> contourHighValues;
+    T::ByteData_vec contours;
+
+    float m = minValue;
+    uint ss = C_UINT((maxValue - minValue) / 2) + 1;
+    for (uint t=0; t<ss; t++)
+    {
+      if (t == 0)
+        contourLowValues.push_back(100.0);
+      else
+        contourLowValues.push_back(m);
+
+      m = m + 2;
+      contourHighValues.push_back(m);
+    }
+
+    getIsobands(gridData,&coordinates,points.first.size(),levels1.size(),contourLowValues,contourHighValues,T::AreaInterpolationMethod::Linear,0,1,contours);
+
+    ImagePaint imagePaint(imageWidth,imageHeight,0xFFFFFFFF,false,rotate);
+
+    int sz = imageWidth * imageHeight;
+    unsigned long *image = new unsigned long[sz];
+    for (int t=0; t<sz; t++)
+      image[t] = 0xFF0000;
+
+    // ### Painting contours into the image:
+
+    if (contours.size() > 0)
+    {
+      uint c = 250;
+      uint step = 250 / contours.size();
+
+      uint t = 0;
+      for (auto it = contours.begin(); it != contours.end(); ++it)
+      {
+        uint col = (c << 16) + (c << 8) + c;
+
+        imagePaint.paintWkb(mpx,mpy,0,0,*it,col);
+        c = c - step;
+        t++;
+      }
+    }
+
+    T::ByteData_vec contours2;
+    getIsolines(gridData,&coordinates,points.first.size(),levels1.size(),contourLowValues,T::AreaInterpolationMethod::Linear,0,1,contours2);
+    for (auto it = contours2.begin(); it != contours2.end(); ++it)
+    {
+      printf("Contour %lu\n",it->size());
+      imagePaint.paintWkb(mpx,mpy,0,0,*it,0x000000);
+    }
+
+    imagePaint.savePngImage("/tmp/test.png");
+#endif
   }
   catch (...)
   {
