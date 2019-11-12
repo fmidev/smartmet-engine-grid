@@ -1,6 +1,6 @@
 ParamValueMissing = -16777216;
 PI = 3.1415926;
-DEBUG = 1;
+DEBUG = 0;
 
 
 -- ***********************************************************************
@@ -729,7 +729,7 @@ function interpolate_landscape(height,coverType,x,y,
     local fix_tl = lapseratefix(lapserate_tl, height, height_tl, waterFlag);
     local fix_tr = lapseratefix(lapserate_tr, height, height_tr, waterFlag);
 
-    print("fix_bl="..fix_bl.." fix_br="..fix_br.." fix_tl="..fix_tl.." fix_tr="..fix_tr);
+    -- print("fix_bl="..fix_bl.." fix_br="..fix_br.." fix_tl="..fix_tl.." fix_tr="..fix_tr);
 
     val_bl = val_bl + lapseratefix(lapserate_bl, height, height_bl, waterFlag);
     val_br = val_br + lapseratefix(lapserate_br, height, height_br, waterFlag);
@@ -744,7 +744,7 @@ function interpolate_landscape(height,coverType,x,y,
   local wtl = (1 - x) * y;
   local wtr = x * y;
 
-  print("wbl="..wbl.." wbr="..wbr.." wtl="..wtl.." wtr="..wtr);
+  -- print("wbl="..wbl.." wbr="..wbr.." wtl="..wtl.." wtr="..wtr);
 
   -- Modify the coefficients based on the land sea mask
 
@@ -772,8 +772,8 @@ function interpolate_landscape(height,coverType,x,y,
   
   end
   
-  print("** val_bl="..val_bl.." val_br="..val_br.." val_tl="..val_tl.." val_tr="..val_tr);
-  print("** wbl="..wbl.." wbr="..wbr.." wtl="..wtl.." wtr="..wtr);
+  -- print("** val_bl="..val_bl.." val_br="..val_br.." val_tl="..val_tl.." val_tr="..val_tr);
+  -- print("** wbl="..wbl.." wbr="..wbr.." wtl="..wtl.." wtr="..wtr);
     
   -- Perform combined interpolation
 
@@ -1047,7 +1047,7 @@ function IPL_WIND_DIR(numOfParams,params)
 
   local result = {};
   
-  if (numOfParams ~= 8 and numOfParams ~= 16) then   
+  if (numOfParams ~= 7 and numOfParams ~= 14) then   
     result.message = 'Invalid number of parameters given ('..numOfParams..')!';
     result.value = 0;  
     return result.value,result.message;
@@ -1055,27 +1055,27 @@ function IPL_WIND_DIR(numOfParams,params)
     
   result.message = 'OK';
     
-  if (numOfParams == 8) then   
-    local n = params[2];
-    local x = params[3];
-    local y = params[4];
-    local val_bl = params[5];
-    local val_br = params[6];
-    local val_tr = params[7];
-    local val_tl = params[8];        
+  if (numOfParams == 7) then   
+    local n = params[1];
+    local x = params[2];
+    local y = params[3];
+    local val_bl = params[4];
+    local val_br = params[5];
+    local val_tr = params[6];
+    local val_tl = params[7];        
     result.value = interpolate_windDirection(x,y,val_bl,val_br,val_tr,val_tl);
   else  
-    local n = params[2];
-    local x = params[3];
-    local y = params[4];
-    local a_val_bl = params[5];
-    local a_val_br = params[6];
-    local a_val_tr = params[7];
-    local a_val_tl = params[8];       
-    local b_val_bl = params[13];
-    local b_val_br = params[14];
-    local b_val_tr = params[15];
-    local b_val_tl = params[16];       
+    local n = params[1];
+    local x = params[2];
+    local y = params[3];
+    local a_val_bl = params[4];
+    local a_val_br = params[5];
+    local a_val_tr = params[6];
+    local a_val_tl = params[7];       
+    local b_val_bl = params[11];
+    local b_val_br = params[12];
+    local b_val_tr = params[13];
+    local b_val_tl = params[14];       
     result.value = interpolate_windDirectionWithSpeed(x,y,a_val_bl,a_val_br,a_val_tr,a_val_tl,b_val_bl,b_val_br,b_val_tr,b_val_tl);
   end
       

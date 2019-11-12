@@ -5,6 +5,151 @@
 local ParamValueMissing = -16777216;
 local debug = 0;
 
+local smartSymbol = {};
+
+smartSymbol['en'] = {}
+smartSymbol['en'][1] = "clear";
+smartSymbol['en'][2] = "mostly clear";
+smartSymbol['en'][4] = "partly cloudy";
+smartSymbol['en'][6] = "mostly cloudy";
+smartSymbol['en'][7] = "overcast";
+smartSymbol['en'][9] = "fog";
+smartSymbol['en'][71] = "isolated thundershowers";
+smartSymbol['en'][74] = "scattered thundershowers";
+smartSymbol['en'][77] = "thundershowers";
+smartSymbol['en'][21] = "isolated showers";
+smartSymbol['en'][24] = "scattered showers";
+smartSymbol['en'][27] = "showers";
+smartSymbol['en'][11] = "drizzle";
+smartSymbol['en'][14] = "freezing drizzle";
+smartSymbol['en'][17] = "freezing rain";
+smartSymbol['en'][31] = "periods of light rain";
+smartSymbol['en'][34] = "periods of light rain";
+smartSymbol['en'][37] = "light rain";
+smartSymbol['en'][32] = "periods of moderate rain";
+smartSymbol['en'][35] = "periods of moderate rain";
+smartSymbol['en'][38] = "moderate rain";
+smartSymbol['en'][33] = "periods of heavy rain";
+smartSymbol['en'][36] = "periods of heavy rain";
+smartSymbol['en'][39] = "heavy rain";
+smartSymbol['en'][41] = "isolated light sleet showers";
+smartSymbol['en'][44] = "scattered light sleet showers";
+smartSymbol['en'][47] = "light sleet";
+smartSymbol['en'][42] = "isolated moderate sleet showers";
+smartSymbol['en'][45] = "scattered moderate sleet showers";
+smartSymbol['en'][48] = "moderate sleet";
+smartSymbol['en'][43] = "isolated heavy sleet showers";
+smartSymbol['en'][46] = "scattered heavy sleet showers";
+smartSymbol['en'][49] = "heavy sleet";
+smartSymbol['en'][51] = "isolated light snow showers";
+smartSymbol['en'][54] = "scattered light snow showers";
+smartSymbol['en'][57] = "light snowfall";
+smartSymbol['en'][52] = "isolated moderate snow showers";
+smartSymbol['en'][55] = "scattered moderate snow showers";
+smartSymbol['en'][58] = "moderate snowfall";
+smartSymbol['en'][53] = "isolated heavy snow showers";
+smartSymbol['en'][56] = "scattered heavy snow showers";
+smartSymbol['en'][59] = "heavy snowfall";
+smartSymbol['en'][61] = "isolated hail showers";
+smartSymbol['en'][64] = "scattered hail showers";
+smartSymbol['en'][67] = "hail showers";
+
+smartSymbol['sv'] = {}
+smartSymbol['sv'][1] = "klart";
+smartSymbol['sv'][2] = "mest klart";
+smartSymbol['sv'][4] = "halvklart";
+smartSymbol['sv'][6] = "molnight";
+smartSymbol['sv'][7] = "mulet";
+smartSymbol['sv'][9] = "dimma";
+smartSymbol['sv'][71] = "enstaka åskskurar";
+smartSymbol['sv'][74] = "lokalt åskskurar";
+smartSymbol['sv'][77] = "åskskurar";
+smartSymbol['sv'][21] = "enstaka regnskurar";
+smartSymbol['sv'][24] = "lokalt regnskurar";
+smartSymbol['sv'][27] = "regnskurar";
+smartSymbol['sv'][11] = "duggregn";
+smartSymbol['sv'][14] = "underkylt duggregn";
+smartSymbol['sv'][17] = "underkylt regn";
+smartSymbol['sv'][31] = "tidvis lätt regn";
+smartSymbol['sv'][34] = "tidvis lätt regn";
+smartSymbol['sv'][37] = "lätt regn";
+smartSymbol['sv'][32] = "tidvis måttligt regn";
+smartSymbol['sv'][35] = "tidvis måttligt regn";
+smartSymbol['sv'][38] = "måttligt regn";
+smartSymbol['sv'][33] = "tidvis kraftigt regn";
+smartSymbol['sv'][36] = "tidvis kraftigt regn";
+smartSymbol['sv'][39] = "kraftigt regn";
+smartSymbol['sv'][41] = "tidvis lätta byar ov snöblandat regn";
+smartSymbol['sv'][44] = "tidvis lätta byar avd snäblandat regn";
+smartSymbol['sv'][47] = "lätt snöblandat regn";
+smartSymbol['sv'][42] = "tidvis måttliga byar av snöblandat regn";
+smartSymbol['sv'][45] = "tidvis måttliga byar av snöblandat regn";
+smartSymbol['sv'][48] = "måttligt snöblandat regn";
+smartSymbol['sv'][43] = "tidvis kraftiga byar av snöblandat regn";
+smartSymbol['sv'][46] = "tidvis kraftiga byar av snöblandat regn";
+smartSymbol['sv'][49] = "kraftigt snöblandat regn";
+smartSymbol['sv'][51] = "tidvis lätta snöbyar";
+smartSymbol['sv'][54] = "tidvis lätta snöbyar";
+smartSymbol['sv'][57] = "tidvis lätt snöfall";
+smartSymbol['sv'][52] = "tidvis måttliga snöbyar";
+smartSymbol['sv'][55] = "tidvis måttliga snöbyar";
+smartSymbol['sv'][58] = "måttligt snöfall";
+smartSymbol['sv'][53] = "tidvis ymniga snöbyar";
+smartSymbol['sv'][56] = "tidvis ymniga snöbyar";
+smartSymbol['sv'][59] = "ymnigt snöfall";
+smartSymbol['sv'][61] = "enstaka hagelskurar";
+smartSymbol['sv'][64] = "lokalt hagelskurar";
+smartSymbol['sv'][67] = "hagelskurar";
+
+smartSymbol['fi'] = {}
+smartSymbol['fi'][1] = "selkeää";
+smartSymbol['fi'][2] = "enimmäkseen selkeää";
+smartSymbol['fi'][4] = "puolipilvistä";
+smartSymbol['fi'][6] = "enimmäkseen pilvistä";
+smartSymbol['fi'][7] = "pilvistä";
+smartSymbol['fi'][9] = "sumua";
+smartSymbol['fi'][71] = "yksittäisiä ukkoskuuroja";
+smartSymbol['fi'][74] = "paikoin ukkoskuuroja";
+smartSymbol['fi'][77] = "ukkoskuuroja";
+smartSymbol['fi'][21] = "yksittäisiä sadekuuroja";
+smartSymbol['fi'][24] = "paikoin sadekuuroja";
+smartSymbol['fi'][27] = "sadekuuroja";
+smartSymbol['fi'][11] = "tihkusadetta";
+smartSymbol['fi'][14] = "jäätävää tihkua";
+smartSymbol['fi'][17] = "jäätävää sadetta";
+smartSymbol['fi'][31] = "ajoittain heikkoa vesisadetta";
+smartSymbol['fi'][34] = "ajoittain heikkoa vesisadetta";
+smartSymbol['fi'][37] = "heikkoa vesisadetta";
+smartSymbol['fi'][32] = "ajoittain kohtalaista vesisadetta";
+smartSymbol['fi'][35] = "ajoittain kohtalaista vesisadetta";
+smartSymbol['fi'][38] = "kohtalaista vesisadetta";
+smartSymbol['fi'][33] = "ajoittain voimakasta vesisadetta";
+smartSymbol['fi'][36] = "ajoittain voimakasta vesisadetta";
+smartSymbol['fi'][39] = "voimakasta vesisadetta";
+smartSymbol['fi'][41] = "ajoittain heikkoja räntäkuuroja";
+smartSymbol['fi'][44] = "ajoittain heikkoja räntäkuuroja";
+smartSymbol['fi'][47] = "heikkoa räntäsadetta";
+smartSymbol['fi'][42] = "ajoittain kohtalaisia räntäkuuroja";
+smartSymbol['fi'][45] = "ajoittain kohtalaisia räntäkuuroja";
+smartSymbol['fi'][48] = "kohtalaista räntäsadetta";
+smartSymbol['fi'][43] = "ajoittain voimakkaita räntäkuuroja";
+smartSymbol['fi'][46] = "ajoittain voimakkaita räntäkuuroja";
+smartSymbol['fi'][49] = "voimakasta räntäsadetta";
+smartSymbol['fi'][51] = "ajoittain heikkoja lumikuuroja";
+smartSymbol['fi'][54] = "ajoittain heikkoja lumikuuroja";
+smartSymbol['fi'][57] = "heikkoa lumisadetta";
+smartSymbol['fi'][52] = "ajoittain kohtalaisia lumikuuroja";
+smartSymbol['fi'][55] = "ajoittain kohtalaisia lumikuuroja";
+smartSymbol['fi'][58] = "kohtalaista lumisadetta";
+smartSymbol['fi'][53] = "ajoittain sakeita lumikuuroja";
+smartSymbol['fi'][56] = "ajoittain sakeita lumikuuroja";
+smartSymbol['fi'][59] = "runsasta lumisadetta";
+smartSymbol['fi'][61] = "yksittäisiä raekuuroja";
+smartSymbol['fi'][64] = "paikoin raekuuroja";
+smartSymbol['fi'][67] = "raekuuroja";
+
+smartSymbol['default'] = smartSymbol['fi'];
+
 
 ----------------------------------------------------------------------
 -- Weather texts for weather symbols in different languages:
@@ -576,6 +721,39 @@ function NB_WeatherText(language,numOfParams,params)
 
 end
  
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : NB_SmartSymbolText
+-- ***********************************************************************
+
+function NB_SmartSymbolText(language,numOfParams,params)
+
+  local result = {};
+
+  if (numOfParams ~= 1) then
+    result.message = 'Invalid number of parameters!';
+    result.value = 0;  
+    return result.value,result.message;
+  end
+
+  local smartSymbolNumber = params[1];
+
+  result.message = "OK"
+  
+  if (smartSymbol[language] ~= nil  and  smartSymbol[language][smartSymbolNumber] ~= nil)  then 
+    result.value = smartSymbol[language][smartSymbolNumber];
+  else
+    if (smartSymbol['default'] ~= nil and smartSymbol['default'][smartSymbolNumber] ~= nil) then  
+      result.value = smartSymbol['default'][smartSymbolNumber];
+    end
+  end
+
+  return result.value,result.message;
+
+end
 
 
 
@@ -1300,7 +1478,7 @@ end
 
 
 
-function NB_smartSymbolNumber(numOfParams,params)
+function NB_SmartSymbolNumber(numOfParams,params)
 
   for index, value in pairs(params) do
     print(index.." : "..value);
@@ -1435,11 +1613,11 @@ function getFunctionNames(type)
   local functionNames = '';
 
   if (type == 1) then 
-    functionNames = 'NB_SummerSimmerIndex,NB_FeelsLikeTemperature,NB_WindChill,NB_Snow1h,NB_Cloudiness8th,NB_smartSymbolNumber';
+    functionNames = 'NB_SummerSimmerIndex,NB_FeelsLikeTemperature,NB_WindChill,NB_Snow1h,NB_Cloudiness8th,NB_SmartSymbolNumber';
   end
   
   if (type == 5) then 
-    functionNames = 'NB_WindCompass8,NB_WindCompass16,NB_WindCompass32,NB_WeatherText,NB_TemperatureText,MY_TEXT';
+    functionNames = 'NB_WindCompass8,NB_WindCompass16,NB_WindCompass32,NB_WeatherText,NB_TemperatureText,NB_SmartSymbolText';
   end
 
   return functionNames;

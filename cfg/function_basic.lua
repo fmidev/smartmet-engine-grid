@@ -314,6 +314,53 @@ end
 
 
 -- ***********************************************************************
+--  FUNCTION : IFSUM
+-- ***********************************************************************
+--  The function returns the sum of the given parameters if the first 
+--  parameter is 1. Otherwise it returns the second parameter.
+-- ***********************************************************************
+
+function IFSUM(numOfParams,params)
+
+  local result = {};
+  
+  -- for index, value in pairs(params) do
+  --  print("IFSUM "..index.." : "..value);
+  -- end
+
+  if (numOfParams > 1) then   
+    local sum = 0;
+    
+    if (params[1] == 1) then
+      for index, value in pairs(params) do
+        if (index > 1) then
+          if (value ~= ParamValueMissing) then
+            sum = sum + value;
+          else
+            result.message = 'OK';
+            result.value = ParamValueMissing;
+            return result.value,result.message;
+          end
+        end
+      end
+    else
+      sum = params[2];
+    end
+    
+    result.message = 'OK';
+    result.value = sum;
+  else
+    result.message = 'No parameters given!';
+    result.value = 0;  
+  end
+    
+  return result.value,result.message;
+
+end
+
+
+
+-- ***********************************************************************
 --  FUNCTION : DIFF
 -- ***********************************************************************
 --  The function returns the sum of the given parameters.
@@ -974,7 +1021,7 @@ function getFunctionNames(type)
   local functionNames = '';
 
   if (type == 1) then 
-    functionNames = 'ABS,AVG,DIV,ITEM,MAX,MIN,MUL,NEG,SUM,DIFF,HYPOT,SQRT,IF,EQ,NEG,GT,GTE,LT,LTE,AND,OR,NOT,IN,INSIDE,OUTSIDE';
+    functionNames = 'ABS,AVG,DIV,ITEM,MAX,MIN,MUL,NEG,SUM,DIFF,HYPOT,SQRT,IF,EQ,NEG,GT,GTE,LT,LTE,AND,OR,NOT,IN,INSIDE,OUTSIDE,IFSUM';
   end
 
   if (type == 5) then 
