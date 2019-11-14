@@ -58,7 +58,7 @@ end
 --  The function returns the standard deviation value of the given parameters.
 -- ***********************************************************************
 
-​function STD(numOfParams,params)
+function STD(numOfParams,params)
 
   local result = {};
   local count = 0;
@@ -78,19 +78,17 @@ end
       end
     end
 
-​    result.message = 'OK';
+    result.message = 'OK';
     result.value = math.sqrt(sum / count);
 
-​  else
+  else
     result.message = 'OK';
     result.value = ParamValueMissing;
   end
 
-​  return result.value,result.message;
+ return result.value,result.message;
 
 end
-
-​
 
 
 
