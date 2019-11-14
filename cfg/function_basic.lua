@@ -52,6 +52,46 @@ end
 
 
 
+-- ***********************************************************************
+--  FUNCTION : STD
+-- ***********************************************************************
+--  The function returns the standard deviation value of the given parameters.
+-- ***********************************************************************
+
+​function STD(numOfParams,params)
+
+  local result = {};
+  local count = 0;
+
+  if (numOfParams > 0) then
+    local sum = 0;
+    local vm;
+    local mean;
+
+    mean = AVG(numOfParams, params)
+
+    for index, value in pairs(params) do
+      if value ~= ParamValueMissing then
+        vm = value - mean;
+        sum = sum + (vm * vm);
+        count = count + 1;
+      end
+    end
+
+​    result.message = 'OK';
+    result.value = math.sqrt(sum / count);
+
+​  else
+    result.message = 'OK';
+    result.value = ParamValueMissing;
+  end
+
+​  return result.value,result.message;
+
+end
+
+​
+
 
 
 -- ***********************************************************************
@@ -76,8 +116,8 @@ function AVG(numOfParams,params)
     result.message = 'OK';
     result.value = sum / count;
   else
-    result.message = 'No parameters given!';
-    result.value = 0;  
+    result.message = 'OK';
+    result.value = ParamValueMissing;
   end
     
   return result.value,result.message;
@@ -138,8 +178,8 @@ function MAX(numOfParams,params)
     result.message = 'OK';
     result.value = max;
   else
-    result.message = 'No parameters given!';
-    result.value = 0;  
+    result.message = 'OK';
+    result.value = ParamValueMissing;
   end
     
   return result.value,result.message;
@@ -171,8 +211,8 @@ function MIN(numOfParams,params)
     result.message = 'OK';
     result.value = min;
   else
-    result.message = 'No parameters given!';
-    result.value = 0;  
+    result.message = 'OK';
+    result.value = ParamValueMissing;
   end
     
   return result.value,result.message;
@@ -201,8 +241,8 @@ function MUL(numOfParams,params)
       result.value = ParamValueMissing;  
     end
   else
-    result.message = 'Invalid number of parameters given ('..numOfParams..')!';
-    result.value = 0;  
+    result.message = 'OK';
+    result.value = ParamValueMissing;
   end
     
   return result.value,result.message;
@@ -232,8 +272,8 @@ function NEG(numOfParams,params)
       result.value = ParamValueMissing;
     end    
   else
-    result.message = 'Invalid number of parameters given ('..numOfParams..')!';
-    result.value = 0;  
+    result.message = 'OK';
+    result.value = ParamValueMissing;
   end
   
   return result.value,result.message;
@@ -262,8 +302,8 @@ function SQRT(numOfParams,params)
       result.value = ParamValueMissing;
     end    
   else
-    result.message = 'Invalid number of parameters given ('..numOfParams..')!';
-    result.value = 0;  
+    result.message = 'OK';
+    result.value = ParamValueMissing;
   end
   
   return result.value,result.message;
@@ -302,8 +342,8 @@ function SUM(numOfParams,params)
     result.message = 'OK';
     result.value = sum;
   else
-    result.message = 'No parameters given!';
-    result.value = 0;  
+    result.message = 'OK';
+    result.value = ParamValueMissing;
   end
     
   return result.value,result.message;
@@ -1021,7 +1061,7 @@ function getFunctionNames(type)
   local functionNames = '';
 
   if (type == 1) then 
-    functionNames = 'ABS,AVG,DIV,ITEM,MAX,MIN,MUL,NEG,SUM,DIFF,HYPOT,SQRT,IF,EQ,NEG,GT,GTE,LT,LTE,AND,OR,NOT,IN,INSIDE,OUTSIDE,IFSUM';
+    functionNames = 'ABS,STD,AVG,DIV,ITEM,MAX,MIN,MUL,NEG,SUM,DIFF,HYPOT,SQRT,IF,EQ,NEG,GT,GTE,LT,LTE,AND,OR,NOT,IN,INSIDE,OUTSIDE,IFSUM';
   end
 
   if (type == 5) then 
