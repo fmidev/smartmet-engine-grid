@@ -334,6 +334,7 @@ void Engine::init()
     {
       ContentServer::CacheImplementation *cache = new ContentServer::CacheImplementation();
       cache->init(0,cServer,mContentCacheSortingFlags);
+      cache->setEventListMaxLength(5);
       mContentServerCache.reset(cache);
       cache->startEventProcessing();
       cServer = cache;
@@ -1329,14 +1330,14 @@ void Engine::clearMappings()
     if (!mParameterMappingUpdateFile_fmi.empty())
     {
       FILE *file = openMappingFile(mParameterMappingUpdateFile_fmi);
-      if (file != NULL)
+      if (file != nullptr)
         fclose(file);
     }
 
     if (!mParameterMappingUpdateFile_newbase.empty())
     {
       FILE *file = openMappingFile(mParameterMappingUpdateFile_newbase);
-      if (file != NULL)
+      if (file != nullptr)
         fclose(file);
     }
   }
