@@ -334,7 +334,6 @@ void Engine::init()
     {
       ContentServer::CacheImplementation *cache = new ContentServer::CacheImplementation();
       cache->init(0,cServer,mContentCacheSortingFlags);
-      cache->setEventListMaxLength(5);
       mContentServerCache.reset(cache);
       cache->startEventProcessing();
       cServer = cache;
