@@ -1173,13 +1173,41 @@ void Engine::getProducerList(string_vec& producerList) const
   FUNCTION_TRACE
   try
   {
+    // Producers defined in the query server
     mQueryServer->getProducerList(0,producerList);
+
+    // Producers defined in the content server
+    ContentServer_sptr contentServer = getContentServer_sptr();
+    contentServer->getProducerInfoList(0, mProducerInfoList);
   }
   catch (...)
   {
     SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
+  }
+}
+
+
+
+
+
+bool Engine::getProducerInfoByName(const std::string& name,T::ProducerInfo& info) const
+{
+  FUNCTION_TRACE
+  try
+  {
+    T::ProducerInfo *producerInfo = mProducerInfoList.getProducerInfoByName(name);
+    if (producerInfo != nullptr)
+    {
+      info = *producerInfo;
+      return true;
+    }
+    return false;
+  }
+  catch (...)
+  {
+    throw Spine::Exception(BCP, exception_operation_failed, nullptr);
   }
 }
 
@@ -1207,7 +1235,8 @@ void Engine::getProducerParameterLevelList(const std::string& producerName,T::Pa
     for (auto pname = nameList.begin(); pname != nameList.end(); ++pname)
     {
       T::ProducerInfo producerInfo;
-      if (contentServer->getProducerInfoByName(0,*pname,producerInfo) == 0)
+      // if (contentServer->getProducerInfoByName(0,*pname,producerInfo) == 0)
+      if (getProducerInfoByName(*pname,producerInfo))
       {
         std::string fmiParameterName;
         uint len = mLevelInfoList.getLength();
@@ -1259,7 +1288,8 @@ void Engine::getProducerParameterLevelIdList(const std::string& producerName,std
     for (auto pname = nameList.begin(); pname != nameList.end(); ++pname)
     {
       T::ProducerInfo producerInfo;
-      if (contentServer->getProducerInfoByName(0,*pname,producerInfo) == 0)
+      //if (contentServer->getProducerInfoByName(0,*pname,producerInfo) == 0)
+      if (getProducerInfoByName(*pname,producerInfo))
       {
         std::string fmiParameterName;
         uint len = mLevelInfoList.getLength();

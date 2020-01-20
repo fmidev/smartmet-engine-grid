@@ -24,6 +24,7 @@ typedef std::shared_ptr<ContentServer::ServiceInterface> ContentServer_sptr;
 typedef std::shared_ptr<DataServer::ServiceInterface> DataServer_sptr;
 typedef std::shared_ptr<QueryServer::ServiceInterface> QueryServer_sptr;
 
+
 class Engine : public SmartMet::Spine::SmartMetEngine
 {
   public:
@@ -105,6 +106,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     void                getProducerList(string_vec& producerList) const;
 
+    bool                getProducerInfoByName(const std::string& name,T::ProducerInfo& info) const;
+
     void                getProducerParameterLevelList(
                           const std::string& producerName,
                           T::ParamLevelId fmiParamLevelId,
@@ -149,6 +152,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings);
     FILE*               openMappingFile(const std::string& mappingFile);
     void                updateMappings();
+
 
     void                updateMappings(
                           T::ParamKeyType sourceParameterKeyType,
@@ -248,6 +252,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     mutable ThreadLock                        mThreadLock;
     mutable time_t                            mParameterMappingUpdateTime;
     mutable string_vec                        mProducerList;
+    mutable T::ProducerInfoList               mProducerInfoList;
     mutable time_t                            mProducerList_updateTime;
     mutable T::LevelInfoList                  mLevelInfoList;
     mutable time_t                            mLevelInfoList_lastUpdate;
