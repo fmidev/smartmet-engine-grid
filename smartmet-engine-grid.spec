@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 20.1.16
+Version: 20.1.21
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -14,7 +14,7 @@ BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: libconfig-devel
 BuildRequires: libpqxx-devel
-BuildRequires: smartmet-library-grid-content-devel >= 20.1.16
+BuildRequires: smartmet-library-grid-content-devel >= 20.1.21
 BuildRequires: smartmet-library-grid-files-devel >= 20.1.16
 BuildRequires: smartmet-library-spine-devel >= 19.11.20
 BuildRequires: make
@@ -24,7 +24,7 @@ BuildRequires: gdal-devel
 Requires: boost-thread
 Requires: libconfig
 Requires: libpqxx-devel
-Requires: smartmet-library-grid-content >= 20.1.16
+Requires: smartmet-library-grid-content >= 20.1.21
 Requires: smartmet-library-grid-files >= 20.1.16
 Requires: smartmet-library-spine >= 19.11.20
 Requires: omniORB-devel
@@ -64,6 +64,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Tue Jan 21 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.1.21-1.fmi
+- Improved access to producer information
+
 * Thu Jan 16 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.1.16-1.fmi
 - Set maximum length of event list
 
