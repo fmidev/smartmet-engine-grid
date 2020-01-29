@@ -65,6 +65,9 @@ rm -rf $RPM_BUILD_ROOT
 
 %changelog
 * Wed Jan 29 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.1.29-1.fmi
+- Added newbase alias names for producers
+- Added a method for getting producers' official newbase names
+
 - Repackaged due to library API changes
 
 * Tue Jan 21 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.1.21-1.fmi
