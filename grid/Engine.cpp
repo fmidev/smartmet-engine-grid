@@ -698,6 +698,39 @@ std::string Engine::getParameterString(std::string producer,std::string paramete
 
 
 
+std::string Engine::getProducerName(const std::string& aliasName) const
+{
+  FUNCTION_TRACE
+  try
+  {
+    mProducerAliases.checkUpdates();
+
+    std::vector<std::string> aliasStrings;
+    mProducerAliases.getAliasList(aliasName,aliasStrings);
+
+    // Removing the level type information from the alias names.
+
+    for (auto it=aliasStrings.begin(); it != aliasStrings.end(); it++)
+    {
+      std::vector<std::string> partList;
+      splitString(*it,';',partList);
+      if (partList.size() == 1)
+        return partList[0];
+    }
+
+     return aliasName;
+  }
+  catch (...)
+  {
+    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    throw exception;
+  }
+}
+
+
+
+
 void Engine::getProducerNameList(const std::string& aliasName,std::vector<std::string>& nameList) const
 {
   FUNCTION_TRACE

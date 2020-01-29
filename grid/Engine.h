@@ -47,6 +47,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                           const std::string& aliasName,
                           std::vector<std::string>& nameList) const;
 
+    std::string         getProducerName(const std::string& aliasName) const;
+
     std::string         getProducerAlias(
                           const std::string& producerName,
                           int levelId) const;
