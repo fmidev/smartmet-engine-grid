@@ -239,6 +239,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     bool                mVirtualFilesEnabled;
     std::string         mVirtualFileDefinitions;
     bool                mContentPreloadEnabled;
+    std::string         mContentPreloadFile;
 
     string_vec          mParameterAliasFiles;
     string_vec          mParameterMappingFiles;

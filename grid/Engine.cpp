@@ -87,6 +87,7 @@ Engine::Engine(const char* theConfigFile)
         "smartmet.engine.grid.data-server.caching",
         "smartmet.engine.grid.data-server.grid-storage.directory",
         "smartmet.engine.grid.data-server.grid-storage.preloadEnabled",
+        "smartmet.engine.grid.data-server.grid-storage.preloadFile",
         "smartmet.engine.grid.data-server.virtualFiles.enabled",
         "smartmet.engine.grid.data-server.virtualFiles.definitionFile",
         "smartmet.engine.grid.data-server.luaFiles",
@@ -219,6 +220,7 @@ Engine::Engine(const char* theConfigFile)
 
     // These settings are used when the data server is embedded into the grid engine.
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadEnabled",mContentPreloadEnabled);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadFile",mContentPreloadFile);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.directory", mDataServerGridDirectory);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.virtualFiles.enabled",mVirtualFilesEnabled);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.virtualFiles.definitionFile",mVirtualFileDefinitions);
@@ -363,8 +365,7 @@ void Engine::init()
       DataServer::ServiceImplementation *server = new DataServer::ServiceImplementation();
       server->init(0,0,"NotRegistered","NotRegistered",mDataServerGridDirectory,cServer,mDataServerLuaFiles);
       server->setPointCacheEnabled(mPointCacheEnabled,mPointCacheHitsRequired,mPointCacheTimePeriod);
-      server->setRequestCounterEnabled(mRequestCounterFilename,mRequestCounterEnabled);
-      server->setContentPreloadEnabled(mContentPreloadEnabled);
+      server->setPreload(mContentPreloadEnabled,mContentPreloadFile,mRequestCounterEnabled,mRequestCounterFilename);
       //dServer->init(0,0,"NotRegistered","NotRegistered",mDataServerGridDirectory,cache);
 
       if (mVirtualFilesEnabled)
