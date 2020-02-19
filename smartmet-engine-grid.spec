@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 20.1.29
+Version: 20.2.19
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -14,8 +14,8 @@ BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: libconfig-devel
 BuildRequires: libpqxx-devel
-BuildRequires: smartmet-library-grid-content-devel >= 20.1.29
-BuildRequires: smartmet-library-grid-files-devel >= 20.1.29
+BuildRequires: smartmet-library-grid-content-devel >= 20.2.19
+BuildRequires: smartmet-library-grid-files-devel >= 20.2.19
 BuildRequires: smartmet-library-spine-devel >= 19.11.20
 BuildRequires: make
 BuildRequires: omniORB-devel
@@ -24,8 +24,8 @@ BuildRequires: gdal-devel
 Requires: boost-thread
 Requires: libconfig
 Requires: libpqxx-devel
-Requires: smartmet-library-grid-content >= 20.1.29
-Requires: smartmet-library-grid-files >= 20.1.29
+Requires: smartmet-library-grid-content >= 20.2.19
+Requires: smartmet-library-grid-files >= 20.2.19
 Requires: smartmet-library-spine >= 19.11.20
 Requires: omniORB-devel
 Provides: %{SPECNAME}
@@ -64,10 +64,12 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Wed Feb 19 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.2.19-1.fmi
+- Added preloading and configuration files for it
+
 * Wed Jan 29 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.1.29-1.fmi
 - Added newbase alias names for producers
 - Added a method for getting producers' official newbase names
-
 - Repackaged due to library API changes
 
 * Tue Jan 21 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.1.21-1.fmi
