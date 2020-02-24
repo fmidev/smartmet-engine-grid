@@ -183,7 +183,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     uint                mPointCacheHitsRequired;
     uint                mPointCacheTimePeriod;
     bool                mRequestCounterEnabled;
-    std::string         mRequestCounterFilename;
+    std::string         mGeneratedCounterFile;
+    std::string         mGeneratedPreloadFile;
     std::string         mDataServerGridDirectory;
 
     std::string         mContentSourceType;
@@ -240,6 +241,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::string         mVirtualFileDefinitions;
     bool                mContentPreloadEnabled;
     std::string         mContentPreloadFile;
+    std::string         mContentCounterFile;
 
     string_vec          mParameterAliasFiles;
     string_vec          mParameterMappingFiles;
