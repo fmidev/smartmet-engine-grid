@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 20.2.19
+Version: 20.2.25
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -14,9 +14,9 @@ BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: libconfig-devel
 BuildRequires: libpqxx-devel
-BuildRequires: smartmet-library-grid-content-devel >= 20.2.19
-BuildRequires: smartmet-library-grid-files-devel >= 20.2.19
-BuildRequires: smartmet-library-spine-devel >= 19.11.20
+BuildRequires: smartmet-library-grid-content-devel >= 20.2.25
+BuildRequires: smartmet-library-grid-files-devel >= 20.2.25
+BuildRequires: smartmet-library-spine-devel >= 20.2.13
 BuildRequires: make
 BuildRequires: omniORB-devel
 BuildRequires: boost-devel
@@ -24,9 +24,9 @@ BuildRequires: gdal-devel
 Requires: boost-thread
 Requires: libconfig
 Requires: libpqxx-devel
-Requires: smartmet-library-grid-content >= 20.2.19
-Requires: smartmet-library-grid-files >= 20.2.19
-Requires: smartmet-library-spine >= 19.11.20
+Requires: smartmet-library-grid-content >= 20.2.25
+Requires: smartmet-library-grid-files >= 20.2.25
+Requires: smartmet-library-spine >= 20.2.13
 Requires: omniORB-devel
 Provides: %{SPECNAME}
 
@@ -64,6 +64,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Tue Feb 25 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.2.25-1.fmi
+- Disable request counter by default
+- Disable debug log by default
+
 * Wed Feb 19 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.2.19-1.fmi
 - Added preloading and configuration files for it
 
