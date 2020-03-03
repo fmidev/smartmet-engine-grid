@@ -2,6 +2,7 @@
 
 #include <spine/SmartMetEngine.h>
 #include <gis/DEM.h>
+#include <gis/LandCover.h>
 #include <grid-content/contentServer/cache/CacheImplementation.h>
 #include <grid-content/contentServer/redis/RedisImplementation.h>
 #include <grid-content/dataServer/implementation/ServiceImplementation.h>
@@ -143,6 +144,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     bool                isGridProducer(const std::string& producer) const;
     void                setDem(boost::shared_ptr<Fmi::DEM> dem);
+    void                setLandCover(boost::shared_ptr<Fmi::LandCover> landCover);
     void                updateProcessing();
 
   protected:
@@ -252,6 +254,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::string         mParameterMappingUpdateFile_newbase;
 
     boost::shared_ptr<Fmi::DEM>               mDem;
+    boost::shared_ptr<Fmi::LandCover>         mLandCover;
     mutable ConfigurationFile                 mConfigurationFile;
     mutable bool                              mShutdownRequested;
     mutable ThreadLock                        mThreadLock;

@@ -2131,6 +2131,24 @@ void Engine::setDem(boost::shared_ptr<Fmi::DEM> dem)
 
 
 
+void Engine::setLandCover(boost::shared_ptr<Fmi::LandCover> landCover)
+{
+  try
+  {
+    mLandCover = landCover;
+    mQueryServer->setLandCover(landCover);
+  }
+  catch (...)
+  {
+    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    throw exception;
+  }
+}
+
+
+
+
+
 void Engine::startUpdateProcessing()
 {
   try
