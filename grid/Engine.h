@@ -244,6 +244,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     bool                mContentPreloadEnabled;
     std::string         mContentPreloadFile;
     std::string         mContentCounterFile;
+    bool                mPreloadMemoryLock;
 
     string_vec          mParameterAliasFiles;
     string_vec          mParameterMappingFiles;

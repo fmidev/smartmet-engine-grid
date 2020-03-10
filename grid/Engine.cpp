@@ -89,6 +89,7 @@ Engine::Engine(const char* theConfigFile)
         "smartmet.engine.grid.data-server.grid-storage.directory",
         "smartmet.engine.grid.data-server.grid-storage.preloadEnabled",
         "smartmet.engine.grid.data-server.grid-storage.preloadFile",
+        "smartmet.engine.grid.data-server.grid-storage.preloadMemoryLock",
         "smartmet.engine.grid.data-server.grid-storage.counterFile",
         "smartmet.engine.grid.data-server.virtualFiles.enabled",
         "smartmet.engine.grid.data-server.virtualFiles.definitionFile",
@@ -136,6 +137,7 @@ Engine::Engine(const char* theConfigFile)
     mPointCacheHitsRequired = 20; // 20 hits required during the last 20 minutes
     mPointCacheTimePeriod = 1200;
     mRequestCounterEnabled = false;
+    mPreloadMemoryLock = false;
 
     mContentServerProcessingLogEnabled = false;
     mContentServerDebugLogEnabled = false;
@@ -224,6 +226,7 @@ Engine::Engine(const char* theConfigFile)
     // These settings are used when the data server is embedded into the grid engine.
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadEnabled",mContentPreloadEnabled);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadFile",mContentPreloadFile);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadMemoryLock",mPreloadMemoryLock);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.counterFile",mContentCounterFile);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.directory", mDataServerGridDirectory);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.virtualFiles.enabled",mVirtualFilesEnabled);
@@ -369,7 +372,7 @@ void Engine::init()
       DataServer::ServiceImplementation *server = new DataServer::ServiceImplementation();
       server->init(0,0,"NotRegistered","NotRegistered",mDataServerGridDirectory,cServer,mDataServerLuaFiles);
       server->setPointCacheEnabled(mPointCacheEnabled,mPointCacheHitsRequired,mPointCacheTimePeriod);
-      server->setPreload(mContentPreloadEnabled,mContentPreloadFile,mContentCounterFile,mRequestCounterEnabled,mGeneratedPreloadFile,mGeneratedCounterFile);
+      server->setPreload(mContentPreloadEnabled,mPreloadMemoryLock,mContentPreloadFile,mContentCounterFile,mRequestCounterEnabled,mGeneratedPreloadFile,mGeneratedCounterFile);
       //dServer->init(0,0,"NotRegistered","NotRegistered",mDataServerGridDirectory,cache);
 
       if (mVirtualFilesEnabled)
