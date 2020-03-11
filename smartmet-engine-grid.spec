@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 20.3.5
+Version: 20.3.11
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -14,9 +14,9 @@ BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: libconfig-devel
 BuildRequires: libpqxx-devel
-BuildRequires: smartmet-library-grid-content-devel >= 20.3.5
-BuildRequires: smartmet-library-grid-files-devel >= 20.3.5
-BuildRequires: smartmet-library-spine-devel >= 20.3.5
+BuildRequires: smartmet-library-grid-content-devel >= 20.3.10
+BuildRequires: smartmet-library-grid-files-devel >= 20.3.10
+BuildRequires: smartmet-library-spine-devel >= 20.3.9
 BuildRequires: make
 BuildRequires: omniORB-devel
 BuildRequires: boost-devel
@@ -24,9 +24,9 @@ BuildRequires: gdal-devel
 Requires: boost-thread
 Requires: libconfig
 Requires: libpqxx-devel
-Requires: smartmet-library-grid-content >= 20.3.5
-Requires: smartmet-library-grid-files >= 20.3.5
-Requires: smartmet-library-spine >= 20.3.5
+Requires: smartmet-library-grid-content >= 20.3.10
+Requires: smartmet-library-grid-files >= 20.3.10
+Requires: smartmet-library-spine >= 20.3.9
 Requires: omniORB-devel
 Provides: %{SPECNAME}
 
@@ -64,6 +64,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Wed Mar 11 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.3.11-1.fmi
+- Memory locking is now configurable
+
 * Thu Mar  5 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.3.5-1.fmi
 - Added dem and land cover information access
 
