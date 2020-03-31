@@ -185,6 +185,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     uint                mPointCacheHitsRequired;
     uint                mPointCacheTimePeriod;
     bool                mRequestCounterEnabled;
+    bool                mRequestForwardEnabled;
     std::string         mGeneratedCounterFile;
     std::string         mGeneratedPreloadFile;
     std::string         mDataServerGridDirectory;
@@ -238,7 +239,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     uint                mMaxSizeOfCachedGridsInMegaBytes;
 
     std::string         mProducerFile;
-    std::string         mProducerAliasFile;
+    string_vec          mProducerAliasFiles;
     bool                mVirtualFilesEnabled;
     std::string         mVirtualFileDefinitions;
     bool                mContentPreloadEnabled;
@@ -265,7 +266,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     mutable time_t                            mProducerList_updateTime;
     mutable T::LevelInfoList                  mLevelInfoList;
     mutable time_t                            mLevelInfoList_lastUpdate;
-    mutable QueryServer::AliasFile            mProducerAliases;
+    mutable QueryServer::AliasFileCollection  mProducerAliasFileCollection;
     mutable QueryServer::AliasFileCollection  mParameterAliasFileCollection;
     mutable QueryServer::ParamMappingFile_vec mParameterMappings;
     mutable T::GenerationInfoList             mGenerationList;

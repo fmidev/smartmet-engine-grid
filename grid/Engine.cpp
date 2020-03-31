@@ -73,6 +73,7 @@ Engine::Engine(const char* theConfigFile)
         "smartmet.engine.grid.content-server.content-source.corba.ior",
         "smartmet.engine.grid.content-server.cache.enabled",
         "smartmet.engine.grid.content-server.cache.contentSortingFlags",
+        "smartmet.engine.grid.content-server.cache.requestForwardEnabled",
 
         "smartmet.engine.grid.content-server.processing-log.enabled",
         "smartmet.engine.grid.content-server.processing-log.file",
@@ -106,7 +107,7 @@ Engine::Engine(const char* theConfigFile)
         "smartmet.engine.grid.query-server.remote",
         "smartmet.engine.grid.query-server.ior",
         "smartmet.engine.grid.query-server.producerFile",
-        "smartmet.engine.grid.query-server.producerAliasFile",
+        "smartmet.engine.grid.query-server.producerAliasFiles",
         "smartmet.engine.grid.query-server.luaFiles",
         "smartmet.engine.grid.query-server.mappingTargetKeyType",
         "smartmet.engine.grid.query-server.mappingFiles",
@@ -138,6 +139,7 @@ Engine::Engine(const char* theConfigFile)
     mPointCacheTimePeriod = 1200;
     mRequestCounterEnabled = false;
     mPreloadMemoryLock = false;
+    mRequestForwardEnabled = false;
 
     mContentServerProcessingLogEnabled = false;
     mContentServerDebugLogEnabled = false;
@@ -209,6 +211,7 @@ Engine::Engine(const char* theConfigFile)
 
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.enabled", mContentCacheEnabled);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.contentSortingFlags", mContentCacheSortingFlags);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.requestForwardEnabled", mRequestForwardEnabled);
 
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.enabled", mContentServerProcessingLogEnabled);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.file", mContentServerProcessingLogFile);
@@ -247,7 +250,7 @@ Engine::Engine(const char* theConfigFile)
 
     // These settings are used when the query server is embedded into the grid engine.
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.producerFile",mProducerFile);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.producerAliasFile",mProducerAliasFile);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.producerAliasFiles",mProducerAliasFiles);
 
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.enabled", mQueryServerProcessingLogEnabled);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.file", mQueryServerProcessingLogFile);
@@ -343,6 +346,7 @@ void Engine::init()
     {
       ContentServer::CacheImplementation *cache = new ContentServer::CacheImplementation();
       cache->init(0,cServer,mContentCacheSortingFlags);
+      cache->setRequestForwardEnabled(mRequestForwardEnabled);
       mContentServerCache.reset(cache);
       cache->startEventProcessing();
       cServer = cache;
@@ -408,7 +412,7 @@ void Engine::init()
     else
     {
       QueryServer::ServiceImplementation *server = new QueryServer::ServiceImplementation();
-      server->init(cServer,dServer,mGridConfigFile,mParameterMappingFiles,mParameterAliasFiles,mProducerFile,mProducerAliasFile,mQueryServerLuaFiles);
+      server->init(cServer,dServer,mGridConfigFile,mParameterMappingFiles,mParameterAliasFiles,mProducerFile,mProducerAliasFiles,mQueryServerLuaFiles);
       qServer = server;
 
       mQueryServer.reset(server);
@@ -451,7 +455,7 @@ void Engine::init()
       qServer->setDebugLog(&mQueryServerDebugLog);
     }
 
-    mProducerAliases.init(mProducerAliasFile,true);
+    mProducerAliasFileCollection.init(mProducerAliasFiles,true);
     mParameterAliasFileCollection.init(mParameterAliasFiles);
 
 
@@ -711,10 +715,10 @@ std::string Engine::getProducerName(const std::string& aliasName) const
   FUNCTION_TRACE
   try
   {
-    mProducerAliases.checkUpdates();
+    mProducerAliasFileCollection.checkUpdates(false);
 
     std::vector<std::string> aliasStrings;
-    mProducerAliases.getAliasList(aliasName,aliasStrings);
+    mProducerAliasFileCollection.getAliasList(aliasName,aliasStrings);
 
     // Removing the level type information from the alias names.
 
@@ -744,10 +748,10 @@ void Engine::getProducerNameList(const std::string& aliasName,std::vector<std::s
   FUNCTION_TRACE
   try
   {
-    mProducerAliases.checkUpdates();
+    mProducerAliasFileCollection.checkUpdates(false);
 
     std::vector<std::string> aliasStrings;
-    mProducerAliases.getAliasList(aliasName,aliasStrings);
+    mProducerAliasFileCollection.getAliasList(aliasName,aliasStrings);
 
     // Removing the level type information from the alias names.
 
@@ -782,10 +786,10 @@ void Engine::getParameterDetails(const std::string& aliasName,ParameterDetails_v
   FUNCTION_TRACE
   try
   {
-    mProducerAliases.checkUpdates();
+    mProducerAliasFileCollection.checkUpdates(false);
 
     std::vector<std::string> aliasStrings;
-    mProducerAliases.getAliasList(aliasName,aliasStrings);
+    mProducerAliasFileCollection.getAliasList(aliasName,aliasStrings);
 
     for (auto it=aliasStrings.begin(); it != aliasStrings.end(); it++)
     {
@@ -855,7 +859,7 @@ void Engine::getParameterDetails(const std::string& producerName,const std::stri
   FUNCTION_TRACE
   try
   {
-    mProducerAliases.checkUpdates();
+    mProducerAliasFileCollection.checkUpdates(false);
     mParameterAliasFileCollection.checkUpdates(false);
 
 
@@ -870,7 +874,7 @@ void Engine::getParameterDetails(const std::string& producerName,const std::stri
     std::string key = prod + ";" + param;
 
     std::vector<std::string> aliasStrings;
-    mProducerAliases.getAliasList(key,aliasStrings);
+    mProducerAliasFileCollection.getAliasList(key,aliasStrings);
 
     for (auto it=aliasStrings.begin(); it != aliasStrings.end(); it++)
     {
