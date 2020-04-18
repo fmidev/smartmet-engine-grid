@@ -39,6 +39,13 @@ else
   CORBA_LIBS = -lomniORB4 -lomnithread  
 endif
 
+# Boost 1.69
+
+ifneq "$(wildcard /usr/include/boost169)" ""
+  INCLUDES += -I/usr/include/boost169
+  LIBS += -L/usr/lib64/boost169
+endif
+
 # Compiler options
 
 DEFINES = -DUNIX -D_REENTRANT
@@ -53,7 +60,7 @@ ifeq ($(CXX), clang++)
 	-Wno-padded \
 	-Wno-missing-prototypes
 
- INCLUDES = \
+ INCLUDES += \
 	-isystem $(includedir) \
 	-isystem $(includedir)/smartmet \
 	$(CORBA_INCLUDE)
@@ -78,7 +85,7 @@ else
 
  FLAGS_RELEASE = -Wuninitialized
 
- INCLUDES = \
+ INCLUDES += \
 	-I$(includedir) \
 	-I$(includedir)/smartmet \
 	$(CORBA_INCLUDE)
@@ -96,7 +103,7 @@ else
   override CFLAGS += $(CFLAGS_RELEASE)
 endif
 
-LIBS = -L$(libdir) \
+LIBS += -L$(libdir) \
 	-lsmartmet-spine \
 	-lsmartmet-grid-files \
 	-lsmartmet-grid-content \
