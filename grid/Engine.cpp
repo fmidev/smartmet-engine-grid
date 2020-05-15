@@ -88,6 +88,7 @@ Engine::Engine(const char* theConfigFile)
         "smartmet.engine.grid.data-server.ior",
         "smartmet.engine.grid.data-server.caching",
         "smartmet.engine.grid.data-server.grid-storage.directory",
+        "smartmet.engine.grid.data-server.grid-storage.memoryMapCheckEnabled",
         "smartmet.engine.grid.data-server.grid-storage.preloadEnabled",
         "smartmet.engine.grid.data-server.grid-storage.preloadFile",
         "smartmet.engine.grid.data-server.grid-storage.preloadMemoryLock",
@@ -148,6 +149,7 @@ Engine::Engine(const char* theConfigFile)
     mQueryServerProcessingLogEnabled = false;
     mQueryServerDebugLogEnabled = false;
     mVirtualFilesEnabled = false;
+    mMemoryMapCheckEnabled = false;
     mParameterMappingUpdateTime = 0;
     mShutdownRequested = false;
     mContentPreloadEnabled = true;
@@ -227,6 +229,7 @@ Engine::Engine(const char* theConfigFile)
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.caching", mDataServerCacheEnabled);
 
     // These settings are used when the data server is embedded into the grid engine.
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.memoryMapCheckEnabled",mMemoryMapCheckEnabled);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadEnabled",mContentPreloadEnabled);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadFile",mContentPreloadFile);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadMemoryLock",mPreloadMemoryLock);
@@ -377,6 +380,7 @@ void Engine::init()
       server->init(0,0,"NotRegistered","NotRegistered",mDataServerGridDirectory,cServer,mDataServerLuaFiles);
       server->setPointCacheEnabled(mPointCacheEnabled,mPointCacheHitsRequired,mPointCacheTimePeriod);
       server->setPreload(mContentPreloadEnabled,mPreloadMemoryLock,mContentPreloadFile,mContentCounterFile,mRequestCounterEnabled,mGeneratedPreloadFile,mGeneratedCounterFile);
+      server->setMemoryMapCheckEnabled(mMemoryMapCheckEnabled);
       //dServer->init(0,0,"NotRegistered","NotRegistered",mDataServerGridDirectory,cache);
 
       if (mVirtualFilesEnabled)
