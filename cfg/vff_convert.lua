@@ -23,37 +23,46 @@ end
 -- ***********************************************************************
 -- ***********************************************************************
 
-function SSI(columns,rows,rhArray,tempArray)
+function SSI(columns,rows,len,params,extParams)
 
   local result = {};
   local simmer_limit = 14.5;
 
-
-  for index, rh in pairs(rhArray) do
-
-    local t = tempArray[index]-273.15;
-
-    if (t <= simmer_limit) then
-      result[index] = t;
-    end
-
-    if (rh == ParamValueMissing) then 
-      result[index] = ParamValueMissing;
-    end
-
-    if (t == ParamValueMissing) then 
-      result[index] = ParamValueMissing;
-    end
-
-    local rh_ref = 50.0 / 100.0;
-    local r = rh / 100.0;
-
-    result[index] =  (1.8 * t - 0.55 * (1 - r) * (1.8 * t - 26) - 0.55 * (1 - rh_ref) * 26) / (1.8 * (1 - 0.55 * (1 - rh_ref)));
+  if (len ~= 2) then
+    return result;
   end
-           
+  
+  local inIdx = 1;
+  local outIdx = 1;
+  
+  for r=1,rows do
+    for c=1,columns do       
+      local rh = params[inIdx];
+      local temp = params[inIdx+1];
+
+      if (temp == ParamValueMissing or rh == ParamValueMissing) then
+        result[outIdx] = ParamValueMissing;
+      else
+        temp = temp - 273.15;
+        if (temp <= simmer_limit) then
+          result[outIdx] = temp;
+        else
+          local rh_ref = 50.0 / 100.0;
+          local r = rh / 100.0;
+
+          result[outIdx] =  (1.8 * temp- 0.55 * (1 - r) * (1.8 * temp - 26) - 0.55 * (1 - rh_ref) * 26) / (1.8 * (1 - 0.55 * (1 - rh_ref)));
+        end
+      end
+      
+      inIdx = inIdx + 2;
+      outIdx = outIdx + 1;
+    end
+  end
+  
   return result;
 
 end
+
 
 
 
@@ -94,124 +103,74 @@ end
 --  FUNCTION : FEELS_LIKE
 -- ***********************************************************************
 
-function FEELS_LIKE(columns,rows,tempArray,windArray,rhArray,radArray)
+function FEELS_LIKE(columns,rows,len,params,extParams)
 
   local result = {};
 
-  --if (numOfParams ~= 4) then
-  --  result.message = 'Invalid number of parameters!';
-  --  result.value = 0;  
-  --  return result.value,result.message;
-  --end
-
-  for index, wind in pairs(windArray) do
-
-    local temp = tempArray[index]-273.15;
-    local rh = rhArray[index];      
-    local rad = radArray[index];      
-            
-    -- Calculate adjusted wind chill portion. Note that even though
-    -- the Canadien formula uses km/h, we use m/s and have fitted
-    -- the coefficients accordingly. Note that (a*w)^0.16 = c*w^16,
-    -- i.e. just get another coefficient c for the wind reduced to 1.5 meters.
-
-    local a = 15.0;   -- using this the two wind chills are good match at T=0
-    local t0 = 37.0;  -- wind chill is horizontal at this T
-
-    local chill = a + (1 - a / t0) * temp + a / t0 * math.pow(wind + 1, 0.16) * (temp - t0);
-
-    -- Heat index
-
-    local heat = SSI_COUNT(rh, temp);
-
-    -- Add the two corrections together
-
-    local feels = temp + (chill - temp) + (heat - temp);
-
-    -- Radiation correction done only when radiation is available
-    -- Based on the Steadman formula for Apparent temperature,
-    -- we just inore the water vapour pressure adjustment
-
-    if (rad ~= ParamValueMissing) then
-  
-      -- Chosen so that at wind=0 and rad=800 the effect is 4 degrees
-      -- At rad=50 the effect is then zero degrees
-    
-      local absorption = 0.07;
-      feels = feels + 0.7 * absorption * rad / (wind + 10) - 0.25;
-
-    end
-    
-    result[index] = feels;
-    
+  if (len ~= 4) then
+    return result;
   end
+  
+  local inIdx = 1;
+  local outIdx = 1;
+  
+  for r=1,rows do
+    for c=1,columns do       
+      local temp = params[inIdx];
+      local wind = params[inIdx+1];
+      local rh = params[inIdx+2];
+      local rad = params[inIdx+3];
 
+      if (temp == ParamValueMissing or wind == ParamValueMissing or rh == ParamValueMissing) then
+        result[outIdx] = ParamValueMissing;
+      else
+        temp = temp - 273.15;
+
+        -- Calculate adjusted wind chill portion. Note that even though
+        -- the Canadien formula uses km/h, we use m/s and have fitted
+        -- the coefficients accordingly. Note that (a*w)^0.16 = c*w^16,
+        -- i.e. just get another coefficient c for the wind reduced to 1.5 meters.
+
+        local a = 15.0;   -- using this the two wind chills are good match at T=0
+        local t0 = 37.0;  -- wind chill is horizontal at this T
+
+        local chill = a + (1 - a / t0) * temp + a / t0 * math.pow(wind + 1, 0.16) * (temp - t0);
+
+        -- Heat index
+
+        local heat = SSI_COUNT(rh, temp);
+
+        -- Add the two corrections together
+
+        local feels = temp + (chill - temp) + (heat - temp);
+
+        -- Radiation correction done only when radiation is available
+        -- Based on the Steadman formula for Apparent temperature,
+        -- we just inore the water vapour pressure adjustment
+
+        if (rad ~= ParamValueMissing) then
+  
+          -- Chosen so that at wind=0 and rad=800 the effect is 4 degrees
+          -- At rad=50 the effect is then zero degrees
+    
+          local absorption = 0.07;
+          feels = feels + 0.7 * absorption * rad / (wind + 10) - 0.25;
+
+        end
+    
+        result[outIdx] = feels;
+
+      end
+      
+      inIdx = inIdx + 4;
+      outIdx = outIdx + 1;
+    end
+  end
+  
   return result;
   
 end
 
-
-
-
--- ***********************************************************************
---  FUNCTION : FEELS_LIKE_HL2
--- ***********************************************************************
-
-function FEELS_LIKE_HL2(columns,rows,tempArray,windArray,rhArray,radArray)
-
-  local result = {};
-
-  --if (numOfParams ~= 4) then
-  --  result.message = 'Invalid number of parameters!';
-  --  result.value = 0;  
-  --  return result.value,result.message;
-  --end
-
-  for index, wind in pairs(windArray) do
-
-    local temp = tempArray[index]-273.15;
-    local rh = rhArray[index] * 100;      
-    local rad = radArray[index];      
-            
-    -- Calculate adjusted wind chill portion. Note that even though
-    -- the Canadien formula uses km/h, we use m/s and have fitted
-    -- the coefficients accordingly. Note that (a*w)^0.16 = c*w^16,
-    -- i.e. just get another coefficient c for the wind reduced to 1.5 meters.
-
-    local a = 15.0;   -- using this the two wind chills are good match at T=0
-    local t0 = 37.0;  -- wind chill is horizontal at this T
-
-    local chill = a + (1 - a / t0) * temp + a / t0 * math.pow(wind + 1, 0.16) * (temp - t0);
-
-    -- Heat index
-
-    local heat = SSI_COUNT(rh, temp);
-
-    -- Add the two corrections together
-
-    local feels = temp + (chill - temp) + (heat - temp);
-
-    -- Radiation correction done only when radiation is available
-    -- Based on the Steadman formula for Apparent temperature,
-    -- we just inore the water vapour pressure adjustment
-
-    if (rad ~= ParamValueMissing) then
-  
-      -- Chosen so that at wind=0 and rad=800 the effect is 4 degrees
-      -- At rad=50 the effect is then zero degrees
-    
-      local absorption = 0.07;
-      feels = feels + 0.7 * absorption * rad / (wind + 10) - 0.25;
-
-    end
-    
-    result[index] = feels;
-    
-  end
-
-  return result;
-  
-end
 
 
 
@@ -234,24 +193,38 @@ end
 -- \return Equivalent no-wind temperature
 -- ***********************************************************************
 
-function WIND_CHILL(columns,rows,tempArray,windArray)
+function WIND_CHILL(columns,rows,len,params,extParams)
 
   local result = {};
 
-  for index, wind in pairs(windArray) do
+  if (len ~= 2) then
+    return result;
+  end
+  
+  local inIdx = 1;
+  local outIdx = 1;
+  
+  for r=1,rows do
+    for c=1,columns do       
+      local temp = params[inIdx];
+      local wind = params[inIdx+1];
 
-    local temp = tempArray[index]-273.15;
-    if (wind == ParamValueMissing or temp == ParamValueMissing or wind < 0) then
-      result[index] = ParamValueMissing;
-    else
-      local kmh = wind * 3.6;
-
-      if (kmh < 5.0) then
-        result[index] = temp + (-1.59 + 0.1345 * temp) / 5.0 * kmh;
+      if (temp == ParamValueMissing or wind == ParamValueMissing or wind < 0) then
+        result[outIdx] = ParamValueMissing;
       else
-        local wpow = math.pow(kmh, 0.16);
-        result[index] = 13.12 + 0.6215 * temp - 11.37 * wpow + 0.3965 * temp * wpow;
+        temp = temp - 273.15;
+        local kmh = wind * 3.6;
+
+        if (kmh < 5.0) then
+          result[outIdx] = temp + (-1.59 + 0.1345 * temp) / 5.0 * kmh;
+        else
+          local wpow = math.pow(kmh, 0.16);
+          result[outIdx] = 13.12 + 0.6215 * temp - 11.37 * wpow + 0.3965 * temp * wpow;
+        end
       end
+      
+      inIdx = inIdx + 2;
+      outIdx = outIdx + 1;
     end
   end
   
@@ -267,13 +240,16 @@ end
 --  The function converts given Celcius degrees to Fahrenheit degrees.
 -- ***********************************************************************
 
-function C2F(columns,rows,params)
+function C2F(columns,rows,len,params,extParams)
 
   local result = {};
 
+  if (len ~= 1) then
+    return result;
+  end
+
   for index, value in pairs(params) do
     if (value ~= ParamValueMissing) then
-      -- print(index..':'..value);
       result[index] = value*1.8 + 32;
     else
       result[index] = ParamValueMissing;
@@ -294,24 +270,37 @@ end
 -- ***********************************************************************
 --  FUNCTION : WIND_SPEED
 -- ***********************************************************************
---  Counts the size of the hypotenuse assuming that params1 and params2
+--  Counts the size of the hypotenuse assuming that params[0] and params[1]
 --  represents vectors and the angle between them is 90 degrees.
 -- ***********************************************************************
 
-function WIND_SPEED(columns,rows,params1,params2)
+function WIND_SPEED(columns,rows,len,params,extParams)
 
   local result = {};
+  local simmer_limit = 14.5;
 
-  for index, value in pairs(params1) do
-    if (value ~= ParamValueMissing) then
-      -- print(index..':'..value);
-      result[index] = math.sqrt(value*value + params2[index]*params2[index]);
-    else
-      result[index] = ParamValueMissing;
-    end
+  if (len ~= 2) then
+    return result;
   end
   
-  -- printTable(result);
+  local inIdx = 1;
+  local outIdx = 1;
+  
+  for r=1,rows do
+    for c=1,columns do       
+      local p1 = params[inIdx];
+      local p2 = params[inIdx+1];
+
+      if (p1 == ParamValueMissing or p2 == ParamValueMissing) then
+        result[outIdx] = ParamValueMissing;
+      else
+        result[outIdx] = math.sqrt(p1*p1 + p2*p2);
+      end
+      
+      inIdx = inIdx + 2;
+      outIdx = outIdx + 1;
+    end
+  end
   
   return result;
   
@@ -521,11 +510,14 @@ end
 --  The function converts given Celcius degrees to Kelvin degrees.
 -- ***********************************************************************
 
-function C2K(columns,rows,params)
+function C2K(columns,rows,len,params,extParams)
 
   local result = {};
 
-  local result = {};
+  if (len ~= 1) then
+    return result;
+  end
+
 
   for index, value in pairs(params) do
     if (value ~= ParamValueMissing) then
@@ -550,9 +542,13 @@ end
 --  The function converts given Fahrenheit degrees to Celcius degrees.
 -- ***********************************************************************
 
-function F2C(columns,rows,params)
+function F2C(columns,rows,len,params,extParams)
 
   local result = {};
+
+  if (len ~= 1) then
+    return result;
+  end
 
   for index, value in pairs(params) do
     if (value ~= ParamValueMissing) then
@@ -576,9 +572,13 @@ end
 --  The function converts given Fahrenheit degrees to Kelvin degrees.
 -- ***********************************************************************
 
-function F2K(columns,rows,params)
+function F2K(columns,rows,len,params,extParams)
 
   local result = {};
+
+  if (len ~= 1) then
+    return result;
+  end
 
   for index, value in pairs(params) do
     if (value ~= ParamValueMissing) then
@@ -602,20 +602,22 @@ end
 --  The function converts given Kelvin degrees to Celcius degrees.
 -- ***********************************************************************
 
-function K2C(columns,rows,params)
+function K2C(columns,rows,len,params,extParams)
 
+  print("K2C");
   local result = {};
+
+  if (len ~= 1) then
+    return result;
+  end
 
   for index, value in pairs(params) do
     if (value ~= ParamValueMissing) then
-      -- print(index..':'..value);
       result[index] = value - 273.15;
     else
       result[index] = ParamValueMissing;
     end
   end
-  
-  -- printTable(result);
   
   return result;
   
@@ -631,9 +633,13 @@ end
 --  The function converts given Kelvin degrees to Fahrenheit degrees.
 -- ***********************************************************************
 
-function K2F(columns,rows,params)
+function K2F(columns,rows,len,params,extParams)
 
   local result = {};
+
+  if (len ~= 1) then
+    return result;
+  end
 
   for index, value in pairs(params) do
     if (value ~= ParamValueMissing) then
@@ -657,9 +663,13 @@ end
 --  The function converts given degrees to radians.
 -- ***********************************************************************
 
-function DEG2RAD(columns,rows,params)
+function DEG2RAD(columns,rows,len,params,extParams)
 
   local result = {};
+
+  if (len ~= 1) then
+    return result;
+  end
 
   for index, value in pairs(params) do
     if (value ~= ParamValueMissing) then
@@ -683,9 +693,13 @@ end
 --  The function converts given radians to degrees.
 -- ***********************************************************************
 
-function RAD2DEG(columns,rows,params)
+function RAD2DEG(columns,rows,len,params,extParams)
 
   local result = {};
+
+  if (len ~= 1) then
+    return result;
+  end
 
   for index, value in pairs(params) do
     if (value ~= ParamValueMissing) then
@@ -699,6 +713,173 @@ function RAD2DEG(columns,rows,params)
   return result;
   
 end
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : IN_PRCNT
+-- ***********************************************************************
+--  Notice that there is also C++ implementation of this function and it
+--  is used when generating virtual files. 
+-- ***********************************************************************
+
+function IN_PRCNT(columns,rows,len,params,extParams)
+
+  print("IN_PRCNT");
+
+  local result = {};
+  local inIdx = 1;
+  local outIdx = 1;
+  local min = extParams[1];
+  local max = extParams[2];
+  
+  for r=1,rows do
+    for c=1,columns do    
+      local agree = 0;
+      local cnt = 0;
+      for i=1,len do
+        value = params[inIdx];      
+        if (value ~= ParamValueMissing) then
+          cnt = cnt + 1;
+          if (value >= min and value <= max) then 
+            agree = agree + 1;
+          end
+        end
+        inIdx = inIdx + 1;        
+      end
+      if (cnt > 0) then
+        result[outIdx] = agree / len;
+      else
+        result[outIdx] = ParamValueMissing;
+      end
+      outIdx = outIdx + 1;
+    end
+  end
+  
+  return result;
+  
+end
+
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : OUT_PRCNT
+-- ***********************************************************************
+--  Notice that there is also C++ implementation of this function and it
+--  is used when generating virtual files. 
+-- ***********************************************************************
+
+function OUT_PRCNT(columns,rows,len,params,extParams)
+
+  local result = {};
+  local inIdx = 1;
+  local outIdx = 1;
+  local min = extParams[1];
+  local max = extParams[2];
+  
+  for r=1,rows do
+    for c=1,columns do    
+      local agree = 0;
+      local cnt = 0;
+      for i=1,len do
+        value = params[inIdx];      
+        if (value ~= ParamValueMissing) then
+          cnt = cnt + 1;
+          if (value < min or value > max) then 
+            agree = agree + 1;
+          end
+        end
+        inIdx = inIdx + 1;        
+      end
+      if (cnt > 0) then
+        result[outIdx] = agree / len;
+      else
+        result[outIdx] = ParamValueMissing;
+      end
+      outIdx = outIdx + 1;
+    end
+  end
+  
+  return result;
+  
+end
+
+
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : MIN
+-- ***********************************************************************
+--  Notice that there is also C++ implementation of this function and it
+--  is used when generating virtual files. 
+-- ***********************************************************************
+
+function MIN(columns,rows,len,params,extParams)
+
+  print("MIN");
+  local result = {};
+  local inIdx = 1;
+  local outIdx = 1;
+    
+  for r=1,rows do
+    for c=1,columns do   
+      local min = ParamValueMissing;      
+      for i=1,len do
+        value = params[inIdx];      
+        if (value ~= ParamValueMissing and (min == ParamValueMissing or value < min)) then
+          min = value;
+        end
+        inIdx = inIdx + 1;        
+      end
+      result[outIdx] = min;
+      outIdx = outIdx + 1;
+    end
+  end
+  
+  return result;
+  
+end
+
+
+
+-- ***********************************************************************
+--  FUNCTION : MAX
+-- ***********************************************************************
+--  Notice that there is also C++ implementation of this function and it
+--  is used when generating virtual files. 
+-- ***********************************************************************
+
+function MAX(columns,rows,len,params,extParams)
+
+  print("MAX");
+  local result = {};
+  local inIdx = 1;
+  local outIdx = 1;
+    
+  for r=1,rows do
+    for c=1,columns do
+      local max = ParamValueMissing;
+      for i=1,len do
+        value = params[inIdx];      
+        if (value ~= ParamValueMissing and (max == ParamValueMissing or value > max)) then
+          max = value;
+        end
+        inIdx = inIdx + 1;        
+      end
+      result[outIdx] = max;
+      outIdx = outIdx + 1;
+    end
+  end
+  
+  return result;
+  
+end
+
 
 
 
@@ -719,25 +900,6 @@ end
 --      Function returns two parameters:
 --        - result value (function result or ParamValueMissing)
 --        - result string (=> 'OK' or an error message)
---
---    Type 2 : 
---      Function takes three parameters as input:
---        - columns       => Number of the columns in the grid
---        - rows          => Number of the rows in the grid
---        - params        => Grid values (= Array of float values)
---      Function return one parameter:
---        - result array  => Array of float values (must have the same 
---                           number of values as the input 'params'.               
---
---    Type 3 : 
---      Function takes four parameters as input:
---        - columns       => Number of the columns in the grid
---        - rows          => Number of the rows in the grid
---        - params1       => Grid 1 values (= Array of float values)
---        - params2       => Grid 2 values (= Array of float values)
---      Function return one parameter:
---        - result array  => Array of float values (must have the same 
---                           number of values as the input 'params1'.               
 --  
 --    Type 4 : 
 --      Function takes five parameters as input:
@@ -746,7 +908,7 @@ end
 --        - params1       => Grid 1 values (= Array of float values)
 --        - params2       => Grid 2 values (= Array of float values)
 --        - params3       => Grid point angles to latlon-north (= Array of float values)
---      Function return one parameter:
+--      Function returns one parameter:
 --        - result array  => Array of float values (must have the same 
 --                           number of values as the input 'params1'.
 --      Can be use for example in order to calculate new Wind U- and V-
@@ -758,7 +920,7 @@ end
 --        - language    => defines the used language
 --        - numOfParams => defines how many values is in the params array
 --        - params      => Array of float values
---      Function return two parameters:
+--      Function returns two parameters:
 --        - result value (string)
 --        - result string (=> 'OK' or an error message)
 --      Can be use for example for translating a numeric value to a string
@@ -768,23 +930,20 @@ end
 --      Function takes two parameters as input:
 --        - numOfParams => defines how many values is in the params array
 --        - params      => Array of string values
---      Function return one parameters:
+--      Function returns one parameters:
 --        - result value (string)
 --      This function takes an array of strings and returns a string. It
 --      is used for example in order to get additional instructions for
 --      complex interpolation operations.  
 --
---    Type 7 : 
---      Function takes four parameters as input:
+--    Type 9: Takes vector<float[len]> as input and returns vector<float> as output
 --        - columns       => Number of the columns in the grid
 --        - rows          => Number of the rows in the grid
---        - params1       => Grid 1 values (= Array of float values)
---        - params2       => Grid 2 values (= Array of float values)
---        - params3       => Grid 3 values (= Array of float values)
---      Function return one parameter:
---        - result array  => Array of float values (must have the same 
---                           number of values as the input 'params1'.               
---  
+--        - len           => Number of the values in the array
+--        - params        => Grid values (vector<float[len]>)
+--        - extParams     => Additional parameters (= Array of float values)
+--      Function returns one parameter:
+--        - result array  => Array of float values.               
 --  
 -- ***********************************************************************
  
@@ -793,19 +952,13 @@ function getFunctionNames(type)
 
   local functionNames = '';
 
-  if (type == 2) then 
-    functionNames = 'C2F,C2K,F2C,F2K,K2C,K2F,DEG2RAD,RAD2DEG';
-  end
-  if (type == 3) then 
-    functionNames = 'SSI,WIND_CHILL,WIND_SPEED';
-  end
   if (type == 4) then 
     functionNames = 'WIND_V,WIND_U,WIND_DIR,WIND_TO_DIR';
+  end 
+  if (type == 9) then 
+    functionNames = 'FEELS_LIKE,SSI,WIND_CHILL,WIND_SPEED,C2F,C2K,F2C,F2K,K2C,K2F,DEG2RAD,RAD2DEG,IN_PRCNT,OUT_PRCNT,GT_PRCNT,LT,_PRCNT,MIN,MAX';
   end
-  if (type == 8) then 
-    functionNames = 'FEELS_LIKE,FEELS_LIKE_HL2';
-  end
-  
+
   return functionNames;
 
 end

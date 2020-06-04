@@ -1,6 +1,6 @@
 ParamValueMissing = -16777216;
 PI = 3.1415926;
-DEBUG = 0;
+DEBUG = 1;
 
 
 -- ***********************************************************************
@@ -24,6 +24,8 @@ AreaInterpolationMethod.ExtLandscape     = 1100;
 
 AreaInterpolationMethod.ExtWindDirection = 1200;
 AreaInterpolationMethod.ExtWindVector    = 1210;
+
+AreaInterpolationMethod.ExtEnsemble      = 1300;
 
 
 
@@ -724,10 +726,10 @@ function interpolate_landscape(height,coverType,x,y,
 
     -- Convert the values to the desired height
 
-    local fix_bl = lapseratefix(lapserate_bl, height, height_bl, waterFlag);
-    local fix_br = lapseratefix(lapserate_br, height, height_br, waterFlag);
-    local fix_tl = lapseratefix(lapserate_tl, height, height_tl, waterFlag);
-    local fix_tr = lapseratefix(lapserate_tr, height, height_tr, waterFlag);
+    -- local fix_bl = lapseratefix(lapserate_bl, height, height_bl, waterFlag);
+    -- local fix_br = lapseratefix(lapserate_br, height, height_br, waterFlag);
+    -- local fix_tl = lapseratefix(lapserate_tl, height, height_tl, waterFlag);
+    -- local fix_tr = lapseratefix(lapserate_tr, height, height_tr, waterFlag);
 
     -- print("fix_bl="..fix_bl.." fix_br="..fix_br.." fix_tl="..fix_tl.." fix_tr="..fix_tr);
 
@@ -796,7 +798,6 @@ end
 function IPL_NONE(numOfParams,params)
 
   if (DEBUG == 1) then
-    print("IPL_NONE()");
     for index, value in pairs(params) do
       print(index.." : "..value);
     end
@@ -1088,6 +1089,33 @@ end
 
 
 -- ***********************************************************************
+--  FUNCTION : IPL_ENSEMBLE
+-- ***********************************************************************
+--  The function returns the interpolate value.
+-- ***********************************************************************
+
+function IPL_ENSEMBLE(numOfParams,params)
+
+  if (DEBUG == 1) then
+    print("IPL_ENSEMBLE()");
+    for index, value in pairs(params) do
+      print(index.." : "..value);
+    end
+  end
+
+  local result = {};
+  
+  result.message = 'OK';
+  result.value = 0;
+    
+  return result.value,result.message;
+  
+end
+
+
+
+
+-- ***********************************************************************
 --  FUNCTION : IPL_WIND_VECTOR
 -- ***********************************************************************
 --  The function returns the interpolate value.
@@ -1204,10 +1232,10 @@ function IPL_LANDSCAPE(numOfParams,params)
     n2 = params[p+1];
     x2 = params[p+2];
     y2 = params[p+3];
-    height_bl = params[p+4] / 9.81;
-    height_br = params[p+5] / 9.81;
-    height_tr = params[p+6] / 9.81;
-    height_tl = params[p+7] / 9.81;
+    height_bl = params[p+4]; -- / 9.81;
+    height_br = params[p+5]; -- / 9.81;
+    height_tr = params[p+6]; -- / 9.81;
+    height_tl = params[p+7]; -- / 9.81;
     p = p + 8;
   else
     p = p + 1;
@@ -1275,6 +1303,29 @@ function getQueryParamStr(parameterKey,parameterLevelId,parameterLevel,forecastT
 
 end
 
+
+
+
+-- ***********************************************************************
+--  FUNCTION : getQueryParamStr2
+-- ***********************************************************************
+--  This method merges query parameters into a string. 
+-- ***********************************************************************
+
+function getQueryParamStr2(parameterKey,parameterLevelId,parameterLevel,forecastType,forecastNumber,areaInterpolationMethod,anyTime,anyProducer)
+
+  local p = "P:"..parameterKey;
+  p = p..","..parameterLevelId;
+  p = p..","..parameterLevel;
+  p = p..","..forecastType;
+  p = p..","..forecastNumber;
+  p = p..","..areaInterpolationMethod;
+  p = p..","..anyTime;
+  p = p..","..anyProducer;
+    
+  return p;
+
+end
 
 
 
@@ -1409,13 +1460,13 @@ function getAreaInterpolationInfo_ext_landscape(qp)
   p[4] = getQueryParamStr(qp.parameterKey,qp.parameterLevelId,qp.parameterLevel,qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List,0,0);
   
   -- It also needs values of the GeopHeight -parameter.
-  p[5] = getQueryParamStr("Z-M2S2","0","0",qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List,0,0);
+  p[5] = getQueryParamStr("GeopHeight","0","0",qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List,0,0);
    
   -- It also needs values of the LapseRate -parameter.
-  p[6] = getQueryParamStr("LR-KM","0","0",qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List,0,1);
+  p[6] = getQueryParamStr("LapseRate","0","0",qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List,0,1);
   
   -- It also needs values of the LandSeaMask -parameter.
-  p[7] = getQueryParamStr("LC-0TO1","1","0",qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List,1,0);
+  p[7] = getQueryParamStr("LandSeaMask","1","0",qp.forecastType,qp.forecastNumber,AreaInterpolationMethod.List,1,0);
 
 
   return mergeInstructionParameters(p);
@@ -1451,6 +1502,33 @@ function getAreaInterpolationInfo_ext_windDirection(qp)
 
 end
 
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : getAreaInterpolationInfo_ext_ensemble
+-- ***********************************************************************
+--  This function returns "instructions" how to interpolate the current
+--  parameter. 
+
+-- ***********************************************************************
+
+function getAreaInterpolationInfo_ext_ensemble(qp)
+
+  print("ENSEMBLE INFO");
+  local p = {};
+
+  -- This is the actual Lua interpolation function.  
+  p[1] = "F:IPL_ENSEMBLE";    
+ 
+  for i=1,qp.forecastNumber do
+    p[i+1] = getQueryParamStr2(qp.parameterKey,qp.parameterLevelId,qp.parameterLevel,3,i,AreaInterpolationMethod.Linear,0,0);
+  end
+
+  return mergeInstructionParameters(p);
+
+end
 
 
 
@@ -1544,6 +1622,10 @@ function getAreaInterpolationInfo(numOfParams,params)
     instructions = getAreaInterpolationInfo_ext_windVector(qp);
   end;
 
+  if (qp.areaInterpolationMethod == AreaInterpolationMethod.ExtEnsemble) then 
+    instructions = getAreaInterpolationInfo_ext_ensemble(qp);
+  end;
+
   if (DEBUG == 1) then
     print("  "..instructions);
   end
@@ -1566,7 +1648,7 @@ end
 function getAreaInterpolationInfo2(producerName,parameterName,parameterKeyType,parameterKey,parameterLevelIdType,parameterLevelId,parameterLevel,forecastType,forecastNumber,areaInterpolationMethod)
 
   if (DEBUG == 1) then
-    print("getAreaInterpolationInfo("..producerName..","..parameterName..","..parameterKeyType..","..parameterKey..","..parameterLevelIdType..","..parameterLevelId..","..parameterLevel..","..forecastType..","..forecastNumber..","..areaInterpolationMethod..")");
+    print("getAreaInterpolationInfo2("..producerName..","..parameterName..","..parameterKeyType..","..parameterKey..","..parameterLevelIdType..","..parameterLevelId..","..parameterLevel..","..forecastType..","..forecastNumber..","..areaInterpolationMethod..")");
   end
 
   local qp = {};
@@ -1612,6 +1694,10 @@ function getAreaInterpolationInfo2(producerName,parameterName,parameterKeyType,p
   if (areaInterpolationMethod == AreaInterpolationMethod.ExtWindVector) then
     instructions = getAreaInterpolationInfo_ext_windVector(qp);
   end;
+  
+  if (areaInterpolationMethod == AreaInterpolationMethod.ExtEnsemble) then
+    instructions = getAreaInterpolationInfo_ext_ensemble(qp);
+  end;
     
   if (DEBUG == 1) then
     print("  "..instructions);
@@ -1643,25 +1729,6 @@ end
 --      Function returns two parameters:
 --        - result value (function result or ParamValueMissing)
 --        - result string (=> 'OK' or an error message)
---
---    Type 2 : 
---      Function takes three parameters as input:
---        - columns       => Number of the columns in the grid
---        - rows          => Number of the rows in the grid
---        - params        => Grid values (= Array of float values)
---      Function return one parameter:
---        - result array  => Array of float values (must have the same 
---                           number of values as the input 'params'.               
---
---    Type 3 : 
---      Function takes four parameters as input:
---        - columns       => Number of the columns in the grid
---        - rows          => Number of the rows in the grid
---        - params1       => Grid 1 values (= Array of float values)
---        - params2       => Grid 2 values (= Array of float values)
---      Function return one parameter:
---        - result array  => Array of float values (must have the same 
---                           number of values as the input 'params1'.               
 --  
 --    Type 4 : 
 --      Function takes five parameters as input:
@@ -1670,7 +1737,7 @@ end
 --        - params1       => Grid 1 values (= Array of float values)
 --        - params2       => Grid 2 values (= Array of float values)
 --        - params3       => Grid point angles to latlon-north (= Array of float values)
---      Function return one parameter:
+--      Function returns one parameter:
 --        - result array  => Array of float values (must have the same 
 --                           number of values as the input 'params1'.
 --      Can be use for example in order to calculate new Wind U- and V-
@@ -1682,7 +1749,7 @@ end
 --        - language    => defines the used language
 --        - numOfParams => defines how many values is in the params array
 --        - params      => Array of float values
---      Function return two parameters:
+--      Function returns two parameters:
 --        - result value (string)
 --        - result string (=> 'OK' or an error message)
 --      Can be use for example for translating a numeric value to a string
@@ -1692,11 +1759,20 @@ end
 --      Function takes two parameters as input:
 --        - numOfParams => defines how many values is in the params array
 --        - params      => Array of string values
---      Function return one parameters:
+--      Function returns one parameters:
 --        - result value (string)
 --      This function takes an array of strings and returns a string. It
 --      is used for example in order to get additional instructions for
 --      complex interpolation operations.  
+--
+--    Type 9: Takes vector<float[len]> as input and returns vector<float> as output
+--        - columns       => Number of the columns in the grid
+--        - rows          => Number of the rows in the grid
+--        - len           => Number of the values in the array
+--        - params        => Grid values (vector<float[len]>)
+--        - extParams     => Additional parameters (= Array of float values)
+--      Function returns one parameter:
+--        - result array  => Array of float values.               
 --  
 -- ***********************************************************************
 
@@ -1706,7 +1782,7 @@ function getFunctionNames(type)
   local functionNames = '';
 
   if (type == 1) then 
-    functionNames = 'IPL_NONE,IPL_LINEAR,IPL_NEAREST,IPL_MAX,IPL_MIN,IPL_AVG,IPL_WIND_DIR,IPL_WIND_VECTOR,IPL_LANDSCAPE';
+    functionNames = 'IPL_NONE,IPL_LINEAR,IPL_NEAREST,IPL_MAX,IPL_MIN,IPL_AVG,IPL_WIND_DIR,IPL_WIND_VECTOR,IPL_LANDSCAPE,IPL_ENSEMBLE';
   end
   
   if (type == 6) then 

@@ -109,25 +109,6 @@ end
 --      Function returns two parameters:
 --        - result value (function result or ParamValueMissing)
 --        - result string (=> 'OK' or an error message)
---
---    Type 2 : 
---      Function takes three parameters as input:
---        - columns       => Number of the columns in the grid
---        - rows          => Number of the rows in the grid
---        - params        => Grid values (= Array of float values)
---      Function return one parameter:
---        - result array  => Array of float values (must have the same 
---                           number of values as the input 'params'.               
---
---    Type 3 : 
---      Function takes four parameters as input:
---        - columns       => Number of the columns in the grid
---        - rows          => Number of the rows in the grid
---        - params1       => Grid 1 values (= Array of float values)
---        - params2       => Grid 2 values (= Array of float values)
---      Function return one parameter:
---        - result array  => Array of float values (must have the same 
---                           number of values as the input 'params1'.               
 --  
 --    Type 4 : 
 --      Function takes five parameters as input:
@@ -136,7 +117,7 @@ end
 --        - params1       => Grid 1 values (= Array of float values)
 --        - params2       => Grid 2 values (= Array of float values)
 --        - params3       => Grid point angles to latlon-north (= Array of float values)
---      Function return one parameter:
+--      Function returns one parameter:
 --        - result array  => Array of float values (must have the same 
 --                           number of values as the input 'params1'.
 --      Can be use for example in order to calculate new Wind U- and V-
@@ -148,7 +129,7 @@ end
 --        - language    => defines the used language
 --        - numOfParams => defines how many values is in the params array
 --        - params      => Array of float values
---      Function return two parameters:
+--      Function returns two parameters:
 --        - result value (string)
 --        - result string (=> 'OK' or an error message)
 --      Can be use for example for translating a numeric value to a string
@@ -158,11 +139,20 @@ end
 --      Function takes two parameters as input:
 --        - numOfParams => defines how many values is in the params array
 --        - params      => Array of string values
---      Function return one parameters:
+--      Function returns one parameters:
 --        - result value (string)
 --      This function takes an array of strings and returns a string. It
 --      is used for example in order to get additional instructions for
 --      complex interpolation operations.  
+--
+--    Type 9: Takes vector<float[len]> as input and returns vector<float> as output
+--        - columns       => Number of the columns in the grid
+--        - rows          => Number of the rows in the grid
+--        - len           => Number of the values in the array
+--        - params        => Grid values (vector<float[len]>)
+--        - extParams     => Additional parameters (= Array of float values)
+--      Function returns one parameter:
+--        - result array  => Array of float values.               
 --  
 -- ***********************************************************************
 
