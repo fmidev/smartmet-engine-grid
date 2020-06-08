@@ -67,6 +67,7 @@ rm -rf $RPM_BUILD_ROOT
 * Mon Jun  8 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.6.8-1.fmi
 - Updated Lua functions
 - Added example virtual file definitions
+- Upgraded libpqxx dependencies
 
 * Fri May 15 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.5.15-1.fmi
 - Added a configuration parameter for checking validity of memory mapped files
