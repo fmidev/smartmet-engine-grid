@@ -240,6 +240,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     std::string         mProducerFile;
     string_vec          mProducerAliasFiles;
+    bool                mMemoryMapCheckEnabled;
     bool                mVirtualFilesEnabled;
     std::string         mVirtualFileDefinitions;
     bool                mContentPreloadEnabled;

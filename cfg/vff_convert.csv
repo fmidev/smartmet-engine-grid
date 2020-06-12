@@ -3,49 +3,68 @@
 # 2. Source parameters (fmiName)
 # 3. Function name
 # 4. Function type
-#
+# 5. Function parameters
 
 ### -------------------------------------------------------------------------------------------------
 ###  T-C
 ### -------------------------------------------------------------------------------------------------
 
-# VIRT-T-C:::6:2;T-K:::6:2;K2C;2;
-# VIRT-T-C:::1:0;T-K:::1:0;K2C;2;
+#VIRT-T-C:SMARTMET:1096:6:2;T-K:SMARTMET:1096:6:2;K2C;9;;
 
 
 ### -------------------------------------------------------------------------------------------------
 ###  Feels like
 ### -------------------------------------------------------------------------------------------------
 
-VIRT-FEELS-LIKE:ECG::1:0;T-K:ECG::1:0,FF-MS:ECGMTA::6:10,RH-PRCNT:ECGMTA::6:2,RADGLO-WM2:ECGMTA::6:0;FEELS_LIKE;8;
-VIRT-FEELS-LIKE:HL2::6:2;T-K:HL2::6:2,FF-MS:HL2MTA::6:10,RH-0TO1:HL2::6:2,RADGLO-WM2:HL2MTA::6:0;FEELS_LIKE_HL2;8;
-VIRT-FEELS-LIKE:SMARTMET::6:2;T-K:SMARTMET::6:2,FF-MS:SMARTMET::6:10,RH-PRCNT:SMARTMET::6:2,RADGLO-WM2:SMARTMET::6:0;FEELS_LIKE;8;
+#VIRT-FEELS-LIKE:SMARTMET:1096:6:2;T-K:SMARTMET:1096:6:2,FF-MS:SMARTMET:1096:6:10,RH-PRCNT:SMARTMET:1096:6:2,RADGLO-WM2:SMARTMET:1096:6:0;FEELS_LIKE;9;;
 
 
 ### -------------------------------------------------------------------------------------------------
-### SSI - Summer Simmer Inded
+### SSI - Summer Simmer Index
 ### -------------------------------------------------------------------------------------------------
 
-VIRT-SSI:SMARTMET::6:2;RH-PRCNT:SMARTMET::6:2,T-K:SMARTMET::6:2;SSI;3;
+#VIRT-SSI:SMARTMET:1096:6:2;RH-PRCNT:SMARTMET:1096:6:2,T-K:SMARTMET:1096:6:2;SSI;9;;
 
 
 ### -------------------------------------------------------------------------------------------------
 ### Wind Chill
 ### -------------------------------------------------------------------------------------------------
 
-VIRT-WIND-CHILL:SMARTMET::6:2;T-K:SMARTMET::6:2,FF-MS:SMARTMET::6:10;WIND_CHILL;3;
+VIRT-WIND-CHILL:SMARTMET:1096:6:2;T-K:SMARTMET:1096:6:2,FF-MS:SMARTMET:1096:6:10;WIND_CHILL;9;;
+
+
+### -------------------------------------------------------------------------------------------------
+### Wind Speed
+### -------------------------------------------------------------------------------------------------
+
+#VIRT-WIND-SPEED:SMARTMET:1096:6:10;U-MS:SMARTMET:1096:6:10,V-MS:SMARTMET:1096:6:10;WIND_SPEED;9;;
 
 
 
-#T-F;T-K;K2F;2;ECG;
-#VIRT-DD-RAD;DD-D:SMARTMET;DEG2RAD;2;
+### -------------------------------------------------------------------------------------------------
+### Ensemble forecasts
+### -------------------------------------------------------------------------------------------------
 
+# Average values
+VIRT-TG-K-AVG:ECBSF:5009:0:7:3:1;TG-K:ECBSF:5009:0:7:3:1-8,TG-K:ECBSF:5009:0:7:3:10-50;AVG;9;;
 
-#VIRT-WIND-DIR;U-MS,V-MS;WIND_DIR;4;ECG;1008
-#VIRT-WIND-DIR;U-MS,V-MS;WIND_DIR;4;MEPS;-1
+# Min values
+VIRT-TG-K-MIN:ECBSF:5009:0:7:3:1;TG-K:ECBSF:5009:0:7:3:1-8,TG-K:ECBSF:5009:0:7:3:10-50;MIN;9;;
 
-#VIRT-WIND-SPEED;U-MS,V-MS;WIND_SPEED;3;ECG;1008
-#VIRT-WIND-SPEED;V-MS,U-MS;WIND_SPEED;3;MEPS;-1
+# Max values
+VIRT-TG-K-MAX:ECBSF:5009:0:7:3:1;TG-K:ECBSF:5009:0:7:3:1-8,TG-K:ECBSF:5009:0:7:3:10-50;MAX;9;;
 
-#VIRT-WIND-V;U-MS,V-MS;WIND_V;4;ECG;1008
-#VIRT-WIND-U;U-MS,V-MS;WIND_U;4;ECG;1008
+# Values greater than A
+VIRT-TG-K-GT-283:ECBSF:5009:0:7:3:1;TG-K:ECBSF:5009:0:7:3:1-8,TG-K:ECBSF:5009:0:7:3:10-50;OUT_PRCNT;9;0,283;
+VIRT-TG-K-GT-288:ECBSF:5009:0:7:3:1;TG-K:ECBSF:5009:0:7:3:1-8,TG-K:ECBSF:5009:0:7:3:10-50;OUT_PRCNT;9;0,288;
+
+# Values less than A
+VIRT-TG-K-LT-283:ECBSF:5009:0:7:3:1;TG-K:ECBSF:5009:0:7:3:1-8,TG-K:ECBSF:5009:0:7:3:10-50;OUT_PRCNT;9;283,1000000000;
+VIRT-TG-K-LT-288:ECBSF:5009:0:7:3:1;TG-K:ECBSF:5009:0:7:3:1-8,TG-K:ECBSF:5009:0:7:3:10-50;OUT_PRCNT;9;288,1000000000;
+
+# Values inside the range A..B
+VIRT-TG-K-IN-273-283:ECBSF:5009:0:7:3:1;TG-K:ECBSF:5009:0:7:3:1-8,TG-K:ECBSF:5009:0:7:3:10-50;IN_PRCNT;9;273,283;
+
+# Values outside the range A..B
+VIRT-TG-K-OUT-273-283:ECBSF:5009:0:7:3:1;TG-K:ECBSF:5009:0:7:3:1-8,TG-K:ECBSF:5009:0:7:3:10-50;OUT_PRCNT;9;273,283;
+
