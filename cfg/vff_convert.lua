@@ -881,6 +881,58 @@ function MAX(columns,rows,len,params,extParams)
 end
 
 
+-- ***********************************************************************
+--  FUNCTION : FRACTILE
+-- ***********************************************************************
+-- Calculate fractile values from ensemble
+-- Algorithm matches that in Himan:
+-- https://github.com/fmidev/himan/blob/master/doc/plugin-fractile.md
+-- ***********************************************************************
+
+function FRACTILE(columns,rows,len,params,extParams)
+  local result = {}
+  local inIdx = 1
+  local outIdx = 1
+  local fractile = extParams[1]
+
+  for r=1,rows do
+    for c=1,columns do
+      local list = {}
+      for i=1,len do
+        value = params[inIdx];
+        if (value ~= ParamValueMissing) then
+          list[#list+1] = value
+        end
+        inIdx = inIdx + 1
+      end
+
+      local N = #list
+
+      if (N == 0) then
+        result[outIdx] = ParamValueMissing
+      else
+        table.sort(list)
+        list[#list+1] = 0.0
+
+        local x
+        if (fractile / 100.0 <= 1.0 / (N + 1)) then
+          x = 1.0
+        elseif (fractile / 100.0 >= (N) / (N+1)) then
+          x = N
+        else
+          x = fractile / 100.0 * (N + 1)
+        end
+        x = math.floor(x) + 1
+
+        result[outIdx] = list[x - 1] + math.fmod(x, 1.0) * (list[x] - list[x-1])
+      end
+      outIdx = outIdx + 1
+    end
+  end
+
+  return result
+
+end
 
 
 -- ***********************************************************************
@@ -956,7 +1008,7 @@ function getFunctionNames(type)
     functionNames = 'WIND_V,WIND_U,WIND_DIR,WIND_TO_DIR';
   end 
   if (type == 9) then 
-    functionNames = 'FEELS_LIKE,SSI,WIND_CHILL,WIND_SPEED,C2F,C2K,F2C,F2K,K2C,K2F,DEG2RAD,RAD2DEG,IN_PRCNT,OUT_PRCNT,GT_PRCNT,LT,_PRCNT,MIN,MAX';
+    functionNames = 'FEELS_LIKE,SSI,WIND_CHILL,WIND_SPEED,C2F,C2K,F2C,F2K,K2C,K2F,DEG2RAD,RAD2DEG,IN_PRCNT,OUT_PRCNT,GT_PRCNT,LT,_PRCNT,MIN,MAX,FRACTILE';
   end
 
   return functionNames;
