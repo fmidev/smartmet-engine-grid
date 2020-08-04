@@ -316,6 +316,8 @@ void Engine::init()
     DataServer::ServiceInterface *dServer = nullptr;
     QueryServer::ServiceInterface *qServer = nullptr;
 
+    clearMappings();
+
     if (mContentSourceType == "redis")
     {
       ContentServer::RedisImplementation *redis = new ContentServer::RedisImplementation();
@@ -462,8 +464,6 @@ void Engine::init()
     mProducerAliasFileCollection.init(mProducerAliasFiles,true);
     mParameterAliasFileCollection.init(mParameterAliasFiles);
 
-
-    clearMappings();
 
     startUpdateProcessing();
   }
