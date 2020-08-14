@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 20.6.8
+Version: 20.8.14
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -14,9 +14,9 @@ BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: libconfig-devel
 BuildRequires: libpqxx-devel
-BuildRequires: smartmet-library-grid-content-devel >= 20.6.8
-BuildRequires: smartmet-library-grid-files-devel >= 20.6.8
-BuildRequires: smartmet-library-spine-devel >= 20.5.27
+BuildRequires: smartmet-library-grid-content-devel >= 20.8.14
+BuildRequires: smartmet-library-grid-files-devel >= 20.8.14
+BuildRequires: smartmet-library-spine-devel >= 20.8.11
 BuildRequires: make
 BuildRequires: omniORB-devel
 BuildRequires: boost169-devel
@@ -24,9 +24,9 @@ BuildRequires: gdal-devel
 Requires: boost169-thread
 Requires: libconfig
 Requires: libpqxx-devel
-Requires: smartmet-library-grid-content >= 20.6.8
-Requires: smartmet-library-grid-files >= 20.6.8
-Requires: smartmet-library-spine >= 20.5.27
+Requires: smartmet-library-grid-content >= 20.8.14
+Requires: smartmet-library-grid-files >= 20.8.14
+Requires: smartmet-library-spine >= 20.8.11
 Requires: omniORB-devel
 Provides: %{SPECNAME}
 
@@ -64,6 +64,10 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Fri Aug 14 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.8.14-1.fmi
+- Fixed initialization order of auto-files
+- Added function to calculate fractiles from virtual grid files
+
 * Mon Jun  8 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.6.8-1.fmi
 - Updated Lua functions
 - Added example virtual file definitions
