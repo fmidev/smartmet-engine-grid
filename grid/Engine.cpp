@@ -14,6 +14,7 @@
 #include <grid-content/dataServer/corba/client/ClientImplementation.h>
 #include <grid-content/dataServer/implementation/VirtualContentFactory_type1.h>
 #include <grid-content/queryServer/corba/client/ClientImplementation.h>
+#include <macgyver/StringConversion.h>
 #include <unistd.h>
 
 
@@ -107,6 +108,8 @@ Engine::Engine(const char* theConfigFile)
 
         "smartmet.engine.grid.query-server.remote",
         "smartmet.engine.grid.query-server.ior",
+        "smartmet.engine.grid.query-server.queryCache.enabled",
+        "smartmet.engine.grid.query-server.queryCache.maxAge",
         "smartmet.engine.grid.query-server.producerFile",
         "smartmet.engine.grid.query-server.producerAliasFiles",
         "smartmet.engine.grid.query-server.luaFiles",
@@ -141,6 +144,10 @@ Engine::Engine(const char* theConfigFile)
     mRequestCounterEnabled = false;
     mPreloadMemoryLock = false;
     mRequestForwardEnabled = false;
+    mMemoryContentDir = "/tmp";
+    mMemoryContentSortingFlags = 5;
+    mEventListMaxSize = 0;
+    mQueryCacheUpdateTime = time(nullptr);
 
     mContentServerProcessingLogEnabled = false;
     mContentServerDebugLogEnabled = false;
@@ -170,6 +177,10 @@ Engine::Engine(const char* theConfigFile)
     mQueryServerProcessingLogTruncateSize = 50000000;
     mQueryServerDebugLogMaxSize = 10000000;
     mQueryServerDebugLogTruncateSize = 5000000;
+    mQueryCacheEnabled = true;
+    mQueryCacheMaxAge = 300;
+
+
     mNumOfCachedGrids = 10000;
     mMaxSizeOfCachedGridsInMegaBytes = 10000;
 
@@ -211,6 +222,10 @@ Engine::Engine(const char* theConfigFile)
 
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.corba.ior", mContentSourceCorbaIor);
 
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.file.contentDir", mMemoryContentDir);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.file.contentSortingFlags", mMemoryContentSortingFlags);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.file.eventListMaxSize", mEventListMaxSize);
+
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.enabled", mContentCacheEnabled);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.contentSortingFlags", mContentCacheSortingFlags);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.requestForwardEnabled", mRequestForwardEnabled);
@@ -250,6 +265,10 @@ Engine::Engine(const char* theConfigFile)
 
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.remote", mQueryServerRemote);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.ior", mQueryServerIor);
+
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.enabled", mQueryCacheEnabled);
+    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.maxAge", mQueryCacheMaxAge);
+
 
     // These settings are used when the query server is embedded into the grid engine.
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.producerFile",mProducerFile);
@@ -340,6 +359,22 @@ void Engine::init()
       client->init(mContentSourceHttpUrl.c_str());
       mContentServer.reset(client);
       cServer = client;
+    }
+    else
+    if (mContentSourceType == "file")
+    {
+      bool eventstEnabled = true;
+      if (mEventListMaxSize == 0)
+      {
+        eventstEnabled = false;
+        mContentCacheEnabled = false;
+      }
+
+      ContentServer::MemoryImplementation *memoryImplementation = new ContentServer::MemoryImplementation();
+      memoryImplementation->init(true,false,true,eventstEnabled,mMemoryContentDir,0,mMemoryContentSortingFlags);
+      memoryImplementation->setEventListMaxLength(mEventListMaxSize);
+      mContentServer.reset(memoryImplementation);
+      cServer = memoryImplementation;
     }
     else
     {
@@ -526,6 +561,161 @@ int Engine::executeQuery(QueryServer::Query& query) const
   }
 }
 
+
+
+
+
+Query_sptr Engine::executeQuery(Query_sptr query) const
+{
+  FUNCTION_TRACE
+  try
+  {
+    if (!mQueryCacheEnabled)
+    {
+      int result = mQueryServer->executeQuery(0,*query);
+      if (result != 0)
+      {
+        Spine::Exception exception(BCP, "The query server returns an error message!");
+        exception.addParameter("Result", Fmi::to_string(result));
+        exception.addParameter("Message", QueryServer::getResultString(result));
+
+        switch (result)
+        {
+          case QueryServer::Result::NO_PRODUCERS_FOUND:
+            exception.addDetail("The reason for this situation is usually that the given producer is unknown");
+            exception.addDetail("or there are no producer list available in the grid engine's configuration "
+                "file.");
+            break;
+        }
+        throw exception;
+      }
+      return query;
+    }
+
+
+    time_t currentTime = time(nullptr);
+    std::size_t hash = query->getHash();
+
+    auto it = mQueryCache.find(hash);
+    if (it != mQueryCache.end())
+    {
+      bool noMatch = false;
+      for (auto prod = it->second.producerHashMap.begin(); prod != it->second.producerHashMap.end()  && !noMatch; ++prod)
+      {
+        ulonglong producerHash = getProducerHash(prod->first);
+        if (producerHash != prod->second)
+          noMatch = true;
+      }
+
+      if (noMatch)
+      {
+        // The cache entry is old. We should remove it.
+        mQueryCache.erase(it);
+      }
+      else
+      {
+        // The cache entry is valid. We can return it.
+        it->second.lastAccessTime = currentTime;
+        it->second.accessCounter++;
+        return it->second.query;
+      }
+    }
+
+    int result = mQueryServer->executeQuery(0,*query);
+    if (result != 0)
+    {
+      Spine::Exception exception(BCP, "The query server returns an error message!");
+      exception.addParameter("Result", Fmi::to_string(result));
+      exception.addParameter("Message", QueryServer::getResultString(result));
+
+      switch (result)
+      {
+        case QueryServer::Result::NO_PRODUCERS_FOUND:
+          exception.addDetail("The reason for this situation is usually that the given producer is unknown");
+          exception.addDetail("or there are no producer list available in the grid engine's configuration "
+              "file.");
+          break;
+      }
+      throw exception;
+    }
+
+
+    if (isCacheable(query))
+    {
+      CacheRec rec;
+      rec.query = query;
+      rec.cacheTime = currentTime;
+      rec.lastAccessTime = currentTime;
+      rec.accessCounter = 0;
+
+      std::set<uint> producerIdList;
+      query->getResultProducerIdList(producerIdList);
+
+      for (auto it = producerIdList.begin(); it != producerIdList.end(); ++it)
+      {
+        ulonglong producerHash = getProducerHash(*it);
+        rec.producerHashMap.insert(std::pair<uint,ulonglong>(*it,producerHash));
+      }
+
+      mQueryCache.insert(std::pair<std::size_t,CacheRec>(hash,rec));
+    }
+    return query;
+  }
+  catch (...)
+  {
+    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    throw exception;
+  }
+}
+
+
+
+
+
+bool Engine::isCacheable(std::shared_ptr<QueryServer::Query> query) const
+{
+  FUNCTION_TRACE
+  try
+  {
+    for (auto param = query->mQueryParameterList.begin(); param != query->mQueryParameterList.end(); ++param)
+    {
+      switch(param->mType)
+      {
+        case QueryServer::QueryParameter::Type::PointValues:
+        case QueryServer::QueryParameter::Type::Isoline:
+        case QueryServer::QueryParameter::Type::Isoband:
+          break;
+
+        case QueryServer::QueryParameter::Type::Vector:
+        case QueryServer::QueryParameter::Type::GridFile:
+          return false;
+      }
+
+      switch(param->mLocationType)
+      {
+        case QueryServer::QueryParameter::LocationType::Point:
+        case QueryServer::QueryParameter::LocationType::Polygon:
+        case QueryServer::QueryParameter::LocationType::Path:
+        case QueryServer::QueryParameter::LocationType::Circle:
+          break;
+
+        case QueryServer::QueryParameter::LocationType::Grid:
+          return false;
+
+        case QueryServer::QueryParameter::LocationType::Geometry:
+          break;
+      }
+    }
+    return true;
+  }
+  catch (...)
+  {
+    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    throw exception;
+  }
+}
 
 
 
@@ -772,6 +962,55 @@ void Engine::getProducerNameList(const std::string& aliasName,std::vector<std::s
 
     if (nameList.size() == 0)
       nameList.push_back(aliasName);
+  }
+  catch (...)
+  {
+    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    throw exception;
+  }
+}
+
+
+
+
+
+ulonglong Engine::getProducerHash(uint producerId) const
+{
+  FUNCTION_TRACE
+  try
+  {
+    ContentServer_sptr contentServer = getContentServer_sptr();
+    time_t currentTime = time(nullptr);
+    ulonglong hash = 0;
+
+    auto rec = mProducerHashMap.find(producerId);
+    if (rec != mProducerHashMap.end())
+    {
+      if ((currentTime - rec->second.checkTime) > 120)
+      {
+        rec->second.checkTime = currentTime;
+        int result = contentServer->getHashByProducerId(0,producerId,hash);
+        if (result == 0)
+          rec->second.hash = hash;
+        else
+          rec->second.hash = 0;
+      }
+      return rec->second.hash;
+    }
+
+    int result = contentServer->getHashByProducerId(0,producerId,hash);
+    if (result == 0)
+    {
+      HashRec hrec;
+      hrec.checkTime = currentTime;
+      hrec.hash = hash;
+
+      mProducerHashMap.insert(std::pair<uint,HashRec>(producerId,hrec));
+      return hash;
+    }
+
+    return 0;
   }
   catch (...)
   {
@@ -1436,28 +1675,30 @@ void Engine::updateMappings()
   FUNCTION_TRACE
   try
   {
-    if ((time(nullptr) - mParameterMappingUpdateTime) > 20)
+    time_t currentTime = time(nullptr);
+
+    if ((currentTime - mParameterMappingUpdateTime) < 300)
+      return;
+
+    mParameterMappingUpdateTime = currentTime;
+
+    QueryServer::ParamMappingFile_vec parameterMappings;
+    loadMappings(parameterMappings);
+
+    if (parameterMappings.size() > 0)
     {
-      mParameterMappingUpdateTime = time(nullptr);
+      AutoThreadLock lock(&mThreadLock);
+      mParameterMappings = parameterMappings;
+    }
 
-      QueryServer::ParamMappingFile_vec parameterMappings;
-      loadMappings(parameterMappings);
+    if (!mParameterMappingUpdateFile_fmi.empty())
+    {
+      updateMappings(T::ParamKeyTypeValue::FMI_NAME,mMappingTargetKeyType,mParameterMappingUpdateFile_fmi,parameterMappings);
+    }
 
-      if (parameterMappings.size() > 0)
-      {
-        AutoThreadLock lock(&mThreadLock);
-        mParameterMappings = parameterMappings;
-      }
-
-      if (!mParameterMappingUpdateFile_fmi.empty())
-      {
-        updateMappings(T::ParamKeyTypeValue::FMI_NAME,mMappingTargetKeyType,mParameterMappingUpdateFile_fmi,parameterMappings);
-      }
-
-      if (!mParameterMappingUpdateFile_newbase.empty())
-      {
-        updateMappings(T::ParamKeyTypeValue::NEWBASE_NAME,mMappingTargetKeyType,mParameterMappingUpdateFile_newbase,parameterMappings);
-      }
+    if (!mParameterMappingUpdateFile_newbase.empty())
+    {
+      updateMappings(T::ParamKeyTypeValue::NEWBASE_NAME,mMappingTargetKeyType,mParameterMappingUpdateFile_newbase,parameterMappings);
     }
   }
   catch (...)
@@ -1770,8 +2011,66 @@ void Engine::updateProcessing()
   {
     while (!mShutdownRequested)
     {
-      updateMappings();
-      sleep(300);
+      try
+      {
+        updateMappings();
+      }
+      catch (...)
+      {
+      }
+
+      try
+      {
+        updateQueryCache();
+      }
+      catch (...)
+      {
+      }
+
+      sleep(1);
+    }
+  }
+  catch (...)
+  {
+    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    throw exception;
+  }
+}
+
+
+
+
+
+void Engine::updateQueryCache()
+{
+  try
+  {
+    if (!mQueryCacheEnabled)
+      return;
+
+    time_t currentTime = time(nullptr);
+    if ((currentTime - mQueryCacheUpdateTime) < 60)
+      return;
+
+    mQueryCacheUpdateTime = currentTime;
+
+    time_t lastAccess = currentTime - mQueryCacheMaxAge;
+
+    std::vector <ulonglong> deleteList;
+
+
+    for (auto it = mQueryCache.begin(); it != mQueryCache.end(); ++it)
+    {
+      if (it->second.lastAccessTime < lastAccess)
+        deleteList.push_back(it->first);
+    }
+
+    for (auto it = deleteList.begin(); it != deleteList.end(); ++it)
+    {
+      auto pos = mQueryCache.find(*it);
+      if (pos != mQueryCache.end())
+        mQueryCache.erase(pos);
     }
   }
   catch (...)

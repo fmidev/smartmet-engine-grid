@@ -5,6 +5,7 @@
 #include <gis/LandCover.h>
 #include <grid-content/contentServer/cache/CacheImplementation.h>
 #include <grid-content/contentServer/redis/RedisImplementation.h>
+#include <grid-content/contentServer/memory/MemoryImplementation.h>
 #include <grid-content/dataServer/implementation/ServiceImplementation.h>
 #include <grid-content/dataServer/cache/CacheImplementation.h>
 #include <grid-content/queryServer/implementation/ServiceImplementation.h>
@@ -24,6 +25,29 @@ namespace Grid
 typedef std::shared_ptr<ContentServer::ServiceInterface> ContentServer_sptr;
 typedef std::shared_ptr<DataServer::ServiceInterface> DataServer_sptr;
 typedef std::shared_ptr<QueryServer::ServiceInterface> QueryServer_sptr;
+typedef std::shared_ptr<QueryServer::Query> Query_sptr;
+
+struct CacheRec
+{
+  Query_sptr query;
+  std::map<uint,ulonglong> producerHashMap;
+  time_t cacheTime;
+  time_t lastAccessTime;
+  uint   accessCounter;
+};
+
+typedef std::map<std::size_t,CacheRec> QueryCache;
+
+
+struct HashRec
+{
+  time_t checkTime;
+  ulonglong hash;
+};
+
+typedef std::map<uint,HashRec> ProducerHash_map;
+
+
 
 
 class Engine : public SmartMet::Spine::SmartMetEngine
@@ -34,6 +58,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     virtual             ~Engine();
 
     int                 executeQuery(QueryServer::Query& query) const;
+    Query_sptr          executeQuery(std::shared_ptr<QueryServer::Query> query) const;
 
     ContentServer_sptr  getContentServer_sptr() const;
     ContentServer_sptr  getContentSourceServer_sptr() const;
@@ -53,6 +78,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::string         getProducerAlias(
                           const std::string& producerName,
                           int levelId) const;
+
+    ulonglong           getProducerHash(uint producerId) const;
 
     std::string         getParameterString(
                           std::string producer,
@@ -157,6 +184,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     FILE*               openMappingFile(const std::string& mappingFile);
     void                updateMappings();
 
+    bool                isCacheable(std::shared_ptr<QueryServer::Query> query) const;
 
     void                updateMappings(
                           T::ParamKeyType sourceParameterKeyType,
@@ -164,6 +192,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                           const std::string& mappingFile,
                           QueryServer::ParamMappingFile_vec& parameterMappings);
 
+    void                updateQueryCache();
 
   private:
 
@@ -197,6 +226,9 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::string         mContentSourceCorbaIor;
     std::string         mContentSourceHttpUrl;
 
+    std::string         mMemoryContentDir;
+    uint                mMemoryContentSortingFlags;
+    uint                mEventListMaxSize;
     bool                mContentCacheEnabled;
     uint                mContentCacheSortingFlags;
 
@@ -234,6 +266,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     int                 mQueryServerDebugLogMaxSize;
     int                 mQueryServerDebugLogTruncateSize;
     Log                 mQueryServerDebugLog;
+    bool                mQueryCacheEnabled;
+    int                 mQueryCacheMaxAge;
 
     uint                mNumOfCachedGrids;
     uint                mMaxSizeOfCachedGridsInMegaBytes;
@@ -271,6 +305,9 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     mutable QueryServer::AliasFileCollection  mParameterAliasFileCollection;
     mutable QueryServer::ParamMappingFile_vec mParameterMappings;
     mutable T::GenerationInfoList             mGenerationList;
+    mutable QueryCache                        mQueryCache;
+    mutable time_t                            mQueryCacheUpdateTime;
+    mutable ProducerHash_map                  mProducerHashMap;
 };
 
 }  // namespace Grid
