@@ -596,29 +596,35 @@ Query_sptr Engine::executeQuery(Query_sptr query) const
     time_t currentTime = time(nullptr);
     std::size_t hash = query->getHash();
 
-    auto it = mQueryCache.find(hash);
-    if (it != mQueryCache.end())
-    {
-      bool noMatch = false;
-      for (auto prod = it->second.producerHashMap.begin(); prod != it->second.producerHashMap.end()  && !noMatch; ++prod)
-      {
-        ulonglong producerHash = getProducerHash(prod->first);
-        if (producerHash != prod->second)
-          noMatch = true;
-      }
+    QueryCacheIterator it;
+    bool noMatch = false;
 
-      if (noMatch)
+    {
+      AutoReadLock lock(&mQueryCacheModificationLock);
+      it = mQueryCache.find(hash);
+      if (it != mQueryCache.end())
       {
-        // The cache entry is old. We should remove it.
-        mQueryCache.erase(it);
+        for (auto prod = it->second.producerHashMap.begin(); prod != it->second.producerHashMap.end()  && !noMatch; ++prod)
+        {
+          ulonglong producerHash = getProducerHash(prod->first);
+          if (producerHash != prod->second)
+            noMatch = true;
+        }
+
+        if (noMatch)
+        {
+          // The cache entry is valid. We can return it.
+          it->second.lastAccessTime = currentTime;
+          it->second.accessCounter++;
+          return it->second.query;
+        }
       }
-      else
-      {
-        // The cache entry is valid. We can return it.
-        it->second.lastAccessTime = currentTime;
-        it->second.accessCounter++;
-        return it->second.query;
-      }
+    }
+
+    if (it != mQueryCache.end()  &&  !noMatch)
+    {
+      AutoWriteLock lock(&mQueryCacheModificationLock);
+      mQueryCache.erase(it);
     }
 
     int result = mQueryServer->executeQuery(0,*query);
@@ -657,6 +663,7 @@ Query_sptr Engine::executeQuery(Query_sptr query) const
         rec.producerHashMap.insert(std::pair<uint,ulonglong>(*it,producerHash));
       }
 
+      AutoWriteLock lock(&mQueryCacheModificationLock);
       mQueryCache.insert(std::pair<std::size_t,CacheRec>(hash,rec));
     }
     return query;
@@ -1485,6 +1492,12 @@ bool Engine::getProducerInfoByName(const std::string& name,T::ProducerInfo& info
   FUNCTION_TRACE
   try
   {
+    if (mProducerInfoList.getLength() == 0)
+    {
+      ContentServer_sptr contentServer = getContentServer_sptr();
+      contentServer->getProducerInfoList(0, mProducerInfoList);
+    }
+
     T::ProducerInfo *producerInfo = mProducerInfoList.getProducerInfoByName(name);
     if (producerInfo != nullptr)
     {
@@ -2053,24 +2066,48 @@ void Engine::updateQueryCache()
     if ((currentTime - mQueryCacheUpdateTime) < 60)
       return;
 
+
     mQueryCacheUpdateTime = currentTime;
-
     time_t lastAccess = currentTime - mQueryCacheMaxAge;
-
     std::vector <ulonglong> deleteList;
 
 
-    for (auto it = mQueryCache.begin(); it != mQueryCache.end(); ++it)
     {
-      if (it->second.lastAccessTime < lastAccess)
-        deleteList.push_back(it->first);
+      AutoReadLock lock(&mQueryCacheModificationLock);
+
+      for (auto it = mQueryCache.begin(); it != mQueryCache.end(); ++it)
+      {
+        if (it->second.lastAccessTime < lastAccess)
+        {
+          // The cache entry has not been accessed for awhile, so we should remove it.
+          deleteList.push_back(it->first);
+        }
+        else
+        {
+          // If the producer information has changed then we should remove the cache entry.
+          bool noMatch = false;
+          for (auto prod = it->second.producerHashMap.begin(); prod != it->second.producerHashMap.end()  && !noMatch; ++prod)
+          {
+            ulonglong producerHash = getProducerHash(prod->first);
+            if (producerHash != prod->second)
+              noMatch = true;
+          }
+
+          if (noMatch)
+            deleteList.push_back(it->first);
+        }
+      }
     }
 
-    for (auto it = deleteList.begin(); it != deleteList.end(); ++it)
+    if (deleteList.size() > 0)
     {
-      auto pos = mQueryCache.find(*it);
-      if (pos != mQueryCache.end())
-        mQueryCache.erase(pos);
+      AutoWriteLock lock(&mQueryCacheModificationLock);
+      for (auto it = deleteList.begin(); it != deleteList.end(); ++it)
+      {
+        auto pos = mQueryCache.find(*it);
+        if (pos != mQueryCache.end())
+          mQueryCache.erase(pos);
+      }
     }
   }
   catch (...)
@@ -2124,6 +2161,7 @@ void Engine::getVerticalGrid(
     if (result != 0)
     {
       SmartMet::Spine::Exception exception(BCP, ContentServer::getResultString(result).c_str(), nullptr);
+      exception.addParameter("ProducerName",valueProducerName);
       throw exception;
     }
 
@@ -2133,6 +2171,7 @@ void Engine::getVerticalGrid(
     if (result != 0)
     {
       SmartMet::Spine::Exception exception(BCP, ContentServer::getResultString(result).c_str());
+      exception.addParameter("ProducerName",heightProducerName);
       throw exception;
     }
 
@@ -2160,6 +2199,7 @@ void Engine::getVerticalGrid(
     if (levels1.size() == 0)
     {
       SmartMet::Spine::Exception exception(BCP,"Cannot find valid levels for the value parameter!");
+      exception.addParameter("ValueProducer",valueProducerName);
       throw exception;
     }
 
@@ -2167,6 +2207,7 @@ void Engine::getVerticalGrid(
     if (levels2.size() == 0)
     {
       SmartMet::Spine::Exception exception(BCP,"Cannot find valid levels for the height parameter!");
+      exception.addParameter("HeightProducer",heightProducerName);
       throw exception;
     }
 

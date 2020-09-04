@@ -37,6 +37,7 @@ struct CacheRec
 };
 
 typedef std::map<std::size_t,CacheRec> QueryCache;
+typedef std::map<std::size_t,CacheRec>::iterator QueryCacheIterator;
 
 
 struct HashRec
@@ -306,6 +307,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     mutable QueryServer::ParamMappingFile_vec mParameterMappings;
     mutable T::GenerationInfoList             mGenerationList;
     mutable QueryCache                        mQueryCache;
+    mutable ModificationLock                  mQueryCacheModificationLock;
     mutable time_t                            mQueryCacheUpdateTime;
     mutable ProducerHash_map                  mProducerHashMap;
 };
