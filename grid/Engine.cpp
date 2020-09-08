@@ -621,12 +621,6 @@ Query_sptr Engine::executeQuery(Query_sptr query) const
       }
     }
 
-    if (it != mQueryCache.end()  &&  !noMatch)
-    {
-      AutoWriteLock lock(&mQueryCacheModificationLock);
-      mQueryCache.erase(it);
-    }
-
     int result = mQueryServer->executeQuery(0,*query);
     if (result != 0)
     {
