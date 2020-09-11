@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 20.9.8
+Version: 20.9.11
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -15,8 +15,8 @@ BuildRequires: gcc-c++
 BuildRequires: libconfig-devel
 BuildRequires: libpqxx-devel
 BuildRequires: smartmet-library-grid-content-devel >= 20.9.7
-BuildRequires: smartmet-library-grid-files-devel >= 20.9.7
-BuildRequires: smartmet-library-spine-devel >= 20.9.4
+BuildRequires: smartmet-library-grid-files-devel >= 20.9.8
+BuildRequires: smartmet-library-spine-devel >= 20.9.8
 BuildRequires: make
 BuildRequires: omniORB-devel
 BuildRequires: boost169-devel
@@ -25,8 +25,8 @@ Requires: boost169-thread
 Requires: libconfig
 Requires: libpqxx-devel
 Requires: smartmet-library-grid-content >= 20.9.7
-Requires: smartmet-library-grid-files >= 20.9.7
-Requires: smartmet-library-spine >= 20.9.4
+Requires: smartmet-library-grid-files >= 20.9.8
+Requires: smartmet-library-spine >= 20.9.8
 Requires: omniORB-devel
 Provides: %{SPECNAME}
 
@@ -64,6 +64,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Fri Sep 11 2020 Pertti Kinnia <pertti.kinnia@fmi.fi> - 20.9.11-1.fmi
+- Removed old code that should not be there anymore
+
 * Tue Sep  8 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.9.8-1.fmi
 - Another fix to query cache thread safety
 
