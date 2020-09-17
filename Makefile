@@ -33,16 +33,16 @@ objdir = obj
 ifeq ($(CORBA), disabled)
   CORBA_FLAGS = -DCORBA_DISABLED
 else
-  CORBA_INCLUDE = -I/usr/include/smartmet/grid-content/contentServer/corba/stubs \
-                  -I/usr/include/smartmet/grid-content/dataServer/corba/stubs \
-                  -I/usr/include/smartmet/grid-content/queryServer/corba/stubs
+  CORBA_INCLUDE = -isystem /usr/include/smartmet/grid-content/contentServer/corba/stubs \
+                  -isystem /usr/include/smartmet/grid-content/dataServer/corba/stubs \
+                  -isystem /usr/include/smartmet/grid-content/queryServer/corba/stubs
   CORBA_LIBS = -lomniORB4 -lomnithread  
 endif
 
 # Boost 1.69
 
 ifneq "$(wildcard /usr/include/boost169)" ""
-  INCLUDES += -I/usr/include/boost169
+  INCLUDES += -isystem /usr/include/boost169
   LIBS += -L/usr/lib64/boost169
 endif
 
@@ -50,26 +50,9 @@ endif
 
 DEFINES = -DUNIX -D_REENTRANT
 
-ifeq ($(CXX), clang++)
+FLAGS = -std=c++11 -fPIC -MD -Wall -W -Wno-unused-parameter -fno-omit-frame-pointer -fdiagnostics-color=always
 
- FLAGS = \
-	-std=c++11 -fPIC -MD -fno-omit-frame-pointer \
-	-Weverything \
-	-Wno-c++98-compat \
-	-Wno-float-equal \
-	-Wno-padded \
-	-Wno-missing-prototypes
-
- INCLUDES += \
-	-isystem $(includedir) \
-	-isystem $(includedir)/smartmet \
-	$(CORBA_INCLUDE)
-
-else
-
- FLAGS = -std=c++11 -fPIC -MD -Wall -W -Wno-unused-parameter -fno-omit-frame-pointer -fdiagnostics-color=always
-
- FLAGS_DEBUG = \
+FLAGS_DEBUG = \
 	-Wcast-align \
 	-Winline \
 	-Wno-multichar \
@@ -83,14 +66,12 @@ else
 
 #	-Woverloaded-virtual
 
- FLAGS_RELEASE = -Wuninitialized
+FLAGS_RELEASE = -Wuninitialized
 
- INCLUDES += \
-	-I$(includedir) \
+INCLUDES += \
 	-I$(includedir)/smartmet \
 	$(CORBA_INCLUDE)
 
-endif
 
 # Compile options in detault, debug and profile modes
 
