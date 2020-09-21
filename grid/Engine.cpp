@@ -2068,6 +2068,7 @@ void Engine::updateQueryCache()
     if ((currentTime - mQueryCacheUpdateTime) < 60)
       return;
 
+    mQueryCacheEnabled = false;
 
     mQueryCacheUpdateTime = currentTime;
     time_t lastAccess = currentTime - mQueryCacheMaxAge;
@@ -2111,6 +2112,8 @@ void Engine::updateQueryCache()
           mQueryCache.erase(pos);
       }
     }
+
+    mQueryCacheEnabled = true;
   }
   catch (...)
   {
