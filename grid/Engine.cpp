@@ -1,6 +1,6 @@
 #include "Engine.h"
 
-#include <spine/Exception.h>
+#include <macgyver/Exception.h>
 #include <grid-files/common/GeneralFunctions.h>
 #include <grid-files/common/ShowFunction.h>
 #include <grid-files/grid/ValueCache.h>
@@ -39,7 +39,7 @@ static void* gridEngine_updateThread(void *arg)
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP,exception_operation_failed,nullptr);
+    Fmi::Exception exception(BCP,"Operation failed!",nullptr);
     exception.printError();
     exit(-1);
   }
@@ -192,7 +192,7 @@ Engine::Engine(const char* theConfigFile)
     {
       if (!mConfigurationFile.findAttribute(configAttribute[t]))
       {
-        SmartMet::Spine::Exception exception(BCP, "Missing configuration attribute!");
+        Fmi::Exception exception(BCP, "Missing configuration attribute!");
         exception.addParameter("File",theConfigFile);
         exception.addParameter("Attribute",configAttribute[t]);
         throw exception;
@@ -300,7 +300,7 @@ Engine::Engine(const char* theConfigFile)
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Constructor failed!", nullptr);
+    Fmi::Exception exception(BCP, "Constructor failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -317,7 +317,7 @@ Engine::~Engine()
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.printError();
   }
 }
@@ -378,7 +378,7 @@ void Engine::init()
     }
     else
     {
-      SmartMet::Spine::Exception exception(BCP, "Unknow content source type!");
+      Fmi::Exception exception(BCP, "Unknow content source type!");
       exception.addParameter("Content source type",mContentSourceType);
     }
 
@@ -504,7 +504,7 @@ void Engine::init()
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -536,7 +536,7 @@ void Engine::shutdown()
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -555,7 +555,7 @@ int Engine::executeQuery(QueryServer::Query& query) const
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -575,7 +575,7 @@ Query_sptr Engine::executeQuery(Query_sptr query) const
       int result = mQueryServer->executeQuery(0,*query);
       if (result != 0)
       {
-        Spine::Exception exception(BCP, "The query server returns an error message!");
+        Fmi::Exception exception(BCP, "The query server returns an error message!");
         exception.addParameter("Result", Fmi::to_string(result));
         exception.addParameter("Message", QueryServer::getResultString(result));
 
@@ -624,7 +624,7 @@ Query_sptr Engine::executeQuery(Query_sptr query) const
     int result = mQueryServer->executeQuery(0,*query);
     if (result != 0)
     {
-      Spine::Exception exception(BCP, "The query server returns an error message!");
+      Fmi::Exception exception(BCP, "The query server returns an error message!");
       exception.addParameter("Result", Fmi::to_string(result));
       exception.addParameter("Message", QueryServer::getResultString(result));
 
@@ -664,7 +664,7 @@ Query_sptr Engine::executeQuery(Query_sptr query) const
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -712,7 +712,7 @@ bool Engine::isCacheable(std::shared_ptr<QueryServer::Query> query) const
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -733,7 +733,7 @@ ContentServer_sptr Engine::getContentServer_sptr() const
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -752,7 +752,7 @@ ContentServer_sptr Engine::getContentSourceServer_sptr() const
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -771,7 +771,7 @@ DataServer_sptr Engine::getDataServer_sptr() const
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -790,7 +790,7 @@ QueryServer_sptr Engine::getQueryServer_sptr() const
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -805,16 +805,7 @@ bool Engine::isGridProducer(const std::string& producer) const
   FUNCTION_TRACE
   try
   {
-    AutoThreadLock lock(&mThreadLock);
-    if ((time(nullptr) - mProducerList_updateTime) > 60)
-    {
-      mProducerList_updateTime = time(nullptr);
-      getProducerList(mProducerList);
-
-      ContentServer_sptr contentServer = getContentServer_sptr();
-      contentServer->getGenerationInfoList(0,mGenerationList);
-      mGenerationList.sort(T::GenerationInfo::ComparisonMethod::generationId);
-    }
+    AutoReadLock lock(&mProducerListModificationLock);
 
     std::vector<std::string> nameList;
     getProducerNameList(producer,nameList);
@@ -831,7 +822,7 @@ bool Engine::isGridProducer(const std::string& producer) const
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -895,7 +886,7 @@ std::string Engine::getParameterString(std::string producer,std::string paramete
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -929,7 +920,7 @@ std::string Engine::getProducerName(const std::string& aliasName) const
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -966,7 +957,7 @@ void Engine::getProducerNameList(const std::string& aliasName,std::vector<std::s
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -1015,7 +1006,7 @@ ulonglong Engine::getProducerHash(uint producerId) const
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -1089,7 +1080,7 @@ void Engine::getParameterDetails(const std::string& aliasName,ParameterDetails_v
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -1176,7 +1167,7 @@ void Engine::getParameterDetails(const std::string& producerName,const std::stri
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -1197,7 +1188,7 @@ void Engine::getParameterDetails(const std::string& producerName,const std::stri
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -1211,7 +1202,7 @@ void Engine::getParameterMappings(std::string producerName,std::string parameter
 {
   try
   {
-    AutoThreadLock lock(&mThreadLock);
+    AutoReadLock lock(&mParameterMappingModificationLock);
 
     for (auto m = mParameterMappings.begin(); m != mParameterMappings.end(); ++m)
     {
@@ -1221,7 +1212,7 @@ void Engine::getParameterMappings(std::string producerName,std::string parameter
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
   }
 }
 
@@ -1233,7 +1224,7 @@ void Engine::getParameterMappings(std::string producerName,std::string parameter
 {
   try
   {
-    AutoThreadLock lock(&mThreadLock);
+    AutoReadLock lock(&mParameterMappingModificationLock);
 
     for (auto m = mParameterMappings.begin(); m != mParameterMappings.end(); ++m)
     {
@@ -1243,7 +1234,7 @@ void Engine::getParameterMappings(std::string producerName,std::string parameter
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
   }
 }
 
@@ -1262,7 +1253,7 @@ void Engine::getParameterMappings(
 {
   try
   {
-    AutoThreadLock lock(&mThreadLock);
+    AutoReadLock lock(&mParameterMappingModificationLock);
 
     for (auto m = mParameterMappings.begin(); m != mParameterMappings.end(); ++m)
     {
@@ -1272,7 +1263,7 @@ void Engine::getParameterMappings(
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
   }
 }
 
@@ -1291,7 +1282,7 @@ void Engine::getParameterMappings(
 {
   try
   {
-    AutoThreadLock lock(&mThreadLock);
+    AutoReadLock lock(&mParameterMappingModificationLock);
 
     for (auto m = mParameterMappings.begin(); m != mParameterMappings.end(); ++m)
     {
@@ -1301,7 +1292,7 @@ void Engine::getParameterMappings(
   }
   catch (...)
   {
-    throw SmartMet::Spine::Exception(BCP, "Operation failed!", nullptr);
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
   }
 }
 
@@ -1379,7 +1370,7 @@ void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails) const
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -1408,7 +1399,7 @@ std::string Engine::getProducerAlias(const std::string& producerName,int levelId
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -1423,15 +1414,7 @@ T::ParamLevelId Engine::getFmiParameterLevelId(uint producerId,int level) const
   FUNCTION_TRACE
   try
   {
-    AutoThreadLock lock(&mThreadLock);
-
-    if (mLevelInfoList.getLength() == 0  ||  (mLevelInfoList_lastUpdate + 300) < time(nullptr))
-    {
-      ContentServer_sptr  contentServer = getContentServer_sptr();
-      contentServer->getLevelInfoList(0,mLevelInfoList);
-
-      mLevelInfoList_lastUpdate = time(nullptr);
-    }
+    AutoReadLock lock(&mProducerListModificationLock);
 
     uint len = mLevelInfoList.getLength();
     for (uint t=0; t<len; t++)
@@ -1447,7 +1430,7 @@ T::ParamLevelId Engine::getFmiParameterLevelId(uint producerId,int level) const
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -1471,7 +1454,7 @@ void Engine::getProducerList(string_vec& producerList) const
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -1502,7 +1485,7 @@ bool Engine::getProducerInfoByName(const std::string& name,T::ProducerInfo& info
   }
   catch (...)
   {
-    throw Spine::Exception(BCP, exception_operation_failed, nullptr);
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
   }
 }
 
@@ -1515,14 +1498,7 @@ void Engine::getProducerParameterLevelList(const std::string& producerName,T::Pa
   FUNCTION_TRACE
   try
   {
-    AutoThreadLock lock(&mThreadLock);
-
-    ContentServer_sptr  contentServer = getContentServer_sptr();
-    if (mLevelInfoList.getLength() == 0  ||  (mLevelInfoList_lastUpdate + 300) < time(nullptr))
-    {
-      contentServer->getLevelInfoList(0,mLevelInfoList);
-      mLevelInfoList_lastUpdate = time(nullptr);
-    }
+    AutoReadLock lock(&mProducerListModificationLock);
 
     std::vector<std::string> nameList;
     getProducerNameList(producerName,nameList);
@@ -1553,7 +1529,7 @@ void Engine::getProducerParameterLevelList(const std::string& producerName,T::Pa
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -1568,14 +1544,7 @@ void Engine::getProducerParameterLevelIdList(const std::string& producerName,std
   FUNCTION_TRACE
   try
   {
-    AutoThreadLock lock(&mThreadLock);
-
-    ContentServer_sptr  contentServer = getContentServer_sptr();
-    if (mLevelInfoList.getLength() == 0  ||  (mLevelInfoList_lastUpdate + 300) < time(nullptr))
-    {
-      contentServer->getLevelInfoList(0,mLevelInfoList);
-      mLevelInfoList_lastUpdate = time(nullptr);
-    }
+    AutoReadLock lock(&mProducerListModificationLock);
 
     std::vector<std::string> nameList;
     getProducerNameList(producerName,nameList);
@@ -1605,7 +1574,7 @@ void Engine::getProducerParameterLevelIdList(const std::string& producerName,std
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -1634,7 +1603,7 @@ void Engine::loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings)
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -1667,7 +1636,7 @@ void Engine::clearMappings()
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -1694,7 +1663,7 @@ void Engine::updateMappings()
 
     if (parameterMappings.size() > 0)
     {
-      AutoThreadLock lock(&mThreadLock);
+      AutoWriteLock lock(&mParameterMappingModificationLock);
       mParameterMappings = parameterMappings;
     }
 
@@ -1710,7 +1679,7 @@ void Engine::updateMappings()
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -1728,7 +1697,7 @@ FILE* Engine::openMappingFile(const std::string& mappingFile)
     FILE *file = fopen(mappingFile.c_str(),"we");
     if (file == nullptr)
     {
-      SmartMet::Spine::Exception exception(BCP, "Cannot open a mapping file for writing!");
+      Fmi::Exception exception(BCP, "Cannot open a mapping file for writing!");
       exception.addParameter("Filaname",mappingFile);
       throw exception;
     }
@@ -1816,7 +1785,7 @@ FILE* Engine::openMappingFile(const std::string& mappingFile)
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -1842,7 +1811,7 @@ void Engine::updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyTy
     int result = contentServer->getProducerInfoList(sessionId,producerInfoList);
     if (result != 0)
     {
-      std::cerr << CODE_LOCATION << "The 'contentServer.getProducerInfoList()' service call returns an error!  Result : " << result << " : " << ContentServer::getResultString(result).c_str() << "\n";
+      std::cerr << __FILE__ << ":" << __LINE__ << ": The 'contentServer.getProducerInfoList()' service call returns an error!  Result : " << result << " : " << ContentServer::getResultString(result).c_str() << "\n";
       return;
     }
 
@@ -2010,7 +1979,7 @@ void Engine::updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyTy
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -2042,18 +2011,58 @@ void Engine::updateProcessing()
       {
       }
 
+      try
+      {
+        updateProducerAndGenerationList();
+      }
+      catch (...)
+      {
+      }
+
       sleep(1);
     }
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
 }
 
 
+
+
+void Engine::updateProducerAndGenerationList()
+{
+  FUNCTION_TRACE
+  try
+  {
+    AutoWriteLock lock(&mProducerListModificationLock);
+    ContentServer_sptr contentServer = getContentServer_sptr();
+
+    if ((time(nullptr) - mProducerList_updateTime) > 60)
+    {
+      mProducerList_updateTime = time(nullptr);
+      getProducerList(mProducerList);
+
+      contentServer->getGenerationInfoList(0,mGenerationList);
+      mGenerationList.sort(T::GenerationInfo::ComparisonMethod::generationId);
+    }
+
+    if (mLevelInfoList.getLength() == 0  ||  (mLevelInfoList_lastUpdate + 300) < time(nullptr))
+    {
+      contentServer->getLevelInfoList(0,mLevelInfoList);
+      mLevelInfoList_lastUpdate = time(nullptr);
+    }
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    throw exception;
+  }
+}
 
 
 
@@ -2117,7 +2126,7 @@ void Engine::updateQueryCache()
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -2165,7 +2174,7 @@ void Engine::getVerticalGrid(
     int result = contentServer->getGenerationInfoListByProducerName(sessionId,valueProducerName,gInfoList1);
     if (result != 0)
     {
-      SmartMet::Spine::Exception exception(BCP, ContentServer::getResultString(result).c_str(), nullptr);
+      Fmi::Exception exception(BCP, ContentServer::getResultString(result).c_str(), nullptr);
       exception.addParameter("ProducerName",valueProducerName);
       throw exception;
     }
@@ -2175,7 +2184,7 @@ void Engine::getVerticalGrid(
     result = contentServer->getGenerationInfoListByProducerName(sessionId,heightProducerName,gInfoList2);
     if (result != 0)
     {
-      SmartMet::Spine::Exception exception(BCP, ContentServer::getResultString(result).c_str());
+      Fmi::Exception exception(BCP, ContentServer::getResultString(result).c_str());
       exception.addParameter("ProducerName",heightProducerName);
       throw exception;
     }
@@ -2196,14 +2205,14 @@ void Engine::getVerticalGrid(
 
     if (gInfo1 != nullptr  &&  gInfo2 != nullptr  &&  gInfo1->mAnalysisTime != gInfo2->mAnalysisTime)
     {
-      SmartMet::Spine::Exception exception(BCP,"Cannot find the same analysis time for values and heights!");
+      Fmi::Exception exception(BCP,"Cannot find the same analysis time for values and heights!");
       throw exception;
     }
 
     getProducerParameterLevelList(valueProducerName,3,1,levels1);
     if (levels1.size() == 0)
     {
-      SmartMet::Spine::Exception exception(BCP,"Cannot find valid levels for the value parameter!");
+      Fmi::Exception exception(BCP,"Cannot find valid levels for the value parameter!");
       exception.addParameter("ValueProducer",valueProducerName);
       throw exception;
     }
@@ -2211,14 +2220,14 @@ void Engine::getVerticalGrid(
     getProducerParameterLevelList(heightProducerName,3,1,levels2);
     if (levels2.size() == 0)
     {
-      SmartMet::Spine::Exception exception(BCP,"Cannot find valid levels for the height parameter!");
+      Fmi::Exception exception(BCP,"Cannot find valid levels for the height parameter!");
       exception.addParameter("HeightProducer",heightProducerName);
       throw exception;
     }
 
     if (levels1.size() != levels2.size())
     {
-      SmartMet::Spine::Exception exception(BCP,"The number of value parameter levels is different than the number of height parameter levels!");
+      Fmi::Exception exception(BCP,"The number of value parameter levels is different than the number of height parameter levels!");
       throw exception;
     }
 
@@ -2320,7 +2329,7 @@ void Engine::getVerticalGrid(
 
       if (len1 == 0)
       {
-        SmartMet::Spine::Exception exception(BCP,"Parameter values not found!");
+        Fmi::Exception exception(BCP,"Parameter values not found!");
         throw exception;
       }
 
@@ -2329,19 +2338,19 @@ void Engine::getVerticalGrid(
       uint len2 = contentList2.getLength();
       if (len2 == 0)
       {
-        SmartMet::Spine::Exception exception(BCP,"Height values not found!");
+        Fmi::Exception exception(BCP,"Height values not found!");
         throw exception;
       }
 
       if (len1 != len2)
       {
-        SmartMet::Spine::Exception exception(BCP,"The number of values is different than the number of heights!");
+        Fmi::Exception exception(BCP,"The number of values is different than the number of heights!");
         throw exception;
       }
 
       if (len1 > 2)
       {
-        SmartMet::Spine::Exception exception(BCP,"We should get maximum two contentInfo records!");
+        Fmi::Exception exception(BCP,"We should get maximum two contentInfo records!");
         throw exception;
       }
 
@@ -2458,7 +2467,7 @@ void Engine::getVerticalGrid(
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -2477,7 +2486,7 @@ void Engine::setDem(boost::shared_ptr<Fmi::DEM> dem)
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -2496,7 +2505,7 @@ void Engine::setLandCover(boost::shared_ptr<Fmi::LandCover> landCover)
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     throw exception;
   }
 }
@@ -2513,7 +2522,7 @@ void Engine::startUpdateProcessing()
   }
   catch (...)
   {
-    SmartMet::Spine::Exception exception(BCP, "Operation failed!", nullptr);
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }

@@ -194,6 +194,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                           QueryServer::ParamMappingFile_vec& parameterMappings);
 
     void                updateQueryCache();
+    void                updateProducerAndGenerationList();
 
   private:
 
@@ -295,11 +296,12 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     boost::shared_ptr<Fmi::LandCover>         mLandCover;
     mutable ConfigurationFile                 mConfigurationFile;
     mutable bool                              mShutdownRequested;
-    mutable ThreadLock                        mThreadLock;
+    mutable ModificationLock                  mParameterMappingModificationLock;
     mutable time_t                            mParameterMappingUpdateTime;
     mutable string_vec                        mProducerList;
     mutable T::ProducerInfoList               mProducerInfoList;
     mutable time_t                            mProducerList_updateTime;
+    mutable ModificationLock                  mProducerListModificationLock;
     mutable T::LevelInfoList                  mLevelInfoList;
     mutable time_t                            mLevelInfoList_lastUpdate;
     mutable QueryServer::AliasFileCollection  mProducerAliasFileCollection;
