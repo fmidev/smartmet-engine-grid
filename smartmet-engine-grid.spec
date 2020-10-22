@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 20.10.20
+Version: 20.10.22
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -14,8 +14,8 @@ BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: libconfig-devel >= 1.7.2
 BuildRequires: libpqxx-devel
-BuildRequires: smartmet-library-grid-content-devel >= 20.10.15
-BuildRequires: smartmet-library-grid-files-devel >= 20.10.15
+BuildRequires: smartmet-library-grid-content-devel >= 20.10.22
+BuildRequires: smartmet-library-grid-files-devel >= 20.10.22
 BuildRequires: smartmet-library-spine-devel >= 20.10.20
 BuildRequires: make
 BuildRequires: omniORB-devel
@@ -24,9 +24,9 @@ BuildRequires: gdal-devel
 Requires: boost169-thread
 Requires: libconfig >= 1.7.2
 Requires: libpqxx-devel
-Requires: smartmet-library-grid-content >= 20.10.15
-Requires: smartmet-library-grid-files >= 20.10.15
-Requires: smartmet-library-spine >= 20.10.14
+Requires: smartmet-library-grid-content >= 20.10.22
+Requires: smartmet-library-grid-files >= 20.10.22
+Requires: smartmet-library-spine >= 20.10.20
 Requires: omniORB-devel
 Provides: %{SPECNAME}
 
@@ -64,6 +64,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Thu Oct 22 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.10.22-1.fmi
+- Performance improvements
+
 * Tue Oct 20 2020 Andris Pavenis <andris.pavenis@fmi.fi> - 20.10.20-1.fmi
 - Rebuild due to libconfig upgrade to version 1.7.2
 
