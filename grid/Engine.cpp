@@ -62,9 +62,6 @@ Engine::Engine(const char* theConfigFile)
         "smartmet.library.grid-files.pointCache.enabled",
         "smartmet.library.grid-files.pointCache.hitsRequired",
         "smartmet.library.grid-files.pointCache.timePeriod",
-        "smartmet.library.grid-files.requestCounter.enabled",
-        "smartmet.library.grid-files.requestCounter.generatedCounterFile",
-        "smartmet.library.grid-files.requestCounter.generatedPreloadFile",
 
         "smartmet.engine.grid.content-server.content-source.type",
         "smartmet.engine.grid.content-server.content-source.redis.address",
@@ -141,7 +138,6 @@ Engine::Engine(const char* theConfigFile)
     mPointCacheEnabled = false;
     mPointCacheHitsRequired = 20; // 20 hits required during the last 20 minutes
     mPointCacheTimePeriod = 1200;
-    mRequestCounterEnabled = false;
     mPreloadMemoryLock = false;
     mRequestForwardEnabled = false;
     mMemoryContentDir = "/tmp";
@@ -207,10 +203,6 @@ Engine::Engine(const char* theConfigFile)
     mConfigurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.enabled", mPointCacheEnabled);
     mConfigurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.hitsRequired", mPointCacheHitsRequired);
     mConfigurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.timePeriod", mPointCacheTimePeriod);
-
-    mConfigurationFile.getAttributeValue("smartmet.library.grid-files.requestCounter.enabled", mRequestCounterEnabled);
-    mConfigurationFile.getAttributeValue("smartmet.library.grid-files.requestCounter.generatedCounterFile", mGeneratedCounterFile);
-    mConfigurationFile.getAttributeValue("smartmet.library.grid-files.requestCounter.generatedPreloadFile", mGeneratedPreloadFile);
 
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.type", mContentSourceType);
 
@@ -416,7 +408,7 @@ void Engine::init()
       DataServer::ServiceImplementation *server = new DataServer::ServiceImplementation();
       server->init(0,0,"NotRegistered","NotRegistered",mDataServerGridDirectory,cServer,mDataServerLuaFiles);
       server->setPointCacheEnabled(mPointCacheEnabled,mPointCacheHitsRequired,mPointCacheTimePeriod);
-      server->setPreload(mContentPreloadEnabled,mPreloadMemoryLock,mContentPreloadFile,mContentCounterFile,mRequestCounterEnabled,mGeneratedPreloadFile,mGeneratedCounterFile);
+      server->setPreload(mContentPreloadEnabled,mPreloadMemoryLock,mContentPreloadFile);
       server->setMemoryMapCheckEnabled(mMemoryMapCheckEnabled);
       //dServer->init(0,0,"NotRegistered","NotRegistered",mDataServerGridDirectory,cache);
 
@@ -434,9 +426,6 @@ void Engine::init()
 
       mDataServer.reset(server);
       server->startEventProcessing();
-
-      if (mRequestCounterEnabled)
-        server->startRequestCounting();
 
       dServer = server;
 

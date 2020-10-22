@@ -12,6 +12,7 @@
 #include <grid-files/common/ConfigurationFile.h>
 #include <grid-files/common/Typedefs.h>
 #include <pthread.h>
+#include <unordered_map>
 #include "ParameterDetails.h"
 
 
@@ -30,14 +31,14 @@ typedef std::shared_ptr<QueryServer::Query> Query_sptr;
 struct CacheRec
 {
   Query_sptr query;
-  std::map<uint,ulonglong> producerHashMap;
+  std::unordered_map<uint,ulonglong> producerHashMap;
   time_t cacheTime;
   time_t lastAccessTime;
   uint   accessCounter;
 };
 
-typedef std::map<std::size_t,CacheRec> QueryCache;
-typedef std::map<std::size_t,CacheRec>::iterator QueryCacheIterator;
+typedef std::unordered_map<std::size_t,CacheRec> QueryCache;
+typedef std::unordered_map<std::size_t,CacheRec>::iterator QueryCacheIterator;
 
 
 struct HashRec
@@ -46,7 +47,7 @@ struct HashRec
   ulonglong hash;
 };
 
-typedef std::map<uint,HashRec> ProducerHash_map;
+typedef std::unordered_map<uint,HashRec> ProducerHash_map;
 
 
 
@@ -215,10 +216,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     bool                mPointCacheEnabled;
     uint                mPointCacheHitsRequired;
     uint                mPointCacheTimePeriod;
-    bool                mRequestCounterEnabled;
     bool                mRequestForwardEnabled;
-    std::string         mGeneratedCounterFile;
-    std::string         mGeneratedPreloadFile;
     std::string         mDataServerGridDirectory;
 
     std::string         mContentSourceType;
