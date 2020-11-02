@@ -485,9 +485,10 @@ void Engine::init()
       qServer->setDebugLog(&mQueryServerDebugLog);
     }
 
+    updateProducerAndGenerationList();
+
     mProducerAliasFileCollection.init(mProducerAliasFiles,true);
     mParameterAliasFileCollection.init(mParameterAliasFiles);
-
 
     startUpdateProcessing();
   }
@@ -1295,13 +1296,6 @@ void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails) const
   {
     ContentServer_sptr contentServer = getContentServer_sptr();
 
-    if (mGenerationList.getLength() == 0)
-    {
-      AutoWriteLock lock(&mProducerListModificationLock);
-      contentServer->getGenerationInfoList(0,mGenerationList);
-      mGenerationList.sort(T::GenerationInfo::ComparisonMethod::generationId);
-    }
-
     for (auto rec = parameterDetails.begin(); rec != parameterDetails.end(); ++rec)
     {
       QueryServer::ParameterMapping_vec mappings;
@@ -1455,13 +1449,6 @@ bool Engine::getProducerInfoByName(const std::string& name,T::ProducerInfo& info
   FUNCTION_TRACE
   try
   {
-    if (mProducerInfoList.getLength() == 0)
-    {
-      AutoWriteLock lock(&mProducerListModificationLock);
-      ContentServer_sptr contentServer = getContentServer_sptr();
-      contentServer->getProducerInfoList(0, mProducerInfoList);
-    }
-
     AutoReadLock lock(&mProducerListModificationLock);
     T::ProducerInfo *producerInfo = mProducerInfoList.getProducerInfoByName(name);
     if (producerInfo != nullptr)
@@ -2026,8 +2013,9 @@ void Engine::updateProducerAndGenerationList()
   FUNCTION_TRACE
   try
   {
-    AutoWriteLock lock(&mProducerListModificationLock);
     ContentServer_sptr contentServer = getContentServer_sptr();
+
+    AutoWriteLock lock(&mProducerListModificationLock);
 
     if ((time(nullptr) - mProducerList_updateTime) > 60)
     {
