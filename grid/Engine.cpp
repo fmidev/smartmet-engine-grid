@@ -1297,6 +1297,7 @@ void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails) const
 
     if (mGenerationList.getLength() == 0)
     {
+      AutoWriteLock lock(&mProducerListModificationLock);
       contentServer->getGenerationInfoList(0,mGenerationList);
       mGenerationList.sort(T::GenerationInfo::ComparisonMethod::generationId);
     }
@@ -1329,6 +1330,7 @@ void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails) const
         if (result == 0)
         {
           uint len = contentInfoList.getLength();
+          AutoReadLock lock(&mProducerListModificationLock);
           for (uint t=0; t<len; t++)
           {
             T::ContentInfo *cInfo = contentInfoList.getContentInfoByIndex(t);
@@ -1434,12 +1436,7 @@ void Engine::getProducerList(string_vec& producerList) const
   FUNCTION_TRACE
   try
   {
-    // Producers defined in the query server
     mQueryServer->getProducerList(0,producerList);
-
-    // Producers defined in the content server
-    ContentServer_sptr contentServer = getContentServer_sptr();
-    contentServer->getProducerInfoList(0, mProducerInfoList);
   }
   catch (...)
   {
@@ -1460,10 +1457,12 @@ bool Engine::getProducerInfoByName(const std::string& name,T::ProducerInfo& info
   {
     if (mProducerInfoList.getLength() == 0)
     {
+      AutoWriteLock lock(&mProducerListModificationLock);
       ContentServer_sptr contentServer = getContentServer_sptr();
       contentServer->getProducerInfoList(0, mProducerInfoList);
     }
 
+    AutoReadLock lock(&mProducerListModificationLock);
     T::ProducerInfo *producerInfo = mProducerInfoList.getProducerInfoByName(name);
     if (producerInfo != nullptr)
     {
@@ -2033,7 +2032,12 @@ void Engine::updateProducerAndGenerationList()
     if ((time(nullptr) - mProducerList_updateTime) > 60)
     {
       mProducerList_updateTime = time(nullptr);
-      getProducerList(mProducerList);
+
+      mQueryServer->getProducerList(0,mProducerList);
+
+      // Producers defined in the content server
+      ContentServer_sptr contentServer = getContentServer_sptr();
+      contentServer->getProducerInfoList(0, mProducerInfoList);
 
       contentServer->getGenerationInfoList(0,mGenerationList);
       mGenerationList.sort(T::GenerationInfo::ComparisonMethod::generationId);
