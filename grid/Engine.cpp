@@ -181,7 +181,6 @@ Engine::Engine(const char* theConfigFile)
     mMaxSizeOfCachedGridsInMegaBytes = 10000;
 
     mConfigurationFile.readFile(theConfigFile);
-    //mConfigurationFile.print(std::cout,0,0);
 
     uint t=0;
     while (configAttribute[t] != nullptr)
@@ -410,7 +409,6 @@ void Engine::init()
       server->setPointCacheEnabled(mPointCacheEnabled,mPointCacheHitsRequired,mPointCacheTimePeriod);
       server->setPreload(mContentPreloadEnabled,mPreloadMemoryLock,mContentPreloadFile);
       server->setMemoryMapCheckEnabled(mMemoryMapCheckEnabled);
-      //dServer->init(0,0,"NotRegistered","NotRegistered",mDataServerGridDirectory,cache);
 
       if (mVirtualFilesEnabled)
       {
@@ -845,8 +843,6 @@ std::string Engine::getParameterString(std::string producer,std::string paramete
     {
       for (size_t t = 0; t < len; t++)
       {
-        //parameters[t].print(std::cout,0,0);
-
         if (parameters[t].mLevelId > "")
           levelId = parameters[t].mLevelId;
 
@@ -937,10 +933,6 @@ void Engine::getProducerNameList(const std::string& aliasName,std::vector<std::s
       splitString(*it,';',partList);
       nameList.push_back(partList[0]);
     }
-
-    //std::cout << "ALIAS " << aliasName << "\n";
-    //for (auto it = nameList.begin(); it != nameList.end(); ++it)
-    //  std::cout << " - name : " << *it << "\n";
 
     if (nameList.size() == 0)
       nameList.push_back(aliasName);
@@ -1056,7 +1048,6 @@ void Engine::getParameterDetails(const std::string& aliasName,ParameterDetails_v
       }
 
       parameterDetails.push_back(p);
-      //p.print(std::cout,0,0);
     }
 
 
@@ -1089,7 +1080,6 @@ void Engine::getParameterDetails(const std::string& producerName,const std::stri
 
 
     std::string prod = producerName;
-    //printf("GET PRODUCER [%s;%s]\n",prod.c_str(),parameterName.c_str());
     mParameterAliasFileCollection.getAlias(producerName,prod);
 
 
@@ -1142,7 +1132,6 @@ void Engine::getParameterDetails(const std::string& producerName,const std::stri
       }
 
       parameterDetails.push_back(p);
-      //p.print(std::cout,0,0);
     }
 
 
@@ -1197,7 +1186,6 @@ void Engine::getParameterMappings(std::string producerName,std::string parameter
     for (auto m = mParameterMappings.begin(); m != mParameterMappings.end(); ++m)
     {
       m->getMappings(producerName, parameterName, geometryId, onlySearchEnabled, mappings);
-      //printf("Get mappings [%s][%s][%d] %lu\n",producerName.c_str(),parameterName.c_str(),geometryId,mappings.size());
     }
   }
   catch (...)
@@ -1219,7 +1207,6 @@ void Engine::getParameterMappings(std::string producerName,std::string parameter
     for (auto m = mParameterMappings.begin(); m != mParameterMappings.end(); ++m)
     {
       m->getMappings(producerName, parameterName, onlySearchEnabled, mappings);
-      //printf("Get mappings [%s][%s][%d] %lu\n",producerName.c_str(),parameterName.c_str(),geometryId,mappings.size());
     }
   }
   catch (...)
@@ -1248,7 +1235,6 @@ void Engine::getParameterMappings(
     for (auto m = mParameterMappings.begin(); m != mParameterMappings.end(); ++m)
     {
       m->getMappings(producerName, parameterName, geometryId, levelIdType, levelId, level, onlySearchEnabled, mappings);
-      //printf("Get mappings [%s][%s][%d] [%d][%d][%d] %lu\n",producerName.c_str(),parameterName.c_str(),geometryId,levelIdType, levelId, level,mappings.size());
     }
   }
   catch (...)
@@ -1277,7 +1263,6 @@ void Engine::getParameterMappings(
     for (auto m = mParameterMappings.begin(); m != mParameterMappings.end(); ++m)
     {
       m->getMappings(producerName, parameterName, levelIdType, levelId, level, onlySearchEnabled, mappings);
-      //printf("Get mappings [%s][%s][%d] [%d][%d][%d] %lu\n",producerName.c_str(),parameterName.c_str(),geometryId,levelIdType, levelId, level,mappings.size());
     }
   }
   catch (...)
@@ -1305,13 +1290,11 @@ void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails) const
         if (mappings.size() == 0  &&  rec->mLevel < " ")
         {
           getParameterMappings(rec->mProducerName, rec->mOriginalParameter, atoi(rec->mGeometryId.c_str()), T::ParamLevelIdTypeValue::ANY, atoi(rec->mLevelId.c_str()), -1, false, mappings);
-          //getParameterMappings(producerInfo.mName, parameterKey, producerGeometryId, T::ParamLevelIdTypeValue::ANY, paramLevelId, -1, false, mappings);
         }
       }
       else
       {
         getParameterMappings(rec->mProducerName, rec->mOriginalParameter, atoi(rec->mGeometryId.c_str()), true, mappings);
-        //getParameterMappings(producerInfo.mName, parameterKey, producerGeometryId, true, mappings);
       }
 
       for (auto m = mappings.begin(); m != mappings.end(); ++m)
@@ -1379,7 +1362,6 @@ std::string Engine::getProducerAlias(const std::string& producerName,int levelId
       tmp = producerName + ";" + std::to_string(levelId);
 
     mParameterAliasFileCollection.getAlias(tmp,prod);
-    // printf("GetAlias [%s;%d][%s]\n",producerName.c_str(),levelId,prod.c_str());
     return prod;
   }
   catch (...)
@@ -1481,7 +1463,6 @@ void Engine::getProducerParameterLevelList(const std::string& producerName,T::Pa
     for (auto pname = nameList.begin(); pname != nameList.end(); ++pname)
     {
       T::ProducerInfo producerInfo;
-      // if (contentServer->getProducerInfoByName(0,*pname,producerInfo) == 0)
       if (getProducerInfoByName(*pname,producerInfo))
       {
         std::string fmiParameterName;
@@ -1527,7 +1508,6 @@ void Engine::getProducerParameterLevelIdList(const std::string& producerName,std
     for (auto pname = nameList.begin(); pname != nameList.end(); ++pname)
     {
       T::ProducerInfo producerInfo;
-      //if (contentServer->getProducerInfoByName(0,*pname,producerInfo) == 0)
       if (getProducerInfoByName(*pname,producerInfo))
       {
         std::string fmiParameterName;
@@ -2160,8 +2140,6 @@ void Engine::getVerticalGrid(
       throw exception;
     }
 
-    //gInfoList1.print(std::cout,0,0);
-
     result = contentServer->getGenerationInfoListByProducerName(sessionId,heightProducerName,gInfoList2);
     if (result != 0)
     {
@@ -2169,8 +2147,6 @@ void Engine::getVerticalGrid(
       exception.addParameter("ProducerName",heightProducerName);
       throw exception;
     }
-
-    //gInfoList2.print(std::cout,0,0);
 
     T::GenerationInfo *gInfo1 = gInfoList1.getLastGenerationInfoByAnalysisTime();
     T::GenerationInfo *gInfo2 = gInfoList2.getLastGenerationInfoByAnalysisTime();
@@ -2239,8 +2215,6 @@ void Engine::getVerticalGrid(
 
       int result2 = queryServer->getParameterValuesByPointListAndTime(sessionId,heightProducerName,std::string(param),T::CoordinateTypeValue::LATLON_COORDINATES,points.first,utcTime,areaInterpolationMethod,timeInterpolationMethod,1,heightVec);
 
-      //printf("SIZES %lu,%lu,%lu\n",points.first.size(),valueVec.size(),heightVec.size());
-
       uint sz = points.first.size();
       if (result1 == 0  &&  result2 == 0  &&  valueVec.size() == sz  &&  heightVec.size() == sz)
       {
@@ -2249,138 +2223,11 @@ void Engine::getVerticalGrid(
           auto dist = points.second[t];
           coordinates.push_back(T::Coordinate(dist,heightVec[t]));
 
-          // printf("%f,%f (%f,%f) = %f\n",dist,heightVec[t],points.first[t].x(),points.first[t].y(),valueVec[t]);
           gridData.push_back(valueVec[t]);
         }
       }
     }
 
-/*
-
-    for (auto level = levels1.rbegin(); level != levels1.rend(); ++level)
-    {
-      uint c = 0;
-      for (auto it = points.first.begin(); it != points.first.end(); ++it)
-      {
-        T::ParamValue value = 0;
-        T::ParamValue height = 0;
-
-        int lev = C_INT(*level);
-        char param[100];
-        char *p = param;
-        p += sprintf(p,"%s:%s",valueParameter.c_str(),valueProducerName.c_str());
-        if (geometryId > 0)
-          p += sprintf(p,":%u:3:%u",geometryId,lev);
-        else
-          p += sprintf(p,"::3:%u",lev);
-
-
-        int result1 = queryServer->getParameterValueByPointAndTime(sessionId,std::string(param),T::CoordinateTypeValue::LATLON_COORDINATES,it->x(),it->y(),utcTime,areaInterpolationMethod,timeInterpolationMethod,1,value);
-
-        p = param;
-        p += sprintf(p,"%s:%s",heightParameter.c_str(),heightProducerName.c_str());
-        if (geometryId > 0)
-          p += sprintf(p,":%u:3:%u",geometryId,lev);
-        else
-          p += sprintf(p,"::3:%u",lev);
-
-        int result2 = queryServer->getParameterValueByPointAndTime(sessionId,std::string(param),T::CoordinateTypeValue::LATLON_COORDINATES,it->x(),it->y(),utcTime,areaInterpolationMethod,timeInterpolationMethod,1,height);
-
-        auto dist = points.second[c];
-        if (result1 == 0  &&  result2 == 0)
-        {
-          coordinates.push_back(T::Coordinate(dist,height));
-          gridData.push_back(value);
-          printf("%f,%f (%f,%f) = %f\n",dist,height,it->x(),it->y(),value);
-        }
-        else
-        {
-          coordinates.push_back(T::Coordinate(dist,height));
-          gridData.push_back(ParamValueMissing);
-        }
-        c++;
-      }
-    }
-
-    for (auto level = levels1.rbegin(); level != levels1.rend(); ++level)
-    {
-      T::ContentInfoList contentList1;
-      result = contentServer->getContentListByParameterGenerationIdAndForecastTime(sessionId, gInfo1->mGenerationId,T::ParamKeyTypeValue::FMI_NAME,valueParameter,T::ParamLevelIdTypeValue::FMI,3,C_INT(*level),forecastType,forecastNumber,geometryId, utcTime,contentList1);
-      uint len1 = contentList1.getLength();
-
-      if (len1 == 0)
-      {
-        Fmi::Exception exception(BCP,"Parameter values not found!");
-        throw exception;
-      }
-
-      T::ContentInfoList contentList2;
-      result = contentServer->getContentListByParameterGenerationIdAndForecastTime(sessionId, gInfo2->mGenerationId,T::ParamKeyTypeValue::FMI_NAME,heightParameter,T::ParamLevelIdTypeValue::FMI,3,C_INT(*level),-1,-1,geometryId, utcTime,contentList2);
-      uint len2 = contentList2.getLength();
-      if (len2 == 0)
-      {
-        Fmi::Exception exception(BCP,"Height values not found!");
-        throw exception;
-      }
-
-      if (len1 != len2)
-      {
-        Fmi::Exception exception(BCP,"The number of values is different than the number of heights!");
-        throw exception;
-      }
-
-      if (len1 > 2)
-      {
-        Fmi::Exception exception(BCP,"We should get maximum two contentInfo records!");
-        throw exception;
-      }
-
-      T::ContentInfo *cInfo1 = contentList1.getContentInfoByIndex(0);
-      T::ContentInfo *cInfo2 = contentList1.getContentInfoByIndex(1);
-      T::ContentInfo *hInfo1 = contentList2.getContentInfoByIndex(0);
-      T::ContentInfo *hInfo2 = contentList2.getContentInfoByIndex(1);
-
-      printf("RECORDS %u  %u  %s\n",len1,len2,utcTime.c_str());
-      cInfo1->print(std::cout,0,0);
-      hInfo1->print(std::cout,0,0);
-
-      uint c = 0;
-      for (auto it = points.first.begin(); it != points.first.end(); ++it)
-      {
-        T::ParamValue value = 0;
-        T::ParamValue height = 0;
-        int result1 = -1;
-        int result2 = -1;
-
-
-        if (len1 == 1  &&  cInfo1->mForecastTime == utcTime  &&  hInfo1->mForecastTime == utcTime)
-        {
-          result1 = dataServer->getGridValueByPoint(sessionId,cInfo1->mFileId,cInfo1->mMessageIndex,T::CoordinateTypeValue::LATLON_COORDINATES,it->x(),it->y(),areaInterpolationMethod,value);
-          result2 = dataServer->getGridValueByPoint(sessionId,hInfo1->mFileId,hInfo1->mMessageIndex,T::CoordinateTypeValue::LATLON_COORDINATES,it->x(),it->y(),areaInterpolationMethod,height);
-        }
-        else
-        if (cInfo1->mForecastTime < utcTime  &&  cInfo2->mForecastTime > utcTime  &&  hInfo1->mForecastTime < utcTime &&  hInfo2->mForecastTime > utcTime)
-        {
-          result1 = dataServer->getGridValueByTimeAndPoint(sessionId,cInfo1->mFileId,cInfo1->mMessageIndex,cInfo2->mFileId,cInfo2->mMessageIndex,utcTime,T::CoordinateTypeValue::LATLON_COORDINATES,it->x(),it->y(),areaInterpolationMethod,timeInterpolationMethod,value);
-          result2 = dataServer->getGridValueByTimeAndPoint(sessionId,hInfo1->mFileId,hInfo1->mMessageIndex,hInfo2->mFileId,hInfo2->mMessageIndex,utcTime,T::CoordinateTypeValue::LATLON_COORDINATES,it->x(),it->y(),areaInterpolationMethod,timeInterpolationMethod,height);
-        }
-
-        auto dist = points.second[c];
-        if (result1 == 0  &&  result2 == 0)
-        {
-          coordinates.push_back(T::Coordinate(dist,height));
-          gridData.push_back(value);
-          printf("%f,%f = %f\n",dist,height,value);
-        }
-        else
-        {
-          coordinates.push_back(T::Coordinate(dist,height));
-          gridData.push_back(ParamValueMissing);
-        }
-        c++;
-      }
-    }
-*/
     gridWidth = points.first.size();
     gridHeight = levels1.size();
 
@@ -2439,7 +2286,6 @@ void Engine::getVerticalGrid(
     getIsolines(gridData,&coordinates,points.first.size(),levels1.size(),contourLowValues,T::AreaInterpolationMethod::Linear,0,1,contours2);
     for (auto it = contours2.begin(); it != contours2.end(); ++it)
     {
-      printf("Contour %lu\n",it->size());
       imagePaint.paintWkb(mpx,mpy,0,0,*it,0x000000);
     }
 
