@@ -273,6 +273,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     uint                mMaxSizeOfCachedGridsInMegaBytes;
 
     std::string         mProducerFile;
+    time_t              mProducerFile_modificationTime;
     string_vec          mProducerAliasFiles;
     bool                mMemoryMapCheckEnabled;
     bool                mVirtualFilesEnabled;

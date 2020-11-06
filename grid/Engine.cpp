@@ -285,6 +285,8 @@ Engine::Engine(const char* theConfigFile)
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.luaFiles",mQueryServerLuaFiles);
 
 
+    mProducerFile_modificationTime = getFileModificationTime(mProducerFile.c_str());
+
     // Initializing information that is needed for identifying the content of the grid files.
 
     SmartMet::Identification::gridDef.init(mGridConfigFile.c_str());
@@ -2037,6 +2039,16 @@ void Engine::updateQueryCache()
     time_t currentTime = time(nullptr);
     if ((currentTime - mQueryCacheUpdateTime) < 60)
       return;
+
+    time_t tt = getFileModificationTime(mProducerFile.c_str());
+    if (mProducerFile_modificationTime != tt  &&  (tt+3) < currentTime)
+    {
+      // The producer search order has changed. So we have to clear the query cache.
+      mProducerFile_modificationTime = tt;
+      AutoWriteLock lock(&mQueryCacheModificationLock);
+      mQueryCache.clear();
+      return;
+    }
 
     mQueryCacheEnabled = false;
 
