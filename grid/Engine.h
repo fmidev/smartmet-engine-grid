@@ -182,6 +182,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                shutdown();
     void                startUpdateProcessing();
     void                clearMappings();
+    void                checkConfiguration();
     void                loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings);
     FILE*               openMappingFile(const std::string& mappingFile);
     void                updateMappings();
@@ -198,6 +199,10 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                updateProducerAndGenerationList();
 
   private:
+
+    std::string         mConfigurationFilename;
+    time_t              mConfigurationFilename_modificationTime;
+    time_t              mConfigurationFilename_checkTime;
 
     ContentServer_sptr  mContentServer;
     ContentServer_sptr  mContentServerCache;
@@ -280,7 +285,6 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::string         mVirtualFileDefinitions;
     bool                mContentPreloadEnabled;
     std::string         mContentPreloadFile;
-    std::string         mContentCounterFile;
     bool                mPreloadMemoryLock;
 
     string_vec          mParameterAliasFiles;
@@ -290,6 +294,9 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     T::ParamKeyType     mMappingTargetKeyType;
     std::string         mParameterMappingUpdateFile_fmi;
     std::string         mParameterMappingUpdateFile_newbase;
+
+    DataServer::ServiceImplementation*        mDataServerImplementation;
+    ContentServer::CacheImplementation*       mContentServerCacheImplementation;
 
     boost::shared_ptr<Fmi::DEM>               mDem;
     boost::shared_ptr<Fmi::LandCover>         mLandCover;

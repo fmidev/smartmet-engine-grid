@@ -90,7 +90,6 @@ Engine::Engine(const char* theConfigFile)
         "smartmet.engine.grid.data-server.grid-storage.preloadEnabled",
         "smartmet.engine.grid.data-server.grid-storage.preloadFile",
         "smartmet.engine.grid.data-server.grid-storage.preloadMemoryLock",
-        "smartmet.engine.grid.data-server.grid-storage.counterFile",
         "smartmet.engine.grid.data-server.virtualFiles.enabled",
         "smartmet.engine.grid.data-server.virtualFiles.definitionFile",
         "smartmet.engine.grid.data-server.luaFiles",
@@ -126,6 +125,9 @@ Engine::Engine(const char* theConfigFile)
         nullptr
     };
 
+    mConfigurationFilename = theConfigFile;
+    mConfigurationFilename_checkTime = time(nullptr) + 120;
+    mConfigurationFilename_modificationTime = getFileModificationTime(mConfigurationFilename.c_str());
     mLevelInfoList_lastUpdate = 0;
     mProducerList_updateTime = 0;
     mContentSourceRedisAddress = "127.0.0.1";
@@ -179,6 +181,9 @@ Engine::Engine(const char* theConfigFile)
 
     mNumOfCachedGrids = 10000;
     mMaxSizeOfCachedGridsInMegaBytes = 10000;
+
+    mContentServerCacheImplementation = nullptr;
+    mDataServerImplementation = nullptr;
 
     mConfigurationFile.readFile(theConfigFile);
 
@@ -239,7 +244,6 @@ Engine::Engine(const char* theConfigFile)
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadEnabled",mContentPreloadEnabled);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadFile",mContentPreloadFile);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadMemoryLock",mPreloadMemoryLock);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.counterFile",mContentCounterFile);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.directory", mDataServerGridDirectory);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.virtualFiles.enabled",mVirtualFilesEnabled);
     mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.virtualFiles.definitionFile",mVirtualFileDefinitions);
@@ -377,12 +381,12 @@ void Engine::init()
 
     if (mContentCacheEnabled)
     {
-      ContentServer::CacheImplementation *cache = new ContentServer::CacheImplementation();
-      cache->init(0,cServer,mContentCacheSortingFlags);
-      cache->setRequestForwardEnabled(mRequestForwardEnabled);
-      mContentServerCache.reset(cache);
-      cache->startEventProcessing();
-      cServer = cache;
+      mContentServerCacheImplementation = new ContentServer::CacheImplementation();
+      mContentServerCacheImplementation->init(0,cServer,mContentCacheSortingFlags);
+      mContentServerCacheImplementation->setRequestForwardEnabled(mRequestForwardEnabled);
+      mContentServerCache.reset(mContentServerCacheImplementation);
+      mContentServerCacheImplementation->startEventProcessing();
+      cServer = mContentServerCacheImplementation;
     }
 
     if (mDataServerRemote  &&  mDataServerIor.length() > 50)
@@ -406,28 +410,28 @@ void Engine::init()
     }
     else
     {
-      DataServer::ServiceImplementation *server = new DataServer::ServiceImplementation();
-      server->init(0,0,"NotRegistered","NotRegistered",mDataServerGridDirectory,cServer,mDataServerLuaFiles);
-      server->setPointCacheEnabled(mPointCacheEnabled,mPointCacheHitsRequired,mPointCacheTimePeriod);
-      server->setPreload(mContentPreloadEnabled,mPreloadMemoryLock,mContentPreloadFile);
-      server->setMemoryMapCheckEnabled(mMemoryMapCheckEnabled);
+      mDataServerImplementation = new DataServer::ServiceImplementation();
+      mDataServerImplementation->init(0,0,"NotRegistered","NotRegistered",mDataServerGridDirectory,cServer,mDataServerLuaFiles);
+      mDataServerImplementation->setPointCacheEnabled(mPointCacheEnabled,mPointCacheHitsRequired,mPointCacheTimePeriod);
+      mDataServerImplementation->setPreload(mContentPreloadEnabled,mPreloadMemoryLock,mContentPreloadFile);
+      mDataServerImplementation->setMemoryMapCheckEnabled(mMemoryMapCheckEnabled);
 
       if (mVirtualFilesEnabled)
       {
-        server->setVirtualContentEnabled(true);
+        mDataServerImplementation->setVirtualContentEnabled(true);
         DataServer::VirtualContentFactory_type1 *factory = new DataServer::VirtualContentFactory_type1();
         factory->init(mVirtualFileDefinitions);
-        server->addVirtualContentFactory(factory);
+        mDataServerImplementation->addVirtualContentFactory(factory);
       }
       else
       {
-        server->setVirtualContentEnabled(false);
+        mDataServerImplementation->setVirtualContentEnabled(false);
       }
 
-      mDataServer.reset(server);
-      server->startEventProcessing();
+      mDataServer.reset(mDataServerImplementation);
+      mDataServerImplementation->startEventProcessing();
 
-      dServer = server;
+      dServer = mDataServerImplementation;
 
       SmartMet::GRID::valueCache.init(mNumOfCachedGrids,mMaxSizeOfCachedGridsInMegaBytes);
     }
@@ -495,6 +499,282 @@ void Engine::init()
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    throw exception;
+  }
+}
+
+
+
+
+
+void Engine::checkConfiguration()
+{
+  FUNCTION_TRACE
+  try
+  {
+    // ### Configuration updates when the server is running.
+
+    time_t currentTime = time(nullptr);
+    if ((currentTime - mConfigurationFilename_checkTime) < 60)
+      return;
+
+    mConfigurationFilename_checkTime = currentTime;
+
+    time_t tt = getFileModificationTime(mConfigurationFilename.c_str());
+    if (tt == mConfigurationFilename_modificationTime)
+      return;
+
+    ConfigurationFile configurationFile;
+    configurationFile.readFile(mConfigurationFilename.c_str());
+
+
+    ContentServer_sptr contentServer = getContentServer_sptr();
+
+    // ### Content server processing log
+
+    bool contentServerProcessingLogEnabled = false;
+    std::string contentServerProcessingLogFile;
+    int contentServerProcessingLogMaxSize = 0;
+    int contentServerProcessingLogTruncateSize = 0;
+
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.enabled", contentServerProcessingLogEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.file", contentServerProcessingLogFile);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.maxSize", contentServerProcessingLogMaxSize);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.truncateSize", contentServerProcessingLogTruncateSize);
+
+    if (mContentServerProcessingLogEnabled != contentServerProcessingLogEnabled || mContentServerProcessingLogFile != contentServerProcessingLogFile ||
+        mContentServerProcessingLogMaxSize != contentServerProcessingLogMaxSize || mContentServerProcessingLogTruncateSize != contentServerProcessingLogTruncateSize)
+    {
+      mContentServerProcessingLog.close();
+
+      mContentServerProcessingLogEnabled = contentServerProcessingLogEnabled;
+      mContentServerProcessingLogFile = contentServerProcessingLogFile;
+      mContentServerProcessingLogMaxSize = contentServerProcessingLogMaxSize;
+      mContentServerProcessingLogTruncateSize = contentServerProcessingLogTruncateSize;
+
+      mContentServerProcessingLog.init(mContentServerProcessingLogEnabled,mContentServerProcessingLogFile.c_str(),mContentServerProcessingLogMaxSize,mContentServerProcessingLogTruncateSize);
+      if (contentServer->getProcessingLog() == nullptr)
+        contentServer->setProcessingLog(&mContentServerProcessingLog);
+    }
+
+
+    // ### Content server debug log
+
+    bool contentServerDebugLogEnabled = false;
+    std::string contentServerDebugLogFile;
+    int contentServerDebugLogMaxSize = 0;
+    int contentServerDebugLogTruncateSize = 0;
+
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.enabled", mContentServerDebugLogEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.file", mContentServerDebugLogFile);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.maxSize", mContentServerDebugLogMaxSize);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.truncateSize", mContentServerDebugLogTruncateSize);
+
+    if (mContentServerDebugLogEnabled != contentServerDebugLogEnabled || mContentServerDebugLogFile != contentServerDebugLogFile ||
+        mContentServerDebugLogMaxSize != contentServerDebugLogMaxSize || mContentServerDebugLogTruncateSize != contentServerDebugLogTruncateSize)
+    {
+      mContentServerDebugLog.close();
+
+      mContentServerDebugLogEnabled = contentServerDebugLogEnabled;
+      mContentServerDebugLogFile = contentServerDebugLogFile;
+      mContentServerDebugLogMaxSize = contentServerDebugLogMaxSize;
+      mContentServerDebugLogTruncateSize = contentServerDebugLogTruncateSize;
+
+      mContentServerDebugLog.init(mContentServerDebugLogEnabled,mContentServerDebugLogFile.c_str(),mContentServerDebugLogMaxSize,mContentServerDebugLogTruncateSize);
+      if (contentServer->getDebugLog() == nullptr)
+        contentServer->setDebugLog(&mContentServerDebugLog);
+    }
+
+
+
+    // ### Data server processing log
+
+    bool dataServerProcessingLogEnabled = false;
+    std::string dataServerProcessingLogFile;
+    int dataServerProcessingLogMaxSize = 0;
+    int dataServerProcessingLogTruncateSize = 0;
+
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.enabled", dataServerProcessingLogEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.file", dataServerProcessingLogFile);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.maxSize", dataServerProcessingLogMaxSize);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.truncateSize", dataServerProcessingLogTruncateSize);
+
+    if (mDataServerProcessingLogEnabled != dataServerProcessingLogEnabled || mDataServerProcessingLogFile != dataServerProcessingLogFile ||
+        mDataServerProcessingLogMaxSize != dataServerProcessingLogMaxSize || mDataServerProcessingLogTruncateSize != dataServerProcessingLogTruncateSize)
+    {
+      mDataServerProcessingLog.close();
+
+      mDataServerProcessingLogEnabled = dataServerProcessingLogEnabled;
+      mDataServerProcessingLogFile = dataServerProcessingLogFile;
+      mDataServerProcessingLogMaxSize = dataServerProcessingLogMaxSize;
+      mDataServerProcessingLogTruncateSize = dataServerProcessingLogTruncateSize;
+
+      mDataServerProcessingLog.init(mDataServerProcessingLogEnabled,mDataServerProcessingLogFile.c_str(),mDataServerProcessingLogMaxSize,mDataServerProcessingLogTruncateSize);
+      if (mDataServer->getProcessingLog() == nullptr)
+        mDataServer->setProcessingLog(&mDataServerProcessingLog);
+    }
+
+
+    // ### Data server debug log
+
+    bool dataServerDebugLogEnabled = false;
+    std::string dataServerDebugLogFile;
+    int dataServerDebugLogMaxSize = 0;
+    int dataServerDebugLogTruncateSize = 0;
+
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.enabled", mDataServerDebugLogEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.file", mDataServerDebugLogFile);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.maxSize", mDataServerDebugLogMaxSize);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.truncateSize", mDataServerDebugLogTruncateSize);
+
+    if (mDataServerDebugLogEnabled != dataServerDebugLogEnabled || mDataServerDebugLogFile != dataServerDebugLogFile ||
+        mDataServerDebugLogMaxSize != dataServerDebugLogMaxSize || mDataServerDebugLogTruncateSize != dataServerDebugLogTruncateSize)
+    {
+      mDataServerDebugLog.close();
+
+      mDataServerDebugLogEnabled = dataServerDebugLogEnabled;
+      mDataServerDebugLogFile = dataServerDebugLogFile;
+      mDataServerDebugLogMaxSize = dataServerDebugLogMaxSize;
+      mDataServerDebugLogTruncateSize = dataServerDebugLogTruncateSize;
+
+      mDataServerDebugLog.init(mDataServerDebugLogEnabled,mDataServerDebugLogFile.c_str(),mDataServerDebugLogMaxSize,mDataServerDebugLogTruncateSize);
+      if (mDataServer->getDebugLog() == nullptr)
+        mDataServer->setDebugLog(&mDataServerDebugLog);
+    }
+
+
+
+    // ### Query server processing log
+
+    bool queryServerProcessingLogEnabled = false;
+    std::string queryServerProcessingLogFile;
+    int queryServerProcessingLogMaxSize = 0;
+    int queryServerProcessingLogTruncateSize = 0;
+
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.enabled", queryServerProcessingLogEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.file", queryServerProcessingLogFile);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.maxSize", queryServerProcessingLogMaxSize);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.truncateSize", queryServerProcessingLogTruncateSize);
+
+    if (mQueryServerProcessingLogEnabled != queryServerProcessingLogEnabled || mQueryServerProcessingLogFile != queryServerProcessingLogFile ||
+        mQueryServerProcessingLogMaxSize != queryServerProcessingLogMaxSize || mQueryServerProcessingLogTruncateSize != queryServerProcessingLogTruncateSize)
+    {
+      mQueryServerProcessingLog.close();
+
+      mQueryServerProcessingLogEnabled = queryServerProcessingLogEnabled;
+      mQueryServerProcessingLogFile = queryServerProcessingLogFile;
+      mQueryServerProcessingLogMaxSize = queryServerProcessingLogMaxSize;
+      mQueryServerProcessingLogTruncateSize = queryServerProcessingLogTruncateSize;
+
+      mQueryServerProcessingLog.init(mQueryServerProcessingLogEnabled,mQueryServerProcessingLogFile.c_str(),mQueryServerProcessingLogMaxSize,mQueryServerProcessingLogTruncateSize);
+      if (mQueryServer->getProcessingLog() == nullptr)
+        mQueryServer->setProcessingLog(&mQueryServerProcessingLog);
+    }
+
+
+    // ### Query server debug log
+
+    bool queryServerDebugLogEnabled = false;
+    std::string queryServerDebugLogFile;
+    int queryServerDebugLogMaxSize = 0;
+    int queryServerDebugLogTruncateSize = 0;
+
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.enabled", mQueryServerDebugLogEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.file", mQueryServerDebugLogFile);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.maxSize", mQueryServerDebugLogMaxSize);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.truncateSize", mQueryServerDebugLogTruncateSize);
+
+    if (mQueryServerDebugLogEnabled != queryServerDebugLogEnabled || mQueryServerDebugLogFile != queryServerDebugLogFile ||
+        mQueryServerDebugLogMaxSize != queryServerDebugLogMaxSize || mQueryServerDebugLogTruncateSize != queryServerDebugLogTruncateSize)
+    {
+      mQueryServerDebugLog.close();
+
+      mQueryServerDebugLogEnabled = queryServerDebugLogEnabled;
+      mQueryServerDebugLogFile = queryServerDebugLogFile;
+      mQueryServerDebugLogMaxSize = queryServerDebugLogMaxSize;
+      mQueryServerDebugLogTruncateSize = queryServerDebugLogTruncateSize;
+
+      mQueryServerDebugLog.init(mQueryServerDebugLogEnabled,mQueryServerDebugLogFile.c_str(),mQueryServerDebugLogMaxSize,mQueryServerDebugLogTruncateSize);
+      if (mQueryServer->getDebugLog() == nullptr)
+        mQueryServer->setDebugLog(&mQueryServerDebugLog);
+    }
+
+
+    // ### Query cache
+
+    bool queryCacheEnabled = false;
+    int queryCacheMaxAge = 0;
+
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.enabled", queryCacheEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.maxAge", queryCacheMaxAge);
+
+    if (mQueryCacheEnabled != queryCacheEnabled  || mQueryCacheMaxAge != queryCacheMaxAge)
+    {
+      mQueryCacheEnabled = queryCacheEnabled;
+      mQueryCacheMaxAge = queryCacheMaxAge;
+    }
+
+
+
+    if (mDataServerImplementation != nullptr)
+    {
+      // ### Point cache
+
+      bool pointCacheEnabled = false;
+      uint pointCacheHitsRequired = 0;
+      uint pointCacheTimePeriod = 0;
+
+      configurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.enabled", pointCacheEnabled);
+      configurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.hitsRequired", pointCacheHitsRequired);
+      configurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.timePeriod", pointCacheTimePeriod);
+
+      if (mPointCacheEnabled != pointCacheEnabled || mPointCacheHitsRequired != pointCacheHitsRequired || mPointCacheTimePeriod != pointCacheTimePeriod)
+      {
+        mPointCacheEnabled = pointCacheEnabled;
+        mPointCacheHitsRequired = pointCacheHitsRequired;
+        mPointCacheTimePeriod = pointCacheTimePeriod;
+
+        mDataServerImplementation->setPointCacheEnabled(mPointCacheEnabled,mPointCacheHitsRequired,mPointCacheTimePeriod);
+      }
+
+
+      // ### Memory map check
+
+      bool memoryMapCheckEnabled = false;
+
+      mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.memoryMapCheckEnabled",memoryMapCheckEnabled);
+      if (mMemoryMapCheckEnabled != memoryMapCheckEnabled)
+      {
+        mMemoryMapCheckEnabled = memoryMapCheckEnabled;
+        mDataServerImplementation->setMemoryMapCheckEnabled(mMemoryMapCheckEnabled);
+      }
+
+
+      // ### Preload
+
+      bool contentPreloadEnabled = false;
+      std::string contentPreloadFile;
+      bool preloadMemoryLock;
+
+      configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadEnabled",contentPreloadEnabled);
+      configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadFile",contentPreloadFile);
+      configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadMemoryLock",preloadMemoryLock);
+
+      if (mContentPreloadEnabled != contentPreloadEnabled || mContentPreloadFile != contentPreloadFile || mPreloadMemoryLock || preloadMemoryLock)
+      {
+        mContentPreloadEnabled = contentPreloadEnabled;
+        mContentPreloadFile = contentPreloadFile;
+        mPreloadMemoryLock = preloadMemoryLock;
+        mDataServerImplementation->setPreload(mContentPreloadEnabled,mPreloadMemoryLock,mContentPreloadFile);
+      }
+    }
+
+    mConfigurationFilename_modificationTime = tt;
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Constructor failed!", nullptr);
     exception.addParameter("Configuration file",mConfigurationFile.getFilename());
     throw exception;
   }
@@ -1975,6 +2255,15 @@ void Engine::updateProcessing()
       catch (...)
       {
       }
+
+      try
+      {
+        checkConfiguration();
+      }
+      catch (...)
+      {
+      }
+
 
       sleep(1);
     }
