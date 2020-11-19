@@ -107,7 +107,7 @@ Engine::Engine(const char* theConfigFile)
         "smartmet.engine.grid.query-server.queryCache.enabled",
         "smartmet.engine.grid.query-server.queryCache.maxAge",
         "smartmet.engine.grid.query-server.producerFile",
-        "smartmet.engine.grid.query-server.producerAliasFiles",
+        "smartmet.engine.grid.query-server.producerMappingFiles",
         "smartmet.engine.grid.query-server.luaFiles",
         "smartmet.engine.grid.query-server.mappingTargetKeyType",
         "smartmet.engine.grid.query-server.mappingFiles",
@@ -125,9 +125,9 @@ Engine::Engine(const char* theConfigFile)
         nullptr
     };
 
-    mConfigurationFilename = theConfigFile;
-    mConfigurationFilename_checkTime = time(nullptr) + 120;
-    mConfigurationFilename_modificationTime = getFileModificationTime(mConfigurationFilename.c_str());
+    mConfigurationFile_name = theConfigFile;
+    mConfigurationFile_checkTime = time(nullptr) + 120;
+    mConfigurationFile_modificationTime = getFileModificationTime(mConfigurationFile_name.c_str());
     mLevelInfoList_lastUpdate = 0;
     mProducerList_updateTime = 0;
     mContentSourceRedisAddress = "127.0.0.1";
@@ -185,12 +185,13 @@ Engine::Engine(const char* theConfigFile)
     mContentServerCacheImplementation = nullptr;
     mDataServerImplementation = nullptr;
 
-    mConfigurationFile.readFile(theConfigFile);
+    ConfigurationFile configurationFile;
+    configurationFile.readFile(mConfigurationFile_name.c_str());
 
     uint t=0;
     while (configAttribute[t] != nullptr)
     {
-      if (!mConfigurationFile.findAttribute(configAttribute[t]))
+      if (!configurationFile.findAttribute(configAttribute[t]))
       {
         Fmi::Exception exception(BCP, "Missing configuration attribute!");
         exception.addParameter("File",theConfigFile);
@@ -200,93 +201,93 @@ Engine::Engine(const char* theConfigFile)
       t++;
     }
 
-    mConfigurationFile.getAttributeValue("smartmet.library.grid-files.configFile", mGridConfigFile);
-    mConfigurationFile.getAttributeValue("smartmet.library.grid-files.cache.numOfGrids", mNumOfCachedGrids);
-    mConfigurationFile.getAttributeValue("smartmet.library.grid-files.cache.maxSizeInMegaBytes", mMaxSizeOfCachedGridsInMegaBytes);
+    configurationFile.getAttributeValue("smartmet.library.grid-files.configFile", mGridConfigFile);
+    configurationFile.getAttributeValue("smartmet.library.grid-files.cache.numOfGrids", mNumOfCachedGrids);
+    configurationFile.getAttributeValue("smartmet.library.grid-files.cache.maxSizeInMegaBytes", mMaxSizeOfCachedGridsInMegaBytes);
 
-    mConfigurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.enabled", mPointCacheEnabled);
-    mConfigurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.hitsRequired", mPointCacheHitsRequired);
-    mConfigurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.timePeriod", mPointCacheTimePeriod);
+    configurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.enabled", mPointCacheEnabled);
+    configurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.hitsRequired", mPointCacheHitsRequired);
+    configurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.timePeriod", mPointCacheTimePeriod);
 
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.type", mContentSourceType);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.type", mContentSourceType);
 
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.address", mContentSourceRedisAddress);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.port", mContentSourceRedisPort);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.tablePrefix", mContentSourceRedisTablePrefix);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.address", mContentSourceRedisAddress);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.port", mContentSourceRedisPort);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.tablePrefix", mContentSourceRedisTablePrefix);
 
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.http.url", mContentSourceHttpUrl);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.http.url", mContentSourceHttpUrl);
 
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.corba.ior", mContentSourceCorbaIor);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.corba.ior", mContentSourceCorbaIor);
 
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.file.contentDir", mMemoryContentDir);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.file.contentSortingFlags", mMemoryContentSortingFlags);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.file.eventListMaxSize", mEventListMaxSize);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.file.contentDir", mMemoryContentDir);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.file.contentSortingFlags", mMemoryContentSortingFlags);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.file.eventListMaxSize", mEventListMaxSize);
 
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.enabled", mContentCacheEnabled);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.contentSortingFlags", mContentCacheSortingFlags);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.requestForwardEnabled", mRequestForwardEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.enabled", mContentCacheEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.contentSortingFlags", mContentCacheSortingFlags);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.requestForwardEnabled", mRequestForwardEnabled);
 
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.enabled", mContentServerProcessingLogEnabled);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.file", mContentServerProcessingLogFile);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.maxSize", mContentServerProcessingLogMaxSize);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.truncateSize", mContentServerProcessingLogTruncateSize);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.enabled", mContentServerDebugLogEnabled);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.file", mContentServerDebugLogFile);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.maxSize", mContentServerDebugLogMaxSize);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.truncateSize", mContentServerDebugLogTruncateSize);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.enabled", mContentServerProcessingLogEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.file", mContentServerProcessingLogFile);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.maxSize", mContentServerProcessingLogMaxSize);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.truncateSize", mContentServerProcessingLogTruncateSize);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.enabled", mContentServerDebugLogEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.file", mContentServerDebugLogFile);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.maxSize", mContentServerDebugLogMaxSize);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.truncateSize", mContentServerDebugLogTruncateSize);
 
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.remote", mDataServerRemote);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.ior", mDataServerIor);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.caching", mDataServerCacheEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.remote", mDataServerRemote);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.ior", mDataServerIor);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.caching", mDataServerCacheEnabled);
 
     // These settings are used when the data server is embedded into the grid engine.
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.memoryMapCheckEnabled",mMemoryMapCheckEnabled);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadEnabled",mContentPreloadEnabled);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadFile",mContentPreloadFile);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadMemoryLock",mPreloadMemoryLock);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.directory", mDataServerGridDirectory);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.virtualFiles.enabled",mVirtualFilesEnabled);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.virtualFiles.definitionFile",mVirtualFileDefinitions);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.luaFiles",mDataServerLuaFiles);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.enabled", mDataServerProcessingLogEnabled);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.file", mDataServerProcessingLogFile);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.maxSize", mDataServerProcessingLogMaxSize);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.truncateSize", mDataServerProcessingLogTruncateSize);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.enabled", mDataServerDebugLogEnabled);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.file", mDataServerDebugLogFile);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.maxSize", mDataServerDebugLogMaxSize);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.truncateSize", mDataServerDebugLogTruncateSize);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.memoryMapCheckEnabled",mMemoryMapCheckEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadEnabled",mContentPreloadEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadFile",mContentPreloadFile);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadMemoryLock",mPreloadMemoryLock);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.directory", mDataServerGridDirectory);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.virtualFiles.enabled",mVirtualFilesEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.virtualFiles.definitionFile",mVirtualFileDefinitions);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.luaFiles",mDataServerLuaFiles);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.enabled", mDataServerProcessingLogEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.file", mDataServerProcessingLogFile);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.maxSize", mDataServerProcessingLogMaxSize);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.truncateSize", mDataServerProcessingLogTruncateSize);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.enabled", mDataServerDebugLogEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.file", mDataServerDebugLogFile);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.maxSize", mDataServerDebugLogMaxSize);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.truncateSize", mDataServerDebugLogTruncateSize);
 
 
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.remote", mQueryServerRemote);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.ior", mQueryServerIor);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.remote", mQueryServerRemote);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.ior", mQueryServerIor);
 
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.enabled", mQueryCacheEnabled);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.maxAge", mQueryCacheMaxAge);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.enabled", mQueryCacheEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.maxAge", mQueryCacheMaxAge);
 
 
     // These settings are used when the query server is embedded into the grid engine.
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.producerFile",mProducerFile);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.producerAliasFiles",mProducerAliasFiles);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.producerFile",mProducerFile);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.producerMappingFiles",mProducerMappingFiles);
 
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.enabled", mQueryServerProcessingLogEnabled);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.file", mQueryServerProcessingLogFile);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.maxSize", mQueryServerProcessingLogMaxSize);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.truncateSize", mQueryServerProcessingLogTruncateSize);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.enabled", mQueryServerDebugLogEnabled);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.file", mQueryServerDebugLogFile);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.maxSize", mQueryServerDebugLogMaxSize);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.truncateSize", mQueryServerDebugLogTruncateSize);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.enabled", mQueryServerProcessingLogEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.file", mQueryServerProcessingLogFile);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.maxSize", mQueryServerProcessingLogMaxSize);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.truncateSize", mQueryServerProcessingLogTruncateSize);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.enabled", mQueryServerDebugLogEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.file", mQueryServerDebugLogFile);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.maxSize", mQueryServerDebugLogMaxSize);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.truncateSize", mQueryServerDebugLogTruncateSize);
 
     int tmp = 0;
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingTargetKeyType",tmp);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingTargetKeyType",tmp);
     mMappingTargetKeyType = C_UCHAR(tmp);
 
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingUpdateFile.fmi",mParameterMappingUpdateFile_fmi);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingUpdateFile.newbase",mParameterMappingUpdateFile_newbase);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingFiles",mParameterMappingFiles);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.aliasFiles",mParameterAliasFiles);
-    mConfigurationFile.getAttributeValue("smartmet.engine.grid.query-server.luaFiles",mQueryServerLuaFiles);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingUpdateFile.fmi",mParameterMappingUpdateFile_fmi);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingUpdateFile.newbase",mParameterMappingUpdateFile_newbase);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingFiles",mParameterMappingFiles);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.aliasFiles",mParameterAliasFiles);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.luaFiles",mQueryServerLuaFiles);
 
 
     mProducerFile_modificationTime = getFileModificationTime(mProducerFile.c_str());
@@ -298,7 +299,7 @@ Engine::Engine(const char* theConfigFile)
   catch (...)
   {
     Fmi::Exception exception(BCP, "Constructor failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -446,7 +447,7 @@ void Engine::init()
     else
     {
       QueryServer::ServiceImplementation *server = new QueryServer::ServiceImplementation();
-      server->init(cServer,dServer,mGridConfigFile,mParameterMappingFiles,mParameterAliasFiles,mProducerFile,mProducerAliasFiles,mQueryServerLuaFiles);
+      server->init(cServer,dServer,mGridConfigFile,mParameterMappingFiles,mParameterAliasFiles,mProducerFile,mProducerMappingFiles,mQueryServerLuaFiles);
       qServer = server;
 
       mQueryServer.reset(server);
@@ -491,7 +492,7 @@ void Engine::init()
 
     updateProducerAndGenerationList();
 
-    mProducerAliasFileCollection.init(mProducerAliasFiles,true);
+    mProducerMappingFileCollection.init(mProducerMappingFiles,true);
     mParameterAliasFileCollection.init(mParameterAliasFiles);
 
     startUpdateProcessing();
@@ -499,7 +500,7 @@ void Engine::init()
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -516,17 +517,17 @@ void Engine::checkConfiguration()
     // ### Configuration updates when the server is running.
 
     time_t currentTime = time(nullptr);
-    if ((currentTime - mConfigurationFilename_checkTime) < 60)
+    if ((currentTime - mConfigurationFile_checkTime) < 60)
       return;
 
-    mConfigurationFilename_checkTime = currentTime;
+    mConfigurationFile_checkTime = currentTime;
 
-    time_t tt = getFileModificationTime(mConfigurationFilename.c_str());
-    if (tt == mConfigurationFilename_modificationTime)
+    time_t tt = getFileModificationTime(mConfigurationFile_name.c_str());
+    if (tt == mConfigurationFile_modificationTime)
       return;
 
     ConfigurationFile configurationFile;
-    configurationFile.readFile(mConfigurationFilename.c_str());
+    configurationFile.readFile(mConfigurationFile_name.c_str());
 
 
     ContentServer_sptr contentServer = getContentServer_sptr();
@@ -566,10 +567,10 @@ void Engine::checkConfiguration()
     int contentServerDebugLogMaxSize = 0;
     int contentServerDebugLogTruncateSize = 0;
 
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.enabled", mContentServerDebugLogEnabled);
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.file", mContentServerDebugLogFile);
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.maxSize", mContentServerDebugLogMaxSize);
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.truncateSize", mContentServerDebugLogTruncateSize);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.enabled",contentServerDebugLogEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.file", contentServerDebugLogFile);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.maxSize", contentServerDebugLogMaxSize);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.truncateSize", contentServerDebugLogTruncateSize);
 
     if (mContentServerDebugLogEnabled != contentServerDebugLogEnabled || mContentServerDebugLogFile != contentServerDebugLogFile ||
         mContentServerDebugLogMaxSize != contentServerDebugLogMaxSize || mContentServerDebugLogTruncateSize != contentServerDebugLogTruncateSize)
@@ -623,10 +624,10 @@ void Engine::checkConfiguration()
     int dataServerDebugLogMaxSize = 0;
     int dataServerDebugLogTruncateSize = 0;
 
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.enabled", mDataServerDebugLogEnabled);
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.file", mDataServerDebugLogFile);
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.maxSize", mDataServerDebugLogMaxSize);
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.truncateSize", mDataServerDebugLogTruncateSize);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.enabled", dataServerDebugLogEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.file", dataServerDebugLogFile);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.maxSize", dataServerDebugLogMaxSize);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.truncateSize", dataServerDebugLogTruncateSize);
 
     if (mDataServerDebugLogEnabled != dataServerDebugLogEnabled || mDataServerDebugLogFile != dataServerDebugLogFile ||
         mDataServerDebugLogMaxSize != dataServerDebugLogMaxSize || mDataServerDebugLogTruncateSize != dataServerDebugLogTruncateSize)
@@ -680,10 +681,10 @@ void Engine::checkConfiguration()
     int queryServerDebugLogMaxSize = 0;
     int queryServerDebugLogTruncateSize = 0;
 
-    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.enabled", mQueryServerDebugLogEnabled);
-    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.file", mQueryServerDebugLogFile);
-    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.maxSize", mQueryServerDebugLogMaxSize);
-    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.truncateSize", mQueryServerDebugLogTruncateSize);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.enabled", queryServerDebugLogEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.file", queryServerDebugLogFile);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.maxSize", queryServerDebugLogMaxSize);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.truncateSize", queryServerDebugLogTruncateSize);
 
     if (mQueryServerDebugLogEnabled != queryServerDebugLogEnabled || mQueryServerDebugLogFile != queryServerDebugLogFile ||
         mQueryServerDebugLogMaxSize != queryServerDebugLogMaxSize || mQueryServerDebugLogTruncateSize != queryServerDebugLogTruncateSize)
@@ -743,7 +744,7 @@ void Engine::checkConfiguration()
 
       bool memoryMapCheckEnabled = false;
 
-      mConfigurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.memoryMapCheckEnabled",memoryMapCheckEnabled);
+      configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.memoryMapCheckEnabled",memoryMapCheckEnabled);
       if (mMemoryMapCheckEnabled != memoryMapCheckEnabled)
       {
         mMemoryMapCheckEnabled = memoryMapCheckEnabled;
@@ -770,12 +771,12 @@ void Engine::checkConfiguration()
       }
     }
 
-    mConfigurationFilename_modificationTime = tt;
+    mConfigurationFile_modificationTime = tt;
   }
   catch (...)
   {
     Fmi::Exception exception(BCP, "Constructor failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -807,7 +808,7 @@ void Engine::shutdown()
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -826,7 +827,7 @@ int Engine::executeQuery(QueryServer::Query& query) const
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -935,7 +936,7 @@ Query_sptr Engine::executeQuery(Query_sptr query) const
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -983,7 +984,43 @@ bool Engine::isCacheable(std::shared_ptr<QueryServer::Query> query) const
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
+    throw exception;
+  }
+}
+
+
+
+
+std::string Engine::getConfigurationFileName()
+{
+  FUNCTION_TRACE
+  try
+  {
+    return mConfigurationFile_name;
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file",mConfigurationFile_name);
+    throw exception;
+  }
+}
+
+
+
+
+std::string Engine::getProducerFileName()
+{
+  FUNCTION_TRACE
+  try
+  {
+    return mProducerFile;
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -1004,7 +1041,7 @@ ContentServer_sptr Engine::getContentServer_sptr() const
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -1023,7 +1060,7 @@ ContentServer_sptr Engine::getContentSourceServer_sptr() const
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -1042,7 +1079,7 @@ DataServer_sptr Engine::getDataServer_sptr() const
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -1061,7 +1098,7 @@ QueryServer_sptr Engine::getQueryServer_sptr() const
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -1093,7 +1130,7 @@ bool Engine::isGridProducer(const std::string& producer) const
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -1155,7 +1192,7 @@ std::string Engine::getParameterString(std::string producer,std::string paramete
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -1169,10 +1206,10 @@ std::string Engine::getProducerName(const std::string& aliasName) const
   FUNCTION_TRACE
   try
   {
-    mProducerAliasFileCollection.checkUpdates(false);
+    mProducerMappingFileCollection.checkUpdates(false);
 
     std::vector<std::string> aliasStrings;
-    mProducerAliasFileCollection.getAliasList(aliasName,aliasStrings);
+    mProducerMappingFileCollection.getAliasList(aliasName,aliasStrings);
 
     // Removing the level type information from the alias names.
 
@@ -1189,7 +1226,7 @@ std::string Engine::getProducerName(const std::string& aliasName) const
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -1202,10 +1239,10 @@ void Engine::getProducerNameList(const std::string& aliasName,std::vector<std::s
   FUNCTION_TRACE
   try
   {
-    mProducerAliasFileCollection.checkUpdates(false);
+    mProducerMappingFileCollection.checkUpdates(false);
 
     std::vector<std::string> aliasStrings;
-    mProducerAliasFileCollection.getAliasList(aliasName,aliasStrings);
+    mProducerMappingFileCollection.getAliasList(aliasName,aliasStrings);
 
     // Removing the level type information from the alias names.
 
@@ -1222,7 +1259,7 @@ void Engine::getProducerNameList(const std::string& aliasName,std::vector<std::s
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -1271,7 +1308,7 @@ ulonglong Engine::getProducerHash(uint producerId) const
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -1285,10 +1322,10 @@ void Engine::getParameterDetails(const std::string& aliasName,ParameterDetails_v
   FUNCTION_TRACE
   try
   {
-    mProducerAliasFileCollection.checkUpdates(false);
+    mProducerMappingFileCollection.checkUpdates(false);
 
     std::vector<std::string> aliasStrings;
-    mProducerAliasFileCollection.getAliasList(aliasName,aliasStrings);
+    mProducerMappingFileCollection.getAliasList(aliasName,aliasStrings);
 
     for (auto it=aliasStrings.begin(); it != aliasStrings.end(); it++)
     {
@@ -1344,7 +1381,7 @@ void Engine::getParameterDetails(const std::string& aliasName,ParameterDetails_v
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -1357,7 +1394,7 @@ void Engine::getParameterDetails(const std::string& producerName,const std::stri
   FUNCTION_TRACE
   try
   {
-    mProducerAliasFileCollection.checkUpdates(false);
+    mProducerMappingFileCollection.checkUpdates(false);
     mParameterAliasFileCollection.checkUpdates(false);
 
 
@@ -1371,7 +1408,7 @@ void Engine::getParameterDetails(const std::string& producerName,const std::stri
     std::string key = prod + ";" + param;
 
     std::vector<std::string> aliasStrings;
-    mProducerAliasFileCollection.getAliasList(key,aliasStrings);
+    mProducerMappingFileCollection.getAliasList(key,aliasStrings);
 
     for (auto it=aliasStrings.begin(); it != aliasStrings.end(); it++)
     {
@@ -1429,7 +1466,7 @@ void Engine::getParameterDetails(const std::string& producerName,const std::stri
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -1450,7 +1487,7 @@ void Engine::getParameterDetails(const std::string& producerName,const std::stri
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -1621,7 +1658,7 @@ void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails) const
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -1649,7 +1686,7 @@ std::string Engine::getProducerAlias(const std::string& producerName,int levelId
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -1680,7 +1717,7 @@ T::ParamLevelId Engine::getFmiParameterLevelId(uint producerId,int level) const
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -1699,7 +1736,7 @@ void Engine::getProducerList(string_vec& producerList) const
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -1768,7 +1805,7 @@ void Engine::getProducerParameterLevelList(const std::string& producerName,T::Pa
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -1812,7 +1849,7 @@ void Engine::getProducerParameterLevelIdList(const std::string& producerName,std
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -1841,7 +1878,7 @@ void Engine::loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings)
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -1874,7 +1911,7 @@ void Engine::clearMappings()
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -1917,7 +1954,7 @@ void Engine::updateMappings()
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -2023,7 +2060,7 @@ FILE* Engine::openMappingFile(const std::string& mappingFile)
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -2217,7 +2254,7 @@ void Engine::updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyTy
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -2271,7 +2308,7 @@ void Engine::updateProcessing()
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -2311,7 +2348,7 @@ void Engine::updateProducerAndGenerationList()
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -2389,7 +2426,7 @@ void Engine::updateQueryCache()
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -2596,7 +2633,7 @@ void Engine::getVerticalGrid(
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -2615,7 +2652,7 @@ void Engine::setDem(boost::shared_ptr<Fmi::DEM> dem)
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }
@@ -2651,7 +2688,7 @@ void Engine::startUpdateProcessing()
   catch (...)
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file",mConfigurationFile.getFilename());
+    exception.addParameter("Configuration file",mConfigurationFile_name);
     throw exception;
   }
 }

@@ -67,6 +67,9 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     DataServer_sptr     getDataServer_sptr() const;
     QueryServer_sptr    getQueryServer_sptr() const;
 
+    std::string         getConfigurationFileName();
+    std::string         getProducerFileName();
+
     T::ParamLevelId     getFmiParameterLevelId(
                           uint producerId,
                           int level) const;
@@ -200,9 +203,9 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
   private:
 
-    std::string         mConfigurationFilename;
-    time_t              mConfigurationFilename_modificationTime;
-    time_t              mConfigurationFilename_checkTime;
+    std::string         mConfigurationFile_name;
+    time_t              mConfigurationFile_modificationTime;
+    time_t              mConfigurationFile_checkTime;
 
     ContentServer_sptr  mContentServer;
     ContentServer_sptr  mContentServerCache;
@@ -279,7 +282,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     std::string         mProducerFile;
     time_t              mProducerFile_modificationTime;
-    string_vec          mProducerAliasFiles;
+    string_vec          mProducerMappingFiles;
     bool                mMemoryMapCheckEnabled;
     bool                mVirtualFilesEnabled;
     std::string         mVirtualFileDefinitions;
@@ -300,7 +303,6 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     boost::shared_ptr<Fmi::DEM>               mDem;
     boost::shared_ptr<Fmi::LandCover>         mLandCover;
-    mutable ConfigurationFile                 mConfigurationFile;
     mutable bool                              mShutdownRequested;
     mutable ModificationLock                  mParameterMappingModificationLock;
     mutable time_t                            mParameterMappingUpdateTime;
@@ -310,7 +312,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     mutable ModificationLock                  mProducerListModificationLock;
     mutable T::LevelInfoList                  mLevelInfoList;
     mutable time_t                            mLevelInfoList_lastUpdate;
-    mutable QueryServer::AliasFileCollection  mProducerAliasFileCollection;
+    mutable QueryServer::AliasFileCollection  mProducerMappingFileCollection;
     mutable QueryServer::AliasFileCollection  mParameterAliasFileCollection;
     mutable QueryServer::ParamMappingFile_vec mParameterMappings;
     mutable T::GenerationInfoList             mGenerationList;
