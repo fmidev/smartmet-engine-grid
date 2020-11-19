@@ -1,18 +1,32 @@
-# Producer & geometryId search order. If no producer is given in
-# the query then the producers are used in the following order.
-#producer;geometry_id;grid_size (info)
-Harmonie;999;
-
-# "Default"
-SMARTMET;1073;7.6km x 7.5km;
-SMARTMETMTA;1073;7.6km x 7.5km;
-SMARTMETNWC;1073;7.6km x 7.5 km;
+############################################################################################
+# Producer search/selection
+############################################################################################
+#
+# This file has two purposes:
+#
+#   1. It defines producers and geometries that can be searched (by Timeseries, 
+#      WFS, WMS, etc). If the requested producer and geometry is not in the list, 
+#      then the query returns nothing. 
+#
+#   2. It defines the search order in the case where no producers are given in 
+#      the query. In this case, the first producer where the search location is 
+#      inside the current geometry, is selected.
+#
+# FIELDS
+#   1. Producer
+#   2. Geometry id
+#   3. Grid size (informative, not used)
+#
+############################################################################################
+#
+SMARTMET;1096;7.6km x 7.5km;
+SMARTMETMTA;1096;7.6km x 7.5km;
+SMARTMETNWC;1096;7.6km x 7.5 km;
+ECG;1007;11.1km x 11.1km;
+ECGMTA;1007;11.1km x 11.1km;
 HL2;173;7.9km x 7.2km;
-HL2;174;8.0km x 7.1km;
-HL2;175;7.9km x 7.1km;
 HL2MTA;173;7.9km x 7.2km;
 ECG;1008;8.9km x 12.9km;
-ECG;1007;11.1km x 11.1km;
 ECG;1045;8.9km x 12.9km;
 ECG;1090;10.1km x 11.1km;
 ECG;1091;10.1km x 11.1km;
@@ -22,7 +36,6 @@ ECGEPS;1068;17.7km x 25.8km;
 ECGEPS;1074;22.2km x 22.2km;
 ECGEPSMTA;1049;17.7km x 25.8km;
 ECGMTA;1008;8.9km x 12.9km;
-ECGMTA;1007;11.1km x 11.1km;
 ECGMTA;1090;10.1km x 11.1km;
 ECGMTA;226;33.1km x 55.6km;
 ECGMTA;409;78.6km x 111.2km;
