@@ -1,4 +1,5 @@
 #include "Engine.h"
+#include "Browser.h"
 
 #include <macgyver/Exception.h>
 #include <grid-files/common/GeneralFunctions.h>
@@ -495,6 +496,9 @@ void Engine::init()
     mProducerMappingFileCollection.init(mProducerMappingFiles,true);
     mParameterAliasFileCollection.init(mParameterAliasFiles);
 
+
+    mBrowser.init(mConfigurationFile_name.c_str(),mContentServer,this);
+
     startUpdateProcessing();
   }
   catch (...)
@@ -804,6 +808,43 @@ void Engine::shutdown()
 
     if (!mQueryServer)
       mQueryServer->shutdown();
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file",mConfigurationFile_name);
+    throw exception;
+  }
+}
+
+
+
+
+bool Engine::browserRequest(const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
+{
+  FUNCTION_TRACE
+  try
+  {
+    return mBrowser.requestHandler(theRequest,theResponse);
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file",mConfigurationFile_name);
+    throw exception;
+  }
+}
+
+
+
+
+
+void Engine::browserContent(std::ostringstream& output)
+{
+  FUNCTION_TRACE
+  try
+  {
+    mBrowser.browserContent(output);
   }
   catch (...)
   {
