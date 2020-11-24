@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 20.10.22
+Version: 20.11.24
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -14,9 +14,9 @@ BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: libconfig-devel >= 1.7.2
 BuildRequires: libpqxx-devel
-BuildRequires: smartmet-library-grid-content-devel >= 20.10.22
-BuildRequires: smartmet-library-grid-files-devel >= 20.10.22
-BuildRequires: smartmet-library-spine-devel >= 20.10.20
+BuildRequires: smartmet-library-grid-content-devel >= 20.11.24
+BuildRequires: smartmet-library-grid-files-devel >= 20.11.24
+BuildRequires: smartmet-library-spine-devel >= 20.11.23
 BuildRequires: make
 BuildRequires: omniORB-devel
 BuildRequires: boost169-devel
@@ -24,9 +24,9 @@ BuildRequires: gdal-devel
 Requires: boost169-thread
 Requires: libconfig >= 1.7.2
 Requires: libpqxx-devel
-Requires: smartmet-library-grid-content >= 20.10.22
-Requires: smartmet-library-grid-files >= 20.10.22
-Requires: smartmet-library-spine >= 20.10.20
+Requires: smartmet-library-grid-content >= 20.11.24
+Requires: smartmet-library-grid-files >= 20.11.24
+Requires: smartmet-library-spine >= 20.11.23
 Requires: omniORB-devel
 Provides: %{SPECNAME}
 
@@ -64,6 +64,14 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Tue Nov 24 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.11.24-1.fmi
+- Added engine browsing capability
+- Minor fixes
+- Config parameter 'producerAliasFiles' renamed to 'producerMappingFiles'
+- Enabled configuration changes during the server execution
+- Clearing the query cache when the producer search order changes
+- Improved thread safety
+
 * Thu Oct 22 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.10.22-1.fmi
 - Performance improvements
 
