@@ -130,7 +130,7 @@ Engine::Engine(const char* theConfigFile)
     mConfigurationFile_checkTime = time(nullptr) + 120;
     mConfigurationFile_modificationTime = getFileModificationTime(mConfigurationFile_name.c_str());
     mLevelInfoList_lastUpdate = 0;
-    mProducerList_updateTime = 0;
+    mProducerInfoList_updateTime = 0;
     mContentSourceRedisAddress = "127.0.0.1";
     mContentSourceRedisPort = 6379;
     mContentSourceRedisTablePrefix = "";
@@ -146,7 +146,7 @@ Engine::Engine(const char* theConfigFile)
     mMemoryContentDir = "/tmp";
     mMemoryContentSortingFlags = 5;
     mEventListMaxSize = 0;
-    mQueryCacheUpdateTime = time(nullptr);
+    mQueryCache_updateTime = time(nullptr);
 
     mContentServerProcessingLogEnabled = false;
     mContentServerDebugLogEnabled = false;
@@ -156,10 +156,10 @@ Engine::Engine(const char* theConfigFile)
     mQueryServerDebugLogEnabled = false;
     mVirtualFilesEnabled = false;
     mMemoryMapCheckEnabled = false;
-    mParameterMappingUpdateTime = 0;
+    mParameterMappingDefinitions_updateTime = 0;
     mShutdownRequested = false;
     mContentPreloadEnabled = true;
-    mMappingTargetKeyType = T::ParamKeyTypeValue::FMI_NAME;
+    mParameterMappingDefinitions_autoFileKeyType = T::ParamKeyTypeValue::FMI_NAME;
 
     mDataServerCacheEnabled = false;
     mDataServerRemote = false;
@@ -176,8 +176,8 @@ Engine::Engine(const char* theConfigFile)
     mQueryServerProcessingLogTruncateSize = 50000000;
     mQueryServerDebugLogMaxSize = 10000000;
     mQueryServerDebugLogTruncateSize = 5000000;
-    mQueryCacheEnabled = true;
-    mQueryCacheMaxAge = 300;
+    mQueryCache_enabled = true;
+    mQueryCache_maxAge = 300;
 
 
     mNumOfCachedGrids = 10000;
@@ -263,13 +263,13 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.remote", mQueryServerRemote);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.ior", mQueryServerIor);
 
-    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.enabled", mQueryCacheEnabled);
-    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.maxAge", mQueryCacheMaxAge);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.enabled", mQueryCache_enabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.maxAge", mQueryCache_maxAge);
 
 
     // These settings are used when the query server is embedded into the grid engine.
-    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.producerFile",mProducerFile);
-    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.producerMappingFiles",mProducerMappingFiles);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.producerFile",mProducerSearchList_filename);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.producerMappingFiles",mProducerMappingDefinitions_filenames);
 
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.enabled", mQueryServerProcessingLogEnabled);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.file", mQueryServerProcessingLogFile);
@@ -282,16 +282,16 @@ Engine::Engine(const char* theConfigFile)
 
     int tmp = 0;
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingTargetKeyType",tmp);
-    mMappingTargetKeyType = C_UCHAR(tmp);
+    mParameterMappingDefinitions_autoFileKeyType = C_UCHAR(tmp);
 
-    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingUpdateFile.fmi",mParameterMappingUpdateFile_fmi);
-    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingUpdateFile.newbase",mParameterMappingUpdateFile_newbase);
-    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingFiles",mParameterMappingFiles);
-    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.aliasFiles",mParameterAliasFiles);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingUpdateFile.fmi",mParameterMappingDefinitions_autoFile_fmi);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingUpdateFile.newbase",mParameterMappingDefinitions_autoFile_newbase);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingFiles",mParameterMappingDefinitions_filenames);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.aliasFiles",mParameterAliasDefinitions_filenames);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.luaFiles",mQueryServerLuaFiles);
 
 
-    mProducerFile_modificationTime = getFileModificationTime(mProducerFile.c_str());
+    mProducerSearchList_modificationTime = getFileModificationTime(mProducerSearchList_filename.c_str());
 
     // Initializing information that is needed for identifying the content of the grid files.
 
@@ -448,7 +448,7 @@ void Engine::init()
     else
     {
       QueryServer::ServiceImplementation *server = new QueryServer::ServiceImplementation();
-      server->init(cServer,dServer,mGridConfigFile,mParameterMappingFiles,mParameterAliasFiles,mProducerFile,mProducerMappingFiles,mQueryServerLuaFiles);
+      server->init(cServer,dServer,mGridConfigFile,mParameterMappingDefinitions_filenames,mParameterAliasDefinitions_filenames,mProducerSearchList_filename,mProducerMappingDefinitions_filenames,mQueryServerLuaFiles);
       qServer = server;
 
       mQueryServer.reset(server);
@@ -493,8 +493,8 @@ void Engine::init()
 
     updateProducerAndGenerationList();
 
-    mProducerMappingFileCollection.init(mProducerMappingFiles,true);
-    mParameterAliasFileCollection.init(mParameterAliasFiles);
+    mProducerMappingDefinitions.init(mProducerMappingDefinitions_filenames,true);
+    mParameterAliasDefinitions.init(mParameterAliasDefinitions_filenames);
 
 
     mBrowser.init(mConfigurationFile_name.c_str(),mContentServer,this);
@@ -714,10 +714,10 @@ void Engine::checkConfiguration()
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.enabled", queryCacheEnabled);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.maxAge", queryCacheMaxAge);
 
-    if (mQueryCacheEnabled != queryCacheEnabled  || mQueryCacheMaxAge != queryCacheMaxAge)
+    if (mQueryCache_enabled != queryCacheEnabled  || mQueryCache_maxAge != queryCacheMaxAge)
     {
-      mQueryCacheEnabled = queryCacheEnabled;
-      mQueryCacheMaxAge = queryCacheMaxAge;
+      mQueryCache_enabled = queryCacheEnabled;
+      mQueryCache_maxAge = queryCacheMaxAge;
     }
 
 
@@ -882,7 +882,7 @@ Query_sptr Engine::executeQuery(Query_sptr query) const
   FUNCTION_TRACE
   try
   {
-    if (!mQueryCacheEnabled)
+    if (!mQueryCache_enabled)
     {
       int result = mQueryServer->executeQuery(0,*query);
       if (result != 0)
@@ -912,7 +912,7 @@ Query_sptr Engine::executeQuery(Query_sptr query) const
     bool noMatch = false;
 
     {
-      AutoReadLock lock(&mQueryCacheModificationLock);
+      AutoReadLock lock(&mQueryCache_modificationLock);
       it = mQueryCache.find(hash);
       if (it != mQueryCache.end())
       {
@@ -969,7 +969,7 @@ Query_sptr Engine::executeQuery(Query_sptr query) const
         rec.producerHashMap.insert(std::pair<uint,ulonglong>(*it,producerHash));
       }
 
-      AutoWriteLock lock(&mQueryCacheModificationLock);
+      AutoWriteLock lock(&mQueryCache_modificationLock);
       mQueryCache.insert(std::pair<std::size_t,CacheRec>(hash,rec));
     }
     return query;
@@ -1056,7 +1056,7 @@ std::string Engine::getProducerFileName()
   FUNCTION_TRACE
   try
   {
-    return mProducerFile;
+    return mProducerSearchList_filename;
   }
   catch (...)
   {
@@ -1153,19 +1153,34 @@ bool Engine::isGridProducer(const std::string& producer) const
   FUNCTION_TRACE
   try
   {
-    AutoReadLock lock(&mProducerListModificationLock);
+    std::string prod = producer;
+    std::string tmp;
+    if ((mProducerMappingDefinitions.getAlias(producer,tmp)  &&  strchr(tmp.c_str(),';') == nullptr))
+    {
+      // Replacing producer alias name with the (newbase) mapping name.
+      prod = tmp;
+    }
+
+    // Finding (Radon) producer names according to the (newbase) producer name from the mappings.
 
     std::vector<std::string> nameList;
-    getProducerNameList(producer,nameList);
+
+    AutoReadLock lock(&mProducerInfoList_modificationLock);
+    getProducerNameList(prod,nameList);
+
+    // Checking that the search of the current (Radon) producers is allower (defined in the producers search file).
+
     for (auto it=nameList.begin(); it!=nameList.end(); ++it)
     {
-      for (auto itm = mProducerList.begin(); itm != mProducerList.end(); ++itm)
+      if (it->empty())
+        return true;  // The (newbase) producer is mapped to an empty (Radon) producer (=> default producer)
+
+      for (auto itm = mProducerSearchList.begin(); itm != mProducerSearchList.end(); ++itm)
       {
         if (strcasecmp(it->c_str(),itm->c_str()) == 0)
           return true;
       }
     }
-
     return false;
   }
   catch (...)
@@ -1247,22 +1262,19 @@ std::string Engine::getProducerName(const std::string& aliasName) const
   FUNCTION_TRACE
   try
   {
-    mProducerMappingFileCollection.checkUpdates(false);
+    // This method returns the producer's mapping name.
 
-    std::vector<std::string> aliasStrings;
-    mProducerMappingFileCollection.getAliasList(aliasName,aliasStrings);
+    mProducerMappingDefinitions.checkUpdates(false);
 
-    // Removing the level type information from the alias names.
+    // Finding the mapping name for the (newbase) producer alias. The producer name mappings look like this:
+    //   pal:pal_skandinavia
+    //   pal_scandinavia:pal_skandinavia
 
-    for (auto it=aliasStrings.begin(); it != aliasStrings.end(); it++)
-    {
-      std::vector<std::string> partList;
-      splitString(*it,';',partList);
-      if (partList.size() == 1)
-        return partList[0];
-    }
+    std::string prod = aliasName;
+    if ((mProducerMappingDefinitions.getAlias(aliasName,prod)  &&  strchr(prod.c_str(),';') == nullptr))
+      return prod;
 
-     return aliasName;
+    return aliasName;
   }
   catch (...)
   {
@@ -1275,27 +1287,32 @@ std::string Engine::getProducerName(const std::string& aliasName) const
 
 
 
-void Engine::getProducerNameList(const std::string& aliasName,std::vector<std::string>& nameList) const
+void Engine::getProducerNameList(const std::string& mappingName,std::vector<std::string>& nameList) const
 {
   FUNCTION_TRACE
   try
   {
-    mProducerMappingFileCollection.checkUpdates(false);
+    // This method returns the list of (Radon) producers according to the (newbase) mapping name.
 
-    std::vector<std::string> aliasStrings;
-    mProducerMappingFileCollection.getAliasList(aliasName,aliasStrings);
+    mProducerMappingDefinitions.checkUpdates(false);
 
-    // Removing the level type information from the alias names.
+    std::vector<std::string> mappingList;
+    mProducerMappingDefinitions.getAliasList(mappingName,mappingList);
 
-    for (auto it=aliasStrings.begin(); it != aliasStrings.end(); it++)
+    // The producer name mapping list looks like this:
+    //   pal_skandinavia:SMARTMET;1096;;;
+    //   pal_skandinavia:SMARTMETMTA;1096;;;
+
+    for (auto it=mappingList.begin(); it != mappingList.end(); it++)
     {
       std::vector<std::string> partList;
       splitString(*it,';',partList);
+
       nameList.push_back(partList[0]);
     }
 
     if (nameList.size() == 0)
-      nameList.push_back(aliasName);
+      nameList.push_back(mappingName);
   }
   catch (...)
   {
@@ -1314,6 +1331,10 @@ ulonglong Engine::getProducerHash(uint producerId) const
   FUNCTION_TRACE
   try
   {
+    // This method returns the hash of the producer's content information in the Content
+    // Server. This is the fastest way to check if the cached content information is still
+    // valid. The hash is updated if it is older than 120 seconds.
+
     ContentServer_sptr contentServer = getContentServer_sptr();
     time_t currentTime = time(nullptr);
     ulonglong hash = 0;
@@ -1363,10 +1384,10 @@ void Engine::getParameterDetails(const std::string& aliasName,ParameterDetails_v
   FUNCTION_TRACE
   try
   {
-    mProducerMappingFileCollection.checkUpdates(false);
+    mProducerMappingDefinitions.checkUpdates(false);
 
     std::vector<std::string> aliasStrings;
-    mProducerMappingFileCollection.getAliasList(aliasName,aliasStrings);
+    mProducerMappingDefinitions.getAliasList(aliasName,aliasStrings);
 
     for (auto it=aliasStrings.begin(); it != aliasStrings.end(); it++)
     {
@@ -1435,23 +1456,51 @@ void Engine::getParameterDetails(const std::string& producerName,const std::stri
   FUNCTION_TRACE
   try
   {
-    mProducerMappingFileCollection.checkUpdates(false);
-    mParameterAliasFileCollection.checkUpdates(false);
-
+    mProducerMappingDefinitions.checkUpdates(false);
+    mParameterAliasDefinitions.checkUpdates(false);
 
     std::string prod = producerName;
-    mParameterAliasFileCollection.getAlias(producerName,prod);
+    std::string tmp;
 
+    // Finding the mapping name for the (newbase) producer. The producer name mappings look like this:
+    //
+    //   pal:pal_skandinavia
+
+    if (mProducerMappingDefinitions.getAlias(producerName,tmp)  &&  strchr(tmp.c_str(),';') == nullptr)
+    {
+      getParameterDetails(tmp,parameterName,parameterDetails);
+      return;
+    }
+
+    // Finding "official name" for the parameter alias name. This name is used in the parameter mapping
+    // files when the query is executed. The parameter alias definitions look like this:
+    //
+    //   fog:FogIntensity
+    //   rtype:PrecipitationType
 
     std::string param = parameterName;
-    mParameterAliasFileCollection.getAlias(parameterName,param);
+    mParameterAliasDefinitions.getAlias(parameterName,param);
+
+
+    // Finding producer mapping for the parameter. The point is that different (newbase) parameters
+    // might be mapped to different (Radon) producers.The mapping list looks like this:
+    //
+    //   pal_skandinavia;FogIntensity:SMARTMET;1096;;;;;
+    //   pal_skandinavia;PrecipitationType:SMARTMETMTA;1096;;;;;
+    //
+    // Notice that this search only maps the (newbase) producer and the paramer information into
+    // the producer name, geometry, levelId, level, forecast type and forecast number used by the
+    // Radon. This means that the current (newbase) parameter name should be found from the parameter
+    // mapping files (this is not checked here). For example:
+    //
+    //   SMARTMET;FogIntensity;2;FOGINT-N;1096;1;6;00000;2;2;2;0;E;;;;
+    //   SMARTMETMTA;PrecipitationType;2;PRECTYPE-N;1096;1;6;00000;2;2;2;0;E;;;;
 
     std::string key = prod + ";" + param;
+    std::vector<std::string> mappingList;
+    mProducerMappingDefinitions.getAliasList(key,mappingList);
 
-    std::vector<std::string> aliasStrings;
-    mProducerMappingFileCollection.getAliasList(key,aliasStrings);
-
-    for (auto it=aliasStrings.begin(); it != aliasStrings.end(); it++)
+    for (auto it=mappingList.begin(); it != mappingList.end(); it++)
     {
       std::vector<std::string> partList;
       splitString(*it,';',partList);
@@ -1541,9 +1590,12 @@ void Engine::getParameterMappings(std::string producerName,std::string parameter
 {
   try
   {
-    AutoReadLock lock(&mParameterMappingModificationLock);
+    if (!mParameterMappingDefinitions)
+      return;
 
-    for (auto m = mParameterMappings.begin(); m != mParameterMappings.end(); ++m)
+    AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
+
+    for (auto m = mParameterMappingDefinitions->begin(); m != mParameterMappingDefinitions->end(); ++m)
     {
       m->getMappings(producerName, parameterName, geometryId, onlySearchEnabled, mappings);
     }
@@ -1562,9 +1614,12 @@ void Engine::getParameterMappings(std::string producerName,std::string parameter
 {
   try
   {
-    AutoReadLock lock(&mParameterMappingModificationLock);
+    if (!mParameterMappingDefinitions)
+      return;
 
-    for (auto m = mParameterMappings.begin(); m != mParameterMappings.end(); ++m)
+    AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
+
+    for (auto m = mParameterMappingDefinitions->begin(); m != mParameterMappingDefinitions->end(); ++m)
     {
       m->getMappings(producerName, parameterName, onlySearchEnabled, mappings);
     }
@@ -1590,9 +1645,12 @@ void Engine::getParameterMappings(
 {
   try
   {
-    AutoReadLock lock(&mParameterMappingModificationLock);
+    if (!mParameterMappingDefinitions)
+      return;
 
-    for (auto m = mParameterMappings.begin(); m != mParameterMappings.end(); ++m)
+    AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
+
+    for (auto m = mParameterMappingDefinitions->begin(); m != mParameterMappingDefinitions->end(); ++m)
     {
       m->getMappings(producerName, parameterName, geometryId, levelIdType, levelId, level, onlySearchEnabled, mappings);
     }
@@ -1618,9 +1676,12 @@ void Engine::getParameterMappings(
 {
   try
   {
-    AutoReadLock lock(&mParameterMappingModificationLock);
+    if (!mParameterMappingDefinitions)
+      return;
 
-    for (auto m = mParameterMappings.begin(); m != mParameterMappings.end(); ++m)
+    AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
+
+    for (auto m = mParameterMappingDefinitions->begin(); m != mParameterMappingDefinitions->end(); ++m)
     {
       m->getMappings(producerName, parameterName, levelIdType, levelId, level, onlySearchEnabled, mappings);
     }
@@ -1667,13 +1728,13 @@ void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails) const
         if (result == 0)
         {
           uint len = contentInfoList.getLength();
-          AutoReadLock lock(&mProducerListModificationLock);
+          AutoReadLock lock(&mProducerInfoList_modificationLock);
           for (uint t=0; t<len; t++)
           {
             T::ContentInfo *cInfo = contentInfoList.getContentInfoByIndex(t);
             if (cInfo != nullptr)
             {
-              T::GenerationInfo *gInfo = mGenerationList.getGenerationInfoById(cInfo->mGenerationId);
+              T::GenerationInfo *gInfo = mGenerationInfoList.getGenerationInfoById(cInfo->mGenerationId);
               if (gInfo != nullptr)
               {
                 auto tt = details.mTimes.find(gInfo->mAnalysisTime);
@@ -1713,16 +1774,25 @@ std::string Engine::getProducerAlias(const std::string& producerName,int levelId
   FUNCTION_TRACE
   try
   {
-    mParameterAliasFileCollection.checkUpdates(false);
+    // This method returns the producer mapping name. Sometimes the same alias name
+    // is used for different mappings. In this case the requested level type might
+    // help us to identify the corret producer.
+
+    // The mapping definitions might look like this (aliasName + levelId):
+    //   ec:ecmwf_maailma_pinta
+    //   ec;2:ecmwf_maailma_painepinta
+
+    mProducerMappingDefinitions.checkUpdates(false);
 
     std::string prod = producerName;
-
     std::string tmp = producerName;
     if (levelId >= 0)
       tmp = producerName + ";" + std::to_string(levelId);
 
-    mParameterAliasFileCollection.getAlias(tmp,prod);
-    return prod;
+    if (mProducerMappingDefinitions.getAlias(tmp,prod)  &&  strchr(prod.c_str(),';') == nullptr)
+      return prod;
+
+    return producerName;
   }
   catch (...)
   {
@@ -1741,7 +1811,7 @@ T::ParamLevelId Engine::getFmiParameterLevelId(uint producerId,int level) const
   FUNCTION_TRACE
   try
   {
-    AutoReadLock lock(&mProducerListModificationLock);
+    AutoReadLock lock(&mProducerInfoList_modificationLock);
 
     uint len = mLevelInfoList.getLength();
     for (uint t=0; t<len; t++)
@@ -1791,7 +1861,7 @@ bool Engine::getProducerInfoByName(const std::string& name,T::ProducerInfo& info
   FUNCTION_TRACE
   try
   {
-    AutoReadLock lock(&mProducerListModificationLock);
+    AutoReadLock lock(&mProducerInfoList_modificationLock);
     T::ProducerInfo *producerInfo = mProducerInfoList.getProducerInfoByName(name);
     if (producerInfo != nullptr)
     {
@@ -1815,7 +1885,7 @@ void Engine::getProducerParameterLevelList(const std::string& producerName,T::Pa
   FUNCTION_TRACE
   try
   {
-    AutoReadLock lock(&mProducerListModificationLock);
+    AutoReadLock lock(&mProducerInfoList_modificationLock);
 
     std::vector<std::string> nameList;
     getProducerNameList(producerName,nameList);
@@ -1860,7 +1930,7 @@ void Engine::getProducerParameterLevelIdList(const std::string& producerName,std
   FUNCTION_TRACE
   try
   {
-    AutoReadLock lock(&mProducerListModificationLock);
+    AutoReadLock lock(&mProducerInfoList_modificationLock);
 
     std::vector<std::string> nameList;
     getProducerNameList(producerName,nameList);
@@ -1903,7 +1973,7 @@ void Engine::loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings)
   FUNCTION_TRACE
   try
   {
-    for (auto it = mParameterMappingFiles.begin(); it != mParameterMappingFiles.end(); ++it)
+    for (auto it = mParameterMappingDefinitions_filenames.begin(); it != mParameterMappingDefinitions_filenames.end(); ++it)
     {
       QueryServer::ParameterMappingFile mapping(*it);
       parameterMappings.push_back(mapping);
@@ -1935,16 +2005,16 @@ void Engine::clearMappings()
   {
     QueryServer::ParamMappingFile_vec parameterMappings;
 
-    if (!mParameterMappingUpdateFile_fmi.empty())
+    if (!mParameterMappingDefinitions_autoFile_fmi.empty())
     {
-      FILE *file = openMappingFile(mParameterMappingUpdateFile_fmi);
+      FILE *file = openMappingFile(mParameterMappingDefinitions_autoFile_fmi);
       if (file != nullptr)
         fclose(file);
     }
 
-    if (!mParameterMappingUpdateFile_newbase.empty())
+    if (!mParameterMappingDefinitions_autoFile_newbase.empty())
     {
-      FILE *file = openMappingFile(mParameterMappingUpdateFile_newbase);
+      FILE *file = openMappingFile(mParameterMappingDefinitions_autoFile_newbase);
       if (file != nullptr)
         fclose(file);
     }
@@ -1968,28 +2038,34 @@ void Engine::updateMappings()
   {
     time_t currentTime = time(nullptr);
 
-    if ((currentTime - mParameterMappingUpdateTime) < 300)
+    if ((currentTime - mParameterMappingDefinitions_updateTime) < 300)
       return;
 
-    mParameterMappingUpdateTime = currentTime;
+    mParameterMappingDefinitions_updateTime = currentTime;
 
-    QueryServer::ParamMappingFile_vec parameterMappings;
-    loadMappings(parameterMappings);
+    QueryServer::ParamMappingFile_vec *parameterMappings = new QueryServer::ParamMappingFile_vec();
 
-    if (parameterMappings.size() > 0)
+    loadMappings(*parameterMappings);
+
+    if (parameterMappings->size() > 0)
     {
-      AutoWriteLock lock(&mParameterMappingModificationLock);
-      mParameterMappings = parameterMappings;
+      AutoWriteLock lock(&mParameterMappingDefinitions_modificationLock);
+      mParameterMappingDefinitions.reset(parameterMappings);
+    }
+    else
+    {
+      delete parameterMappings;
+      return;
     }
 
-    if (!mParameterMappingUpdateFile_fmi.empty())
+    if (!mParameterMappingDefinitions_autoFile_fmi.empty())
     {
-      updateMappings(T::ParamKeyTypeValue::FMI_NAME,mMappingTargetKeyType,mParameterMappingUpdateFile_fmi,parameterMappings);
+      updateMappings(T::ParamKeyTypeValue::FMI_NAME,mParameterMappingDefinitions_autoFileKeyType,mParameterMappingDefinitions_autoFile_fmi,*parameterMappings);
     }
 
-    if (!mParameterMappingUpdateFile_newbase.empty())
+    if (!mParameterMappingDefinitions_autoFile_newbase.empty())
     {
-      updateMappings(T::ParamKeyTypeValue::NEWBASE_NAME,mMappingTargetKeyType,mParameterMappingUpdateFile_newbase,parameterMappings);
+      updateMappings(T::ParamKeyTypeValue::NEWBASE_NAME,mParameterMappingDefinitions_autoFileKeyType,mParameterMappingDefinitions_autoFile_newbase,*parameterMappings);
     }
   }
   catch (...)
@@ -2364,20 +2440,20 @@ void Engine::updateProducerAndGenerationList()
   {
     ContentServer_sptr contentServer = getContentServer_sptr();
 
-    AutoWriteLock lock(&mProducerListModificationLock);
+    AutoWriteLock lock(&mProducerInfoList_modificationLock);
 
-    if ((time(nullptr) - mProducerList_updateTime) > 60)
+    if ((time(nullptr) - mProducerInfoList_updateTime) > 60)
     {
-      mProducerList_updateTime = time(nullptr);
+      mProducerInfoList_updateTime = time(nullptr);
 
-      mQueryServer->getProducerList(0,mProducerList);
+      mQueryServer->getProducerList(0,mProducerSearchList);
 
       // Producers defined in the content server
       ContentServer_sptr contentServer = getContentServer_sptr();
       contentServer->getProducerInfoList(0, mProducerInfoList);
 
-      contentServer->getGenerationInfoList(0,mGenerationList);
-      mGenerationList.sort(T::GenerationInfo::ComparisonMethod::generationId);
+      contentServer->getGenerationInfoList(0,mGenerationInfoList);
+      mGenerationInfoList.sort(T::GenerationInfo::ComparisonMethod::generationId);
     }
 
     if (mLevelInfoList.getLength() == 0  ||  (mLevelInfoList_lastUpdate + 300) < time(nullptr))
@@ -2400,32 +2476,32 @@ void Engine::updateQueryCache()
 {
   try
   {
-    if (!mQueryCacheEnabled)
+    if (!mQueryCache_enabled)
       return;
 
     time_t currentTime = time(nullptr);
-    if ((currentTime - mQueryCacheUpdateTime) < 60)
+    if ((currentTime - mQueryCache_updateTime) < 60)
       return;
 
-    time_t tt = getFileModificationTime(mProducerFile.c_str());
-    if (mProducerFile_modificationTime != tt  &&  (tt+3) < currentTime)
+    time_t tt = getFileModificationTime(mProducerSearchList_filename.c_str());
+    if (mProducerSearchList_modificationTime != tt  &&  (tt+3) < currentTime)
     {
       // The producer search order has changed. So we have to clear the query cache.
-      mProducerFile_modificationTime = tt;
-      AutoWriteLock lock(&mQueryCacheModificationLock);
+      mProducerSearchList_modificationTime = tt;
+      AutoWriteLock lock(&mQueryCache_modificationLock);
       mQueryCache.clear();
       return;
     }
 
-    mQueryCacheEnabled = false;
+    mQueryCache_enabled = false;
 
-    mQueryCacheUpdateTime = currentTime;
-    time_t lastAccess = currentTime - mQueryCacheMaxAge;
+    mQueryCache_updateTime = currentTime;
+    time_t lastAccess = currentTime - mQueryCache_maxAge;
     std::vector <ulonglong> deleteList;
 
 
     {
-      AutoReadLock lock(&mQueryCacheModificationLock);
+      AutoReadLock lock(&mQueryCache_modificationLock);
 
       for (auto it = mQueryCache.begin(); it != mQueryCache.end(); ++it)
       {
@@ -2453,7 +2529,7 @@ void Engine::updateQueryCache()
 
     if (deleteList.size() > 0)
     {
-      AutoWriteLock lock(&mQueryCacheModificationLock);
+      AutoWriteLock lock(&mQueryCache_modificationLock);
       for (auto it = deleteList.begin(); it != deleteList.end(); ++it)
       {
         auto pos = mQueryCache.find(*it);
@@ -2462,7 +2538,7 @@ void Engine::updateQueryCache()
       }
     }
 
-    mQueryCacheEnabled = true;
+    mQueryCache_enabled = true;
   }
   catch (...)
   {

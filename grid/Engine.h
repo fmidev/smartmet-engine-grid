@@ -41,7 +41,7 @@ struct CacheRec
 
 typedef std::unordered_map<std::size_t,CacheRec> QueryCache;
 typedef std::unordered_map<std::size_t,CacheRec>::iterator QueryCacheIterator;
-
+typedef std::shared_ptr<QueryServer::ParamMappingFile_vec> ParamMappingFile_vec_sptr;
 
 struct HashRec
 {
@@ -79,7 +79,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                           int level) const;
 
     void                getProducerNameList(
-                          const std::string& aliasName,
+                          const std::string& mappingName,
                           std::vector<std::string>& nameList) const;
 
     std::string         getProducerName(const std::string& aliasName) const;
@@ -278,15 +278,10 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     int                 mQueryServerDebugLogMaxSize;
     int                 mQueryServerDebugLogTruncateSize;
     Log                 mQueryServerDebugLog;
-    bool                mQueryCacheEnabled;
-    int                 mQueryCacheMaxAge;
 
     uint                mNumOfCachedGrids;
     uint                mMaxSizeOfCachedGridsInMegaBytes;
 
-    std::string         mProducerFile;
-    time_t              mProducerFile_modificationTime;
-    string_vec          mProducerMappingFiles;
     bool                mMemoryMapCheckEnabled;
     bool                mVirtualFilesEnabled;
     std::string         mVirtualFileDefinitions;
@@ -294,13 +289,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::string         mContentPreloadFile;
     bool                mPreloadMemoryLock;
 
-    string_vec          mParameterAliasFiles;
-    string_vec          mParameterMappingFiles;
-
     pthread_t           mThread;
-    T::ParamKeyType     mMappingTargetKeyType;
-    std::string         mParameterMappingUpdateFile_fmi;
-    std::string         mParameterMappingUpdateFile_newbase;
     Browser             mBrowser;
 
     DataServer::ServiceImplementation*        mDataServerImplementation;
@@ -309,22 +298,40 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     boost::shared_ptr<Fmi::DEM>               mDem;
     boost::shared_ptr<Fmi::LandCover>         mLandCover;
     mutable bool                              mShutdownRequested;
-    mutable ModificationLock                  mParameterMappingModificationLock;
-    mutable time_t                            mParameterMappingUpdateTime;
-    mutable string_vec                        mProducerList;
+
+    mutable QueryServer::AliasFileCollection  mProducerMappingDefinitions;
+    string_vec                                mProducerMappingDefinitions_filenames;
+
+    mutable ParamMappingFile_vec_sptr         mParameterMappingDefinitions;
+    mutable ModificationLock                  mParameterMappingDefinitions_modificationLock;
+    mutable time_t                            mParameterMappingDefinitions_updateTime;
+    string_vec                                mParameterMappingDefinitions_filenames;
+
+    T::ParamKeyType                           mParameterMappingDefinitions_autoFileKeyType;
+    std::string                               mParameterMappingDefinitions_autoFile_fmi;
+    std::string                               mParameterMappingDefinitions_autoFile_newbase;
+
+    mutable QueryServer::AliasFileCollection  mParameterAliasDefinitions;
+    string_vec                                mParameterAliasDefinitions_filenames;
+
+    mutable string_vec                        mProducerSearchList;
+    std::string                               mProducerSearchList_filename;
+    time_t                                    mProducerSearchList_modificationTime;
+
     mutable T::ProducerInfoList               mProducerInfoList;
-    mutable time_t                            mProducerList_updateTime;
-    mutable ModificationLock                  mProducerListModificationLock;
+    mutable time_t                            mProducerInfoList_updateTime;
+    mutable ModificationLock                  mProducerInfoList_modificationLock;
+    mutable ProducerHash_map                  mProducerHashMap;
+    mutable T::GenerationInfoList             mGenerationInfoList;
+
     mutable T::LevelInfoList                  mLevelInfoList;
     mutable time_t                            mLevelInfoList_lastUpdate;
-    mutable QueryServer::AliasFileCollection  mProducerMappingFileCollection;
-    mutable QueryServer::AliasFileCollection  mParameterAliasFileCollection;
-    mutable QueryServer::ParamMappingFile_vec mParameterMappings;
-    mutable T::GenerationInfoList             mGenerationList;
+
     mutable QueryCache                        mQueryCache;
-    mutable ModificationLock                  mQueryCacheModificationLock;
-    mutable time_t                            mQueryCacheUpdateTime;
-    mutable ProducerHash_map                  mProducerHashMap;
+    mutable ModificationLock                  mQueryCache_modificationLock;
+    mutable time_t                            mQueryCache_updateTime;
+    bool                                      mQueryCache_enabled;
+    int                                       mQueryCache_maxAge;
 };
 
 }  // namespace Grid
