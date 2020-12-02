@@ -5,6 +5,28 @@
 local ParamValueMissing = -16777216;
 local debug = 0;
 
+local thunder_limit1 = 30;
+local thunder_limit2 = 60;
+
+local rain_limit1 = 0.025;
+local rain_limit2 = 0.04;
+local rain_limit3 = 0.4;
+local rain_limit4 = 1.5;
+local rain_limit5 = 2;
+local rain_limit6 = 4;
+local rain_limit7 = 7;
+
+local cloud_limit1 = 7;
+local cloud_limit2 = 20;
+local cloud_limit3 = 33;
+local cloud_limit4 = 46;
+local cloud_limit5 = 59;
+local cloud_limit6 = 72;
+local cloud_limit7 = 85;
+local cloud_limit8 = 93;
+  
+  
+
 local smartSymbol = {};
 
 smartSymbol['en'] = {}
@@ -740,6 +762,9 @@ function NB_SmartSymbolText(language,numOfParams,params)
   end
 
   local smartSymbolNumber = params[1];
+  if (smartSymbolNumber > 100) then
+    smartSymbolNumber = smartSymbolNumber - 100;
+  end
 
   result.message = "OK"
   
@@ -1478,8 +1503,132 @@ end
 
 
 
-function NB_SmartSymbolNumber(numOfParams,params)
+function countSmartSymbolNumber(n,thunder,rain,fog,rform,rtype)
 
+  if (n == ParamValueMissing) then
+    return ParamValueMissing;
+  end
+
+  if (thundder ~= ParamValueMissing and thunder >= thunder_limit1) then    
+    local nclass = 0;
+    if (n < cloud_limit6) then
+      nclass = 0;
+    elseif (n < cloud_limit8) then
+      nclass = 1;
+    else
+      nclass = 2;
+    end
+
+    return (71 + 3 * nclass);
+  end
+
+  -- No thunder (or not available). Then we always need precipitation rate
+
+  if (rain == ParamValueMissing) then
+    return ParamValueMissing;
+  end
+
+  if (rain < rain_limit1) then
+    
+    -- No precipitation. Now we need only fog/cloudiness
+
+    if (fog > 0 and fog ~= ParamValueMissing) then 
+      return  9;
+    end
+
+    -- no rain, no fog (or not available), only cloudiness
+    if (n < cloud_limit2) then
+      return 1;  -- clear
+    elseif (n < cloud_limit3) then
+      return  2;  -- mostly clear
+    elseif (n < cloud_limit6) then
+      return  4;  -- partly cloudy
+    elseif (n < cloud_limit8) then
+      return 6;  -- mostly cloudy
+    else
+      return 7;    -- overcast
+    end
+
+  end
+
+  -- Since we have precipitation, we always need precipitation form
+    
+  if (rform == ParamValueMissing) then
+    return ParamValueMissing;
+  end
+
+  if (rform == 0) then       -- drizzle
+    return  11;   
+  elseif (rform == 4) then  -- freezing drizzle
+    return 14;
+  elseif (rform == 5) then  -- freezing rain
+    return 17;
+  elseif (rform == 7 or rform == 8)  then  -- snow or ice particles
+    return 57;                    -- convert to plain snowfall + cloudy
+  end
+  
+  -- only water, sleet and snow left. Cloudiness limits
+  -- are the same for them, precipitation limits are not.
+
+  local nclass = 0;
+  if (n < cloud_limit6) then
+    nlcass = 0;
+  elseif (n < cloud_limit8) then
+    nclass = 1;
+  else 
+    nclass = 2;
+  end
+
+  if (rform == 6) then  -- hail
+    return (61 + 3 * nclass);
+  end
+  
+  if (rform == 1) then  -- water
+    
+    --  Now we need precipitation type too
+    local rt = 1;
+    if (rtype ~= ParamValueMissing) then    
+      rt = math.floor(rtype + 0.5);
+    end
+
+    if (rt == 2) then                  --  convective
+      return (21 + 3 * nclass);  -- 21, 24, 27 for showers
+    end
+
+    -- rtype=1:large scale precipitation (or rtype is missing)
+    local rclass = 0;
+    if (rain < rain_limit3) then
+      rclass = 0;
+    elseif (rain < rain_limit6) then
+      rclass = 1;
+    else 
+      rclas = 2;
+    end;
+      
+    return (31 + 3 * nclass + rclass);  -- 31-39 for precipitation
+  end
+
+  -- rform=2:sleet and rform=3:snow map to 41-49 and 51-59 respectively
+
+  local rclass = 0;
+  if (rain < rain_limit3) then
+    rclass = 0;
+  elseif (rain < rain_limit4) then
+    rclass = 1;
+  else
+    rclass = 2;
+  end;
+
+  return (10 * rform + 21 + 3 * nclass + rclass);
+
+end
+
+
+
+
+function NB_SmartSymbolNumber2(numOfParams,params)
+
+  print("SmartSymbolNumber");
   for index, value in pairs(params) do
     print(index.." : "..value);
   end
@@ -1499,7 +1648,7 @@ function NB_SmartSymbolNumber(numOfParams,params)
 
   local smartsymbol = getSmartSymbol(wawa,cloudiness,temperature);
   
-  print("SMART :"..smartsymbol);
+  -- print("SMART :"..smartsymbol);
 
   -- Add day/night information
   if (smartsymbol ~= ParamValueMissing) then
@@ -1527,6 +1676,141 @@ function NB_SmartSymbolNumber(numOfParams,params)
 end
 
 
+
+
+function NB_SmartSymbolNumber(numOfParams,params)
+
+  local result = {};
+  local n = params[1];           -- TotalCloudCover
+  local thunder = params[2];     -- ProbabilityThunderstorm
+  local rain = params[3];        -- Precipitation1h
+  local fog = params[4];         -- FmiFogIntensity
+  local rform = params[5];       -- PrecipitationForm
+  local rtype = params[6];       -- PrecipitationType
+  local dark = params[7];        -- Dark
+
+  result.value = countSmartSymbolNumber(n,thunder,rain,fog,rform,rtype);
+
+  result.message = "OK";
+  if (dark > 0  and  result.value ~= ParamValueMissing) then
+    result.value =result.value + 100; 
+  end
+  
+  return result.value,result.message;
+
+end
+
+
+
+function NB_WeatherNumber(numOfParams,params)
+
+  --print("NB_WeatherNumber");
+  --for index, value in pairs(params) do
+  --  print(index.." : "..value);
+  --end
+
+  local result = {};
+
+  local cloudiness = params[1];  -- TotalCloudCover
+  local rain = params[2];        -- Precipitation1h
+  local rform = params[3];       -- PrecipitationForm
+  local rtype = params[4];       -- PrecipitationType
+  local thunder = params[5];     -- ProbabilityThunderstorm
+  local fog = params[6];         -- FmiFogIntensity
+    
+  local n_class = 9;  
+  if (cloudiness == ParamValueMissing) then
+    n_class = 9;     
+  elseif (cloudiness < cloud_limit1) then
+    n_class = 0;
+  elseif (cloudiness < cloud_limit2) then
+    n_class = 1;
+  elseif (cloudiness < cloud_limit3) then
+    n_class = 2;
+  elseif (cloudiness < cloud_limit4) then
+    n_class = 3;
+  elseif (cloudiness < cloud_limit5) then
+    n_class = 4;
+  elseif (cloudiness < cloud_limit6) then
+    n_class = 5;
+  elseif (cloudiness < cloud_limit7) then
+    n_class = 6;
+  elseif (cloudiness < cloud_limit8) then
+    n_class = 7;
+  else
+    n_class = 8;
+  end
+
+  local rain_class = 9; 
+  if (rain == ParamValueMissing) then
+    rain_class = 9;
+  elseif (rain < rain_limit1) then
+    rain_class = 0;
+  elseif (rain < rain_limit2) then
+    rain_class = 1;
+  elseif (rain < rain_limit3) then
+    rain_class = 2;
+  elseif (rain < rain_limit4) then
+    rain_class = 3;
+  elseif (rain < rain_limit5) then
+    rain_class = 4;
+  elseif (rain < rain_limit6) then
+    rain_class = 5;
+  elseif (rain < rain_limit7) then
+    rain_class = 6;
+  else
+    rain_class = 7;
+  end
+
+  local rform_class = 9; 
+  if (rform == ParamValueMissing) then
+    rform_class = 9;
+  else
+    rform_class = math.floor(rform +0.5);
+  end
+
+  local rtype_class = 9; 
+  if (rtype == ParamValueMissing) then
+    rtype_class = 9;
+  else
+    rtype_class = math.floor(rtype + 0.5);
+  end
+
+  local thunder_class = 9;
+  if (thunder == ParamValueMissing) then
+    thunder_class = 9;
+  elseif (thunder < thunder_limit1) then
+    thunder_class = 0;
+  elseif (thunder < thunder_limit2) then
+    thunder_class = 1;
+  else
+    thunder_class = 2;
+  end
+
+  local fog_class = 9;
+  if (fog == ParamValueMissing) then
+    fog_class = 0;
+  else 
+    fog_class = math.floor(fog + 0.5);
+  end
+
+  -- Build the number
+  local version = 1;
+  local cloud_class = 0;  -- not available yet
+
+  result.value =  (10000000 * version +
+          1000000 * thunder_class +
+          100000 * rform_class +
+          10000 * rtype_class +
+          1000 * rain_class +
+          100 * fog_class +
+          10 * n_class +
+          cloud_class);
+
+  result.message = 'OK';
+  return result.value,result.message;
+
+end
 
 
 
@@ -1603,7 +1887,7 @@ function getFunctionNames(type)
   local functionNames = '';
 
   if (type == 1) then 
-    functionNames = 'NB_SummerSimmerIndex,NB_FeelsLikeTemperature,NB_WindChill,NB_Snow1h,NB_Cloudiness8th,NB_SmartSymbolNumber';
+    functionNames = 'NB_SummerSimmerIndex,NB_FeelsLikeTemperature,NB_WindChill,NB_Snow1h,NB_Cloudiness8th,NB_SmartSymbolNumber,NB_WeatherNumber';
   end
   
   if (type == 5) then 
