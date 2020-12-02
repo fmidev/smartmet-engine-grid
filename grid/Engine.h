@@ -235,6 +235,9 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::string         mContentSourceRedisAddress;
     int                 mContentSourceRedisPort;
     std::string         mContentSourceRedisTablePrefix;
+    std::string         mContentSourceRedisSecondaryAddress;
+    int                 mContentSourceRedisSecondaryPort;
+    bool                mContentSourceRedisLockEnabled;
     std::string         mContentSourceCorbaIor;
     std::string         mContentSourceHttpUrl;
 

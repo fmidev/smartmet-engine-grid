@@ -133,6 +133,9 @@ Engine::Engine(const char* theConfigFile)
     mProducerInfoList_updateTime = 0;
     mContentSourceRedisAddress = "127.0.0.1";
     mContentSourceRedisPort = 6379;
+    mContentSourceRedisSecondaryAddress = "127.0.0.1";
+    mContentSourceRedisSecondaryPort = 0;
+    mContentSourceRedisLockEnabled = false;
     mContentSourceRedisTablePrefix = "";
     mContentSourceHttpUrl = "";
     mContentSourceCorbaIor = "";
@@ -215,6 +218,9 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.address", mContentSourceRedisAddress);
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.port", mContentSourceRedisPort);
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.tablePrefix", mContentSourceRedisTablePrefix);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.secondaryAddress", mContentSourceRedisSecondaryAddress);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.secondaryPort", mContentSourceRedisSecondaryPort);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.lockEnabled", mContentSourceRedisLockEnabled);
 
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.http.url", mContentSourceHttpUrl);
 
@@ -339,7 +345,7 @@ void Engine::init()
     if (mContentSourceType == "redis")
     {
       ContentServer::RedisImplementation *redis = new ContentServer::RedisImplementation();
-      redis->init(mContentSourceRedisAddress.c_str(),mContentSourceRedisPort,mContentSourceRedisTablePrefix.c_str());
+      redis->init(mContentSourceRedisAddress.c_str(),mContentSourceRedisPort,mContentSourceRedisTablePrefix.c_str(),mContentSourceRedisSecondaryAddress.c_str(),mContentSourceRedisSecondaryPort,mContentSourceRedisLockEnabled);
       mContentServer.reset(redis);
       cServer = redis;
     }
