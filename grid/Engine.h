@@ -145,7 +145,9 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     void                getProducerList(string_vec& producerList) const;
 
-    bool                getProducerInfoByName(const std::string& name,T::ProducerInfo& info) const;
+    bool                getProducerInfoByName(const std::string& name,T::ProducerInfo& producerInfo) const;
+    bool                getProducerInfoById(uint producerId,T::ProducerInfo& producerInfo) const;
+    bool                getGenerationInfoById(uint generationId,T::GenerationInfo& generationInfo);
 
     void                getProducerParameterLevelList(
                           const std::string& producerName,
@@ -238,6 +240,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::string         mContentSourceRedisSecondaryAddress;
     int                 mContentSourceRedisSecondaryPort;
     bool                mContentSourceRedisLockEnabled;
+    bool                mContentSourceRedisReloadRequired;
     std::string         mContentSourceCorbaIor;
     std::string         mContentSourceHttpUrl;
 
@@ -257,6 +260,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     int                 mContentServerDebugLogMaxSize;
     int                 mContentServerDebugLogTruncateSize;
     Log                 mContentServerDebugLog;
+    time_t              mContentServerStartTime;
 
     bool                mDataServerProcessingLogEnabled;
     std::string         mDataServerProcessingLogFile;

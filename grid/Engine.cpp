@@ -137,6 +137,7 @@ Engine::Engine(const char* theConfigFile)
     mContentSourceRedisSecondaryPort = 0;
     mContentSourceRedisLockEnabled = false;
     mContentSourceRedisTablePrefix = "";
+    mContentSourceRedisReloadRequired = false;
     mContentSourceHttpUrl = "";
     mContentSourceCorbaIor = "";
     mContentCacheEnabled = true;
@@ -150,6 +151,7 @@ Engine::Engine(const char* theConfigFile)
     mMemoryContentSortingFlags = 5;
     mEventListMaxSize = 0;
     mQueryCache_updateTime = time(nullptr);
+    mContentServerStartTime = 0;
 
     mContentServerProcessingLogEnabled = false;
     mContentServerDebugLogEnabled = false;
@@ -221,6 +223,7 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.secondaryAddress", mContentSourceRedisSecondaryAddress);
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.secondaryPort", mContentSourceRedisSecondaryPort);
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.lockEnabled", mContentSourceRedisLockEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.reloadRequired", mContentSourceRedisReloadRequired);
 
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.http.url", mContentSourceHttpUrl);
 
@@ -345,7 +348,7 @@ void Engine::init()
     if (mContentSourceType == "redis")
     {
       ContentServer::RedisImplementation *redis = new ContentServer::RedisImplementation();
-      redis->init(mContentSourceRedisAddress.c_str(),mContentSourceRedisPort,mContentSourceRedisTablePrefix.c_str(),mContentSourceRedisSecondaryAddress.c_str(),mContentSourceRedisSecondaryPort,mContentSourceRedisLockEnabled);
+      redis->init(mContentSourceRedisAddress.c_str(),mContentSourceRedisPort,mContentSourceRedisTablePrefix.c_str(),mContentSourceRedisSecondaryAddress.c_str(),mContentSourceRedisSecondaryPort,mContentSourceRedisLockEnabled,mContentSourceRedisReloadRequired);
       mContentServer.reset(redis);
       cServer = redis;
     }
@@ -1862,19 +1865,49 @@ void Engine::getProducerList(string_vec& producerList) const
 
 
 
-bool Engine::getProducerInfoByName(const std::string& name,T::ProducerInfo& info) const
+bool Engine::getProducerInfoByName(const std::string& name,T::ProducerInfo& producerInfo) const
 {
   FUNCTION_TRACE
   try
   {
     AutoReadLock lock(&mProducerInfoList_modificationLock);
-    T::ProducerInfo *producerInfo = mProducerInfoList.getProducerInfoByName(name);
-    if (producerInfo != nullptr)
-    {
-      info = *producerInfo;
-      return true;
-    }
-    return false;
+    return mProducerInfoList.getProducerInfoByName(name,producerInfo);
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+
+
+bool Engine::getProducerInfoById(uint producerId,T::ProducerInfo& producerInfo) const
+{
+  FUNCTION_TRACE
+  try
+  {
+    AutoReadLock lock(&mProducerInfoList_modificationLock);
+    return mProducerInfoList.getProducerInfoById(producerId,producerInfo);
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+
+
+bool Engine::getGenerationInfoById(uint generationId,T::GenerationInfo& generationInfo)
+{
+  FUNCTION_TRACE
+  try
+  {
+    AutoReadLock lock(&mProducerInfoList_modificationLock);
+    return mGenerationInfoList.getGenerationInfoById(generationId,generationInfo);
   }
   catch (...)
   {
@@ -2390,8 +2423,44 @@ void Engine::updateProcessing()
 {
   try
   {
+    ContentServer_sptr contentServer = getContentServer_sptr();
     while (!mShutdownRequested)
     {
+      try
+      {
+        T::EventInfo eventInfo;
+        int result = contentServer->getLastEventInfo(0,0,eventInfo);
+        if (result == ContentServer::Result::DATA_NOT_FOUND || result == ContentServer::Result::OK)
+        {
+          if (eventInfo.mServerTime > mContentServerStartTime)
+          {
+            if (mContentServerStartTime > 0)
+            {
+              // Content Server has been restarted. We should delete all cached information.
+
+              {
+                AutoWriteLock lock(&mProducerInfoList_modificationLock);
+                mProducerInfoList.clear();
+                mGenerationInfoList.clear();
+                mLevelInfoList.clear();
+                mProducerInfoList_updateTime = 0;
+                mLevelInfoList_lastUpdate = 0;
+              }
+
+              {
+                AutoWriteLock lock(&mQueryCache_modificationLock);
+                mQueryCache.clear();
+              }
+            }
+          }
+          mContentServerStartTime = eventInfo.mServerTime;
+        }
+
+      }
+      catch (...)
+      {
+      }
+
       try
       {
         updateMappings();
