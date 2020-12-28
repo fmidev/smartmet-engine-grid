@@ -21,6 +21,8 @@ BuildRequires: make
 BuildRequires: omniORB-devel
 BuildRequires: boost169-devel
 BuildRequires: gdal32-devel
+BuildRequires: bzip2-devel
+BuildRequires: zlib-devel
 Requires: boost169-thread
 Requires: libconfig >= 1.7.2
 Requires: libpqxx-devel < 1:7.0
