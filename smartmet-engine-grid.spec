@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 20.12.3
+Version: 20.12.28
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -13,20 +13,20 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: libconfig-devel >= 1.7.2
-BuildRequires: libpqxx-devel
-BuildRequires: smartmet-library-grid-content-devel >= 20.12.3
-BuildRequires: smartmet-library-grid-files-devel >= 20.12.3
-BuildRequires: smartmet-library-spine-devel >= 20.11.23
+BuildRequires: libpqxx-devel < 1:7.0
+BuildRequires: smartmet-library-grid-content-devel >= 20.12.28
+BuildRequires: smartmet-library-grid-files-devel >= 20.12.28
+BuildRequires: smartmet-library-spine-devel >= 20.12.15
 BuildRequires: make
 BuildRequires: omniORB-devel
 BuildRequires: boost169-devel
-BuildRequires: gdal-devel
+BuildRequires: gdal32-devel
 Requires: boost169-thread
 Requires: libconfig >= 1.7.2
-Requires: libpqxx-devel
-Requires: smartmet-library-grid-content >= 20.12.3
-Requires: smartmet-library-grid-files >= 20.12.3
-Requires: smartmet-library-spine >= 20.11.23
+Requires: libpqxx-devel < 1:7.0
+Requires: smartmet-library-grid-content >= 20.12.28
+Requires: smartmet-library-grid-files >= 20.12.28
+Requires: smartmet-library-spine >= 20.12.15
 Requires: omniORB-devel
 Provides: %{SPECNAME}
 
@@ -64,6 +64,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Mon Dec 28 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.12.28-1.fmi
+- New build system with updated GDAL and libpqxx dependencies
+
 * Thu Dec  3 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.12.3-1.fmi
 - Added parameters for Redis Content Server
 - Added new LUA functions
