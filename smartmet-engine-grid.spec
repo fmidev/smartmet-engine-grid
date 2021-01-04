@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 20.12.28
+Version: 21.1.4
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -14,9 +14,9 @@ BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: libconfig-devel >= 1.7.2
 BuildRequires: libpqxx-devel < 1:7.0
-BuildRequires: smartmet-library-grid-content-devel >= 20.12.28
-BuildRequires: smartmet-library-grid-files-devel >= 20.12.28
-BuildRequires: smartmet-library-spine-devel >= 20.12.15
+BuildRequires: smartmet-library-grid-content-devel >= 21.1.4
+BuildRequires: smartmet-library-grid-files-devel >= 21.1.4
+BuildRequires: smartmet-library-spine-devel >= 20.12.30
 BuildRequires: make
 BuildRequires: omniORB-devel
 BuildRequires: boost169-devel
@@ -26,9 +26,9 @@ BuildRequires: zlib-devel
 Requires: boost169-thread
 Requires: libconfig >= 1.7.2
 Requires: libpqxx-devel < 1:7.0
-Requires: smartmet-library-grid-content >= 20.12.28
-Requires: smartmet-library-grid-files >= 20.12.28
-Requires: smartmet-library-spine >= 20.12.15
+Requires: smartmet-library-grid-content >= 21.1.4
+Requires: smartmet-library-grid-files >= 21.1.4
+Requires: smartmet-library-spine >= 20.12.30
 Requires: omniORB-devel
 Provides: %{SPECNAME}
 
@@ -66,6 +66,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Mon Jan  4 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.1.4-1.fmi
+- Repackaged due to base library API changes
+
 * Mon Dec 28 2020 Mika Heiskanen <mika.heiskanen@fmi.fi> - 20.12.28-1.fmi
 - New build system with updated GDAL and libpqxx dependencies
 
