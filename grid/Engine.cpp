@@ -2515,11 +2515,12 @@ void Engine::updateProducerAndGenerationList()
   {
     ContentServer_sptr contentServer = getContentServer_sptr();
 
-    AutoWriteLock lock(&mProducerInfoList_modificationLock);
 
     if ((time(nullptr) - mProducerInfoList_updateTime) > 60)
     {
       mProducerInfoList_updateTime = time(nullptr);
+
+      AutoWriteLock lock(&mProducerInfoList_modificationLock);
 
       mQueryServer->getProducerList(0,mProducerSearchList);
 
@@ -2533,8 +2534,15 @@ void Engine::updateProducerAndGenerationList()
 
     if (mLevelInfoList.getLength() == 0  ||  (mLevelInfoList_lastUpdate + 300) < time(nullptr))
     {
-      contentServer->getLevelInfoList(0,mLevelInfoList);
       mLevelInfoList_lastUpdate = time(nullptr);
+
+      T::LevelInfoList levelInfoList;
+
+      if (contentServer->getLevelInfoList(0,levelInfoList) == 0)
+      {
+        AutoWriteLock lock(&mProducerInfoList_modificationLock);
+        mLevelInfoList = levelInfoList;
+      }
     }
   }
   catch (...)
