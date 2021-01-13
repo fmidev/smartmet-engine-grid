@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 21.1.11
+Version: 21.1.13
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -15,7 +15,7 @@ BuildRequires: gcc-c++
 BuildRequires: libconfig-devel >= 1.7.2
 BuildRequires: libpqxx-devel < 1:7.0
 BuildRequires: smartmet-library-grid-content-devel >= 21.1.11
-BuildRequires: smartmet-library-grid-files-devel >= 21.1.11
+BuildRequires: smartmet-library-grid-files-devel >= 21.1.12
 BuildRequires: smartmet-library-spine-devel >= 21.1.5
 BuildRequires: make
 BuildRequires: omniORB-devel
@@ -27,7 +27,7 @@ Requires: boost169-thread
 Requires: libconfig >= 1.7.2
 Requires: libpqxx-devel < 1:7.0
 Requires: smartmet-library-grid-content >= 21.1.11
-Requires: smartmet-library-grid-files >= 21.1.11
+Requires: smartmet-library-grid-files >= 21.1.12
 Requires: smartmet-library-spine >= 21.1.5
 Requires: omniORB-devel
 Provides: %{SPECNAME}
@@ -66,6 +66,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Wed Jan 13 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.1.13-1.fmi
+- Updated grid-files dependency
+
 * Mon Jan 11 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.1.11-1.fmi
 - Improved locking mechanism to avoid long lock durations
 
