@@ -1204,7 +1204,7 @@ bool Engine::isGridProducer(const std::string& producer) const
 
 
 
-std::string Engine::getParameterString(std::string producer,std::string parameter) const
+std::string Engine::getParameterString(const std::string& producer,const std::string& parameter) const
 {
   FUNCTION_TRACE
   try
@@ -1317,11 +1317,11 @@ void Engine::getProducerNameList(const std::string& mappingName,std::vector<std:
       std::vector<std::string> partList;
       splitString(*it,';',partList);
 
-      nameList.push_back(partList[0]);
+      nameList.emplace_back(partList[0]);
     }
 
     if (nameList.size() == 0)
-      nameList.push_back(mappingName);
+      nameList.emplace_back(mappingName);
   }
   catch (...)
   {
@@ -1437,7 +1437,7 @@ void Engine::getParameterDetails(const std::string& aliasName,ParameterDetails_v
         }
       }
 
-      parameterDetails.push_back(p);
+      parameterDetails.emplace_back(p);
     }
 
 
@@ -1446,7 +1446,7 @@ void Engine::getParameterDetails(const std::string& aliasName,ParameterDetails_v
       ParameterDetails p;
       p.mOriginalProducer = aliasName;
       p.mProducerName = aliasName;
-      parameterDetails.push_back(p);
+      parameterDetails.emplace_back(p);
     }
   }
   catch (...)
@@ -1549,7 +1549,7 @@ void Engine::getParameterDetails(const std::string& producerName,const std::stri
         }
       }
 
-      parameterDetails.push_back(p);
+      parameterDetails.emplace_back(p);
     }
 
 
@@ -1559,7 +1559,7 @@ void Engine::getParameterDetails(const std::string& producerName,const std::stri
       p.mOriginalProducer = producerName;
       p.mOriginalParameter = parameterName;
       p.mProducerName = key;
-      parameterDetails.push_back(p);
+      parameterDetails.emplace_back(p);
     }
   }
   catch (...)
@@ -1595,7 +1595,7 @@ void Engine::getParameterDetails(const std::string& producerName,const std::stri
 
 
 
-void Engine::getParameterMappings(std::string producerName,std::string parameterName,T::GeometryId geometryId, bool onlySearchEnabled, QueryServer::ParameterMapping_vec& mappings) const
+void Engine::getParameterMappings(const std::string& producerName,const std::string& parameterName,T::GeometryId geometryId, bool onlySearchEnabled, QueryServer::ParameterMapping_vec& mappings) const
 {
   try
   {
@@ -1619,7 +1619,7 @@ void Engine::getParameterMappings(std::string producerName,std::string parameter
 
 
 
-void Engine::getParameterMappings(std::string producerName,std::string parameterName,bool onlySearchEnabled, QueryServer::ParameterMapping_vec& mappings) const
+void Engine::getParameterMappings(const std::string& producerName,const std::string& parameterName,bool onlySearchEnabled, QueryServer::ParameterMapping_vec& mappings) const
 {
   try
   {
@@ -1643,8 +1643,8 @@ void Engine::getParameterMappings(std::string producerName,std::string parameter
 
 
 void Engine::getParameterMappings(
-    std::string producerName,
-    std::string parameterName,
+    const std::string& producerName,
+    const std::string& parameterName,
     T::GeometryId geometryId,
     T::ParamLevelIdType levelIdType,
     T::ParamLevelId levelId,
@@ -1675,8 +1675,8 @@ void Engine::getParameterMappings(
 
 
 void Engine::getParameterMappings(
-    std::string producerName,
-    std::string parameterName,
+    const std::string& producerName,
+    const std::string& parameterName,
     T::ParamLevelIdType levelIdType,
     T::ParamLevelId levelId,
     T::ParamLevel level,
@@ -1762,7 +1762,7 @@ void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails) const
           }
         }
 
-        rec->mMappings.push_back(details);
+        rec->mMappings.emplace_back(details);
       }
     }
   }
@@ -2015,7 +2015,7 @@ void Engine::loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings)
     for (auto it = mParameterMappingDefinitions_filenames.begin(); it != mParameterMappingDefinitions_filenames.end(); ++it)
     {
       QueryServer::ParameterMappingFile mapping(*it);
-      parameterMappings.push_back(mapping);
+      parameterMappings.emplace_back(mapping);
     }
 
     for (auto it = parameterMappings.begin(); it != parameterMappings.end(); ++it)
@@ -2591,7 +2591,7 @@ void Engine::updateQueryCache()
         if (it->second.lastAccessTime < lastAccess)
         {
           // The cache entry has not been accessed for awhile, so we should remove it.
-          deleteList.push_back(it->first);
+          deleteList.emplace_back(it->first);
         }
         else
         {
@@ -2605,7 +2605,7 @@ void Engine::updateQueryCache()
           }
 
           if (noMatch)
-            deleteList.push_back(it->first);
+            deleteList.emplace_back(it->first);
         }
       }
     }
@@ -2641,11 +2641,11 @@ void Engine::getVerticalGrid(
     double lon2,
     double lat2,
     int steps,
-    std::string utcTime,
-    std::string valueProducerName,
-    std::string valueParameter,
-    std::string heightProducerName,
-    std::string heightParameter,
+    const std::string& utcTime,
+    const std::string& valueProducerName,
+    const std::string& valueParameter,
+    const std::string& heightProducerName,
+    const std::string& heightParameter,
     int geometryId,
     int forecastType,
     int forecastNumber,
@@ -2742,7 +2742,8 @@ void Engine::getVerticalGrid(
       std::vector<T::ParamValue> valueVec;
       std::vector<T::ParamValue> heightVec;
 
-      int result1 = queryServer->getParameterValuesByPointListAndTime(sessionId,valueProducerName,std::string(param),T::CoordinateTypeValue::LATLON_COORDINATES,points.first,utcTime,areaInterpolationMethod,timeInterpolationMethod,1,valueVec);
+      std::string pa(param);
+      int result1 = queryServer->getParameterValuesByPointListAndTime(sessionId,valueProducerName,pa,T::CoordinateTypeValue::LATLON_COORDINATES,points.first,utcTime,areaInterpolationMethod,timeInterpolationMethod,1,valueVec);
 
       p = param;
       p += sprintf(p,"%s:%s",heightParameter.c_str(),heightProducerName.c_str());
@@ -2751,7 +2752,8 @@ void Engine::getVerticalGrid(
       else
         p += sprintf(p,"::3:%u",lev);
 
-      int result2 = queryServer->getParameterValuesByPointListAndTime(sessionId,heightProducerName,std::string(param),T::CoordinateTypeValue::LATLON_COORDINATES,points.first,utcTime,areaInterpolationMethod,timeInterpolationMethod,1,heightVec);
+      pa = param;
+      int result2 = queryServer->getParameterValuesByPointListAndTime(sessionId,heightProducerName,pa,T::CoordinateTypeValue::LATLON_COORDINATES,points.first,utcTime,areaInterpolationMethod,timeInterpolationMethod,1,heightVec);
 
       uint sz = points.first.size();
       if (result1 == 0  &&  result2 == 0  &&  valueVec.size() == sz  &&  heightVec.size() == sz)
@@ -2759,9 +2761,9 @@ void Engine::getVerticalGrid(
         for (uint t=0; t<sz; t++)
         {
           auto dist = points.second[t];
-          coordinates.push_back(T::Coordinate(dist,heightVec[t]));
+          coordinates.emplace_back(T::Coordinate(dist,heightVec[t]));
 
-          gridData.push_back(valueVec[t]);
+          gridData.emplace_back(valueVec[t]);
         }
       }
     }
@@ -2785,12 +2787,12 @@ void Engine::getVerticalGrid(
     for (uint t=0; t<ss; t++)
     {
       if (t == 0)
-        contourLowValues.push_back(100.0);
+        contourLowValues.emplace_back(100.0);
       else
-        contourLowValues.push_back(m);
+        contourLowValues.emplace_back(m);
 
       m = m + 2;
-      contourHighValues.push_back(m);
+      contourHighValues.emplace_back(m);
     }
 
     getIsobands(gridData,&coordinates,points.first.size(),levels1.size(),contourLowValues,contourHighValues,T::AreaInterpolationMethod::Linear,0,1,contours);

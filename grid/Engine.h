@@ -91,8 +91,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     ulonglong           getProducerHash(uint producerId) const;
 
     std::string         getParameterString(
-                          std::string producer,
-                          std::string parameter) const;
+                          const std::string& producer,
+                          const std::string& parameter) const;
 
     void                getParameterDetails(
                           const std::string& aliasName,
@@ -112,21 +112,21 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                mapParameterDetails(ParameterDetails_vec& parameterDetails) const;
 
     void                getParameterMappings(
-                          std::string producerName,
-                          std::string parameterName,
+                          const std::string& producerName,
+                          const std::string& parameterName,
                           T::GeometryId geometryId,
                           bool onlySearchEnabled,
                           QueryServer::ParameterMapping_vec& mappings) const;
 
     void                getParameterMappings(
-                          std::string producerName,
-                          std::string parameterName,
+                          const std::string& producerName,
+                          const std::string& parameterName,
                           bool onlySearchEnabled,
                           QueryServer::ParameterMapping_vec& mappings) const;
 
     void                getParameterMappings(
-                          std::string producerName,
-                          std::string parameterName,
+                          const std::string& producerName,
+                          const std::string& parameterName,
                           T::GeometryId geometryId,
                           T::ParamLevelIdType levelIdType,
                           T::ParamLevelId levelId,
@@ -135,8 +135,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                           QueryServer::ParameterMapping_vec& mappings) const;
 
     void                getParameterMappings(
-                          std::string producerName,
-                          std::string parameterName,
+                          const std::string& producerName,
+                          const std::string& parameterName,
                           T::ParamLevelIdType levelIdType,
                           T::ParamLevelId levelId,
                           T::ParamLevel level,
@@ -165,11 +165,11 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                             double lon2,
                             double lat2,
                             int steps,
-                            std::string utcTime,
-                            std::string valueProducerName,
-                            std::string valueParameter,
-                            std::string heightProducerName,
-                            std::string heightParameter,
+                            const std::string& utcTime,
+                            const std::string& valueProducerName,
+                            const std::string& valueParameter,
+                            const std::string& heightProducerName,
+                            const std::string& heightParameter,
                             int geometryId,
                             int forecastType,
                             int forecastNumber,
