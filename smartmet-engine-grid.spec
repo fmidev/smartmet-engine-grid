@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 21.1.14
+Version: 21.1.19
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -25,7 +25,7 @@ BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 Requires: boost169-thread
 Requires: libconfig >= 1.7.2
-Requires: libpqxx-devel < 1:7.0
+Requires: libpqxx < 1:7.0
 Requires: smartmet-library-grid-content >= 21.1.14
 Requires: smartmet-library-grid-files >= 21.1.14
 Requires: smartmet-library-spine >= 21.1.14
@@ -66,6 +66,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Tue Jan 19 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.1.19-1.fmi
+- Fixed libpqxx dependencies
+
 * Thu Jan 14 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.1.14-1.fmi
 - Repackaged smartmet to resolve debuginfo issues
 
