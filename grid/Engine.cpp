@@ -769,7 +769,7 @@ void Engine::checkConfiguration()
 
       bool contentPreloadEnabled = false;
       std::string contentPreloadFile;
-      bool preloadMemoryLock;
+      bool preloadMemoryLock = false;
 
       configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadEnabled",contentPreloadEnabled);
       configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadFile",contentPreloadFile);
@@ -1986,7 +1986,7 @@ void Engine::getProducerParameterLevelIdList(const std::string& producerName,std
           T::LevelInfo *levelInfo = mLevelInfoList.getLevelInfoByIndex(t);
           if (levelInfo != nullptr  &&  levelInfo->mProducerId == producerInfo.mProducerId)
           {
-            if (levelIdList.find(levelInfo->mFmiParameterLevelId) == levelIdList.end())
+            //if (levelIdList.find(levelInfo->mFmiParameterLevelId) == levelIdList.end())
               levelIdList.insert(levelInfo->mFmiParameterLevelId);
           }
         }
@@ -2320,7 +2320,7 @@ void Engine::updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyTy
                     s = 'E';
                 }
 
-                if (searchList.find(searchKey) == searchList.end())
+                //if (searchList.find(searchKey) == searchList.end())
                   searchList.insert(searchKey);
 
                 if (file == nullptr)
