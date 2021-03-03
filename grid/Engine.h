@@ -180,6 +180,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                             uint& gridWidth,
                             uint& gridHeight) const;
 
+    bool                isEnabled() const;
     bool                isGridProducer(const std::string& producer) const;
     void                setDem(boost::shared_ptr<Fmi::DEM> dem);
     void                setLandCover(boost::shared_ptr<Fmi::LandCover> landCover);
@@ -208,6 +209,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                updateProducerAndGenerationList();
 
   private:
+
+    bool                mEnabled;
 
     std::string         mConfigurationFile_name;
     time_t              mConfigurationFile_modificationTime;

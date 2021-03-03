@@ -64,6 +64,8 @@ Engine::Engine(const char* theConfigFile)
         "smartmet.library.grid-files.pointCache.hitsRequired",
         "smartmet.library.grid-files.pointCache.timePeriod",
 
+        "smartmet.engine.grid.enabled",
+
         "smartmet.engine.grid.content-server.content-source.type",
         "smartmet.engine.grid.content-server.content-source.redis.address",
         "smartmet.engine.grid.content-server.content-source.redis.port",
@@ -126,6 +128,7 @@ Engine::Engine(const char* theConfigFile)
         nullptr
     };
 
+    mEnabled = true;
     mConfigurationFile_name = theConfigFile;
     mConfigurationFile_checkTime = time(nullptr) + 120;
     mConfigurationFile_modificationTime = getFileModificationTime(mConfigurationFile_name.c_str());
@@ -214,6 +217,8 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.enabled", mPointCacheEnabled);
     configurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.hitsRequired", mPointCacheHitsRequired);
     configurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.timePeriod", mPointCacheTimePeriod);
+
+    configurationFile.getAttributeValue("smartmet.engine.grid.enabled", mEnabled);
 
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.type", mContentSourceType);
 
@@ -339,6 +344,20 @@ void Engine::init()
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+    {
+      mContentServer.reset(new ContentServer::ServiceInterface());
+      mContentServer->setEnabled(false);
+
+      mDataServer.reset(new DataServer::ServiceInterface());
+      mDataServer->setEnabled(false);
+
+      mQueryServer.reset(new QueryServer::ServiceInterface());
+      mQueryServer->setEnabled(false);
+
+      return;
+    }
+
     ContentServer::ServiceInterface *cServer = nullptr;
     DataServer::ServiceInterface *dServer = nullptr;
     QueryServer::ServiceInterface *qServer = nullptr;
@@ -527,6 +546,9 @@ void Engine::checkConfiguration()
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return;
+
     // ### Configuration updates when the server is running.
 
     time_t currentTime = time(nullptr);
@@ -544,6 +566,21 @@ void Engine::checkConfiguration()
 
 
     ContentServer_sptr contentServer = getContentServer_sptr();
+
+
+    bool enabled = true;
+    configurationFile.getAttributeValue("smartmet.engine.grid.enabled", enabled);
+    if (mEnabled && !enabled)
+    {
+      // The grid-engine can be disabled when it is running. However, it cannot be enabled
+      // if it is started in the disabled state.
+
+      mEnabled = false;
+      mContentServer->setEnabled(false);
+      mDataServer->setEnabled(false);
+      mQueryServer->setEnabled(false);
+      return;
+    }
 
     // ### Content server processing log
 
@@ -797,12 +834,32 @@ void Engine::checkConfiguration()
 
 
 
+bool Engine::isEnabled() const
+{
+  FUNCTION_TRACE
+  try
+  {
+    return mEnabled;
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file",mConfigurationFile_name);
+    throw exception;
+  }
+}
+
+
+
 
 void Engine::shutdown()
 {
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return;
+
     std::cout << "  -- Shutdown requested (grid engine)\n";
     mShutdownRequested = true;
 
@@ -834,6 +891,9 @@ bool Engine::browserRequest(const Spine::HTTP::Request& theRequest,Spine::HTTP::
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return false;
+
     return mBrowser.requestHandler(theRequest,theResponse);
   }
   catch (...)
@@ -853,6 +913,9 @@ void Engine::browserContent(std::ostringstream& output)
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return;
+
     mBrowser.browserContent(output);
   }
   catch (...)
@@ -872,6 +935,9 @@ int Engine::executeQuery(QueryServer::Query& query) const
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return QueryServer::Result::SERVICE_DISABLED;
+
     return mQueryServer->executeQuery(0,query);
   }
   catch (...)
@@ -891,6 +957,9 @@ Query_sptr Engine::executeQuery(Query_sptr query) const
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return query;
+
     if (!mQueryCache_enabled)
     {
       int result = mQueryServer->executeQuery(0,*query);
@@ -1000,6 +1069,9 @@ bool Engine::isCacheable(std::shared_ptr<QueryServer::Query> query) const
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return false;
+
     for (auto param = query->mQueryParameterList.begin(); param != query->mQueryParameterList.end(); ++param)
     {
       switch(param->mType)
@@ -1162,6 +1234,9 @@ bool Engine::isGridProducer(const std::string& producer) const
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return false;
+
     std::string prod = producer;
     std::string tmp;
     if ((mProducerMappingDefinitions.getAlias(producer,tmp)  &&  strchr(tmp.c_str(),';') == nullptr))
@@ -1209,6 +1284,9 @@ std::string Engine::getParameterString(const std::string& producer,const std::st
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return parameter;
+
     std::string key = producer + ";" + parameter;
 
     ParameterDetails_vec parameters;
@@ -1271,6 +1349,9 @@ std::string Engine::getProducerName(const std::string& aliasName) const
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return aliasName;
+
     // This method returns the producer's mapping name.
 
     mProducerMappingDefinitions.checkUpdates(false);
@@ -1301,6 +1382,9 @@ void Engine::getProducerNameList(const std::string& mappingName,std::vector<std:
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return;
+
     // This method returns the list of (Radon) producers according to the (newbase) mapping name.
 
     mProducerMappingDefinitions.checkUpdates(false);
@@ -1340,6 +1424,9 @@ ulonglong Engine::getProducerHash(uint producerId) const
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return 0;
+
     // This method returns the hash of the producer's content information in the Content
     // Server. This is the fastest way to check if the cached content information is still
     // valid. The hash is updated if it is older than 120 seconds.
@@ -1393,6 +1480,9 @@ void Engine::getParameterDetails(const std::string& aliasName,ParameterDetails_v
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return;
+
     mProducerMappingDefinitions.checkUpdates(false);
 
     std::vector<std::string> aliasStrings;
@@ -1465,6 +1555,9 @@ void Engine::getParameterDetails(const std::string& producerName,const std::stri
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return;
+
     mProducerMappingDefinitions.checkUpdates(false);
     mParameterAliasDefinitions.checkUpdates(false);
 
@@ -1579,6 +1672,9 @@ void Engine::getParameterDetails(const std::string& producerName,const std::stri
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return;
+
     getParameterDetails(producerName,parameterName,parameterDetails);
     for (auto it = parameterDetails.begin(); it != parameterDetails.end(); ++it)
       it->mLevel = level;
@@ -1599,6 +1695,9 @@ void Engine::getParameterMappings(const std::string& producerName,const std::str
 {
   try
   {
+    if (!mEnabled)
+      return;
+
     if (!mParameterMappingDefinitions)
       return;
 
@@ -1623,6 +1722,9 @@ void Engine::getParameterMappings(const std::string& producerName,const std::str
 {
   try
   {
+    if (!mEnabled)
+      return;
+
     if (!mParameterMappingDefinitions)
       return;
 
@@ -1654,6 +1756,9 @@ void Engine::getParameterMappings(
 {
   try
   {
+    if (!mEnabled)
+      return;
+
     if (!mParameterMappingDefinitions)
       return;
 
@@ -1685,6 +1790,9 @@ void Engine::getParameterMappings(
 {
   try
   {
+    if (!mEnabled)
+      return;
+
     if (!mParameterMappingDefinitions)
       return;
 
@@ -1709,6 +1817,9 @@ void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails) const
 {
   try
   {
+    if (!mEnabled)
+      return;
+
     ContentServer_sptr contentServer = getContentServer_sptr();
 
     for (auto rec = parameterDetails.begin(); rec != parameterDetails.end(); ++rec)
@@ -1783,6 +1894,9 @@ std::string Engine::getProducerAlias(const std::string& producerName,int levelId
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return producerName;
+
     // This method returns the producer mapping name. Sometimes the same alias name
     // is used for different mappings. In this case the requested level type might
     // help us to identify the corret producer.
@@ -1820,6 +1934,9 @@ T::ParamLevelId Engine::getFmiParameterLevelId(uint producerId,int level) const
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return 0;
+
     AutoReadLock lock(&mProducerInfoList_modificationLock);
 
     uint len = mLevelInfoList.getLength();
@@ -1851,6 +1968,9 @@ void Engine::getProducerList(string_vec& producerList) const
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return;
+
     mQueryServer->getProducerList(0,producerList);
   }
   catch (...)
@@ -1870,6 +1990,9 @@ bool Engine::getProducerInfoByName(const std::string& name,T::ProducerInfo& prod
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return false;
+
     AutoReadLock lock(&mProducerInfoList_modificationLock);
     return mProducerInfoList.getProducerInfoByName(name,producerInfo);
   }
@@ -1888,6 +2011,9 @@ bool Engine::getProducerInfoById(uint producerId,T::ProducerInfo& producerInfo) 
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return false;
+
     AutoReadLock lock(&mProducerInfoList_modificationLock);
     return mProducerInfoList.getProducerInfoById(producerId,producerInfo);
   }
@@ -1906,6 +2032,9 @@ bool Engine::getGenerationInfoById(uint generationId,T::GenerationInfo& generati
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return false;
+
     AutoReadLock lock(&mProducerInfoList_modificationLock);
     return mGenerationInfoList.getGenerationInfoById(generationId,generationInfo);
   }
@@ -1924,6 +2053,9 @@ void Engine::getProducerParameterLevelList(const std::string& producerName,T::Pa
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return;
+
     AutoReadLock lock(&mProducerInfoList_modificationLock);
 
     std::vector<std::string> nameList;
@@ -1969,6 +2101,9 @@ void Engine::getProducerParameterLevelIdList(const std::string& producerName,std
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return;
+
     AutoReadLock lock(&mProducerInfoList_modificationLock);
 
     std::vector<std::string> nameList;
@@ -2012,6 +2147,9 @@ void Engine::loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings)
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return;
+
     for (auto it = mParameterMappingDefinitions_filenames.begin(); it != mParameterMappingDefinitions_filenames.end(); ++it)
     {
       QueryServer::ParameterMappingFile mapping(*it);
@@ -2042,6 +2180,9 @@ void Engine::clearMappings()
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return;
+
     QueryServer::ParamMappingFile_vec parameterMappings;
 
     if (!mParameterMappingDefinitions_autoFile_fmi.empty())
@@ -2075,6 +2216,9 @@ void Engine::updateMappings()
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return;
+
     time_t currentTime = time(nullptr);
 
     if ((currentTime - mParameterMappingDefinitions_updateTime) < 300)
@@ -2124,6 +2268,9 @@ FILE* Engine::openMappingFile(const std::string& mappingFile)
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return nullptr;
+
     FILE *file = fopen(mappingFile.c_str(),"we");
     if (file == nullptr)
     {
@@ -2230,6 +2377,9 @@ void Engine::updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyTy
   FUNCTION_TRACE
   try
   {
+    if (!mEnabled)
+      return;
+
     ContentServer_sptr  contentServer = getContentServer_sptr();
 
     T::SessionId sessionId = 0;
@@ -2423,6 +2573,9 @@ void Engine::updateProcessing()
 {
   try
   {
+    if (!mEnabled)
+      return;
+
     ContentServer_sptr contentServer = getContentServer_sptr();
     while (!mShutdownRequested)
     {
@@ -2513,8 +2666,10 @@ void Engine::updateProducerAndGenerationList()
   FUNCTION_TRACE
   try
   {
-    ContentServer_sptr contentServer = getContentServer_sptr();
+    if (!mEnabled)
+      return;
 
+    ContentServer_sptr contentServer = getContentServer_sptr();
 
     if ((time(nullptr) - mProducerInfoList_updateTime) > 60)
     {
@@ -2559,6 +2714,9 @@ void Engine::updateQueryCache()
 {
   try
   {
+    if (!mEnabled)
+      return;
+
     if (!mQueryCache_enabled)
       return;
 
@@ -2658,6 +2816,9 @@ void Engine::getVerticalGrid(
 {
   try
   {
+    if (!mEnabled)
+      return;
+
     ContentServer_sptr  contentServer = getContentServer_sptr();
     DataServer_sptr  dataServer = getDataServer_sptr();
     QueryServer_sptr  queryServer = getQueryServer_sptr();
@@ -2848,6 +3009,9 @@ void Engine::setDem(boost::shared_ptr<Fmi::DEM> dem)
 {
   try
   {
+    if (!mEnabled)
+      return;
+
     mDem = dem;
     mQueryServer->setDem(dem);
   }
@@ -2867,6 +3031,9 @@ void Engine::setLandCover(boost::shared_ptr<Fmi::LandCover> landCover)
 {
   try
   {
+    if (!mEnabled)
+      return;
+
     mLandCover = landCover;
     mQueryServer->setLandCover(landCover);
   }
@@ -2885,6 +3052,9 @@ void Engine::startUpdateProcessing()
 {
   try
   {
+    if (!mEnabled)
+      return;
+
     pthread_create(&mThread,nullptr,gridEngine_updateThread,this);
   }
   catch (...)
