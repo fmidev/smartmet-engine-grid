@@ -2,6 +2,8 @@
 #include "Browser.h"
 
 #include <macgyver/Exception.h>
+#include <spine/Convenience.h>
+#include <macgyver/AnsiEscapeCodes.h>
 #include <grid-files/common/GeneralFunctions.h>
 #include <grid-files/common/ShowFunction.h>
 #include <grid-files/grid/ValueCache.h>
@@ -310,6 +312,10 @@ Engine::Engine(const char* theConfigFile)
     // Initializing information that is needed for identifying the content of the grid files.
 
     SmartMet::Identification::gridDef.init(mGridConfigFile.c_str());
+
+    if (!mEnabled)
+      std::cout << ANSI_FG_RED << "**** Grid-engine configuration: Engine usage disabled!" << ANSI_FG_DEFAULT << std::endl;
+
   }
   catch (...)
   {
@@ -527,6 +533,7 @@ void Engine::init()
 
     mBrowser.init(mConfigurationFile_name.c_str(),mContentServer,this);
 
+
     startUpdateProcessing();
   }
   catch (...)
@@ -552,7 +559,7 @@ void Engine::checkConfiguration()
     // ### Configuration updates when the server is running.
 
     time_t currentTime = time(nullptr);
-    if ((currentTime - mConfigurationFile_checkTime) < 60)
+    if ((currentTime - mConfigurationFile_checkTime) < 30)
       return;
 
     mConfigurationFile_checkTime = currentTime;
@@ -579,6 +586,8 @@ void Engine::checkConfiguration()
       mContentServer->setEnabled(false);
       mDataServer->setEnabled(false);
       mQueryServer->setEnabled(false);
+
+      std::cout << ANSI_FG_RED << Spine::log_time_str() << " Grid-engine configuration: engine disabled" << ANSI_FG_DEFAULT << std::endl;
       return;
     }
 
@@ -760,12 +769,21 @@ void Engine::checkConfiguration()
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.enabled", queryCacheEnabled);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.maxAge", queryCacheMaxAge);
 
-    if (mQueryCache_enabled != queryCacheEnabled  || mQueryCache_maxAge != queryCacheMaxAge)
+    if (mQueryCache_enabled != queryCacheEnabled)
     {
       mQueryCache_enabled = queryCacheEnabled;
-      mQueryCache_maxAge = queryCacheMaxAge;
+
+      if (mQueryCache_enabled)
+        std::cout << Spine::log_time_str() << " Grid-engine configuration: query cache enabled" << std::endl;
+      else
+        std::cout << Spine::log_time_str() << " Grid-engine configuration: query cache disabled" << std::endl;
     }
 
+    if (mQueryCache_maxAge != queryCacheMaxAge)
+    {
+      mQueryCache_maxAge = queryCacheMaxAge;
+      std::cout << Spine::log_time_str() << " Grid-engine configuration: query cache max age set to " << mQueryCache_maxAge << " seconds" << std::endl;
+    }
 
 
     if (mDataServerImplementation != nullptr)
@@ -780,15 +798,24 @@ void Engine::checkConfiguration()
       configurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.hitsRequired", pointCacheHitsRequired);
       configurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.timePeriod", pointCacheTimePeriod);
 
-      if (mPointCacheEnabled != pointCacheEnabled || mPointCacheHitsRequired != pointCacheHitsRequired || mPointCacheTimePeriod != pointCacheTimePeriod)
+      if (mPointCacheEnabled != pointCacheEnabled)
       {
         mPointCacheEnabled = pointCacheEnabled;
+        mDataServerImplementation->setPointCacheEnabled(mPointCacheEnabled,mPointCacheHitsRequired,mPointCacheTimePeriod);
+
+        if (mPointCacheEnabled)
+          std::cout << Spine::log_time_str() << " Grid-engine configuration: point cache enabled" << std::endl;
+        else
+          std::cout << Spine::log_time_str() << " Grid-engine configuration: point cache disabled" << std::endl;
+      }
+
+      if (mPointCacheHitsRequired != pointCacheHitsRequired || mPointCacheTimePeriod != pointCacheTimePeriod)
+      {
         mPointCacheHitsRequired = pointCacheHitsRequired;
         mPointCacheTimePeriod = pointCacheTimePeriod;
 
         mDataServerImplementation->setPointCacheEnabled(mPointCacheEnabled,mPointCacheHitsRequired,mPointCacheTimePeriod);
       }
-
 
       // ### Memory map check
 
@@ -799,6 +826,11 @@ void Engine::checkConfiguration()
       {
         mMemoryMapCheckEnabled = memoryMapCheckEnabled;
         mDataServerImplementation->setMemoryMapCheckEnabled(mMemoryMapCheckEnabled);
+
+        if (mMemoryMapCheckEnabled)
+          std::cout << Spine::log_time_str() << " Grid-engine configuration: memory map check enabled" << std::endl;
+        else
+          std::cout << Spine::log_time_str() << " Grid-engine configuration: memory map check disabled" << std::endl;
       }
 
 
@@ -812,9 +844,17 @@ void Engine::checkConfiguration()
       configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadFile",contentPreloadFile);
       configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadMemoryLock",preloadMemoryLock);
 
-      if (mContentPreloadEnabled != contentPreloadEnabled || mContentPreloadFile != contentPreloadFile || mPreloadMemoryLock || preloadMemoryLock)
+      if (mContentPreloadEnabled != contentPreloadEnabled)
       {
         mContentPreloadEnabled = contentPreloadEnabled;
+        if (mContentPreloadEnabled)
+          std::cout << Spine::log_time_str() << " Grid-engine configuration: content preload enabled" << std::endl;
+        else
+          std::cout << Spine::log_time_str() << " Grid-engine configuration: content preload disabled" << std::endl;
+      }
+
+      if (mContentPreloadFile != contentPreloadFile || mPreloadMemoryLock || preloadMemoryLock)
+      {
         mContentPreloadFile = contentPreloadFile;
         mPreloadMemoryLock = preloadMemoryLock;
         mDataServerImplementation->setPreload(mContentPreloadEnabled,mPreloadMemoryLock,mContentPreloadFile);
@@ -1155,7 +1195,7 @@ ContentServer_sptr Engine::getContentServer_sptr() const
   FUNCTION_TRACE
   try
   {
-    if (mContentCacheEnabled)
+    if (mEnabled  &&  mContentCacheEnabled)
       return mContentServerCache;
     else
       return mContentServer;
