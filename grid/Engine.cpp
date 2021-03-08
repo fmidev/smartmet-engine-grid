@@ -1884,7 +1884,7 @@ void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails) const
         details.mMapping = *m;
 
         T::ContentInfoList contentInfoList;
-        int result = contentServer->getContentListByParameterAndProducerName(0,m->mProducerName,m->mParameterKeyType,m->mParameterKey,m->mParameterLevelIdType,m->mParameterLevelId,m->mParameterLevel,m->mParameterLevel,-1,-1,m->mGeometryId,0,0xFFFFFFFF,0,contentInfoList);
+        int result = contentServer->getContentListByParameterAndProducerName(0,m->mProducerName,m->mParameterKeyType,m->mParameterKey,m->mParameterLevelIdType,m->mParameterLevelId,m->mParameterLevel,m->mParameterLevel,-1,-1,m->mGeometryId,std::string("19000101T000000"),std::string("21000101T000000"),0,contentInfoList);
         if (result == 0)
         {
           uint len = contentInfoList.getLength();
