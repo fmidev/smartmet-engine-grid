@@ -14,6 +14,9 @@
 #include <pthread.h>
 #include <unordered_map>
 #include <spine/HTTP.h>
+#include <spine/TableFormatter.h>
+#include <spine/Table.h>
+#include <spine/Value.h>
 #include "ParameterDetails.h"
 #include "Browser.h"
 
@@ -25,6 +28,7 @@ namespace Engine
 namespace Grid
 {
 
+typedef std::pair<boost::shared_ptr<Spine::Table>, Spine::TableFormatter::Names> ContentTable;
 typedef std::shared_ptr<ContentServer::ServiceInterface> ContentServer_sptr;
 typedef std::shared_ptr<DataServer::ServiceInterface> DataServer_sptr;
 typedef std::shared_ptr<QueryServer::ServiceInterface> QueryServer_sptr;
@@ -89,6 +93,10 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                           int levelId) const;
 
     ulonglong           getProducerHash(uint producerId) const;
+
+    ContentTable        getProducerInfo(boost::optional<std::string> producer) const;
+
+    ContentTable        getParameterInfo(boost::optional<std::string> producer) const;
 
     std::string         getParameterString(
                           const std::string& producer,
@@ -203,7 +211,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                           T::ParamKeyType sourceParameterKeyType,
                           T::ParamKeyType targetParameterKeyType,
                           const std::string& mappingFile,
-                          QueryServer::ParamMappingFile_vec& parameterMappings);
+                          QueryServer::ParamMappingFile_vec& parameterMappings,
+                          Spine::Table& paramTable);
 
     void                updateQueryCache();
     void                updateProducerAndGenerationList();
@@ -342,6 +351,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     mutable time_t                            mQueryCache_updateTime;
     bool                                      mQueryCache_enabled;
     int                                       mQueryCache_maxAge;
+
+    boost::shared_ptr<Spine::Table>           mParameterTable;
 };
 
 }  // namespace Grid

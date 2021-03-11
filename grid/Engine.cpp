@@ -19,6 +19,7 @@
 #include <grid-content/queryServer/corba/client/ClientImplementation.h>
 #include <macgyver/StringConversion.h>
 #include <unistd.h>
+#include <unordered_set>
 
 
 #define FUNCTION_TRACE FUNCTION_TRACE_OFF
@@ -195,6 +196,8 @@ Engine::Engine(const char* theConfigFile)
 
     mContentServerCacheImplementation = nullptr;
     mDataServerImplementation = nullptr;
+
+    mParameterTable.reset(new Spine::Table);
 
     ConfigurationFile configurationFile;
     configurationFile.readFile(mConfigurationFile_name.c_str());
@@ -1969,6 +1972,135 @@ std::string Engine::getProducerAlias(const std::string& producerName,int levelId
 
 
 
+ContentTable Engine::getProducerInfo(boost::optional<std::string> producer) const
+{
+  try
+  {
+    boost::shared_ptr < Spine::Table > resultTable(new Spine::Table);
+
+    Spine::TableFormatter::Names headers{ "#", "ProducerName", "ProducerId", "Title", "Description","NumOfGenerations","NewestGeneration","OldestGeneation" };
+
+    AutoReadLock lock(&mProducerInfoList_modificationLock);
+
+    uint len = mProducerInfoList.getLength();
+    uint row = 0;
+    for (uint t=0; t<len; t++)
+    {
+      T::ProducerInfo *info = mProducerInfoList.getProducerInfoByIndex(t);
+
+      if (!producer || strcasecmp(producer->c_str(),info->mName.c_str()) == 0)
+      {
+        T::GenerationInfoList generationList;
+        mGenerationInfoList.getGenerationInfoListByProducerId(info->mProducerId,generationList);
+
+        uint glen = generationList.getLength();
+        if (glen > 0)
+        {
+          generationList.sort(T::GenerationInfo::ComparisonMethod::analysisTime_generationId);
+
+          // Row number
+          resultTable->set(0,row, Fmi::to_string(row + 1));
+
+          // Producer name
+          resultTable->set(1,row, info->mName);
+
+          // Producer id
+          resultTable->set(2,row, Fmi::to_string(info->mProducerId));
+
+          // Producer title
+          resultTable->set(3,row, info->mTitle);
+
+          // Producer description
+          resultTable->set(4,row, info->mDescription);
+
+          // Number of generations
+          resultTable->set(5,row,Fmi::to_string(glen));
+
+          T::GenerationInfo *newest = generationList.getGenerationInfoByIndex(glen-1);
+          T::GenerationInfo *oldest = generationList.getGenerationInfoByIndex(0);
+
+          // Newest generation
+          resultTable->set(6,row,newest->mAnalysisTime);
+
+          // Oldest generation
+          resultTable->set(7,row,oldest->mAnalysisTime);
+
+          row++;
+        }
+      }
+    }
+
+    return std::make_pair(resultTable, headers);
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file", mConfigurationFile_name);
+    throw exception;
+  }
+}
+
+
+
+
+
+ContentTable Engine::getParameterInfo(boost::optional<std::string> producer) const
+{
+  FUNCTION_TRACE
+  try
+  {
+    Spine::TableFormatter::Names headers{"#", "Producer", "FmiParameterName", "FmiParameterId", "NewbaseParameterName", "NewbaseParameterId",  "Unit", "Description"};
+    boost::shared_ptr < Spine::Table > resultTable(new Spine::Table);
+
+    AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
+
+    auto startRow = mParameterTable->minj();
+    auto endRow = mParameterTable->maxj();
+    auto endCol = mParameterTable->maxi();
+
+    uint row = 0;
+    if (producer)
+    {
+      for (std::size_t y=startRow; y<=endRow; y++)
+      {
+        auto p = mParameterTable->get(1,y);
+        if (strcasecmp(p.c_str(),producer->c_str()) == 0)
+        {
+          resultTable->set(0,row,std::to_string(row+1));
+          for (std::size_t x=1; x<= endCol; x++)
+          {
+            resultTable->set(x,row,mParameterTable->get(x,y));
+          }
+          row++;
+        }
+      }
+    }
+    else
+    {
+      for (std::size_t y=startRow; y<=endRow; y++)
+      {
+        for (std::size_t x=0; x<= endCol; x++)
+        {
+          resultTable->set(x,row,mParameterTable->get(x,y));
+        }
+        row++;
+      }
+    }
+
+    return std::make_pair(resultTable, headers);
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file", mConfigurationFile_name);
+    throw exception;
+  }
+}
+
+
+
+
+
 T::ParamLevelId Engine::getFmiParameterLevelId(uint producerId,int level) const
 {
   FUNCTION_TRACE
@@ -2281,15 +2413,19 @@ void Engine::updateMappings()
       return;
     }
 
+    Spine::Table *paramTable = new Spine::Table();
     if (!mParameterMappingDefinitions_autoFile_fmi.empty())
     {
-      updateMappings(T::ParamKeyTypeValue::FMI_NAME,mParameterMappingDefinitions_autoFileKeyType,mParameterMappingDefinitions_autoFile_fmi,*parameterMappings);
+      updateMappings(T::ParamKeyTypeValue::FMI_NAME,mParameterMappingDefinitions_autoFileKeyType,mParameterMappingDefinitions_autoFile_fmi,*parameterMappings,*paramTable);
     }
 
     if (!mParameterMappingDefinitions_autoFile_newbase.empty())
     {
-      updateMappings(T::ParamKeyTypeValue::NEWBASE_NAME,mParameterMappingDefinitions_autoFileKeyType,mParameterMappingDefinitions_autoFile_newbase,*parameterMappings);
+      updateMappings(T::ParamKeyTypeValue::NEWBASE_NAME,mParameterMappingDefinitions_autoFileKeyType,mParameterMappingDefinitions_autoFile_newbase,*parameterMappings,*paramTable);
     }
+
+    AutoWriteLock lock(&mParameterMappingDefinitions_modificationLock);
+    mParameterTable.reset(paramTable);
   }
   catch (...)
   {
@@ -2412,7 +2548,7 @@ FILE* Engine::openMappingFile(const std::string& mappingFile)
 
 
 
-void Engine::updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyType targetParameterKeyType,const std::string& mappingFile,QueryServer::ParamMappingFile_vec& parameterMappings)
+void Engine::updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyType targetParameterKeyType,const std::string& mappingFile,QueryServer::ParamMappingFile_vec& parameterMappings,Spine::Table& paramTable)
 {
   FUNCTION_TRACE
   try
@@ -2424,8 +2560,8 @@ void Engine::updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyTy
 
     T::SessionId sessionId = 0;
     uint numOfNewMappings = 0;
-    std::set<std::string> mapList;
-    std::set<std::string> searchList;
+    std::unordered_set<std::string> mapList;
+    std::unordered_set<std::string> searchList;
 
     T::ProducerInfoList producerInfoList;
     int result = contentServer->getProducerInfoList(sessionId,producerInfoList);
@@ -2436,6 +2572,8 @@ void Engine::updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyTy
     }
 
     FILE *file = nullptr;
+    std::unordered_set<std::string> pList;
+    auto row = paramTable.maxj();
 
     uint plen = producerInfoList.getLength();
     for (uint t=0; t<plen; t++)
@@ -2461,6 +2599,37 @@ void Engine::updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyTy
             m.mParameterLevelIdType = toUInt8(pl[5].c_str());
             m.mParameterLevelId = toInt8(pl[6].c_str());
             m.mParameterLevel = toInt32(pl[7].c_str());
+
+            if (sourceParameterKeyType == T::ParamKeyTypeValue::FMI_NAME)
+            {
+              char tmp[200];
+              sprintf(tmp,"%s;%s",pl[0].c_str(),pl[1].c_str());
+
+              auto res = pList.insert(std::string(tmp));
+              if (res.second)
+              {
+                paramTable.set(0,row, std::to_string(row+1));
+                paramTable.set(1,row, pl[0]);
+                paramTable.set(2,row, pl[1]);
+
+                Identification::FmiParameterDef paramDef;
+                if (Identification::gridDef.getFmiParameterDefByName(pl[1],paramDef))
+                {
+                  paramTable.set(3,row, paramDef.mFmiParameterId);
+
+                  Identification::NewbaseParameterDef nbDef;
+                  Identification::gridDef.getNewbaseParameterDefByFmiId(paramDef.mFmiParameterId,nbDef);
+                  paramTable.set(4,row, nbDef.mParameterName);
+                  paramTable.set(5,row, nbDef.mNewbaseParameterId);
+
+                  paramTable.set(6,row, paramDef.mParameterUnits);
+                  paramTable.set(7,row, paramDef.mParameterDescription);
+                }
+
+                row++;
+              }
+            }
+
 
             char key[200];
             sprintf(key,"%s;%s;%s;%s;%s;%s;%s;%s;",pl[0].c_str(),pl[1].c_str(),pl[2].c_str(),pl[3].c_str(),pl[4].c_str(),pl[5].c_str(),pl[6].c_str(),pl[7].c_str());
