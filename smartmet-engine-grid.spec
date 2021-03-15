@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 21.3.11
+Version: 21.3.15
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -14,7 +14,7 @@ BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: libconfig-devel >= 1.7.2
 BuildRequires: libpqxx-devel < 1:7.0
-BuildRequires: smartmet-library-grid-content-devel >= 21.3.4
+BuildRequires: smartmet-library-grid-content-devel >= 21.3.15
 BuildRequires: smartmet-library-grid-files-devel >= 21.3.4
 BuildRequires: smartmet-library-spine-devel >= 21.3.9
 BuildRequires: make
@@ -39,6 +39,7 @@ SmartMet grid engine
 Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
+Requires: smartmet-library-grid-content-devel >= 21.3.15
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
 
@@ -66,6 +67,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Mon Mar 15 2021 Andris Pavēnis <andris.pavenis@fmi.fi> - 21.3.15-1.fmi
+- Add missing dependencies for devel package
+
 * Thu Mar 11 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.3.11-1.fmi
 - Added methods for generating responses to admin plugin producer and parameter queries
 
