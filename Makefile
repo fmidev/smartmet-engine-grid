@@ -71,6 +71,8 @@ INCLUDES := -Iinclude $(INCLUDES)
 # The rules
 
 all: objdir $(LIBFILE)
+	$(MAKE) -C testdata $@
+
 debug: all
 release: all
 profile: all
@@ -88,6 +90,7 @@ $(LIBFILE): $(OBJS)
 
 clean:
 	rm -f $(LIBFILE) obj/* *~ $(SUBNAME)/*~
+	$(MAKE) -C testdata $@
 
 format:
 	clang-format -i -style=file $(SUBNAME)/*.h $(SUBNAME)/*.cpp test/*.cpp
@@ -102,9 +105,11 @@ install:
 	done
 	@mkdir -p $(enginedir)
 	$(INSTALL_PROG) $(LIBFILE) $(enginedir)/$(LIBFILE)
+	$(MAKE) -C testdata $@
+
 
 test:
-	cd test && make test
+	if [ -d test/Makefile ] ; then $(MAKE) -C test $@; else true; fi
 
 objdir:
 	@mkdir -p $(objdir)

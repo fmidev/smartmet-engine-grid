@@ -43,6 +43,14 @@ Requires: smartmet-library-grid-content-devel >= 21.3.15
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
 
+%package -n smartmet-test-grid
+Summary: SmartMet %{SPECNAME} - redis server with required data for testing purpose
+Group: SmartMet/Development
+Provides: smartmet-test-grid
+Requires: smartmet-library-grid-files >= 21.3.4
+%description -n smartmet-test-grid
+SmartMet %{SPECNAME} - redis server with required data for testing purpose
+
 %prep
 rm -rf $RPM_BUILD_ROOT
 
@@ -65,6 +73,11 @@ rm -rf $RPM_BUILD_ROOT
 %files -n %{SPECNAME}-devel
 %defattr(0664,root,root,0775)
 %{_includedir}/smartmet/engines/%{DIRNAME}
+
+%files -n smartmet-test-grid
+%defattr(0664,root,root,0775)
+%{_datadir}/smartmet/test/grid
+%{_bindir}/TestConfigCreator
 
 %changelog
 * Mon Mar 15 2021 Andris Pavēnis <andris.pavenis@fmi.fi> - 21.3.15-1.fmi
