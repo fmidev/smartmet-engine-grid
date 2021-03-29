@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 21.3.15
+Version: 21.3.29
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -77,9 +77,12 @@ rm -rf $RPM_BUILD_ROOT
 %files -n smartmet-test-grid
 %defattr(0664,root,root,0775)
 %{_datadir}/smartmet/test/grid
-%{_bindir}/TestConfigCreator
+%attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Mon Mar 29 2021 Andris Pavēnis <andris.pavenis@fmi.fi> - 21.3.29-1.fmi
+- Add test data and test config creator application
+
 * Mon Mar 15 2021 Andris Pavēnis <andris.pavenis@fmi.fi> - 21.3.15-1.fmi
 - Add missing dependencies for devel package
 
