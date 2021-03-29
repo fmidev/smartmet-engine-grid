@@ -1,4 +1,4 @@
-PROG = TestConfigCreator
+PROG = smartmet-grid-test-config-creator
 
 REQUIRES = gdal configpp
 
@@ -24,7 +24,7 @@ install:
 		$(datadir)/smartmet/test/grid/library/
 	$(INSTALL_DATA) grid/redis/redis-server.rdb grid/redis/redis-template.conf \
 		$(datadir)/smartmet/test/grid/redis/
-	$(INSTALL_PROG) TestConfigCreator $(bindir)/
+	$(INSTALL_PROG) smartmet-grid-test-config-creator $(bindir)/
 
 $(PROG) : % : %.cpp Makefile
 	$(CXX) $(CFLAGS) -o $@ $@.cpp $(INCLUDES) $(LIBS)

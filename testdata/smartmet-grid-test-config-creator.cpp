@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
   {
     if (argc < 4)
     {
-      fprintf(stderr,"USAGE: TestConfigCreator <configurationFile> <inputFile> <outpufFile> [-D attrName attValue ... -D attrName attrValue]\n");
+      fprintf(stderr,"USAGE: smartmet-grid-test-config-creator <configurationFile> <inputFile> <outpufFile> [-D attrName attValue ... -D attrName attrValue]\n");
       return -1;
     }
 
