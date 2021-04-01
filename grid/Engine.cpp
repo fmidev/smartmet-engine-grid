@@ -202,6 +202,10 @@ Engine::Engine(const char* theConfigFile)
     ConfigurationFile configurationFile;
     configurationFile.readFile(mConfigurationFile_name.c_str());
 
+    configurationFile.getAttributeValue("smartmet.engine.grid.enabled", mEnabled);
+    if (!mEnabled)
+      return;
+
     uint t=0;
     while (configAttribute[t] != nullptr)
     {
@@ -222,8 +226,6 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.enabled", mPointCacheEnabled);
     configurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.hitsRequired", mPointCacheHitsRequired);
     configurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.timePeriod", mPointCacheTimePeriod);
-
-    configurationFile.getAttributeValue("smartmet.engine.grid.enabled", mEnabled);
 
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.type", mContentSourceType);
 
