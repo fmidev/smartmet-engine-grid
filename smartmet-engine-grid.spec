@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 21.3.29
+Version: 21.4.1
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -14,9 +14,9 @@ BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: libconfig-devel >= 1.7.2
 BuildRequires: libpqxx-devel < 1:7.0
-BuildRequires: smartmet-library-grid-content-devel >= 21.3.15
-BuildRequires: smartmet-library-grid-files-devel >= 21.3.4
-BuildRequires: smartmet-library-spine-devel >= 21.3.9
+BuildRequires: smartmet-library-grid-content-devel >= 21.3.29
+BuildRequires: smartmet-library-grid-files-devel >= 21.3.31
+BuildRequires: smartmet-library-spine-devel >= 21.3.27
 BuildRequires: make
 BuildRequires: omniORB-devel
 BuildRequires: boost169-devel
@@ -26,9 +26,9 @@ BuildRequires: zlib-devel
 Requires: boost169-thread
 Requires: libconfig >= 1.7.2
 Requires: libpqxx < 1:7.0
-Requires: smartmet-library-grid-content >= 21.3.4
-Requires: smartmet-library-grid-files >= 21.3.4
-Requires: smartmet-library-spine >= 21.3.9
+Requires: smartmet-library-grid-content >= 21.3.29
+Requires: smartmet-library-grid-files >= 21.3.31
+Requires: smartmet-library-spine >= 21.3.27
 Requires: omniORB-devel
 Provides: %{SPECNAME}
 
@@ -39,7 +39,7 @@ SmartMet grid engine
 Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
-Requires: smartmet-library-grid-content-devel >= 21.3.15
+Requires: smartmet-library-grid-content-devel >= 21.3.29
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
 
@@ -47,7 +47,7 @@ SmartMet %{SPECNAME} development headers.
 Summary: SmartMet %{SPECNAME} - redis server with required data for testing purpose
 Group: SmartMet/Development
 Provides: smartmet-test-grid
-Requires: smartmet-library-grid-files >= 21.3.4
+Requires: smartmet-library-grid-files >= 21.3.31
 %description -n smartmet-test-grid
 SmartMet %{SPECNAME} - redis server with required data for testing purpose
 
@@ -80,6 +80,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Thu Apr  1 2021 Pertti Kinnia <pertti.kinnia@fmi.fi> - 21.4.1-1.fmi
+- Repackaged due to grid-files API changes
+
 * Mon Mar 29 2021 Andris Pavēnis <andris.pavenis@fmi.fi> - 21.3.29-1.fmi
 - Add test data and test config creator application
 
