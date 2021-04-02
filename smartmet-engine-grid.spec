@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 21.4.1
+Version: 21.4.2
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -43,12 +43,12 @@ Requires: smartmet-library-grid-content-devel >= 21.3.29
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
 
-%package -n smartmet-test-grid
+%package -n smartmet-engine-grid-test
 Summary: SmartMet %{SPECNAME} - redis server with required data for testing purpose
 Group: SmartMet/Development
-Provides: smartmet-test-grid
+Provides: smartmet-engine-grid-test
 Requires: smartmet-library-grid-files >= 21.3.31
-%description -n smartmet-test-grid
+%description -n smartmet-engine-grid-test
 SmartMet %{SPECNAME} - redis server with required data for testing purpose
 
 %prep
@@ -74,12 +74,15 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(0664,root,root,0775)
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
-%files -n smartmet-test-grid
+%files -n smartmet-engine-grid-test
 %defattr(0664,root,root,0775)
 %{_datadir}/smartmet/test/grid
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Fri Apr  2 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.4.2-1.fmi
+- Renamed smartmet-test-grid to smartmet-engine-grid-test for CirleCI package prefix detection to work
+
 * Thu Apr  1 2021 Pertti Kinnia <pertti.kinnia@fmi.fi> - 21.4.1-1.fmi
 - Repackaged due to grid-files API changes
 
