@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 21.4.2
+Version: 21.4.27
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -80,6 +80,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Tue Apr 27 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.4.27-1.fmi
+- Fixed what=gridparameters query to handle an empty parameter table
+
 * Fri Apr  2 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.4.2-1.fmi
 - Renamed smartmet-test-grid to smartmet-engine-grid-test for CirleCI package prefix detection to work
 

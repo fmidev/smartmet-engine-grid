@@ -2056,39 +2056,44 @@ ContentTable Engine::getParameterInfo(boost::optional<std::string> producer) con
 
     AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
 
-    auto startRow = mParameterTable->minj();
-    auto endRow = mParameterTable->maxj();
-    auto endCol = mParameterTable->maxi();
-
-    uint row = 0;
-    if (producer)
+    if(!mParameterTable->empty())
     {
-      for (std::size_t y=startRow; y<=endRow; y++)
+
+      auto startRow = mParameterTable->minj();
+      auto endRow = mParameterTable->maxj();
+      auto endCol = mParameterTable->maxi();
+
+      uint row = 0;
+      if (producer)
       {
-        auto p = mParameterTable->get(1,y);
-        if (strcasecmp(p.c_str(),producer->c_str()) == 0)
+        for (std::size_t y=startRow; y<=endRow; y++)
         {
-          resultTable->set(0,row,std::to_string(row+1));
-          for (std::size_t x=1; x<= endCol; x++)
+          auto p = mParameterTable->get(1,y);
+          if (strcasecmp(p.c_str(),producer->c_str()) == 0)
+          {
+            resultTable->set(0,row,std::to_string(row+1));
+            for (std::size_t x=1; x<= endCol; x++)
+            {
+              resultTable->set(x,row,mParameterTable->get(x,y));
+            }
+            row++;
+          }
+        }
+      }
+      else
+      {
+        for (std::size_t y=startRow; y<=endRow; y++)
+        {
+          for (std::size_t x=0; x<= endCol; x++)
           {
             resultTable->set(x,row,mParameterTable->get(x,y));
           }
           row++;
         }
       }
-    }
-    else
-    {
-      for (std::size_t y=startRow; y<=endRow; y++)
-      {
-        for (std::size_t x=0; x<= endCol; x++)
-        {
-          resultTable->set(x,row,mParameterTable->get(x,y));
-        }
-        row++;
-      }
-    }
 
+    }
+    
     return std::make_pair(resultTable, headers);
   }
   catch (...)
