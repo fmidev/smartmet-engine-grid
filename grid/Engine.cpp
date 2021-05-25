@@ -1595,6 +1595,24 @@ void Engine::getParameterDetails(const std::string& aliasName,ParameterDetails_v
 
 
 
+void Engine::getParameterAlias(const std::string& aliasName,std::string& aliasValue) const
+{
+  try
+  {
+    mParameterAliasDefinitions.getAlias(aliasName,aliasValue);
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file",mConfigurationFile_name);
+    throw exception;
+  }
+}
+
+
+
+
+
 void Engine::getParameterDetails(const std::string& producerName,const std::string& parameterName,ParameterDetails_vec& parameterDetails) const
 {
   FUNCTION_TRACE
@@ -1695,7 +1713,7 @@ void Engine::getParameterDetails(const std::string& producerName,const std::stri
     {
       ParameterDetails p;
       p.mOriginalProducer = producerName;
-      p.mOriginalParameter = parameterName;
+      p.mOriginalParameter = param;
       p.mProducerName = key;
       parameterDetails.emplace_back(p);
     }

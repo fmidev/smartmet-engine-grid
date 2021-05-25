@@ -102,6 +102,10 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                           const std::string& producer,
                           const std::string& parameter) const;
 
+    void                getParameterAlias(
+                          const std::string& aliasName,
+                          std::string& aliasValue) const;
+
     void                getParameterDetails(
                           const std::string& aliasName,
                           ParameterDetails_vec& parameterDetails) const;

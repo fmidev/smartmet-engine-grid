@@ -1729,10 +1729,10 @@ bool Browser::page_producerFile(const Spine::HTTP::Request& theRequest,Spine::HT
     output << "<H2>Producer search file</H2>\n";
     output << "<HR>\n";
     output << "<H3>Introduction</H3>\n";
-    output << "<P>The producer serach file has two purposes : </P>\n";
+    output << "<P>The producer search file has two purposes : </P>\n";
     output << "<OL>\n";
     output << "  <LI>\n";
-    output << "    <B>Defining produces and geometries that can be searched</B>\n";
+    output << "    <B>Defining producers and geometries that can be searched</B>\n";
     output << "      <P>If the requested producer and geometry are not in the list, then the query returns nothing.</P>";
     output << "  </LI>\n";
     output << "  <LI>\n";
