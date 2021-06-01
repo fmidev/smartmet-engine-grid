@@ -1923,12 +1923,12 @@ void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails) const
                 auto tt = details.mTimes.find(gInfo->mAnalysisTime);
                 if (tt != details.mTimes.end())
                 {
-                  tt->second.insert(cInfo->mForecastTime);
+                  tt->second.insert(cInfo->getForecastTime());
                 }
                 else
                 {
                   std::set<std::string> ttt;
-                  ttt.insert(cInfo->mForecastTime);
+                  ttt.insert(cInfo->getForecastTime());
                   details.mTimes.insert(std::pair<std::string,std::set<std::string>>(gInfo->mAnalysisTime,ttt));
                 }
               }
@@ -2499,8 +2499,6 @@ FILE* Engine::openMappingFile(const std::string& mappingFile)
     fprintf(file,"#         3 = GRIB_ID\n");
     fprintf(file,"#         4 = NEWBASE_ID\n");
     fprintf(file,"#         5 = NEWBASE_NAME\n");
-    fprintf(file,"#         6 = CDM_ID\n");
-    fprintf(file,"#         7 = CDM_NAME\n");
     fprintf(file,"#  4) Parameter id / name\n");
     fprintf(file,"#  5) Geometry id\n");
     fprintf(file,"#  6) Parameter level id type:\n");
@@ -2640,12 +2638,12 @@ void Engine::updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyTy
                 Identification::FmiParameterDef paramDef;
                 if (Identification::gridDef.getFmiParameterDefByName(pl[1],paramDef))
                 {
-                  paramTable.set(3,row, paramDef.mFmiParameterId);
+                  paramTable.set(3,row, std::to_string(paramDef.mFmiParameterId));
 
                   Identification::NewbaseParameterDef nbDef;
                   Identification::gridDef.getNewbaseParameterDefByFmiId(paramDef.mFmiParameterId,nbDef);
                   paramTable.set(4,row, nbDef.mParameterName);
-                  paramTable.set(5,row, nbDef.mNewbaseParameterId);
+                  paramTable.set(5,row, std::to_string(nbDef.mNewbaseParameterId));
 
                   paramTable.set(6,row, paramDef.mParameterUnits);
                   paramTable.set(7,row, paramDef.mParameterDescription);
@@ -2719,10 +2717,10 @@ void Engine::updateMappings(T::ParamKeyType sourceParameterKeyType,T::ParamKeyTy
                   found = Identification::gridDef.getFmiParameterDefByName(pl[3],paramDef);
                 else
                 if (targetParameterKeyType == T::ParamKeyTypeValue::FMI_ID)
-                  found = Identification::gridDef.getFmiParameterDefById(pl[3],paramDef);
+                  found = Identification::gridDef.getFmiParameterDefById(toUInt32(pl[3]),paramDef);
                 else
                 if (targetParameterKeyType == T::ParamKeyTypeValue::NEWBASE_ID)
-                  found = Identification::gridDef.getFmiParameterDefByNewbaseId(pl[3],paramDef);
+                  found = Identification::gridDef.getFmiParameterDefByNewbaseId(toUInt32(pl[3]),paramDef);
 
                 if (found)
                 {

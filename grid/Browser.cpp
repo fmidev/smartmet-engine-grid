@@ -185,7 +185,7 @@ bool Browser::page_contentList(const Spine::HTTP::Request& theRequest,Spine::HTT
     output << "<TD>Grib1ParameterLevelId</TD>";
     output << "<TD>Grib2ParameterLevelId</TD>";
     output << "<TD>ParameterLevel</TD>";
-    output << "<TD>FmiParameterUnits</TD>";
+    //output << "<TD>FmiParameterUnits</TD>";
     //output << "<TD>GribParameterUnits</TD>";
     output << "<TD>ForecastType</TD>";
     output << "<TD>ForecastNumber</TD>";
@@ -248,7 +248,7 @@ bool Browser::page_contentList(const Spine::HTTP::Request& theRequest,Spine::HTT
             url << "&parameterId=" << content->getFmiParameterName();
             url << "&levelId=" << toString(content->mFmiParameterLevelId);
             url << "&level=" << content->mParameterLevel;
-            url << "&start=" << content->mForecastTime;
+            url << "&start=" << content->getForecastTime();
             url << "&fileId=" << content->mFileId;
             url << "&messageIndex=" << content->mMessageIndex;
             url << "&forecastType=" << content->mForecastType;
@@ -276,17 +276,17 @@ bool Browser::page_contentList(const Spine::HTTP::Request& theRequest,Spine::HTT
         output << "<TD>"<< content->mMessageSize << "</TD>";
         //output << "<TD>"<< content->mProducerId << "</TD>";
         //output << "<TD>"<< content->mGenerationId << "</TD>";
-        output << "<TD>"<< content->mForecastTime << "</TD>";
+        output << "<TD>"<< content->getForecastTime() << "</TD>";
         output << "<TD>"<< content->mFmiParameterId << "</TD>";
         output << "<TD>"<< content->getFmiParameterName() << "</TD>";
         output << "<TD>"<< content->mGribParameterId << "</TD>";
         output << "<TD>"<< content->mNewbaseParameterId << "</TD>";
-        output << "<TD>"<< content->mNewbaseParameterName << "</TD>";
+        output << "<TD>"<< content->getNewbaseParameterName() << "</TD>";
         output << "<TD>"<< (int)content->mFmiParameterLevelId << "</TD>";
         output << "<TD>"<< (int)content->mGrib1ParameterLevelId << "</TD>";
         output << "<TD>"<< (int)content->mGrib2ParameterLevelId << "</TD>";
         output << "<TD>"<< content->mParameterLevel << "</TD>";
-        output << "<TD>"<< content->mFmiParameterUnits << "</TD>";
+        //output << "<TD>"<< content->mFmiParameterUnits << "</TD>";
         //output << "<TD>"<< content->mGribParameterUnits << "</TD>";
         output << "<TD>"<< content->mForecastType << "</TD>";
         output << "<TD>"<< content->mForecastNumber << "</TD>";
@@ -1457,7 +1457,7 @@ bool Browser::page_parameterMappingFile(const Spine::HTTP::Request& theRequest,S
       return false;
 
 
-    const char* paramIdType[] = {"UNKNOWN","FMI-ID","FMI-NAME","GRIB-ID","NEWBASE-ID","NEWBASE-NAME","CDM-ID","CDM-NAME"};
+    const char* paramIdType[] = {"UNKNOWN","FMI-ID","FMI-NAME","GRIB-ID","NEWBASE-ID","NEWBASE-NAME"};
     const char* levelIdType[] = {"UNKNOWN","FMI","GRIB1","GRIB2"};
     const char* interpolationMethod[] = {"None","Linear","Nearest","Min","Max","Logarithmic"};
 
@@ -1513,7 +1513,7 @@ bool Browser::page_parameterMappingFile(const Spine::HTTP::Request& theRequest,S
         switch (f)
         {
           case 3:
-            if (i < 8)
+            if (i < 6)
               output << "<TD>" << paramIdType[i] << "</TD>";
             else
               output << "<TD>" << *field << "</TD>";
