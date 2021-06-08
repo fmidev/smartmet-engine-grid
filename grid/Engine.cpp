@@ -423,6 +423,7 @@ void Engine::init()
     {
       Fmi::Exception exception(BCP, "Unknow content source type!");
       exception.addParameter("Content source type",mContentSourceType);
+      throw exception;
     }
 
     if (mContentCacheEnabled)
