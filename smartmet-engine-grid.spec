@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 21.6.1
+Version: 21.6.8
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -14,8 +14,8 @@ BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: libconfig-devel >= 1.7.2
 BuildRequires: libpqxx-devel < 1:7.0
-BuildRequires: smartmet-library-grid-content-devel >= 21.6.1
-BuildRequires: smartmet-library-grid-files-devel >= 21.6.1
+BuildRequires: smartmet-library-grid-content-devel >= 21.6.8
+BuildRequires: smartmet-library-grid-files-devel >= 21.6.8
 BuildRequires: smartmet-library-spine-devel >= 21.5.31
 BuildRequires: make
 BuildRequires: omniORB-devel
@@ -26,8 +26,8 @@ BuildRequires: zlib-devel
 Requires: boost169-thread
 Requires: libconfig >= 1.7.2
 Requires: libpqxx < 1:7.0
-Requires: smartmet-library-grid-content >= 21.6.1
-Requires: smartmet-library-grid-files >= 21.6.1
+Requires: smartmet-library-grid-content >= 21.6.8
+Requires: smartmet-library-grid-files >= 21.6.8
 Requires: smartmet-library-spine >= 21.5.31
 Requires: omniORB-devel
 Provides: %{SPECNAME}
@@ -39,7 +39,7 @@ SmartMet grid engine
 Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
-Requires: smartmet-library-grid-content-devel >= 21.6.1
+Requires: smartmet-library-grid-content-devel >= 21.6.8
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
 
@@ -47,7 +47,7 @@ SmartMet %{SPECNAME} development headers.
 Summary: SmartMet %{SPECNAME} - redis server with required data for testing purpose
 Group: SmartMet/Development
 Provides: smartmet-engine-grid-test
-Requires: smartmet-library-grid-files >= 21.6.1
+Requires: smartmet-library-grid-files >= 21.6.8
 %description -n smartmet-engine-grid-test
 SmartMet %{SPECNAME} - redis server with required data for testing purpose
 
@@ -80,6 +80,10 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Tue Jun  8 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.6.8-1.fmi
+- Repackaged due to memory saving ABI changes in base libraries
+- Minor typo fix
+
 * Tue Jun  1 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.6.1-1.fmi
 - Updated to use the new library APIs
 
