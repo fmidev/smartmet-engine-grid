@@ -312,6 +312,10 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::string         mContentPreloadFile;
     bool                mPreloadMemoryLock;
 
+    bool                mContentSwapEnabled;
+    uint                mContentUpdateInterval;
+
+
     pthread_t           mThread;
     Browser             mBrowser;
 

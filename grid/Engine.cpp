@@ -189,6 +189,8 @@ Engine::Engine(const char* theConfigFile)
     mQueryServerDebugLogTruncateSize = 5000000;
     mQueryCache_enabled = true;
     mQueryCache_maxAge = 300;
+    mContentSwapEnabled = false;
+    mContentUpdateInterval = 180;
 
 
     mNumOfCachedGrids = 10000;
@@ -248,6 +250,9 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.enabled", mContentCacheEnabled);
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.contentSortingFlags", mContentCacheSortingFlags);
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.requestForwardEnabled", mRequestForwardEnabled);
+
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.contentSwapEnabled",mContentSwapEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.contentUpdateInterval",mContentUpdateInterval);
 
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.enabled", mContentServerProcessingLogEnabled);
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.file", mContentServerProcessingLogFile);
@@ -423,8 +428,10 @@ void Engine::init()
     if (mContentCacheEnabled)
     {
       mContentServerCacheImplementation = new ContentServer::CacheImplementation();
-      mContentServerCacheImplementation->init(0,cServer,mContentCacheSortingFlags);
       mContentServerCacheImplementation->setRequestForwardEnabled(mRequestForwardEnabled);
+      mContentServerCacheImplementation->setContentSwapEnabled(mContentSwapEnabled);
+      mContentServerCacheImplementation->setContentUpdateInterval(mContentUpdateInterval);
+      mContentServerCacheImplementation->init(0,cServer,mContentCacheSortingFlags);
       mContentServerCache.reset(mContentServerCacheImplementation);
       mContentServerCacheImplementation->startEventProcessing();
       cServer = mContentServerCacheImplementation;
