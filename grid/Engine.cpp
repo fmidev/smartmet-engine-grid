@@ -17,6 +17,7 @@
 #include <macgyver/Exception.h>
 #include <macgyver/StringConversion.h>
 #include <spine/Convenience.h>
+#include <spine/Reactor.h>
 #include <unistd.h>
 
 #include <unordered_set>
@@ -161,7 +162,6 @@ Engine::Engine(const char* theConfigFile)
     mVirtualFilesEnabled = false;
     mMemoryMapCheckEnabled = false;
     mParameterMappingDefinitions_updateTime = 0;
-    mShutdownRequested = false;
     mContentPreloadEnabled = true;
     mParameterMappingDefinitions_autoFileKeyType = T::ParamKeyTypeValue::FMI_NAME;
 
@@ -1077,7 +1077,6 @@ void Engine::shutdown()
     if (!mEnabled) return;
 
     std::cout << "  -- Shutdown requested (grid engine)\n";
-    mShutdownRequested = true;
 
     if (!mContentServer) mContentServer->shutdown();
 
@@ -2904,7 +2903,7 @@ void Engine::updateProcessing()
     if (!mEnabled) return;
 
     ContentServer_sptr contentServer = getContentServer_sptr();
-    while (!mShutdownRequested)
+    while (!Spine::Reactor::isShuttingDown())
     {
       try
       {

@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 21.8.2
+Version: 21.8.17
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -15,7 +15,7 @@ BuildRequires: gcc-c++
 BuildRequires: libconfig-devel >= 1.7.2
 BuildRequires: smartmet-library-grid-content-devel >= 21.8.2
 BuildRequires: smartmet-library-grid-files-devel >= 21.6.8
-BuildRequires: smartmet-library-spine-devel >= 21.7.28
+BuildRequires: smartmet-library-spine-devel >= 21.8.17
 BuildRequires: make
 BuildRequires: omniORB-devel
 BuildRequires: boost169-devel
@@ -26,7 +26,7 @@ Requires: boost169-thread
 Requires: libconfig >= 1.7.2
 Requires: smartmet-library-grid-content >= 21.8.2
 Requires: smartmet-library-grid-files >= 21.6.8
-Requires: smartmet-library-spine >= 21.7.28
+Requires: smartmet-library-spine >= 21.8.17
 Requires: omniORB-devel
 
 %if %{defined el7}
@@ -93,6 +93,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Tue Aug 17 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.8.17-1.fmi
+- Use the new API for shutting down
+
 * Mon Aug  2 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.8.2-1.fmi
 - Repackaged since grid-content ABI changed by switching to boost::atomic_shared_ptr
 

@@ -324,7 +324,6 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     boost::shared_ptr<Fmi::DEM>               mDem;
     boost::shared_ptr<Fmi::LandCover>         mLandCover;
-    mutable bool                              mShutdownRequested;
 
     mutable QueryServer::AliasFileCollection  mProducerMappingDefinitions;
     string_vec                                mProducerMappingDefinitions_filenames;
