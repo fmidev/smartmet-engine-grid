@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 21.8.17
+Version: 21.8.18
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -13,7 +13,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: libconfig-devel >= 1.7.2
-BuildRequires: smartmet-library-grid-content-devel >= 21.8.2
+BuildRequires: smartmet-library-grid-content-devel >= 21.8.18
 BuildRequires: smartmet-library-grid-files-devel >= 21.6.8
 BuildRequires: smartmet-library-spine-devel >= 21.8.17
 BuildRequires: make
@@ -24,7 +24,7 @@ BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 Requires: boost169-thread
 Requires: libconfig >= 1.7.2
-Requires: smartmet-library-grid-content >= 21.8.2
+Requires: smartmet-library-grid-content >= 21.8.18
 Requires: smartmet-library-grid-files >= 21.6.8
 Requires: smartmet-library-spine >= 21.8.17
 Requires: omniORB-devel
@@ -51,7 +51,7 @@ SmartMet grid engine
 Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
-Requires: smartmet-library-grid-content-devel >= 21.8.2
+Requires: smartmet-library-grid-content-devel >= 21.8.18
 Requires: %{SPECNAME} = %{version}-%{release}
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
@@ -93,6 +93,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Wed Aug 18 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.8.18-1.fmi
+- Improved origintime handling
+
 * Tue Aug 17 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.8.17-1.fmi
 - Use the new API for shutting down
 
