@@ -2127,7 +2127,7 @@ ContentTable Engine::getProducerInfo(boost::optional<std::string> producer) cons
         uint glen = generationList.getLength();
         if (glen > 0)
         {
-          generationList.sort(T::GenerationInfo::ComparisonMethod::analysisTime_generationId);
+          generationList.sort(T::GenerationInfo::ComparisonMethod::analysisTime);
 
           // Row number
           resultTable->set(0, row, Fmi::to_string(row + 1));
