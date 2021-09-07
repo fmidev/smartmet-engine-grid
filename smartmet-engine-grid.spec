@@ -94,9 +94,6 @@ rm -rf $RPM_BUILD_ROOT
 * Tue Sep  7 2021 Andris Pavēnis <andris.pavenis@fmi.fi> 21.9.7-1.fmi
 - Repackaged due to dependency changes (libconfig -> libconfig17)
 
-* Tue Sep  7 2021 Andris Pavēnis <andris.pavenis@fmi.fi> 21.9.7-1.fmi
-- Repackaged due to dependency changes (libconfig -> libconfig17)
-
 * Tue Aug 31 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.8.31-1.fmi
 - Repackaged due to ABI changes in Spine
 
