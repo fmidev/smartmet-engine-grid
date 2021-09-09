@@ -181,6 +181,7 @@ bool Browser::page_contentList(const Spine::HTTP::Request& theRequest,Spine::HTT
     output << "<TD>GribParameterId</TD>";
     output << "<TD>NewbaseParameterId</TD>";
     output << "<TD>NewbaseParameterName</TD>";
+    output << "<TD>NetCDFParameterName</TD>";
     output << "<TD>FmiParameterLevelId</TD>";
     output << "<TD>Grib1ParameterLevelId</TD>";
     output << "<TD>Grib2ParameterLevelId</TD>";
@@ -282,6 +283,7 @@ bool Browser::page_contentList(const Spine::HTTP::Request& theRequest,Spine::HTT
         output << "<TD>"<< content->mGribParameterId << "</TD>";
         output << "<TD>"<< content->mNewbaseParameterId << "</TD>";
         output << "<TD>"<< content->getNewbaseParameterName() << "</TD>";
+        output << "<TD>"<< content->getNetCdfParameterName() << "</TD>";
         output << "<TD>"<< (int)content->mFmiParameterLevelId << "</TD>";
         output << "<TD>"<< (int)content->mGrib1ParameterLevelId << "</TD>";
         output << "<TD>"<< (int)content->mGrib2ParameterLevelId << "</TD>";
