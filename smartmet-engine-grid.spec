@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 21.8.17
+Version: 21.9.7
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -12,10 +12,9 @@ Source0: %{name}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
-BuildRequires: libconfig-devel >= 1.7.2
-BuildRequires: smartmet-library-grid-content-devel >= 21.8.2
+BuildRequires: smartmet-library-grid-content-devel >= 21.8.18
 BuildRequires: smartmet-library-grid-files-devel >= 21.6.8
-BuildRequires: smartmet-library-spine-devel >= 21.8.17
+BuildRequires: smartmet-library-spine-devel >= 21.9.7
 BuildRequires: make
 BuildRequires: omniORB-devel
 BuildRequires: boost169-devel
@@ -23,10 +22,9 @@ BuildRequires: gdal32-devel
 BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 Requires: boost169-thread
-Requires: libconfig >= 1.7.2
-Requires: smartmet-library-grid-content >= 21.8.2
+Requires: smartmet-library-grid-content >= 21.8.18
 Requires: smartmet-library-grid-files >= 21.6.8
-Requires: smartmet-library-spine >= 21.8.17
+Requires: smartmet-library-spine >= 21.9.7
 Requires: omniORB-devel
 
 %if %{defined el7}
@@ -51,7 +49,7 @@ SmartMet grid engine
 Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
-Requires: smartmet-library-grid-content-devel >= 21.8.2
+Requires: smartmet-library-grid-content-devel >= 21.8.18
 Requires: %{SPECNAME} = %{version}-%{release}
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
@@ -93,6 +91,15 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Tue Sep  7 2021 Andris Pavēnis <andris.pavenis@fmi.fi> 21.9.7-1.fmi
+- Repackaged due to dependency changes (libconfig -> libconfig17)
+
+* Tue Aug 31 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.8.31-1.fmi
+- Repackaged due to ABI changes in Spine
+
+* Wed Aug 18 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.8.18-1.fmi
+- Improved origintime handling
+
 * Tue Aug 17 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.8.17-1.fmi
 - Use the new API for shutting down
 
