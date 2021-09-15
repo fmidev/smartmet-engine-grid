@@ -336,6 +336,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     T::ParamKeyType                           mParameterMappingDefinitions_autoFileKeyType;
     std::string                               mParameterMappingDefinitions_autoFile_fmi;
     std::string                               mParameterMappingDefinitions_autoFile_newbase;
+    std::string                               mParameterMappingDefinitions_autoFile_netCdf;
 
     mutable QueryServer::AliasFileCollection  mParameterAliasDefinitions;
     string_vec                                mParameterAliasDefinitions_filenames;
