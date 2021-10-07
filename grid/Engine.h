@@ -140,7 +140,6 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                           const std::string& producerName,
                           const std::string& parameterName,
                           T::GeometryId geometryId,
-                          T::ParamLevelIdType levelIdType,
                           T::ParamLevelId levelId,
                           T::ParamLevel level,
                           bool onlySearchEnabled,
@@ -149,7 +148,6 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                getParameterMappings(
                           const std::string& producerName,
                           const std::string& parameterName,
-                          T::ParamLevelIdType levelIdType,
                           T::ParamLevelId levelId,
                           T::ParamLevel level,
                           bool onlySearchEnabled,
@@ -261,10 +259,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::string         mContentSourceHttpUrl;
 
     std::string         mMemoryContentDir;
-    uint                mMemoryContentSortingFlags;
     uint                mEventListMaxSize;
     bool                mContentCacheEnabled;
-    uint                mContentCacheSortingFlags;
 
     bool                mContentServerProcessingLogEnabled;
     std::string         mContentServerProcessingLogFile;
