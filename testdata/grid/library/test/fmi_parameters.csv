@@ -13,6 +13,17 @@
 # 7) LevelInterpolationMethod
 # 8) DefaultPrecision
 #
+
+# These are for testing
+30682;T-MEAN-C;C;AverageTemperature (682);1;1;1;;
+30812;F02-T-MAX-C;C;NormalMaxTemperatureF02 (812);1;1;1;;
+30813;F12-T-MAX-C;C;NormalMaxTemperatureF02 (813);1;1;1;;
+30814;F37-T-MAX-C;C;NormalMaxTemperatureF37 (814);1;1;1;;
+30815;F50-T-MAX-C;C;NormalMaxTemperatureF50 (815);1;1;1;;
+30816;F63-T-MAX-C;C;NormalMaxTemperatureF63 (816);1;1;1;;
+30817;F88-T-MAX-C;C;NormalMaxTemperatureF88 (817);1;1;1;;
+30818;F98-T-MAX-C;C;NormalMaxTemperatureF98 (818);1;1;1;;
+
 1000000001;Pressure;;Pressure;1;1;1;;
 1000000002;GeopHeight;;GeopHeight;1;1;1;;
 1000000003;GeomHeight;;GeomHeight;1;1;1;;
