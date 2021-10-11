@@ -71,7 +71,6 @@ Engine::Engine(const char* theConfigFile)
         "smartmet.engine.grid.content-server.content-source.http.url",
         "smartmet.engine.grid.content-server.content-source.corba.ior",
         "smartmet.engine.grid.content-server.cache.enabled",
-        "smartmet.engine.grid.content-server.cache.contentSortingFlags",
         "smartmet.engine.grid.content-server.cache.requestForwardEnabled",
 
         "smartmet.engine.grid.content-server.processing-log.enabled",
@@ -142,14 +141,12 @@ Engine::Engine(const char* theConfigFile)
     mContentSourceHttpUrl = "";
     mContentSourceCorbaIor = "";
     mContentCacheEnabled = true;
-    mContentCacheSortingFlags = 5;
     mPointCacheEnabled = false;
     mPointCacheHitsRequired = 20;  // 20 hits required during the last 20 minutes
     mPointCacheTimePeriod = 1200;
     mPreloadMemoryLock = false;
     mRequestForwardEnabled = false;
     mMemoryContentDir = "/tmp";
-    mMemoryContentSortingFlags = 5;
     mEventListMaxSize = 0;
     mQueryCache_updateTime = time(nullptr);
     mContentServerStartTime = 0;
@@ -237,11 +234,9 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.corba.ior", mContentSourceCorbaIor);
 
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.file.contentDir", mMemoryContentDir);
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.file.contentSortingFlags", mMemoryContentSortingFlags);
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.file.eventListMaxSize", mEventListMaxSize);
 
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.enabled", mContentCacheEnabled);
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.contentSortingFlags", mContentCacheSortingFlags);
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.requestForwardEnabled", mRequestForwardEnabled);
 
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.contentSwapEnabled", mContentSwapEnabled);
@@ -395,7 +390,7 @@ void Engine::init()
       }
 
       ContentServer::MemoryImplementation* memoryImplementation = new ContentServer::MemoryImplementation();
-      memoryImplementation->init(true, false, true, eventstEnabled, mMemoryContentDir, 0, mMemoryContentSortingFlags);
+      memoryImplementation->init(true, false, true, eventstEnabled, mMemoryContentDir, 0);
       memoryImplementation->setEventListMaxLength(mEventListMaxSize);
       mContentServer.reset(memoryImplementation);
       cServer = memoryImplementation;
@@ -413,7 +408,7 @@ void Engine::init()
       mContentServerCacheImplementation->setRequestForwardEnabled(mRequestForwardEnabled);
       mContentServerCacheImplementation->setContentSwapEnabled(mContentSwapEnabled);
       mContentServerCacheImplementation->setContentUpdateInterval(mContentUpdateInterval);
-      mContentServerCacheImplementation->init(0, cServer, mContentCacheSortingFlags);
+      mContentServerCacheImplementation->init(0, cServer);
       mContentServerCache.reset(mContentServerCacheImplementation);
       mContentServerCacheImplementation->startEventProcessing();
       cServer = mContentServerCacheImplementation;
@@ -1696,7 +1691,6 @@ void Engine::getParameterMappings(
     const std::string& producerName,
     const std::string& parameterName,
     T::GeometryId geometryId,
-    T::ParamLevelIdType levelIdType,
     T::ParamLevelId levelId,
     T::ParamLevel level,
     bool onlySearchEnabled,
@@ -1714,7 +1708,7 @@ void Engine::getParameterMappings(
 
     for (auto m = mParameterMappingDefinitions->begin(); m != mParameterMappingDefinitions->end(); ++m)
     {
-      m->getMappings(producerName, parameterName, geometryId, levelIdType, levelId, level, onlySearchEnabled, mappings);
+      m->getMappings(producerName, parameterName, geometryId, levelId, level, onlySearchEnabled, mappings);
     }
   }
   catch (...)
@@ -1726,7 +1720,6 @@ void Engine::getParameterMappings(
 void Engine::getParameterMappings(
     const std::string& producerName,
     const std::string& parameterName,
-    T::ParamLevelIdType levelIdType,
     T::ParamLevelId levelId,
     T::ParamLevel level,
     bool onlySearchEnabled,
@@ -1744,7 +1737,7 @@ void Engine::getParameterMappings(
 
     for (auto m = mParameterMappingDefinitions->begin(); m != mParameterMappingDefinitions->end(); ++m)
     {
-      m->getMappings(producerName, parameterName, levelIdType, levelId, level, onlySearchEnabled, mappings);
+      m->getMappings(producerName, parameterName, levelId, level, onlySearchEnabled, mappings);
     }
   }
   catch (...)
@@ -1767,11 +1760,11 @@ void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails) const
       QueryServer::ParameterMapping_vec mappings;
       if (rec->mLevelId > " " || rec->mLevel > " ")
       {
-        getParameterMappings(rec->mProducerName, rec->mOriginalParameter, atoi(rec->mGeometryId.c_str()), T::ParamLevelIdTypeValue::ANY, atoi(rec->mLevelId.c_str()),
+        getParameterMappings(rec->mProducerName, rec->mOriginalParameter, atoi(rec->mGeometryId.c_str()), atoi(rec->mLevelId.c_str()),
             atoi(rec->mLevel.c_str()), false, mappings);
         if (mappings.size() == 0 && rec->mLevel < " ")
         {
-          getParameterMappings(rec->mProducerName, rec->mOriginalParameter, atoi(rec->mGeometryId.c_str()), T::ParamLevelIdTypeValue::ANY, atoi(rec->mLevelId.c_str()), -1, false,
+          getParameterMappings(rec->mProducerName, rec->mOriginalParameter, atoi(rec->mGeometryId.c_str()), atoi(rec->mLevelId.c_str()), -1, false,
               mappings);
         }
       }
@@ -1786,7 +1779,7 @@ void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails) const
         details.mMapping = *m;
 
         T::ContentInfoList contentInfoList;
-        int result = contentServer->getContentListByParameterAndProducerName(0, m->mProducerName, m->mParameterKeyType, m->mParameterKey, m->mParameterLevelIdType,
+        int result = contentServer->getContentListByParameterAndProducerName(0, m->mProducerName, m->mParameterKeyType, m->mParameterKey,
             m->mParameterLevelId, m->mParameterLevel, m->mParameterLevel, -1, -1, m->mGeometryId, std::string("19000101T000000"), std::string("21000101T000000"), 0,
             contentInfoList);
         if (result == 0)
@@ -2463,7 +2456,7 @@ void Engine::updateMappings(
             m.mParameterKeyType = toUInt8(pl[2].c_str());
             m.mParameterKey = pl[3];
             m.mGeometryId = toInt32(pl[4].c_str());
-            m.mParameterLevelIdType = toUInt8(pl[5].c_str());
+            //m.mParameterLevelIdType = toUInt8(pl[5].c_str());
             m.mParameterLevelId = toInt8(pl[6].c_str());
             m.mParameterLevel = toInt32(pl[7].c_str());
 
