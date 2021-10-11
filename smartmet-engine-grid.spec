@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 21.10.4
+Version: 21.10.11
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -12,9 +12,9 @@ Source0: %{name}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
-BuildRequires: smartmet-library-grid-content-devel >= 21.10.4
-BuildRequires: smartmet-library-grid-files-devel >= 21.10.4
-BuildRequires: smartmet-library-spine-devel >= 21.9.17
+BuildRequires: smartmet-library-grid-content-devel >= 21.10.11
+BuildRequires: smartmet-library-grid-files-devel >= 21.10.11
+BuildRequires: smartmet-library-spine-devel >= 21.10.11
 BuildRequires: make
 BuildRequires: omniORB-devel
 BuildRequires: boost169-devel
@@ -22,9 +22,9 @@ BuildRequires: gdal32-devel
 BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 Requires: boost169-thread
-Requires: smartmet-library-grid-content >= 21.10.4
-Requires: smartmet-library-grid-files >= 21.10.4
-Requires: smartmet-library-spine >= 21.9.17
+Requires: smartmet-library-grid-content >= 21.10.11
+Requires: smartmet-library-grid-files >= 21.10.11
+Requires: smartmet-library-spine >= 21.10.11
 Requires: omniORB-devel
 
 %if %{defined el7}
@@ -49,7 +49,7 @@ SmartMet grid engine
 Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
-Requires: smartmet-library-grid-content-devel >= 21.10.4
+Requires: smartmet-library-grid-content-devel >= 21.10.11
 Requires: %{SPECNAME} = %{version}-%{release}
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
@@ -58,7 +58,7 @@ SmartMet %{SPECNAME} development headers.
 Summary: SmartMet %{SPECNAME} - redis server with required data for testing purpose
 Group: SmartMet/Development
 Provides: smartmet-engine-grid-test
-Requires: smartmet-library-grid-files >= 21.10.4
+Requires: smartmet-library-grid-files >= 21.10.11
 %description -n smartmet-engine-grid-test
 SmartMet %{SPECNAME} - redis server with required data for testing purpose
 
@@ -91,6 +91,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Mon Oct 11 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.10.11-1.fmi
+- Simplified grid storage structures
+
 * Mon Oct  4 2021 Mika Heiskanen <mika.heiskanen@fmi.fi> - 21.10.4-1.fmi
 - Simplified configuration files
 
