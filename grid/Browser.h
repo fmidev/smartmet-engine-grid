@@ -33,6 +33,8 @@ class Browser
     void                  init(const char *theConfigurationFile,ContentServer_sptr theMainContentServer,Engine *theGridEngine);
     bool                  requestHandler(const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
     void                  browserContent(std::ostringstream& output);
+    unsigned long long    getFlags();
+    void                  setFlags(unsigned long long flags);
 
   private:
 
@@ -49,11 +51,19 @@ class Browser
     bool                  page_luaFiles(const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
     bool                  page_luaFile(const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
     bool                  page_contentServer(const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
+    bool                  page_dataServer(const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
+    bool                  page_queryServer(const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
     bool                  page_contentInformation(const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
     bool                  page_producers(const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
     bool                  page_generations(const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
     bool                  page_files(const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
     bool                  page_contentList(const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
+    bool                  page_contentServer_debugLog(const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
+    bool                  page_contentServer_processingLog(const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
+    bool                  page_dataServer_debugLog(const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
+    bool                  page_dataServer_processingLog(const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
+    bool                  page_queryServer_debugLog(const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
+    bool                  page_queryServer_processingLog(const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
 
     bool                  includeFile(std::ostringstream& output,const char *filename);
 
@@ -65,6 +75,17 @@ class Browser
     uint                  mCachedFileId;
     T::ContentInfoList    mCachedContentInfoList;
     Filenames             mFilenames;
+    unsigned long long    mFlags;
+
+
+  public:
+
+    class Flags
+    {
+      public:
+        static const unsigned long long   contentModificationEnabled  = 1 << 0;
+        static const unsigned long long   logModificationEnabled      = 1 << 1;
+    };
 };
 
 }  // namespace Grid
