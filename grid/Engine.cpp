@@ -182,6 +182,8 @@ Engine::Engine(const char* theConfigFile)
     mQueryCache_maxAge = 300;
     mContentSwapEnabled = false;
     mContentUpdateInterval = 180;
+    mBrowserEnabled = true;
+    mBrowserFlags = 0;
 
     mNumOfCachedGrids = 10000;
     mMaxSizeOfCachedGridsInMegaBytes = 10000;
@@ -302,6 +304,10 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingFiles", mParameterMappingDefinitions_filenames);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.aliasFiles", mParameterAliasDefinitions_filenames);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.luaFiles", mQueryServerLuaFiles);
+
+    configurationFile.getAttributeValue("smartmet.engine.grid.browser.enabled", mBrowserEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.browser.flags", mBrowserFlags);
+
 
     mProducerSearchList_modificationTime = getFileModificationTime(mProducerSearchList_filename.c_str());
 
@@ -478,39 +484,39 @@ void Engine::init()
       mQueryServer.reset(server);
     }
 
-    if (mContentServerProcessingLogEnabled && mContentServerProcessingLogFile.length() > 0)
+    if (mContentServerProcessingLogFile.length() > 0)
     {
-      mContentServerProcessingLog.init(true, mContentServerProcessingLogFile.c_str(), mContentServerProcessingLogMaxSize, mContentServerProcessingLogTruncateSize);
+      mContentServerProcessingLog.init(mContentServerProcessingLogEnabled, mContentServerProcessingLogFile.c_str(), mContentServerProcessingLogMaxSize, mContentServerProcessingLogTruncateSize);
       cServer->setProcessingLog(&mContentServerProcessingLog);
     }
 
-    if (mContentServerDebugLogEnabled && mContentServerDebugLogFile.length() > 0)
+    if (mContentServerDebugLogFile.length() > 0)
     {
-      mContentServerDebugLog.init(true, mContentServerDebugLogFile.c_str(), mContentServerDebugLogMaxSize, mContentServerDebugLogTruncateSize);
+      mContentServerDebugLog.init(mContentServerDebugLogEnabled, mContentServerDebugLogFile.c_str(), mContentServerDebugLogMaxSize, mContentServerDebugLogTruncateSize);
       cServer->setDebugLog(&mContentServerDebugLog);
     }
 
-    if (mDataServerProcessingLogEnabled && mDataServerProcessingLogFile.length() > 0)
+    if (mDataServerProcessingLogFile.length() > 0)
     {
-      mDataServerProcessingLog.init(true, mDataServerProcessingLogFile.c_str(), mDataServerProcessingLogMaxSize, mDataServerProcessingLogTruncateSize);
+      mDataServerProcessingLog.init(mDataServerProcessingLogEnabled, mDataServerProcessingLogFile.c_str(), mDataServerProcessingLogMaxSize, mDataServerProcessingLogTruncateSize);
       dServer->setProcessingLog(&mDataServerProcessingLog);
     }
 
-    if (mDataServerDebugLogEnabled && mDataServerDebugLogFile.length() > 0)
+    if (mDataServerDebugLogFile.length() > 0)
     {
-      mDataServerDebugLog.init(true, mDataServerDebugLogFile.c_str(), mDataServerDebugLogMaxSize, mDataServerDebugLogTruncateSize);
+      mDataServerDebugLog.init(mDataServerDebugLogEnabled, mDataServerDebugLogFile.c_str(), mDataServerDebugLogMaxSize, mDataServerDebugLogTruncateSize);
       dServer->setDebugLog(&mDataServerDebugLog);
     }
 
-    if (mQueryServerProcessingLogEnabled && mQueryServerProcessingLogFile.length() > 0)
+    if (mQueryServerProcessingLogFile.length() > 0)
     {
-      mQueryServerProcessingLog.init(true, mQueryServerProcessingLogFile.c_str(), mQueryServerProcessingLogMaxSize, mQueryServerProcessingLogTruncateSize);
+      mQueryServerProcessingLog.init(mQueryServerProcessingLogEnabled, mQueryServerProcessingLogFile.c_str(), mQueryServerProcessingLogMaxSize, mQueryServerProcessingLogTruncateSize);
       qServer->setProcessingLog(&mQueryServerProcessingLog);
     }
 
-    if (mQueryServerDebugLogEnabled && mQueryServerDebugLogFile.length() > 0)
+    if (mQueryServerDebugLogFile.length() > 0)
     {
-      mQueryServerDebugLog.init(true, mQueryServerDebugLogFile.c_str(), mQueryServerDebugLogMaxSize, mQueryServerDebugLogTruncateSize);
+      mQueryServerDebugLog.init(mQueryServerDebugLogEnabled, mQueryServerDebugLogFile.c_str(), mQueryServerDebugLogMaxSize, mQueryServerDebugLogTruncateSize);
       qServer->setDebugLog(&mQueryServerDebugLog);
     }
 
@@ -520,6 +526,7 @@ void Engine::init()
     mParameterAliasDefinitions.init(mParameterAliasDefinitions_filenames);
 
     mBrowser.init(mConfigurationFile_name.c_str(), mContentServer, this);
+    mBrowser.setFlags(mBrowserFlags);
 
     startUpdateProcessing();
   }
@@ -736,6 +743,33 @@ void Engine::checkConfiguration()
         mQueryServer->setDebugLog(&mQueryServerDebugLog);
     }
 
+    // ### Browser
+
+    bool browserEnabled = false;
+
+    configurationFile.getAttributeValue("smartmet.engine.grid.browser.enabled", browserEnabled);
+
+    if (mBrowserEnabled != browserEnabled)
+    {
+      mBrowserEnabled = browserEnabled;
+
+      if (mBrowserEnabled)
+        std::cout << Spine::log_time_str() << " Grid-engine configuration: Browser enabled" << std::endl;
+      else
+        std::cout << Spine::log_time_str() << " Grid-engine configuration: Browser disabled" << std::endl;
+    }
+
+
+    unsigned long long browserFlags = 0;
+    configurationFile.getAttributeValue("smartmet.engine.grid.browser.flags", browserFlags);
+
+    if (mBrowserFlags != browserFlags)
+    {
+      std::cout << Spine::log_time_str() << " Grid-engine configuration: Browser flags changed (" << mBrowserFlags << " => " << browserFlags << ")" << std::endl;
+      mBrowserFlags = browserFlags;
+      mBrowser.setFlags(mBrowserFlags);
+    }
+
     // ### Query cache
 
     bool queryCacheEnabled = false;
@@ -894,7 +928,7 @@ bool Engine::browserRequest(const Spine::HTTP::Request& theRequest, Spine::HTTP:
   FUNCTION_TRACE
   try
   {
-    if (!mEnabled)
+    if (!mEnabled || !mBrowserEnabled)
       return false;
 
     return mBrowser.requestHandler(theRequest, theResponse);
@@ -912,7 +946,7 @@ void Engine::browserContent(std::ostringstream& output)
   FUNCTION_TRACE
   try
   {
-    if (!mEnabled)
+    if (!mEnabled || !mBrowserEnabled)
       return;
 
     mBrowser.browserContent(output);

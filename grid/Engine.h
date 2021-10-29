@@ -314,6 +314,9 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     pthread_t           mThread;
     Browser             mBrowser;
+    bool                mBrowserEnabled;
+    unsigned long long  mBrowserFlags;
+
 
     DataServer::ServiceImplementation*        mDataServerImplementation;
     ContentServer::CacheImplementation*       mContentServerCacheImplementation;
