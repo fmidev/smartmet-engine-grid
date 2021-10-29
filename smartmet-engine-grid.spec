@@ -12,8 +12,8 @@ Source0: %{name}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
-BuildRequires: smartmet-library-grid-content-devel >= 21.10.19
-BuildRequires: smartmet-library-grid-files-devel >= 21.10.19
+BuildRequires: smartmet-library-grid-content-devel >= 21.10.29
+BuildRequires: smartmet-library-grid-files-devel >= 21.10.29
 BuildRequires: smartmet-library-spine-devel >= 21.10.18
 BuildRequires: make
 BuildRequires: omniORB-devel
@@ -22,8 +22,8 @@ BuildRequires: gdal32-devel
 BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 Requires: boost169-thread
-Requires: smartmet-library-grid-content >= 21.10.19
-Requires: smartmet-library-grid-files >= 21.10.19
+Requires: smartmet-library-grid-content >= 21.10.29
+Requires: smartmet-library-grid-files >= 21.10.29
 Requires: smartmet-library-spine >= 21.10.18
 Requires: omniORB-devel
 
@@ -49,7 +49,7 @@ SmartMet grid engine
 Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
-Requires: smartmet-library-grid-content-devel >= 21.10.19
+Requires: smartmet-library-grid-content-devel >= 21.10.29
 Requires: %{SPECNAME} = %{version}-%{release}
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
@@ -58,7 +58,7 @@ SmartMet %{SPECNAME} development headers.
 Summary: SmartMet %{SPECNAME} - redis server with required data for testing purpose
 Group: SmartMet/Development
 Provides: smartmet-engine-grid-test
-Requires: smartmet-library-grid-files >= 21.10.19
+Requires: smartmet-library-grid-files >= 21.10.29
 %description -n smartmet-engine-grid-test
 SmartMet %{SPECNAME} - redis server with required data for testing purpose
 
