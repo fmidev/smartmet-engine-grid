@@ -480,7 +480,7 @@ bool Browser::page_contentList(const Spine::HTTP::Request& theRequest,Spine::HTT
       if (startMessageIndex > 0)
         output << "<TD width=\"70\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF;';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=contentList&producerId=" << producerId << "&producerName=" << producerName << "&generationId=" << generationId << "&generationName=" << generationName << "&fileId=" << fileId << "&startMessageIndex=0" << "');\" >&lt;&lt;</TD>\n";
       else
-        output << "<TD width=\"70\" style=\"background:"+bg+";\" > </TD>\n";
+        output << "<TD width=\"70\" style=\"background:"+bg+";\" >&nbsp;</TD>\n";
 
       if ((startMessageIndex+maxRecords) < len)
         output << "<TD width=\"70\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF;';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=contentList&producerId=" << producerId << "&producerName=" << producerName << "&generationId=" << generationId << "&generationName=" << generationName << "&fileId=" << fileId << "&startMessageIndex=" << nextMessageIndex << "');\" >&gt;&gt;</TD>\n";
@@ -499,7 +499,7 @@ bool Browser::page_contentList(const Spine::HTTP::Request& theRequest,Spine::HTT
             output << "<TD width=\"70\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF;';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=contentList&producerId=" << producerId << "&producerName=" << producerName << "&generationId=" << generationId << "&generationName=" << generationName << "&fileId=" << fileId << "&startMessageIndex=0');\" >&lt;&lt;&lt;</TD>\n";
         }
         else
-          output << "<TD width=\"70\" style=\"background:"+bg+";\" > </TD>\n";
+          output << "<TD width=\"70\" style=\"background:"+bg+";\" >&nbsp;</TD>\n";
 
         if ((startMessageIndex+maxRecords) < len)
         {
@@ -509,7 +509,7 @@ bool Browser::page_contentList(const Spine::HTTP::Request& theRequest,Spine::HTT
             output << "<TD width=\"70\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF;';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=contentList&producerId=" << producerId << "&producerName=" << producerName << "&generationId=" << generationId << "&generationName=" << generationName << "&fileId=" << fileId << "&startMessageIndex=" << (len-maxRecords) << "');\" >&gt;&gt;&gt;</TD>\n";
         }
         else
-          output << "<TD width=\"70\" style=\"background:"+bg+";\" > </TD>\n";
+          output << "<TD width=\"70\" style=\"background:"+bg+";\" >&nbsp;</TD>\n";
 
       }
 
@@ -525,7 +525,7 @@ bool Browser::page_contentList(const Spine::HTTP::Request& theRequest,Spine::HTT
             output << "<TD width=\"70\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF;';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=contentList&producerId=" << producerId << "&producerName=" << producerName << "&generationId=" << generationId << "&generationName=" << generationName << "&fileId=" << fileId << "&startMessageIndex=0');\" >&lt;&lt;&lt;&lt;</TD>\n";
         }
         else
-          output << "<TD width=\"70\" style=\"background:"+bg+";\" > </TD>\n";
+          output << "<TD width=\"70\" style=\"background:"+bg+";\" >&nbsp;</TD>\n";
 
         if ((startMessageIndex+maxRecords) < len)
         {
@@ -535,7 +535,7 @@ bool Browser::page_contentList(const Spine::HTTP::Request& theRequest,Spine::HTT
             output << "<TD width=\"70\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF;';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=contentList&producerId=" << producerId << "&producerName=" << producerName << "&generationId=" << generationId << "&generationName=" << generationName << "&fileId=" << fileId << "&startMessageIndex=" << (len-maxRecords) << "');\" >&gt;&gt;&gt;&gt;</TD>\n";
         }
         else
-          output << "<TD width=\"70\" style=\"background:"+bg+";\" > </TD>\n";
+          output << "<TD width=\"70\" style=\"background:"+bg+";\" >&nbsp;</TD>\n";
       }
 
       if (len > 10000)
@@ -550,7 +550,7 @@ bool Browser::page_contentList(const Spine::HTTP::Request& theRequest,Spine::HTT
             output << "<TD width=\"70\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF;';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=contentList&producerId=" << producerId << "&producerName=" << producerName << "&generationId=" << generationId << "&generationName=" << generationName << "&fileId=" << fileId << "&startMessageIndex=0');\" >&lt;&lt;&lt;&lt;&lt;</TD>\n";
         }
         else
-          output << "<TD width=\"70\" style=\"background:"+bg+";\" > </TD>\n";
+          output << "<TD width=\"70\" style=\"background:"+bg+";\" >&nbsp;</TD>\n";
 
         if ((startMessageIndex+maxRecords) < len)
         {
@@ -560,7 +560,7 @@ bool Browser::page_contentList(const Spine::HTTP::Request& theRequest,Spine::HTT
             output << "<TD width=\"70\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF;';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=contentList&producerId=" << producerId << "&producerName=" << producerName << "&generationId=" << generationId << "&generationName=" << generationName << "&fileId=" << fileId << "&startMessageIndex=" << (len-maxRecords) << "');\" >&gt;&gt;&gt;&gt;&gt;</TD>\n";
         }
         else
-          output << "<TD width=\"70\" style=\"background:"+bg+";\" > </TD>\n";
+          output << "<TD width=\"70\" style=\"background:"+bg+";\" >&nbsp;</TD>\n";
       }
 
       for (uint t=len; t<maxRecords; t++)
@@ -932,17 +932,15 @@ bool Browser::page_files(const Spine::HTTP::Request& theRequest,Spine::HTTP::Res
       output << "<HR>\n";
       output << "<TABLE style=\"font-size:12;\"><TR>\n";
 
-      //output << "<TD style=\"width:100;background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#FFFF00;';\" onClick=\"getPage(this,parent,'/grid-admin?target=grid-engine&page=files&generation=" << generationId << "&startFileId=" << prevStartFileId << "');\" >Previous page</TD>\n";
-      //window.history.back();
       if (startFileId > 0)
         output << "<TD width=\"70\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF;';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=files&producerId=" << producerId << "&producerName=" << producerName << "&generationId=" << generationId << "&generationName=" << generationName << "&endFileId=" << (startFileId-1) << "');\" >&lt;&lt;</TD>\n";
       else
-        output << "<TD width=\"70\" style=\"background:"+bg+";\" > </TD>\n";
+        output << "<TD width=\"70\" style=\"background:"+bg+";\" >&nbsp;</TD>\n";
 
       if (len >= maxRecords)
         output << "<TD width=\"70\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF;';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=files&producerId=" << producerId << "&producerName=" << producerName << "&generationId=" << generationId << "&generationName=" << generationName << "&startFileId=" << nextFileId << "');\" >&gt;&gt;</TD>\n";
       else
-        output << "<TD width=\"70\" style=\"background:"+bg+";\" > </TD>\n";
+        output << "<TD width=\"70\" style=\"background:"+bg+";\" >&nbsp;</TD>\n";
 
       output << "</TR></TABLE>\n";
     }
@@ -1071,6 +1069,8 @@ bool Browser::page_generations(const Spine::HTTP::Request& theRequest,Spine::HTT
 
     uint producerId = 0;
     uint generationId  = 0;
+    uint startGenerationIndex = 0;
+    uint maxRecords = 30;
     uint mode = 0;
     T::GenerationInfo gInfo;
     std::string producerName;
@@ -1086,6 +1086,10 @@ bool Browser::page_generations(const Spine::HTTP::Request& theRequest,Spine::HTT
     auto generation = theRequest.getParameter("generationId");
     if (generation)
       generationId = atoi(generation->c_str());
+
+    auto startGenerationIdx = theRequest.getParameter("startGenerationIndex");
+    if (startGenerationIdx)
+      startGenerationIndex = atoi(startGenerationIdx->c_str());
 
     auto modeStr = theRequest.getParameter("mode");
     if (modeStr)
@@ -1222,48 +1226,81 @@ bool Browser::page_generations(const Spine::HTTP::Request& theRequest,Spine::HTT
     contentServer->getGenerationInfoListByProducerId(0,producerId,generationInfoList);
 
     uint len = generationInfoList.getLength();
-    for (uint t=0; t<len; t++)
+    for (uint t=0; t<maxRecords; t++)
     {
-      T::GenerationInfo *generation = generationInfoList.getGenerationInfoByIndex(t);
-
-      std::string fg = "#000000";
-      std::string bg = "#FFFFFF";
-
-      if (generation->mDeletionTime > 0 && generation->mDeletionTime < (time(nullptr) + 120))
-        fg = "#808080";
-
-      if (generation->mGenerationId == generationId)
+      T::GenerationInfo *generation = generationInfoList.getGenerationInfoByIndex(startGenerationIndex+t);
+      if (generation != nullptr)
       {
-        gInfo = *generation;
-        fg = "#FFFFFF";
-        bg = "#FF0000";
-        output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=files&producerId=" << producerId << "&producerName=" << producerName << "&generationId=" << generation->mGenerationId << "&generationName=" << generation->mName << "');\" >\n";
+        std::string fg = "#000000";
+        std::string bg = "#FFFFFF";
+
+        if (generation->mDeletionTime > 0 && generation->mDeletionTime < (time(nullptr) + 120))
+          fg = "#808080";
+
+        if (generation->mGenerationId == generationId)
+        {
+          gInfo = *generation;
+          fg = "#FFFFFF";
+          bg = "#FF0000";
+          output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=files&producerId=" << producerId << "&producerName=" << producerName << "&generationId=" << generation->mGenerationId << "&generationName=" << generation->mName << "');\" >\n";
+        }
+        else
+        {
+          output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg << "; color:" << fg << ";'\" onmouseover=\"this.style='background:#FFFF00; color:#000000;';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=generations&producerId=" << producerId << "&producerName=" << producerName << "&startGenerationIndex=" << startGenerationIndex << "&generationId=" << generation->mGenerationId << "&generationName=" << generation->mName << "');\" >\n";
+        }
+
+
+        output << "<TD>"<< generation->mGenerationId << "</TD>";
+        output << "<TD>"<< generation->mName << "</TD>";
+        output << "<TD>"<< generation->mDescription << "</TD>";
+        output << "<TD>"<< generation->mAnalysisTime << "</TD>";
+        output << "<TD>"<< generation->mFlags << "</TD>";
+        output << "<TD>"<< generation->mSourceId << "</TD>";
+        output << "<TD>"<< (int)generation->mStatus << "</TD>";
+        if (generation->mDeletionTime > 0)
+          output << "<TD>"<< utcTimeFromTimeT(generation->mDeletionTime) << "</TD>";
+        else
+          output << "<TD></TD>";
+
+        output << "</TR>";
       }
       else
       {
-        output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg << "; color:" << fg << ";'\" onmouseover=\"this.style='background:#FFFF00; color:#000000;';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=generations&producerId=" << producerId << "&producerName=" << producerName << "&generationId=" << generation->mGenerationId << "&generationName=" << generation->mName << "');\" >\n";
+        output << "<TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD></TR>\n";
       }
-
-
-      output << "<TD>"<< generation->mGenerationId << "</TD>";
-      output << "<TD>"<< generation->mName << "</TD>";
-      output << "<TD>"<< generation->mDescription << "</TD>";
-      output << "<TD>"<< generation->mAnalysisTime << "</TD>";
-      output << "<TD>"<< generation->mFlags << "</TD>";
-      output << "<TD>"<< generation->mSourceId << "</TD>";
-      output << "<TD>"<< (int)generation->mStatus << "</TD>";
-      if (generation->mDeletionTime > 0)
-        output << "<TD>"<< utcTimeFromTimeT(generation->mDeletionTime) << "</TD>";
-      else
-        output << "<TD></TD>";
-      output << "</TR>";
     }
 
     output << "</TABLE>\n";
 
+    if (startGenerationIndex > 0 || len >= maxRecords)
+    {
+      std::string bg = "#C0C0C0";
+
+      output << "<HR>\n";
+      output << "<TABLE style=\"font-size:12;\"><TR>\n";
+
+      if (startGenerationIndex > 0)
+      {
+        if (startGenerationIndex > maxRecords)
+          output << "<TD width=\"70\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF;';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=generations&producerId=" << producerId << "&producerName=" << producerName << "&startGenerationIndex=" << (startGenerationIndex-maxRecords) << "');\" >&lt;&lt;</TD>\n";
+        else
+          output << "<TD width=\"70\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF;';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=generations&producerId=" << producerId << "&producerName=" << producerName << "&startGenerationIndex=0');\" >&lt;&lt;</TD>\n";
+      }
+      else
+        output << "<TD width=\"70\" style=\"background:"+bg+";\" >&nbsp;</TD>\n";
+
+      if (len > (startGenerationIndex+maxRecords))
+        output << "<TD width=\"70\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF;';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=generations&producerId=" << producerId << "&producerName=" << producerName << "&startGenerationIndex=" << (startGenerationIndex+maxRecords) << "');\" >&gt;&gt;</TD>\n";
+      else
+        output << "<TD width=\"70\" style=\"background:"+bg+";\" >&nbsp;</TD>\n";
+
+      output << "</TR></TABLE>\n";
+    }
+
+
     if ((mFlags & Flags::contentModificationEnabled) && mainSource)
     {
-      std::string prod = "&producerId=" + toString(producerId) + "&producerName=" + producerName;
+      std::string prod = "&producerId=" + toString(producerId) + "&producerName=" + producerName + "&startGenerationIndex=" + std::to_string(startGenerationIndex);
 
       if (mode > 0  && mode < 100)
       {
@@ -1358,10 +1395,16 @@ bool Browser::page_producers(const Spine::HTTP::Request& theRequest,Spine::HTTP:
 
     T::ProducerInfo pInfo;
     uint producerId = 0;
+    uint startProducerIndex = 0;
+    uint maxRecords = 30;
     uint mode = 0;
     auto producer = theRequest.getParameter("producerId");
     if (producer)
       producerId = atoi(producer->c_str());
+
+    auto producerIdx = theRequest.getParameter("startProducerIndex");
+    if (producerIdx)
+      startProducerIndex = atoi(producerIdx->c_str());
 
     auto modeStr = theRequest.getParameter("mode");
     if (modeStr)
@@ -1474,34 +1517,64 @@ bool Browser::page_producers(const Spine::HTTP::Request& theRequest,Spine::HTTP:
     contentServer->getProducerInfoList(0,producerInfoList);
 
     uint len = producerInfoList.getLength();
-    for (uint t=0; t<len; t++)
+    for (uint t=0; t<maxRecords; t++)
     {
-      T::ProducerInfo *producer = producerInfoList.getProducerInfoByIndex(t);
-
-      if (producer->mProducerId == producerId)
+      T::ProducerInfo *producer = producerInfoList.getProducerInfoByIndex(t+startProducerIndex);
+      if (producer != nullptr)
       {
-        fg = "#FFFFFF";
-        bg = "#FF0000";
-        pInfo = *producer;
-        output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=generations&producerId=" << producer->mProducerId << "&producerName=" << producer->mName << "');\" >\n";
+        if (producer->mProducerId == producerId)
+        {
+          fg = "#FFFFFF";
+          bg = "#FF0000";
+          pInfo = *producer;
+          output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=generations&producerId=" << producer->mProducerId << "&producerName=" << producer->mName << "');\" >\n";
+        }
+        else
+        {
+          fg = "#000000";
+          bg = "#FFFFFF";
+          output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << ";'\" onmouseover=\"this.style='background:#FFFF00; color:#000000;';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=producers&startProducerIndex=" << startProducerIndex << "&producerId=" << producer->mProducerId << "&producerName=" << producer->mName << "');\" >\n";
+        }
+
+        output << "<TD>"<< producer->mProducerId << "</TD>";
+        output << "<TD>"<< producer->mName << "</TD>";
+        output << "<TD>"<< producer->mTitle << "</TD>";
+        output << "<TD>"<< producer->mDescription << "</TD>";
+        output << "<TD>"<< producer->mFlags << "</TD>";
+        output << "<TD>"<< producer->mSourceId << "</TD>";
+        output << "</TR>";
       }
       else
       {
-        fg = "#000000";
-        bg = "#FFFFFF";
-        output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << ";'\" onmouseover=\"this.style='background:#FFFF00; color:#000000;';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=producers&producerId=" << producer->mProducerId << "&producerName=" << producer->mName << "');\" >\n";
+        output << "<TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD></TR>\n";
       }
-
-
-      output << "<TD>"<< producer->mProducerId << "</TD>";
-      output << "<TD>"<< producer->mName << "</TD>";
-      output << "<TD>"<< producer->mTitle << "</TD>";
-      output << "<TD>"<< producer->mDescription << "</TD>";
-      output << "<TD>"<< producer->mFlags << "</TD>";
-      output << "<TD>"<< producer->mSourceId << "</TD>";
-      output << "</TR>";
     }
     output << "</TABLE>\n";
+
+    if (startProducerIndex > 0 || len >= maxRecords)
+    {
+      std::string bg = "#C0C0C0";
+
+      output << "<HR>\n";
+      output << "<TABLE style=\"font-size:12;\"><TR>\n";
+
+      if (startProducerIndex > 0)
+      {
+        if (startProducerIndex > maxRecords)
+          output << "<TD width=\"70\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF;';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=producers&startProducerIndex=" << (startProducerIndex-maxRecords) << "');\" >&lt;&lt;</TD>\n";
+        else
+          output << "<TD width=\"70\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF;';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=producers&startProducerIndex=0');\" >&lt;&lt;</TD>\n";
+      }
+      else
+        output << "<TD width=\"70\" style=\"background:"+bg+";\" >&nbsp;</TD>\n";
+
+      if (len > (startProducerIndex+maxRecords))
+        output << "<TD width=\"70\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF;';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=producers&startProducerIndex=" << (startProducerIndex+maxRecords) << "');\" >&gt;&gt;</TD>\n";
+      else
+        output << "<TD width=\"70\" style=\"background:"+bg+";\" >&nbsp;</TD>\n";
+
+      output << "</TR></TABLE>\n";
+    }
 
     if ((mFlags & Flags::contentModificationEnabled) && mainSource)
     {
@@ -1526,27 +1599,27 @@ bool Browser::page_producers(const Spine::HTTP::Request& theRequest,Spine::HTTP:
       switch (mode)
       {
         case 0:
-          output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=producers&mode=1');\" >New producer</TD>\n";
+          output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=producers&mode=1&startProducerIndex=" << startProducerIndex << "');\" >New producer</TD>\n";
           if (producerId != 0)
           {
-            output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=producers&mode=2&producerId=" << producerId << "');\" >Edit producer</TD>\n";
-            output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=producers&mode=3&producerId=" << producerId << "');\" >Delete producer</TD>\n";
+            output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=producers&mode=2&startProducerIndex=" << startProducerIndex << "&producerId=" << producerId << "');\" >Edit producer</TD>\n";
+            output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=producers&mode=3&startProducerIndex=" << startProducerIndex << "&producerId=" << producerId << "');\" >Delete producer</TD>\n";
           }
           break;
 
         case 1:
-          output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=producers&mode=101&name='+producer_name.value+'&title='+producer_title.value+'&description='+producer_description.value+'&flags='+producer_flags.value+'&sourceId='+producer_sourceId.value);\" >Add producer</TD>\n";
-          output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=producers&mode=0&producerId=" << producerId << "');\" >Cancel</TD>\n";
+          output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=producers&mode=101&startProducerIndex=" << startProducerIndex << "&name='+producer_name.value+'&title='+producer_title.value+'&description='+producer_description.value+'&flags='+producer_flags.value+'&sourceId='+producer_sourceId.value);\" >Add producer</TD>\n";
+          output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=producers&mode=0&startProducerIndex=" << startProducerIndex << "&producerId=" << producerId << "');\" >Cancel</TD>\n";
           break;
 
         case 2:
-          output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=producers&mode=102&producerId=" << producerId << "&name='+producer_name.value+'&title='+producer_title.value+'&description='+producer_description.value+'&flags='+producer_flags.value+'&sourceId='+producer_sourceId.value);\" >Update producer</TD>\n";
-          output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=producers&mode=0&producerId=" << producerId << "');\" >Cancel</TD>\n";
+          output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=producers&mode=102&startProducerIndex=" << startProducerIndex << "&producerId=" << producerId << "&name='+producer_name.value+'&title='+producer_title.value+'&description='+producer_description.value+'&flags='+producer_flags.value+'&sourceId='+producer_sourceId.value);\" >Update producer</TD>\n";
+          output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=producers&mode=0&startProducerIndex=" << startProducerIndex << "&producerId=" << producerId << "');\" >Cancel</TD>\n";
           break;
 
         case 3:
-          output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=producers&mode=103&producerId=" << producerId << "');\" >Delete producer</TD>\n";
-          output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=producers&mode=0&producerId=" << producerId << "');\" >Cancel</TD>\n";
+          output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=producers&mode=103&startProducerIndex=" << startProducerIndex << "&producerId=" << producerId << "');\" >Delete producer</TD>\n";
+          output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=producers&mode=0&startProducerIndex=" << startProducerIndex << "&producerId=" << producerId << "');\" >Cancel</TD>\n";
           break;
       }
 

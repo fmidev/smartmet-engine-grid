@@ -58,9 +58,6 @@ Engine::Engine(const char* theConfigFile)
         "smartmet.library.grid-files.configFile",
         "smartmet.library.grid-files.cache.numOfGrids",
         "smartmet.library.grid-files.cache.maxSizeInMegaBytes",
-        "smartmet.library.grid-files.pointCache.enabled",
-        "smartmet.library.grid-files.pointCache.hitsRequired",
-        "smartmet.library.grid-files.pointCache.timePeriod",
 
         "smartmet.engine.grid.enabled",
 
@@ -141,9 +138,6 @@ Engine::Engine(const char* theConfigFile)
     mContentSourceHttpUrl = "";
     mContentSourceCorbaIor = "";
     mContentCacheEnabled = true;
-    mPointCacheEnabled = false;
-    mPointCacheHitsRequired = 20;  // 20 hits required during the last 20 minutes
-    mPointCacheTimePeriod = 1200;
     mPreloadMemoryLock = false;
     mRequestForwardEnabled = false;
     mMemoryContentDir = "/tmp";
@@ -216,10 +210,6 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.library.grid-files.configFile", mGridConfigFile);
     configurationFile.getAttributeValue("smartmet.library.grid-files.cache.numOfGrids", mNumOfCachedGrids);
     configurationFile.getAttributeValue("smartmet.library.grid-files.cache.maxSizeInMegaBytes", mMaxSizeOfCachedGridsInMegaBytes);
-
-    configurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.enabled", mPointCacheEnabled);
-    configurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.hitsRequired", mPointCacheHitsRequired);
-    configurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.timePeriod", mPointCacheTimePeriod);
 
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.type", mContentSourceType);
 
@@ -443,7 +433,6 @@ void Engine::init()
     {
       mDataServerImplementation = new DataServer::ServiceImplementation();
       mDataServerImplementation->init(0, 0, "NotRegistered", "NotRegistered", mDataServerGridDirectory, cServer, mDataServerLuaFiles);
-      mDataServerImplementation->setPointCacheEnabled(mPointCacheEnabled, mPointCacheHitsRequired, mPointCacheTimePeriod);
       mDataServerImplementation->setPreload(mContentPreloadEnabled, mPreloadMemoryLock, mContentPreloadFile);
       mDataServerImplementation->setMemoryMapCheckEnabled(mMemoryMapCheckEnabled);
 
@@ -796,35 +785,6 @@ void Engine::checkConfiguration()
 
     if (mDataServerImplementation != nullptr)
     {
-      // ### Point cache
-
-      bool pointCacheEnabled = false;
-      uint pointCacheHitsRequired = 0;
-      uint pointCacheTimePeriod = 0;
-
-      configurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.enabled", pointCacheEnabled);
-      configurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.hitsRequired", pointCacheHitsRequired);
-      configurationFile.getAttributeValue("smartmet.library.grid-files.pointCache.timePeriod", pointCacheTimePeriod);
-
-      if (mPointCacheEnabled != pointCacheEnabled)
-      {
-        mPointCacheEnabled = pointCacheEnabled;
-        mDataServerImplementation->setPointCacheEnabled(mPointCacheEnabled, mPointCacheHitsRequired, mPointCacheTimePeriod);
-
-        if (mPointCacheEnabled)
-          std::cout << Spine::log_time_str() << " Grid-engine configuration: point cache enabled" << std::endl;
-        else
-          std::cout << Spine::log_time_str() << " Grid-engine configuration: point cache disabled" << std::endl;
-      }
-
-      if (mPointCacheHitsRequired != pointCacheHitsRequired || mPointCacheTimePeriod != pointCacheTimePeriod)
-      {
-        mPointCacheHitsRequired = pointCacheHitsRequired;
-        mPointCacheTimePeriod = pointCacheTimePeriod;
-
-        mDataServerImplementation->setPointCacheEnabled(mPointCacheEnabled, mPointCacheHitsRequired, mPointCacheTimePeriod);
-      }
-
       // ### Memory map check
 
       bool memoryMapCheckEnabled = false;
