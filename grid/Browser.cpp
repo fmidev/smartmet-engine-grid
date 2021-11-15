@@ -1139,6 +1139,19 @@ bool Browser::page_generations(const Spine::HTTP::Request& theRequest,Spine::HTT
         }
       }
 
+      v = theRequest.getParameter("modificationTime");
+      if (v)
+      {
+        try
+        {
+          gInfo.mModificationTime = utcTimeToTimeT(*v);
+        }
+        catch (...)
+        {
+          mode = 0;
+        }
+      }
+
       switch (mode)
       {
         case 101:
@@ -1218,6 +1231,7 @@ bool Browser::page_generations(const Spine::HTTP::Request& theRequest,Spine::HTT
     output << "<TD>Flags</TD>";
     output << "<TD>SourceId</TD>";
     output << "<TD>Status</TD>";
+    output << "<TD>ModificationTime</TD>";
     output << "<TD>DeletionTime</TD>";
     output << "</TR>";
 
@@ -1257,6 +1271,11 @@ bool Browser::page_generations(const Spine::HTTP::Request& theRequest,Spine::HTT
         output << "<TD>"<< generation->mFlags << "</TD>";
         output << "<TD>"<< generation->mSourceId << "</TD>";
         output << "<TD>"<< (int)generation->mStatus << "</TD>";
+        if (generation->mModificationTime > 0)
+          output << "<TD>"<< utcTimeFromTimeT(generation->mModificationTime) << "</TD>";
+        else
+          output << "<TD></TD>";
+
         if (generation->mDeletionTime > 0)
           output << "<TD>"<< utcTimeFromTimeT(generation->mDeletionTime) << "</TD>";
         else
@@ -1266,7 +1285,7 @@ bool Browser::page_generations(const Spine::HTTP::Request& theRequest,Spine::HTT
       }
       else
       {
-        output << "<TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD></TR>\n";
+        output << "<TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD></TR>\n";
       }
     }
 
@@ -1318,6 +1337,7 @@ bool Browser::page_generations(const Spine::HTTP::Request& theRequest,Spine::HTT
         output << "<TR><TD width=\"240\" bgColor=\"#D0D0D0\">Flags</TD><TD><INPUT style=\"width:100%;\"  type=\"text\" id=\"generation_flags\" value=\"" << gInfo.mFlags << "\"></TD></TR>";
         output << "<TR><TD width=\"240\" bgColor=\"#D0D0D0\">SourceId</TD><TD><INPUT style=\"width:100%;\"  type=\"text\" id=\"generation_sourceId\" value=\"" << gInfo.mSourceId << "\"></TD></TR>";
         output << "<TR><TD width=\"240\" bgColor=\"#D0D0D0\">Status</TD><TD><INPUT style=\"width:100%;\"  type=\"text\" id=\"generation_status\" value=\"" << (int)gInfo.mStatus << "\"></TD></TR>";
+        output << "<TR><TD width=\"240\" bgColor=\"#D0D0D0\">ModificationTime</TD><TD><INPUT style=\"width:100%;\"  type=\"text\" id=\"generation_modificationTime\" value=\"" << dt << "\"></TD></TR>";
         output << "<TR><TD width=\"240\" bgColor=\"#D0D0D0\">DeletionTime</TD><TD><INPUT style=\"width:100%;\"  type=\"text\" id=\"generation_deletionTime\" value=\"" << dt << "\"></TD></TR>";
         output << "</TABLE>\n";
       }
@@ -1338,12 +1358,12 @@ bool Browser::page_generations(const Spine::HTTP::Request& theRequest,Spine::HTT
           break;
 
         case 1:
-          output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=generations&mode=101" << prod << "&name='+generation_name.value+'&analysisTime='+generation_analysisTime.value+'&description='+generation_description.value+'&flags='+generation_flags.value+'&sourceId='+generation_sourceId.value+'&status='+generation_status.value+'&deletionTime='+generation_deletionTime.value);\" >Add generation</TD>\n";
+          output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=generations&mode=101" << prod << "&name='+generation_name.value+'&analysisTime='+generation_analysisTime.value+'&description='+generation_description.value+'&flags='+generation_flags.value+'&sourceId='+generation_sourceId.value+'&status='+generation_status.value+'&deletionTime='+generation_deletionTime.value+'&modificationTime='+generation_modificationTime.value);\" >Add generation</TD>\n";
           output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=generations&mode=0" << prod << "&generationId=" << generationId << "');\" >Cancel</TD>\n";
           break;
 
         case 2:
-          output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=generations&mode=102" << prod << "&generationId=" << generationId << "&name='+generation_name.value+'&analysisTime='+generation_analysisTime.value+'&description='+generation_description.value+'&flags='+generation_flags.value+'&sourceId='+generation_sourceId.value+'&status='+generation_status.value+'&deletionTime='+generation_deletionTime.value);\" >Update generation</TD>\n";
+          output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=generations&mode=102" << prod << "&generationId=" << generationId << "&name='+generation_name.value+'&analysisTime='+generation_analysisTime.value+'&description='+generation_description.value+'&flags='+generation_flags.value+'&sourceId='+generation_sourceId.value+'&status='+generation_status.value+'&deletionTime='+generation_deletionTime.value+'&modificationTime='+generation_modificationTime.value);\" >Update generation</TD>\n";
           output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=generations&mode=0" << prod << "&generationId=" << generationId << "');\" >Cancel</TD>\n";
           break;
 
