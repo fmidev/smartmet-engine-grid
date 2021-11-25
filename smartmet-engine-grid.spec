@@ -18,7 +18,7 @@ BuildRequires: smartmet-library-spine-devel >= 21.11.10
 BuildRequires: make
 BuildRequires: omniORB-devel
 BuildRequires: boost169-devel
-BuildRequires: gdal32-devel
+BuildRequires: gdal33-devel
 BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 Requires: boost169-thread
