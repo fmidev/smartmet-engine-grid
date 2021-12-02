@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 21.11.15
+Version: 21.12.2
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -12,9 +12,9 @@ Source0: %{name}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
-BuildRequires: smartmet-library-grid-content-devel >= 21.11.15
-BuildRequires: smartmet-library-grid-files-devel >= 21.11.15
-BuildRequires: smartmet-library-spine-devel >= 21.11.10
+BuildRequires: smartmet-library-grid-content-devel >= 21.12.2
+BuildRequires: smartmet-library-grid-files-devel >= 21.12.2
+BuildRequires: smartmet-library-spine-devel >= 21.12.2
 BuildRequires: make
 BuildRequires: omniORB-devel
 BuildRequires: boost169-devel
@@ -22,9 +22,9 @@ BuildRequires: gdal33-devel
 BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 Requires: boost169-thread
-Requires: smartmet-library-grid-content >= 21.11.15
-Requires: smartmet-library-grid-files >= 21.11.15
-Requires: smartmet-library-spine >= 21.11.10
+Requires: smartmet-library-grid-content >= 21.12.2
+Requires: smartmet-library-grid-files >= 21.12.2
+Requires: smartmet-library-spine >= 21.12.2
 Requires: omniORB-devel
 
 %if %{defined el7}
@@ -32,8 +32,8 @@ Requires: libpqxx < 1:7.0
 BuildRequires: libpqxx-devel < 1:7.0
 %else
 %if %{defined el8}
-Requires: libpqxx >= 5.0.1
-BuildRequires: libpqxx-devel >= 5.0.1
+Requires: libpqxx >= 1:7.6.0, libpqxx < 1:7.7.0
+BuildRequires: libpqxx-devel >= 1:7.6.0, libpqxx-devel < 1:7.7.0
 %else
 Requires: libpqxx
 BuildRequires: libpqxx-devel
