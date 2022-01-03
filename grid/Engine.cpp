@@ -16,6 +16,7 @@
 #include <macgyver/AnsiEscapeCodes.h>
 #include <macgyver/Exception.h>
 #include <macgyver/StringConversion.h>
+#include <macgyver/TimeFormatter.h>
 #include <spine/Convenience.h>
 #include <spine/Reactor.h>
 #include <unistd.h>
@@ -274,6 +275,7 @@ Engine::Engine(const char* theConfigFile)
     // These settings are used when the query server is embedded into the grid engine.
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.producerFile", mProducerSearchList_filename);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.producerMappingFiles", mProducerMappingDefinitions_filenames);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.producerStatusFile", mProducerStatusFile);
 
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.enabled", mQueryServerProcessingLogEnabled);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.file", mQueryServerProcessingLogFile);
@@ -1852,10 +1854,13 @@ std::string Engine::getProducerAlias(const std::string& producerName, int levelI
   }
 }
 
-ContentTable Engine::getProducerInfo(boost::optional<std::string> producer) const
+ContentTable Engine::getProducerInfo(boost::optional<std::string> producer,std::string timeFormat) const
 {
   try
   {
+    updateProducerAndGenerationList();
+
+    std::unique_ptr<Fmi::TimeFormatter> timeFormatter(Fmi::TimeFormatter::create(timeFormat));
     boost::shared_ptr < Spine::Table > resultTable(new Spine::Table);
 
     Spine::TableFormatter::Names headers
@@ -1901,12 +1906,390 @@ ContentTable Engine::getProducerInfo(boost::optional<std::string> producer) cons
           T::GenerationInfo* oldest = generationList.getGenerationInfoByIndex(0);
 
           // Newest generation
-          resultTable->set(6, row, newest->mAnalysisTime);
 
-          // Oldest generation
-          resultTable->set(7, row, oldest->mAnalysisTime);
+          if (!timeFormat.empty()  &&  strcasecmp(timeFormat.c_str(),"ISO") != 0)
+          {
+            // Analysis time
+            boost::posix_time::ptime fTime = toTimeStamp(newest->mAnalysisTime);
+            resultTable->set(6, row, timeFormatter->format(fTime));
+
+            // Oldest generation
+            boost::posix_time::ptime lTime = toTimeStamp(oldest->mAnalysisTime);
+            resultTable->set(7, row, timeFormatter->format(lTime));
+          }
+          else
+          {
+            resultTable->set(6, row, newest->mAnalysisTime);
+
+            // Oldest generation
+            resultTable->set(7, row, oldest->mAnalysisTime);
+          }
 
           row++;
+        }
+      }
+    }
+
+    return std::make_pair(resultTable, headers);
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file", mConfigurationFile_name);
+    throw exception;
+  }
+}
+
+ContentTable Engine::getGenerationInfo(boost::optional<std::string> producer,std::string timeFormat) const
+{
+  try
+  {
+    updateProducerAndGenerationList();
+
+    if (timeFormat.empty())
+      timeFormat = "iso";
+
+    std::unique_ptr<Fmi::TimeFormatter> timeFormatter(Fmi::TimeFormatter::create(timeFormat));
+
+    boost::shared_ptr < Spine::Table > resultTable(new Spine::Table);
+
+    Spine::TableFormatter::Names headers
+    {"ProducerName", "Timesteps", "AnalysisTime", "MinTime", "MaxTime", "FmiParameters", "ParameterAliases" };
+
+    ContentServer_sptr contentServer = getContentServer_sptr();
+    time_t currentTime = time(nullptr);
+    AutoReadLock lock(&mProducerInfoList_modificationLock);
+
+    uint len = mProducerInfoList.getLength();
+    uint row = 0;
+    for (uint t = 0; t < len; t++)
+    {
+      T::ProducerInfo* info = mProducerInfoList.getProducerInfoByIndex(t);
+
+      if (!producer || strcasecmp(producer->c_str(), info->mName.c_str()) == 0)
+      {
+        T::GenerationInfoList generationList;
+        mGenerationInfoList.getGenerationInfoListByProducerId(info->mProducerId, generationList);
+
+        uint glen = generationList.getLength();
+        if (glen > 0)
+        {
+          generationList.sort(T::GenerationInfo::ComparisonMethod::analysisTime);
+
+          uint glen = generationList.getLength();
+          for (uint g=0; g<glen; g++)
+          {
+            T::GenerationInfo *gInfo = generationList.getGenerationInfoByIndex(g);
+            time_t deletionTime = gInfo->mDeletionTime;
+
+            if (gInfo->mStatus == T::GenerationInfo::Status::Ready)
+            {
+              if (deletionTime == 0 || (currentTime + 120) < deletionTime)
+              {
+                std::set<std::string> contentTimeList;
+                contentServer->getContentTimeListByGenerationId(0,gInfo->mGenerationId,contentTimeList);
+
+                std::ostringstream output1;
+                std::ostringstream output2;
+
+                if (mParameterMappingDefinitions)
+                {
+                  AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
+                  std::set<std::string> paramKeyList;
+                  contentServer->getContentParamKeyListByGenerationId(0,gInfo->mGenerationId,T::ParamKeyTypeValue::FMI_NAME,paramKeyList);
+
+
+                  std::set<std::string> paramList;
+                  for (auto pk = paramKeyList.begin(); pk != paramKeyList.end(); ++pk)
+                  {
+                    QueryServer::ParameterMapping_vec mappings;
+                    for (auto mf = mParameterMappingDefinitions->begin(); mf != mParameterMappingDefinitions->end(); ++mf)
+                    {
+                      mf->getMappingsByParamKey(info->mName,T::ParamKeyTypeValue::FMI_NAME,*pk,-1,-1,-1,mappings);
+                    }
+
+                    if (mappings.size() > 0)
+                    {
+                      for (auto pm = mappings.begin(); pm != mappings.end(); ++pm)
+                      {
+                        if (strcasecmp(pk->c_str(),pm->mParameterName.c_str()) != 0)
+                          paramList.insert(pm->mParameterName);
+                      }
+                    }
+                    if (pk != paramKeyList.begin())
+                     output1 << ",";
+
+                    output1 << *pk;
+                  }
+
+                  for (auto pp = paramList.begin(); pp != paramList.end(); ++pp)
+                  {
+                    if (pp != paramList.begin())
+                     output2 << ",";
+
+                    output2 << *pp;
+                  }
+                }
+
+                uint slen = contentTimeList.size();
+                if (slen > 0)
+                {
+                  auto first = contentTimeList.begin();
+                  auto last = contentTimeList.rbegin();
+
+                  // Producer name
+                  resultTable->set(0, row, info->mName);
+
+                  // Timesteps
+                  resultTable->set(1, row, std::to_string(slen));
+
+
+                  if (!timeFormat.empty()  &&  strcasecmp(timeFormat.c_str(),"ISO") != 0  && timeFormatter)
+                  {
+                    // Analysis time
+                    boost::posix_time::ptime aTime = toTimeStamp(gInfo->mAnalysisTime);
+                    resultTable->set(2, row, timeFormatter->format(aTime));
+
+                    // Min time
+                    boost::posix_time::ptime fTime = toTimeStamp(*first);
+                    resultTable->set(3, row, timeFormatter->format(fTime));
+
+                    // Max time
+                    boost::posix_time::ptime lTime = toTimeStamp(*last);
+                    resultTable->set(4, row, timeFormatter->format(lTime));
+                  }
+                  else
+                  {
+                    // Analysis time
+                    resultTable->set(2, row, gInfo->mAnalysisTime);
+
+                    // Min time
+                    resultTable->set(3, row, *first);
+
+                    // Max time
+                    resultTable->set(4, row, *last);
+                  }
+
+                  // FMI Parameters
+                  resultTable->set(5, row, output1.str());
+
+                  // Parameter alias names
+                  resultTable->set(6, row, output2.str());
+
+                  row++;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return std::make_pair(resultTable, headers);
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file", mConfigurationFile_name);
+    throw exception;
+  }
+}
+
+ContentTable Engine::getExtGenerationInfo(boost::optional<std::string> producer,std::string timeFormat) const
+{
+  try
+  {
+    updateProducerAndGenerationList();
+
+    if (timeFormat.empty())
+      timeFormat = "iso";
+
+    std::unique_ptr<Fmi::TimeFormatter> timeFormatter(Fmi::TimeFormatter::create(timeFormat));
+    boost::shared_ptr < Spine::Table > resultTable(new Spine::Table);
+    Spine::TableFormatter::Names headers
+    { "ProducerName", "Timesteps", "AnalysisTime", "MinTime", "MaxTime", "FmiParameters", "ParameterAliases" };
+
+
+    if (mProducerStatusFile.empty())
+      return std::make_pair(resultTable, headers);
+
+    ContentServer_sptr contentServer = getContentServer_sptr();
+
+    std::vector<std::vector<std::string>> records;
+    readCsvFile(mProducerStatusFile.c_str(),records);
+
+    time_t currentTime = time(nullptr);
+    uint row = 0;
+
+    //printf("RECORDS %ld\n",records.size());
+    for (auto rec = records.begin(); rec != records.end(); ++rec)
+    {
+      uint sz = rec->size();
+      if (sz > 1 && (!producer ||  producer->empty() || strcasecmp(producer->c_str(),(*rec)[0].c_str()) == 0))
+      {
+        bool available = true;
+        std::map<std::string,std::vector<uint>> counterList;
+
+        for (uint t=1; t<sz && available; t++)
+        {
+          AutoReadLock lock(&mProducerInfoList_modificationLock);
+          T::ProducerInfo *pInfo = mProducerInfoList.getProducerInfoByName((*rec)[t]);
+          if (pInfo)
+          {
+            //printf("PRODUCER %s\n",pInfo->mName.c_str());
+            T::GenerationInfoList generationInfoList;
+            mGenerationInfoList.getGenerationInfoListByProducerId(pInfo->mProducerId,generationInfoList);
+            //printf("GENERATIONS %u/%u\n",generationInfoList.getLength(),mGenerationInfoList.getLength());
+
+            uint len = generationInfoList.getLength();
+            for (uint g = 0; g < len; g++)
+            {
+              T::GenerationInfo *gInfo = generationInfoList.getGenerationInfoByIndex(g);
+              time_t deletionTime = gInfo->mDeletionTime;
+
+              if (gInfo->mStatus == T::GenerationInfo::Status::Ready)
+              {
+                if (deletionTime == 0 || (currentTime + 120) < deletionTime)
+                {
+                  auto p = counterList.find(gInfo->mAnalysisTime);
+                  if (p != counterList.end())
+                    p->second.push_back(gInfo->mGenerationId);
+                  else
+                  {
+                    std::vector<uint> cntList;
+                    cntList.push_back(gInfo->mGenerationId);
+                    counterList.insert(std::pair<std::string,std::vector<uint>>(gInfo->mAnalysisTime,cntList));
+                  }
+                }
+              }
+            }
+          }
+          else
+          {
+            //printf("PRODUCER [%s] NOT FOUND\n",(*rec)[t].c_str());
+            available = false;
+          }
+        }
+
+        for (auto it = counterList.begin(); it != counterList.end(); ++it)
+        {
+          if (it->second.size() == (sz-1))
+          {
+            std::ostringstream output1;
+            std::ostringstream output2;
+
+            std::set<std::string> contentTimeList;
+            contentServer->getContentTimeListByGenerationId(0,it->second[0],contentTimeList);
+
+            uint slen = contentTimeList.size();
+            if (slen > 0)
+            {
+              std::set<std::string> paramList1;
+              std::set<std::string> paramList2;
+
+              for (auto g = it->second.begin(); g != it->second.end(); ++g)
+              {
+                T::GenerationInfo *gInfo = mGenerationInfoList.getGenerationInfoById(*g);
+                if (gInfo &&  mParameterMappingDefinitions)
+                {
+                  T::ProducerInfo *pInfo = mProducerInfoList.getProducerInfoById(gInfo->mProducerId);
+
+                  if (pInfo)
+                  {
+                    AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
+                    std::set<std::string> paramKeyList;
+                    contentServer->getContentParamKeyListByGenerationId(0,gInfo->mGenerationId,T::ParamKeyTypeValue::FMI_NAME,paramKeyList);
+
+                    for (auto pk = paramKeyList.begin(); pk != paramKeyList.end(); ++pk)
+                    {
+                      QueryServer::ParameterMapping_vec mappings;
+                      for (auto mf = mParameterMappingDefinitions->begin(); mf != mParameterMappingDefinitions->end(); ++mf)
+                      {
+                        mf->getMappingsByParamKey(pInfo->mName,T::ParamKeyTypeValue::FMI_NAME,*pk,-1,-1,-1,mappings);
+                      }
+
+                      if (mappings.size() > 0)
+                      {
+                        for (auto pm = mappings.begin(); pm != mappings.end(); ++pm)
+                        {
+                          if (strcasecmp(pk->c_str(),pm->mParameterName.c_str()) != 0)
+                          {
+                            std::string name = (*rec)[0] + ";" + pm->mParameterName;
+                            std::string alias;
+                            if (mProducerMappingDefinitions.getAlias(name,alias))
+                            {
+                              paramList1.insert(*pk);
+                              paramList2.insert(pm->mParameterName);
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+
+              for (auto pp = paramList1.begin(); pp != paramList1.end(); ++pp)
+              {
+                if (pp != paramList1.begin())
+                  output1 << ",";
+
+                output1 << *pp;
+              }
+
+              for (auto pp = paramList2.begin(); pp != paramList2.end(); ++pp)
+              {
+                if (pp != paramList2.begin())
+                  output2 << ",";
+
+                output2 << *pp;
+              }
+
+              auto first = contentTimeList.begin();
+              auto last = contentTimeList.rbegin();
+
+              // Producer name
+              resultTable->set(0, row, (*rec)[0]);
+
+              // Timesteps
+              resultTable->set(1, row, std::to_string(slen));
+
+              if (!timeFormat.empty()  &&  strcasecmp(timeFormat.c_str(),"iso") != 0  && timeFormatter)
+              {
+
+                // Analysis time
+                boost::posix_time::ptime aTime = toTimeStamp(it->first);
+                resultTable->set(2, row, timeFormatter->format(aTime));
+
+                // Min time
+                boost::posix_time::ptime fTime = toTimeStamp(*first);
+                resultTable->set(3, row, timeFormatter->format(fTime));
+
+                // Max time
+                boost::posix_time::ptime lTime = toTimeStamp(*last);
+                resultTable->set(4, row, timeFormatter->format(lTime));
+              }
+              else
+              {
+                // Analysis time
+                resultTable->set(2, row, it->first);
+
+                // Min time
+                resultTable->set(3, row, *first);
+
+                // Max time
+                resultTable->set(4, row, *last);
+              }
+
+              // FMI Parameters
+              resultTable->set(5, row, output1.str());
+
+              // Parameter alias names
+              resultTable->set(6, row, output2.str());
+
+              row++;
+            }
+          }
         }
       }
     }
@@ -2192,6 +2575,184 @@ void Engine::loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings)
     throw exception;
   }
 }
+
+
+
+
+
+void Engine::getAnalysisTimes(std::vector<std::vector<std::string>>& table) const
+{
+  FUNCTION_TRACE
+  try
+  {
+    if (!mEnabled)
+      return;
+
+    if (mProducerStatusFile.empty())
+      return;
+
+    table.clear();
+    ContentServer_sptr contentServer = getContentServer_sptr();
+    time_t currentTime = time(nullptr);
+
+    AutoReadLock lock(&mProducerInfoList_modificationLock);
+    uint plen = mProducerInfoList.getLength();
+    for (uint p=0; p<plen; p++)
+    {
+      T::ProducerInfo *pInfo = mProducerInfoList.getProducerInfoByIndex(p);
+      T::GenerationInfoList generationInfoList;
+      mGenerationInfoList.getGenerationInfoListByProducerId(pInfo->mProducerId,generationInfoList);
+      uint len = generationInfoList.getLength();
+      for (uint g = 0; g < len; g++)
+      {
+        T::GenerationInfo *gInfo = generationInfoList.getGenerationInfoByIndex(g);
+         time_t deletionTime = gInfo->mDeletionTime;
+
+        if (gInfo->mStatus == T::GenerationInfo::Status::Ready)
+        {
+          if (deletionTime == 0 || (currentTime + 120) < deletionTime)
+          {
+            std::set<std::string> contentTimeList;
+            contentServer->getContentTimeListByGenerationId(0,gInfo->mGenerationId,contentTimeList);
+
+            uint slen = contentTimeList.size();
+            if (slen > 0)
+            {
+              auto first = contentTimeList.begin();
+              auto last = contentTimeList.rbegin();
+              printf("%s:%s:%s:%s:%u\n",pInfo->mName.c_str(),gInfo->mAnalysisTime.c_str(),first->c_str(),last->c_str(),slen);
+
+              std::vector<std::string> vec;
+              vec.push_back(pInfo->mName);
+              vec.push_back(gInfo->mAnalysisTime);
+              vec.push_back(*first);
+              vec.push_back(*last);
+              vec.push_back(std::to_string(slen));
+
+              table.push_back(vec);
+            }
+          }
+        }
+      }
+    }
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file", mConfigurationFile_name);
+    throw exception;
+  }
+}
+
+
+void Engine::getExtAnalysisTimes(std::vector<std::vector<std::string>>& table) const
+{
+  FUNCTION_TRACE
+  try
+  {
+    //printf("\n\n**************** ANALYSIS TIMES %s *****************************\n",mProducerStatusFile.c_str());
+
+    if (!mEnabled)
+      return;
+
+    if (mProducerStatusFile.empty())
+      return;
+
+    table.clear();
+    ContentServer_sptr contentServer = getContentServer_sptr();
+
+    std::vector<std::vector<std::string>> records;
+    readCsvFile(mProducerStatusFile.c_str(),records);
+
+    time_t currentTime = time(nullptr);
+
+    //printf("RECORDS %ld\n",records.size());
+    for (auto rec = records.begin(); rec != records.end(); ++rec)
+    {
+      uint sz = rec->size();
+      bool available = true;
+      std::map<std::string,uint> counterList;
+      std::map<std::string,uint> generationList;
+      for (uint t=1; t<sz && available; t++)
+      {
+        AutoReadLock lock(&mProducerInfoList_modificationLock);
+        T::ProducerInfo *pInfo = mProducerInfoList.getProducerInfoByName((*rec)[t]);
+        if (pInfo)
+        {
+          //printf("PRODUCER %s\n",pInfo->mName.c_str());
+          T::GenerationInfoList generationInfoList;
+          mGenerationInfoList.getGenerationInfoListByProducerId(pInfo->mProducerId,generationInfoList);
+          //printf("GENERATIONS %u/%u\n",generationInfoList.getLength(),mGenerationInfoList.getLength());
+
+          uint len = generationInfoList.getLength();
+          for (uint g = 0; g < len; g++)
+          {
+            T::GenerationInfo *gInfo = generationInfoList.getGenerationInfoByIndex(g);
+            time_t deletionTime = gInfo->mDeletionTime;
+
+            if (gInfo->mStatus == T::GenerationInfo::Status::Ready)
+            {
+              if (deletionTime == 0 || (currentTime + 120) < deletionTime)
+              {
+                auto p = counterList.find(gInfo->mAnalysisTime);
+                if (p != counterList.end())
+                  p->second++;
+                else
+                {
+                  counterList.insert(std::pair<std::string,uint>(gInfo->mAnalysisTime,1));
+                  generationList.insert(std::pair<std::string,uint>(gInfo->mAnalysisTime,gInfo->mGenerationId));
+                }
+              }
+            }
+          }
+        }
+        else
+        {
+          //printf("PRODUCER [%s] NOT FOUND\n",(*rec)[t].c_str());
+          available = false;
+        }
+      }
+
+      for (auto it = counterList.begin(); it != counterList.end(); ++it)
+      {
+        if (it->second == (sz-1))
+        {
+          auto g = generationList.find(it->first);
+          if (g != generationList.end())
+          {
+            std::set<std::string> contentTimeList;
+            contentServer->getContentTimeListByGenerationId(0,g->second,contentTimeList);
+
+            uint slen = contentTimeList.size();
+            if (slen > 0)
+            {
+              auto first = contentTimeList.begin();
+              auto last = contentTimeList.rbegin();
+              printf("%s:%s:%s:%s:%u\n",(*rec)[0].c_str(),it->first.c_str(),first->c_str(),last->c_str(),slen);
+
+              std::vector<std::string> vec;
+              vec.push_back((*rec)[0]);
+              vec.push_back(it->first);
+              vec.push_back(*first);
+              vec.push_back(*last);
+              vec.push_back(std::to_string(slen));
+
+              table.push_back(vec);
+            }
+          }
+        }
+      }
+    }
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file", mConfigurationFile_name);
+    throw exception;
+  }
+}
+
+
 
 void Engine::clearMappings()
 {
@@ -2726,7 +3287,7 @@ void Engine::updateProcessing()
   }
 }
 
-void Engine::updateProducerAndGenerationList()
+void Engine::updateProducerAndGenerationList() const
 {
   FUNCTION_TRACE
   try

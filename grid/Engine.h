@@ -77,6 +77,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     std::string         getConfigurationFileName();
     std::string         getProducerFileName();
+    void                getAnalysisTimes(std::vector<std::vector<std::string>>& table) const;;
+    void                getExtAnalysisTimes(std::vector<std::vector<std::string>>& table) const;;
 
     T::ParamLevelId     getFmiParameterLevelId(
                           uint producerId,
@@ -94,7 +96,9 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     ulonglong           getProducerHash(uint producerId) const;
 
-    ContentTable        getProducerInfo(boost::optional<std::string> producer) const;
+    ContentTable        getProducerInfo(boost::optional<std::string> producer,std::string timeFormat) const;
+    ContentTable        getGenerationInfo(boost::optional<std::string> producer,std::string timeFormat) const;
+    ContentTable        getExtGenerationInfo(boost::optional<std::string> producer,std::string timeFormat) const;
 
     ContentTable        getParameterInfo(boost::optional<std::string> producer) const;
 
@@ -217,7 +221,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                           Spine::Table& paramTable);
 
     void                updateQueryCache();
-    void                updateProducerAndGenerationList();
+    void                updateProducerAndGenerationList() const;
 
   private:
 
@@ -346,6 +350,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     mutable ModificationLock                  mProducerInfoList_modificationLock;
     mutable ProducerHash_map                  mProducerHashMap;
     mutable T::GenerationInfoList             mGenerationInfoList;
+
+    std::string                               mProducerStatusFile;
 
     mutable T::LevelInfoList                  mLevelInfoList;
     mutable time_t                            mLevelInfoList_lastUpdate;
