@@ -2918,6 +2918,8 @@ FILE* Engine::openMappingFile(const std::string& mappingFile)
     fprintf(file, "#         2 = Nearest\n");
     fprintf(file, "#         3 = Min\n");
     fprintf(file, "#         4 = Max\n");
+    fprintf(file, "#         9 = Landscape\n");
+    fprintf(file, "#         10 = Forbidden\n");
     fprintf(file, "#         500..999 = List\n");
     fprintf(file, "#         1000..65535 = External (interpolated by an external function)\n");
     fprintf(file, "# 10) Time interpolation method\n");
@@ -2926,6 +2928,8 @@ FILE* Engine::openMappingFile(const std::string& mappingFile)
     fprintf(file, "#         2 = Nearest\n");
     fprintf(file, "#         3 = Min\n");
     fprintf(file, "#         4 = Max\n");
+    fprintf(file, "#         6 = Previous\n");
+    fprintf(file, "#         7 = Next\n");
     fprintf(file, "#         1000..65535 = External (interpolated by an external function)\n");
     fprintf(file, "# 11) Level interpolation method\n");
     fprintf(file, "#         0 = None\n");
@@ -2934,9 +2938,12 @@ FILE* Engine::openMappingFile(const std::string& mappingFile)
     fprintf(file, "#         3 = Min\n");
     fprintf(file, "#         4 = Max\n");
     fprintf(file, "#         5 = Logarithmic\n");
+    fprintf(file, "#         6 = Previous\n");
+    fprintf(file, "#         7 = Next\n");
     fprintf(file, "#         1000..65535 = External (interpolated by an external function)\n");
     fprintf(file, "# 12) Group flags\n");
-    fprintf(file, "#         bit 0 = Climatological parameter (=> ignore year when searching) \n");
+    fprintf(file, "#         bit 0 = Climatological parameter (=> ignore year when searching)\n");
+    fprintf(file, "#         bit 1 = Global parameter (=> ignore timestamp when searching, for example LandSeaMask)\n");
     fprintf(file, "# 13) Search match (Can this mapping used when searching mappings for incomplete "
         "parameters)\n");
     fprintf(file, "#         E = Enabled\n");
