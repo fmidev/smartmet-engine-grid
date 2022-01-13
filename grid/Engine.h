@@ -77,8 +77,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     std::string         getConfigurationFileName();
     std::string         getProducerFileName();
-    void                getAnalysisTimes(std::vector<std::vector<std::string>>& table) const;;
-    void                getExtAnalysisTimes(std::vector<std::vector<std::string>>& table) const;;
+    void                getAnalysisTimes(std::vector<std::vector<std::string>>& table) const;
+    void                getExtAnalysisTimes(std::vector<std::vector<std::string>>& table) const;
 
     T::ParamLevelId     getFmiParameterLevelId(
                           uint producerId,
