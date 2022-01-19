@@ -21,7 +21,7 @@ The Grid Engine can be configured also in a such way that all grid services are 
 
 
 ## Licence
-The Grid Engine is a part of the SmartMet Server (https://github.com/fmidev/smartmet-server), which is published with MIT-license.
+The Grid Engine is a part of <a href="https://github.com/fmidev/smartmet-server">the SmartMet Server</a>, which is published with MIT-license.
 
 ## How to contribute
 Found a bug? Want to implement a new feature? Your contribution is very welcome!
@@ -31,7 +31,12 @@ Small changes and bug fixes can be submitted via pull request. In larger contrib
 CLA is required in order to contribute. Please contact us for more information!
 
 ## Documentation
-SmartMet Server Grid support (https://github.com/fmidev/smartmet-tools-grid/raw/master/doc/grid-support.pdf)
+
+<a href="https://github.com/fmidev/smartmet-engine-grid/blob/master/doc/grid-engine.md">Grid Engine</a>
+
+<a href="https://github.com/fmidev/smartmet-tools-grid/blob/master/doc/quick-setup.md">Quick Setup</a>
+
+<a href="https://github.com/fmidev/smartmet-tools-grid/blob/master/doc/grid-support.md">Grid Support</a>
 
 
 ## Communication and Resources
