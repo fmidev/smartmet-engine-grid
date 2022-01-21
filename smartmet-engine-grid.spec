@@ -12,19 +12,19 @@ Source0: %{name}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
-BuildRequires: smartmet-library-grid-content-devel >= 22.1.13
-BuildRequires: smartmet-library-grid-files-devel >= 22.1.13
-BuildRequires: smartmet-library-spine-devel >= 22.1.5
+BuildRequires: smartmet-library-grid-content-devel >= 21.1.21
+BuildRequires: smartmet-library-grid-files-devel >= 21.1.21
+BuildRequires: smartmet-library-spine-devel >= 21.1.21
 BuildRequires: make
 BuildRequires: omniORB-devel
 BuildRequires: boost169-devel
-BuildRequires: gdal33-devel
+BuildRequires: gdal34-devel
 BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 Requires: boost169-thread
-Requires: smartmet-library-grid-content >= 22.1.13
-Requires: smartmet-library-grid-files >= 22.1.13
-Requires: smartmet-library-spine >= 22.1.5
+Requires: smartmet-library-grid-content >= 21.1.21
+Requires: smartmet-library-grid-files >= 21.1.21
+Requires: smartmet-library-spine >= 21.1.21
 Requires: omniORB-devel
 
 %if %{defined el7}
@@ -49,7 +49,7 @@ SmartMet grid engine
 Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
-Requires: smartmet-library-grid-content-devel >= 22.1.13
+Requires: smartmet-library-grid-content-devel >= 21.1.21
 Requires: %{SPECNAME} = %{version}-%{release}
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
@@ -58,7 +58,7 @@ SmartMet %{SPECNAME} development headers.
 Summary: SmartMet %{SPECNAME} - redis server with required data for testing purpose
 Group: SmartMet/Development
 Provides: smartmet-engine-grid-test
-Requires: smartmet-library-grid-files >= 22.1.13
+Requires: smartmet-library-grid-files >= 21.1.21
 %description -n smartmet-engine-grid-test
 SmartMet %{SPECNAME} - redis server with required data for testing purpose
 
