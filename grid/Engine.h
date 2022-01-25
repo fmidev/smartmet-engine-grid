@@ -240,6 +240,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     bool                mDataServerRemote;
     bool                mDataServerCacheEnabled;
     std::string         mDataServerIor;
+    time_t              mDataServerCleanupAge;
+    time_t              mDataServerCleanupInterval;
 
     QueryServer_sptr    mQueryServer;
     string_vec          mQueryServerLuaFiles;

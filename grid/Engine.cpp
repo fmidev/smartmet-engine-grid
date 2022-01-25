@@ -160,6 +160,8 @@ Engine::Engine(const char* theConfigFile)
 
     mDataServerCacheEnabled = false;
     mDataServerRemote = false;
+    mDataServerCleanupAge = 24*3600;
+    mDataServerCleanupInterval = 600;
     mContentServerProcessingLogMaxSize = 10000000;
     mContentServerProcessingLogTruncateSize = 5000000;
     mContentServerDebugLogMaxSize = 10000000;
@@ -254,6 +256,9 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadFile", mContentPreloadFile);
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadMemoryLock", mPreloadMemoryLock);
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.directory", mDataServerGridDirectory);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.clean-up.age", mDataServerCleanupAge);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.clean-up.checkInterval", mDataServerCleanupInterval);
+
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.virtualFiles.enabled", mVirtualFilesEnabled);
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.virtualFiles.definitionFile", mVirtualFileDefinitions);
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.luaFiles", mDataServerLuaFiles);
@@ -437,6 +442,7 @@ void Engine::init()
       mDataServerImplementation->init(0, 0, "NotRegistered", "NotRegistered", mDataServerGridDirectory, cServer, mDataServerLuaFiles);
       mDataServerImplementation->setPreload(mContentPreloadEnabled, mPreloadMemoryLock, mContentPreloadFile);
       mDataServerImplementation->setMemoryMapCheckEnabled(mMemoryMapCheckEnabled);
+      mDataServerImplementation->setCleanup(mDataServerCleanupAge,mDataServerCleanupInterval);
 
       if (mVirtualFilesEnabled)
       {
@@ -827,6 +833,22 @@ void Engine::checkConfiguration()
         mContentPreloadFile = contentPreloadFile;
         mPreloadMemoryLock = preloadMemoryLock;
         mDataServerImplementation->setPreload(mContentPreloadEnabled, mPreloadMemoryLock, mContentPreloadFile);
+      }
+
+
+      time_t cleanupAge = mDataServerCleanupAge;
+      time_t cleanupInterval = mDataServerCleanupInterval;
+
+      configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.clean-up.age",cleanupAge);
+      configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.clean-up.checkInterval",cleanupInterval);
+
+      if (cleanupAge != mDataServerCleanupAge || cleanupInterval != mDataServerCleanupInterval)
+      {
+        mDataServerCleanupAge = cleanupAge;
+        mDataServerCleanupInterval = cleanupInterval;
+        mDataServerImplementation->setCleanup(mDataServerCleanupAge,mDataServerCleanupInterval);
+        std::cout << Spine::log_time_str() << " Grid-engine configuration: clean-up.age = " <<  cleanupAge << ", clean-up.interval = " << cleanupInterval << std::endl;
+
       }
     }
 
