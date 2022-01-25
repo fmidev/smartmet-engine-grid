@@ -476,11 +476,23 @@ The grid filenames that come from the Content Server can usually directly used a
       preloadFile           = "%(DIR)/preload.csv"
       preloadMemoryLock     = false
     }
+    
+    clean-up :
+    {
+      age = 3600
+      checkInterval = 300  
+    }    
+
   }
 </pre>
 
 
 The "memoryMapCheckedEnabled" parameter is an experimental parameter that was used in order to solve a situation where a memory mapped file was removed from the disk when it was still memory mapped. The idea was that the Data Server tried to check whether the current memory mapped file exist before it tried to access it Unfortunately this did not work well, and that's why it is usually disabled.
+
+Grid files can be released from the memory if they are not accessed in a given time ("clean-up.age" in seconds). The "clean-up.checkInterval" 
+parameter defines the interval for the clean-up operation (in seconds). This feature is useful especially with archive installations that might 
+contains millions of  grids, which are rarely accessed. If the grid files are continuously changing then there is not necessary any need for
+the clean-up.
 
 All preload parameters are also experimental parameters that should not be used. They probably work, but the benefits for preloading grids into memory or locking them into memory are very minimal meanwhile the drawbacks are quite significant. 
 
