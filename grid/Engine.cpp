@@ -1976,7 +1976,7 @@ ContentTable Engine::getGenerationInfo(boost::optional<std::string> producer,std
     boost::shared_ptr < Spine::Table > resultTable(new Spine::Table);
 
     Spine::TableFormatter::Names headers
-    {"ProducerName", "Timesteps", "AnalysisTime", "MinTime", "MaxTime", "FmiParameters", "ParameterAliases" };
+    {"ProducerName", "Timesteps", "AnalysisTime", "MinTime", "MaxTime", "ModificationTime", "FmiParameters", "ParameterAliases" };
 
     ContentServer_sptr contentServer = getContentServer_sptr();
     time_t currentTime = time(nullptr);
@@ -2079,6 +2079,10 @@ ContentTable Engine::getGenerationInfo(boost::optional<std::string> producer,std
                     // Max time
                     boost::posix_time::ptime lTime = toTimeStamp(*last);
                     resultTable->set(4, row, timeFormatter->format(lTime));
+
+                    // Modification time
+                    boost::posix_time::ptime mTime = toTimeStamp(utcTimeFromTimeT(gInfo->mModificationTime));
+                    resultTable->set(5, row, timeFormatter->format(mTime));
                   }
                   else
                   {
@@ -2090,13 +2094,16 @@ ContentTable Engine::getGenerationInfo(boost::optional<std::string> producer,std
 
                     // Max time
                     resultTable->set(4, row, *last);
+
+                    // Modification time
+                    resultTable->set(5, row, utcTimeFromTimeT(gInfo->mModificationTime));
                   }
 
                   // FMI Parameters
-                  resultTable->set(5, row, output1.str());
+                  resultTable->set(6, row, output1.str());
 
                   // Parameter alias names
-                  resultTable->set(6, row, output2.str());
+                  resultTable->set(7, row, output2.str());
 
                   row++;
                 }
@@ -2129,7 +2136,7 @@ ContentTable Engine::getExtGenerationInfo(boost::optional<std::string> producer,
     std::unique_ptr<Fmi::TimeFormatter> timeFormatter(Fmi::TimeFormatter::create(timeFormat));
     boost::shared_ptr < Spine::Table > resultTable(new Spine::Table);
     Spine::TableFormatter::Names headers
-    { "ProducerName", "Timesteps", "AnalysisTime", "MinTime", "MaxTime", "FmiParameters", "ParameterAliases" };
+    { "ProducerName", "Timesteps", "AnalysisTime", "MinTime", "MaxTime", "ModificationTime", "FmiParameters", "ParameterAliases" };
 
 
     if (mProducerStatusFile.empty())
@@ -2195,6 +2202,7 @@ ContentTable Engine::getExtGenerationInfo(boost::optional<std::string> producer,
 
         for (auto it = counterList.begin(); it != counterList.end(); ++it)
         {
+          time_t modTime = 0;
           if (it->second.size() == (sz-1))
           {
             std::ostringstream output1;
@@ -2212,6 +2220,9 @@ ContentTable Engine::getExtGenerationInfo(boost::optional<std::string> producer,
               for (auto g = it->second.begin(); g != it->second.end(); ++g)
               {
                 T::GenerationInfo *gInfo = mGenerationInfoList.getGenerationInfoById(*g);
+                if (gInfo && gInfo->mModificationTime > modTime)
+                  modTime = gInfo->mModificationTime;
+
                 if (gInfo &&  mParameterMappingDefinitions)
                 {
                   T::ProducerInfo *pInfo = mProducerInfoList.getProducerInfoById(gInfo->mProducerId);
@@ -2290,6 +2301,11 @@ ContentTable Engine::getExtGenerationInfo(boost::optional<std::string> producer,
                 // Max time
                 boost::posix_time::ptime lTime = toTimeStamp(*last);
                 resultTable->set(4, row, timeFormatter->format(lTime));
+
+                // Modification time
+                boost::posix_time::ptime mTime = toTimeStamp(utcTimeFromTimeT(modTime));
+                resultTable->set(5, row, timeFormatter->format(mTime));
+
               }
               else
               {
@@ -2301,13 +2317,16 @@ ContentTable Engine::getExtGenerationInfo(boost::optional<std::string> producer,
 
                 // Max time
                 resultTable->set(4, row, *last);
+
+                // Modification time
+                resultTable->set(5, row, utcTimeFromTimeT(modTime));
               }
 
               // FMI Parameters
-              resultTable->set(5, row, output1.str());
+              resultTable->set(6, row, output1.str());
 
               // Parameter alias names
-              resultTable->set(6, row, output2.str());
+              resultTable->set(7, row, output2.str());
 
               row++;
             }
