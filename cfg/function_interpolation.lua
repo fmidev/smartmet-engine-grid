@@ -1,6 +1,6 @@
 ParamValueMissing = -16777216;
 PI = 3.1415926;
-DEBUG = 1;
+DEBUG = 0;
 
 
 -- ***********************************************************************
@@ -1583,12 +1583,11 @@ function getAreaInterpolationInfo(numOfParams,params)
   qp.parameterName = params[2];
   qp.parameterKeyType = tonumber(params[3]);
   qp.parameterKey = params[4];
-  qp.parameterLevelIdType = tonumber(params[5]);
-  qp.parameterLevelId = tonumber(params[6]);
-  qp.parameterLevel = tonumber(params[7]);
-  qp.forecastType = tonumber(params[8]);
-  qp.forecastNumber = tonumber(params[9]);
-  qp.areaInterpolationMethod = tonumber(params[10]);
+  qp.parameterLevelId = tonumber(params[5]);
+  qp.parameterLevel = tonumber(params[6]);
+  qp.forecastType = tonumber(params[7]);
+  qp.forecastNumber = tonumber(params[8]);
+  qp.areaInterpolationMethod = tonumber(params[9]);
 
   if (DEBUG == 1) then
     for index, value in pairs(qp) do
@@ -1645,10 +1644,10 @@ end
 --  parameter according to the current interpolation method.
 -- ***********************************************************************
 
-function getAreaInterpolationInfo2(producerName,parameterName,parameterKeyType,parameterKey,parameterLevelIdType,parameterLevelId,parameterLevel,forecastType,forecastNumber,areaInterpolationMethod)
+function getAreaInterpolationInfo2(producerName,parameterName,parameterKeyType,parameterKey,parameterLevelId,parameterLevel,forecastType,forecastNumber,areaInterpolationMethod)
 
   if (DEBUG == 1) then
-    print("getAreaInterpolationInfo2("..producerName..","..parameterName..","..parameterKeyType..","..parameterKey..","..parameterLevelIdType..","..parameterLevelId..","..parameterLevel..","..forecastType..","..forecastNumber..","..areaInterpolationMethod..")");
+    print("getAreaInterpolationInfo2("..producerName..","..parameterName..","..parameterKeyType..","..parameterKey..","..parameterLevelId..","..parameterLevel..","..forecastType..","..forecastNumber..","..areaInterpolationMethod..")");
   end
 
   local qp = {};
@@ -1656,7 +1655,6 @@ function getAreaInterpolationInfo2(producerName,parameterName,parameterKeyType,p
   qp.parameterName = parameterName;
   qp.parameterKeyType = parameterKeyType;
   qp.parameterKey = parameterKey;
-  qp.parameterLevelIdType = parameterLevelIdType;
   qp.parameterLevelId = parameterLevelId;
   qp.parameterLevel = parameterLevel;
   qp.forecastType = forecastType;
