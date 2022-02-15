@@ -617,15 +617,16 @@ If a query does not contain any producer definition the Query Server goes throug
 The producer search file is a simple CSV-file that looks like this:
 
 <pre>
-  SMARTMET;1096;;
-  SMARTMETMTA;1096;;
-  ECG;1007;;
-  ECGMTA;1007;;
-  ECG;1008;;
-  ECGMTA;1008;;
+  SMARTMETNWC:1110;SMARTMET:1096;SMARTMETMTA:1096
+  SMARTMET:1096
+  SMARTMETMTA:1096
+  ECG:1007
+  ECGMTA:1007
+  ECG:1008
+  ECGMTA:1008
 </pre>
 
-The first field is the name of the producer and the second field is the geometry identifier. Notice that the same producer might support several different geometries. This file is automatically uploaded if it changes, which means that there is no need to restart the server.
+The first field is the name of the producer and the second field is the geometry identifier. If a line contains multiple producers then the data from the first producer on the line can be concatenated by the following producers. Notice that the same producer might support several different geometries. This file is automatically uploaded if it changes, which means that there is no need to restart the server.
 
 The actual name and location of this file is defined in the grid engine's main configuration file.
 
