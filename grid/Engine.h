@@ -300,6 +300,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     int                 mQueryServerDebugLogMaxSize;
     int                 mQueryServerDebugLogTruncateSize;
     Log                 mQueryServerDebugLog;
+    bool                mQueryServerCheckGeometryStatus;
 
     uint                mNumOfCachedGrids;
     uint                mMaxSizeOfCachedGridsInMegaBytes;
@@ -352,6 +353,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     mutable ModificationLock                  mProducerInfoList_modificationLock;
     mutable ProducerHash_map                  mProducerHashMap;
     mutable T::GenerationInfoList             mGenerationInfoList;
+    mutable T::GeometryInfoList               mGeometryInfoList;
 
     std::string                               mProducerStatusFile;
 

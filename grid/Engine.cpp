@@ -177,6 +177,7 @@ Engine::Engine(const char* theConfigFile)
     mQueryServerDebugLogTruncateSize = 5000000;
     mQueryCache_enabled = true;
     mQueryCache_maxAge = 300;
+    mQueryServerCheckGeometryStatus = false;
     mContentSwapEnabled = false;
     mContentUpdateInterval = 180;
     mBrowserEnabled = true;
@@ -281,6 +282,7 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.producerFile", mProducerSearchList_filename);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.producerMappingFiles", mProducerMappingDefinitions_filenames);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.producerStatusFile", mProducerStatusFile);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.checkGeometryStatus",mQueryServerCheckGeometryStatus);
 
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.enabled", mQueryServerProcessingLogEnabled);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.file", mQueryServerProcessingLogFile);
@@ -475,7 +477,7 @@ void Engine::init()
     {
       QueryServer::ServiceImplementation* server = new QueryServer::ServiceImplementation();
       server->init(cServer, dServer, mGridConfigFile, mParameterMappingDefinitions_filenames, mParameterAliasDefinitions_filenames, mProducerSearchList_filename,
-          mProducerMappingDefinitions_filenames, mQueryServerLuaFiles);
+          mProducerMappingDefinitions_filenames, mQueryServerLuaFiles,mQueryServerCheckGeometryStatus);
       qServer = server;
 
       mQueryServer.reset(server);
@@ -1976,7 +1978,7 @@ ContentTable Engine::getGenerationInfo(boost::optional<std::string> producer,std
     boost::shared_ptr < Spine::Table > resultTable(new Spine::Table);
 
     Spine::TableFormatter::Names headers
-    {"ProducerName", "Timesteps", "AnalysisTime", "MinTime", "MaxTime", "ModificationTime", "FmiParameters", "ParameterAliases" };
+    {"ProducerName", "GeometryId", "Timesteps", "AnalysisTime", "MinTime", "MaxTime", "ModificationTime", "FmiParameters", "ParameterAliases" };
 
     ContentServer_sptr contentServer = getContentServer_sptr();
     time_t currentTime = time(nullptr);
@@ -2004,108 +2006,119 @@ ContentTable Engine::getGenerationInfo(boost::optional<std::string> producer,std
             T::GenerationInfo *gInfo = generationList.getGenerationInfoByIndex(g);
             time_t deletionTime = gInfo->mDeletionTime;
 
-            if (gInfo->mStatus == T::GenerationInfo::Status::Ready)
+            if (deletionTime == 0 || (currentTime + 120) < deletionTime)
             {
-              if (deletionTime == 0 || (currentTime + 120) < deletionTime)
+              T::GeometryInfoList geometryInfoList;
+              mGeometryInfoList.getGeometryInfoListByGenerationId(gInfo->mGenerationId,geometryInfoList);
+
+              uint geomLen = geometryInfoList.getLength();
+              for (uint gg = 0; gg < geomLen; gg++)
               {
-                std::set<std::string> contentTimeList;
-                contentServer->getContentTimeListByGenerationId(0,gInfo->mGenerationId,contentTimeList);
-
-                std::ostringstream output1;
-                std::ostringstream output2;
-
-                if (mParameterMappingDefinitions)
+                T::GeometryInfo *geom = geometryInfoList.getGeometryInfoByIndex(gg);
+                if (geom != nullptr &&  geom->mStatus == T::GeometryInfo::Status::Ready)
                 {
-                  AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
-                  std::set<std::string> paramKeyList;
-                  contentServer->getContentParamKeyListByGenerationId(0,gInfo->mGenerationId,T::ParamKeyTypeValue::FMI_NAME,paramKeyList);
+                  std::set<std::string> contentTimeList;
+                  contentServer->getContentTimeListByGenerationAndGeometryId(0,geom->mGenerationId,geom->mGeometryId,contentTimeList);
 
+                  std::ostringstream output1;
+                  std::ostringstream output2;
 
-                  std::set<std::string> paramList;
-                  for (auto pk = paramKeyList.begin(); pk != paramKeyList.end(); ++pk)
+                  if (mParameterMappingDefinitions)
                   {
-                    QueryServer::ParameterMapping_vec mappings;
-                    for (auto mf = mParameterMappingDefinitions->begin(); mf != mParameterMappingDefinitions->end(); ++mf)
-                    {
-                      mf->getMappingsByParamKey(info->mName,T::ParamKeyTypeValue::FMI_NAME,*pk,-1,-1,-1,mappings);
-                    }
+                    AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
+                    std::set<std::string> paramKeyList;
+                    contentServer->getContentParamKeyListByGenerationAndGeometryId(0,geom->mGenerationId,geom->mGeometryId,T::ParamKeyTypeValue::FMI_NAME,paramKeyList);
 
-                    if (mappings.size() > 0)
+
+                    std::set<std::string> paramList;
+                    for (auto pk = paramKeyList.begin(); pk != paramKeyList.end(); ++pk)
                     {
-                      for (auto pm = mappings.begin(); pm != mappings.end(); ++pm)
+                      QueryServer::ParameterMapping_vec mappings;
+                      for (auto mf = mParameterMappingDefinitions->begin(); mf != mParameterMappingDefinitions->end(); ++mf)
                       {
-                        if (strcasecmp(pk->c_str(),pm->mParameterName.c_str()) != 0)
-                          paramList.insert(pm->mParameterName);
+                        mf->getMappingsByParamKey(info->mName,T::ParamKeyTypeValue::FMI_NAME,*pk,-1,-1,-1,mappings);
                       }
+
+                      if (mappings.size() > 0)
+                      {
+                        for (auto pm = mappings.begin(); pm != mappings.end(); ++pm)
+                        {
+                          if (strcasecmp(pk->c_str(),pm->mParameterName.c_str()) != 0)
+                            paramList.insert(pm->mParameterName);
+                        }
+                      }
+                      if (pk != paramKeyList.begin())
+                       output1 << ",";
+
+                      output1 << *pk;
                     }
-                    if (pk != paramKeyList.begin())
-                     output1 << ",";
 
-                    output1 << *pk;
+                    for (auto pp = paramList.begin(); pp != paramList.end(); ++pp)
+                    {
+                      if (pp != paramList.begin())
+                       output2 << ",";
+
+                      output2 << *pp;
+                    }
                   }
 
-                  for (auto pp = paramList.begin(); pp != paramList.end(); ++pp)
+                  uint slen = contentTimeList.size();
+                  if (slen > 0)
                   {
-                    if (pp != paramList.begin())
-                     output2 << ",";
+                    auto first = contentTimeList.begin();
+                    auto last = contentTimeList.rbegin();
 
-                    output2 << *pp;
+                    // Producer name
+                    resultTable->set(0, row, info->mName);
+
+                    // Geometry id
+                    resultTable->set(1, row, std::to_string(geom->mGeometryId));
+
+                    // Timesteps
+                    resultTable->set(2, row, std::to_string(slen));
+
+
+                    if (!timeFormat.empty()  &&  strcasecmp(timeFormat.c_str(),"ISO") != 0  && timeFormatter)
+                    {
+                      // Analysis time
+                      boost::posix_time::ptime aTime = toTimeStamp(gInfo->mAnalysisTime);
+                      resultTable->set(3, row, timeFormatter->format(aTime));
+
+                      // Min time
+                      boost::posix_time::ptime fTime = toTimeStamp(*first);
+                      resultTable->set(4, row, timeFormatter->format(fTime));
+
+                      // Max time
+                      boost::posix_time::ptime lTime = toTimeStamp(*last);
+                      resultTable->set(5, row, timeFormatter->format(lTime));
+
+                      // Modification time
+                      boost::posix_time::ptime mTime = toTimeStamp(utcTimeFromTimeT(geom->mModificationTime));
+                      resultTable->set(6, row, timeFormatter->format(mTime));
+                    }
+                    else
+                    {
+                      // Analysis time
+                      resultTable->set(3, row, gInfo->mAnalysisTime);
+
+                      // Min time
+                      resultTable->set(4, row, *first);
+
+                      // Max time
+                      resultTable->set(5, row, *last);
+
+                      // Modification time
+                      resultTable->set(6, row, utcTimeFromTimeT(geom->mModificationTime));
+                    }
+
+                    // FMI Parameters
+                    resultTable->set(7, row, output1.str());
+
+                    // Parameter alias names
+                    resultTable->set(8, row, output2.str());
+
+                    row++;
                   }
-                }
-
-                uint slen = contentTimeList.size();
-                if (slen > 0)
-                {
-                  auto first = contentTimeList.begin();
-                  auto last = contentTimeList.rbegin();
-
-                  // Producer name
-                  resultTable->set(0, row, info->mName);
-
-                  // Timesteps
-                  resultTable->set(1, row, std::to_string(slen));
-
-
-                  if (!timeFormat.empty()  &&  strcasecmp(timeFormat.c_str(),"ISO") != 0  && timeFormatter)
-                  {
-                    // Analysis time
-                    boost::posix_time::ptime aTime = toTimeStamp(gInfo->mAnalysisTime);
-                    resultTable->set(2, row, timeFormatter->format(aTime));
-
-                    // Min time
-                    boost::posix_time::ptime fTime = toTimeStamp(*first);
-                    resultTable->set(3, row, timeFormatter->format(fTime));
-
-                    // Max time
-                    boost::posix_time::ptime lTime = toTimeStamp(*last);
-                    resultTable->set(4, row, timeFormatter->format(lTime));
-
-                    // Modification time
-                    boost::posix_time::ptime mTime = toTimeStamp(utcTimeFromTimeT(gInfo->mModificationTime));
-                    resultTable->set(5, row, timeFormatter->format(mTime));
-                  }
-                  else
-                  {
-                    // Analysis time
-                    resultTable->set(2, row, gInfo->mAnalysisTime);
-
-                    // Min time
-                    resultTable->set(3, row, *first);
-
-                    // Max time
-                    resultTable->set(4, row, *last);
-
-                    // Modification time
-                    resultTable->set(5, row, utcTimeFromTimeT(gInfo->mModificationTime));
-                  }
-
-                  // FMI Parameters
-                  resultTable->set(6, row, output1.str());
-
-                  // Parameter alias names
-                  resultTable->set(7, row, output2.str());
-
-                  row++;
                 }
               }
             }
@@ -2136,7 +2149,7 @@ ContentTable Engine::getExtGenerationInfo(boost::optional<std::string> producer,
     std::unique_ptr<Fmi::TimeFormatter> timeFormatter(Fmi::TimeFormatter::create(timeFormat));
     boost::shared_ptr < Spine::Table > resultTable(new Spine::Table);
     Spine::TableFormatter::Names headers
-    { "ProducerName", "Timesteps", "AnalysisTime", "MinTime", "MaxTime", "ModificationTime", "FmiParameters", "ParameterAliases" };
+    { "ProducerName", "GeometryId", "Timesteps", "AnalysisTime", "MinTime", "MaxTime", "ModificationTime", "FmiParameters", "ParameterAliases" };
 
 
     if (mProducerStatusFile.empty())
@@ -2157,12 +2170,21 @@ ContentTable Engine::getExtGenerationInfo(boost::optional<std::string> producer,
       if (sz > 1 && (!producer ||  producer->empty() || strcasecmp(producer->c_str(),(*rec)[0].c_str()) == 0))
       {
         bool available = true;
-        std::map<std::string,std::vector<uint>> counterList;
+        std::map<std::string,std::vector<std::pair<uint,int>>> counterList;
 
         for (uint t=1; t<sz && available; t++)
         {
           AutoReadLock lock(&mProducerInfoList_modificationLock);
-          T::ProducerInfo *pInfo = mProducerInfoList.getProducerInfoByName((*rec)[t]);
+
+          std::vector <std::string> list;
+          splitString((*rec)[t], ':',list);
+
+          std::string producerName = list[0];
+          int geometryId = 0;
+          if (list.size() > 1)
+            geometryId = toInt32(list[1]);
+
+          T::ProducerInfo *pInfo = mProducerInfoList.getProducerInfoByName(producerName);
           if (pInfo)
           {
             //printf("PRODUCER %s\n",pInfo->mName.c_str());
@@ -2176,18 +2198,27 @@ ContentTable Engine::getExtGenerationInfo(boost::optional<std::string> producer,
               T::GenerationInfo *gInfo = generationInfoList.getGenerationInfoByIndex(g);
               time_t deletionTime = gInfo->mDeletionTime;
 
-              if (gInfo->mStatus == T::GenerationInfo::Status::Ready)
+              if (deletionTime == 0 || (currentTime + 120) < deletionTime)
               {
-                if (deletionTime == 0 || (currentTime + 120) < deletionTime)
+                T::GeometryInfoList geometryInfoList;
+                mGeometryInfoList.getGeometryInfoListByGenerationId(gInfo->mGenerationId,geometryInfoList);
+
+                uint geomLen = geometryInfoList.getLength();
+                for (uint gg = 0; gg < geomLen; gg++)
                 {
-                  auto p = counterList.find(gInfo->mAnalysisTime);
-                  if (p != counterList.end())
-                    p->second.push_back(gInfo->mGenerationId);
-                  else
+                  T::GeometryInfo *geom = geometryInfoList.getGeometryInfoByIndex(gg);
+                  if (geom != nullptr &&  geom->mStatus == T::GeometryInfo::Status::Ready  &&  (geometryId == geom->mGeometryId  ||  geometryId == 0))
                   {
-                    std::vector<uint> cntList;
-                    cntList.push_back(gInfo->mGenerationId);
-                    counterList.insert(std::pair<std::string,std::vector<uint>>(gInfo->mAnalysisTime,cntList));
+                    std::string key = gInfo->mAnalysisTime + ":" + std::to_string(geom->mGeometryId);
+                    auto p = counterList.find(key);
+                    if (p != counterList.end())
+                      p->second.push_back(std::pair<uint,int>(geom->mGenerationId,geom->mGeometryId));
+                    else
+                    {
+                      std::vector<std::pair<uint,int>> cntList;
+                      cntList.push_back(std::pair<uint,int>(geom->mGenerationId,geom->mGeometryId));
+                      counterList.insert(std::pair<std::string,std::vector<std::pair<uint,int>>>(key,cntList));
+                    }
                   }
                 }
               }
@@ -2209,7 +2240,8 @@ ContentTable Engine::getExtGenerationInfo(boost::optional<std::string> producer,
             std::ostringstream output2;
 
             std::set<std::string> contentTimeList;
-            contentServer->getContentTimeListByGenerationId(0,it->second[0],contentTimeList);
+            //printf("CONTENT [%s] [%u][%d]\n",it->first.c_str(),it->second[0].first,it->second[0].second);
+            contentServer->getContentTimeListByGenerationAndGeometryId(0,it->second[0].first,it->second[0].second,contentTimeList);
 
             uint slen = contentTimeList.size();
             if (slen > 0)
@@ -2219,19 +2251,24 @@ ContentTable Engine::getExtGenerationInfo(boost::optional<std::string> producer,
 
               for (auto g = it->second.begin(); g != it->second.end(); ++g)
               {
-                T::GenerationInfo *gInfo = mGenerationInfoList.getGenerationInfoById(*g);
-                if (gInfo && gInfo->mModificationTime > modTime)
-                  modTime = gInfo->mModificationTime;
+                //printf(" --- %u %d\n",g->first,g->second);
+                //T::GenerationInfo *gInfo = mGenerationInfoList.getGenerationInfoById(g->first);
+                T::GeometryInfo *geom = mGeometryInfoList.getGeometryInfoById(g->first,g->second,0);
 
-                if (gInfo &&  mParameterMappingDefinitions)
+                if (geom && geom->mModificationTime > modTime)
                 {
-                  T::ProducerInfo *pInfo = mProducerInfoList.getProducerInfoById(gInfo->mProducerId);
+                  modTime = geom->mModificationTime;
+                }
+
+                if (geom &&  mParameterMappingDefinitions)
+                {
+                  T::ProducerInfo *pInfo = mProducerInfoList.getProducerInfoById(geom->mProducerId);
 
                   if (pInfo)
                   {
                     AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
                     std::set<std::string> paramKeyList;
-                    contentServer->getContentParamKeyListByGenerationId(0,gInfo->mGenerationId,T::ParamKeyTypeValue::FMI_NAME,paramKeyList);
+                    contentServer->getContentParamKeyListByGenerationAndGeometryId(0,geom->mGenerationId,geom->mGeometryId,T::ParamKeyTypeValue::FMI_NAME,paramKeyList);
 
                     for (auto pk = paramKeyList.begin(); pk != paramKeyList.end(); ++pk)
                     {
@@ -2260,73 +2297,76 @@ ContentTable Engine::getExtGenerationInfo(boost::optional<std::string> producer,
                     }
                   }
                 }
-              }
 
-              for (auto pp = paramList1.begin(); pp != paramList1.end(); ++pp)
-              {
-                if (pp != paramList1.begin())
-                  output1 << ",";
+                for (auto pp = paramList1.begin(); pp != paramList1.end(); ++pp)
+                {
+                  if (pp != paramList1.begin())
+                    output1 << ",";
 
-                output1 << *pp;
-              }
+                  output1 << *pp;
+                }
 
-              for (auto pp = paramList2.begin(); pp != paramList2.end(); ++pp)
-              {
-                if (pp != paramList2.begin())
-                  output2 << ",";
+                for (auto pp = paramList2.begin(); pp != paramList2.end(); ++pp)
+                {
+                  if (pp != paramList2.begin())
+                    output2 << ",";
 
-                output2 << *pp;
+                  output2 << *pp;
+                }
               }
 
               auto first = contentTimeList.begin();
               auto last = contentTimeList.rbegin();
+              std::vector<std::string> ss;
+              splitString(it->first,':',ss);
 
               // Producer name
               resultTable->set(0, row, (*rec)[0]);
 
+              // Geometry id
+              resultTable->set(1, row, ss[1]);
+
               // Timesteps
-              resultTable->set(1, row, std::to_string(slen));
+              resultTable->set(2, row, std::to_string(slen));
 
               if (!timeFormat.empty()  &&  strcasecmp(timeFormat.c_str(),"iso") != 0  && timeFormatter)
               {
-
                 // Analysis time
-                boost::posix_time::ptime aTime = toTimeStamp(it->first);
-                resultTable->set(2, row, timeFormatter->format(aTime));
+                boost::posix_time::ptime aTime = toTimeStamp(ss[0]);
+                resultTable->set(3, row, timeFormatter->format(aTime));
 
                 // Min time
                 boost::posix_time::ptime fTime = toTimeStamp(*first);
-                resultTable->set(3, row, timeFormatter->format(fTime));
+                resultTable->set(4, row, timeFormatter->format(fTime));
 
                 // Max time
                 boost::posix_time::ptime lTime = toTimeStamp(*last);
-                resultTable->set(4, row, timeFormatter->format(lTime));
+                resultTable->set(5, row, timeFormatter->format(lTime));
 
                 // Modification time
                 boost::posix_time::ptime mTime = toTimeStamp(utcTimeFromTimeT(modTime));
-                resultTable->set(5, row, timeFormatter->format(mTime));
-
+                resultTable->set(6, row, timeFormatter->format(mTime));
               }
               else
               {
                 // Analysis time
-                resultTable->set(2, row, it->first);
+                resultTable->set(3, row, ss[0]);
 
                 // Min time
-                resultTable->set(3, row, *first);
+                resultTable->set(4, row, *first);
 
                 // Max time
-                resultTable->set(4, row, *last);
+                resultTable->set(5, row, *last);
 
                 // Modification time
-                resultTable->set(5, row, utcTimeFromTimeT(modTime));
+                resultTable->set(6, row, utcTimeFromTimeT(modTime));
               }
 
               // FMI Parameters
-              resultTable->set(6, row, output1.str());
+              resultTable->set(7, row, output1.str());
 
               // Parameter alias names
-              resultTable->set(7, row, output2.str());
+              resultTable->set(8, row, output2.str());
 
               row++;
             }
@@ -2661,7 +2701,7 @@ void Engine::getAnalysisTimes(std::vector<std::vector<std::string>>& table) cons
             {
               auto first = contentTimeList.begin();
               auto last = contentTimeList.rbegin();
-              printf("%s:%s:%s:%s:%u\n",pInfo->mName.c_str(),gInfo->mAnalysisTime.c_str(),first->c_str(),last->c_str(),slen);
+              //printf("%s:%s:%s:%s:%u\n",pInfo->mName.c_str(),gInfo->mAnalysisTime.c_str(),first->c_str(),last->c_str(),slen);
 
               std::vector<std::string> vec;
               vec.push_back(pInfo->mName);
@@ -2769,7 +2809,7 @@ void Engine::getExtAnalysisTimes(std::vector<std::vector<std::string>>& table) c
             {
               auto first = contentTimeList.begin();
               auto last = contentTimeList.rbegin();
-              printf("%s:%s:%s:%s:%u\n",(*rec)[0].c_str(),it->first.c_str(),first->c_str(),last->c_str(),slen);
+              //printf("%s:%s:%s:%s:%u\n",(*rec)[0].c_str(),it->first.c_str(),first->c_str(),last->c_str(),slen);
 
               std::vector<std::string> vec;
               vec.push_back((*rec)[0]);
@@ -3274,6 +3314,7 @@ void Engine::updateProcessing()
                 AutoWriteLock lock(&mProducerInfoList_modificationLock);
                 mProducerInfoList.clear();
                 mGenerationInfoList.clear();
+                mGeometryInfoList.clear();
                 mLevelInfoList.clear();
                 mProducerInfoList_updateTime = 0;
                 mLevelInfoList_lastUpdate = 0;
@@ -3359,6 +3400,9 @@ void Engine::updateProducerAndGenerationList() const
 
       contentServer->getGenerationInfoList(0, mGenerationInfoList);
       mGenerationInfoList.sort(T::GenerationInfo::ComparisonMethod::generationId);
+
+      contentServer->getGeometryInfoList(0, mGeometryInfoList);
+      mGeometryInfoList.sort(T::GeometryInfo::ComparisonMethod::generationId);
     }
 
     if (mLevelInfoList.getLength() == 0 || (mLevelInfoList_lastUpdate + 300) < time(nullptr))
