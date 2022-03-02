@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 22.3.1
+Version: 22.3.2
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -91,6 +91,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Wed Mar  2 2022 Pertti Kinnia <pertti.kinnia@fmi.fi> - 22.3.2-1.fmi
+- Duplicated parameter names removed
+
 * Tue Mar  1 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.3.1-1.fmi
 - Repackaged due to an ABI change in grid-content library
 
