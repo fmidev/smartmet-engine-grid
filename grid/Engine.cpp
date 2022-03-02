@@ -2297,22 +2297,22 @@ ContentTable Engine::getExtGenerationInfo(boost::optional<std::string> producer,
                     }
                   }
                 }
+              }
 
-                for (auto pp = paramList1.begin(); pp != paramList1.end(); ++pp)
-                {
-                  if (pp != paramList1.begin())
-                    output1 << ",";
+              for (auto pp = paramList1.begin(); pp != paramList1.end(); ++pp)
+              {
+                if (pp != paramList1.begin())
+                  output1 << ",";
 
-                  output1 << *pp;
-                }
+                output1 << *pp;
+              }
 
-                for (auto pp = paramList2.begin(); pp != paramList2.end(); ++pp)
-                {
-                  if (pp != paramList2.begin())
-                    output2 << ",";
+              for (auto pp = paramList2.begin(); pp != paramList2.end(); ++pp)
+              {
+                if (pp != paramList2.begin())
+                  output2 << ",";
 
-                  output2 << *pp;
-                }
+                output2 << *pp;
               }
 
               auto first = contentTimeList.begin();
