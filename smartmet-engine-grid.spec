@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 22.3.10
+Version: 22.3.15
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -12,8 +12,8 @@ Source0: %{name}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
-BuildRequires: smartmet-library-grid-content-devel >= 22.3.10
-BuildRequires: smartmet-library-grid-files-devel >= 22.3.8
+BuildRequires: smartmet-library-grid-content-devel >= 22.3.15
+BuildRequires: smartmet-library-grid-files-devel >= 22.3.15
 BuildRequires: smartmet-library-spine-devel >= 22.3.8
 BuildRequires: make
 BuildRequires: omniORB-devel
@@ -22,8 +22,8 @@ BuildRequires: gdal34-devel
 BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 Requires: boost169-thread
-Requires: smartmet-library-grid-content >= 22.3.10
-Requires: smartmet-library-grid-files >= 22.3.8
+Requires: smartmet-library-grid-content >= 22.3.15
+Requires: smartmet-library-grid-files >= 22.3.15
 Requires: smartmet-library-spine >= 22.3.8
 Requires: omniORB-devel
 
@@ -49,7 +49,7 @@ SmartMet grid engine
 Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
-Requires: smartmet-library-grid-content-devel >= 22.3.10
+Requires: smartmet-library-grid-content-devel >= 22.3.15
 Requires: %{SPECNAME} = %{version}-%{release}
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
@@ -58,7 +58,7 @@ SmartMet %{SPECNAME} development headers.
 Summary: SmartMet %{SPECNAME} - redis server with required data for testing purpose
 Group: SmartMet/Development
 Provides: smartmet-engine-grid-test
-Requires: smartmet-library-grid-files >= 22.3.8
+Requires: smartmet-library-grid-files >= 22.3.15
 %description -n smartmet-engine-grid-test
 SmartMet %{SPECNAME} - redis server with required data for testing purpose
 
@@ -91,6 +91,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Tue Mar 15 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.3.15-1.fmi
+- Fixed to ModificationLock require recompile
+
 * Thu Mar 10 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.3.10-1.fmi
 - Repackaged due to base library ABI changes
 
