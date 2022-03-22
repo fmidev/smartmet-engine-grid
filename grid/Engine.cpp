@@ -2556,15 +2556,15 @@ void Engine::getProducerParameterLevelList(const std::string& producerName, T::P
 
     for (auto pname = nameList.begin(); pname != nameList.end(); ++pname)
     {
-      T::ProducerInfo producerInfo;
-      if (getProducerInfoByName(*pname, producerInfo))
+      T::ProducerInfo *producerInfo = mProducerInfoList.getProducerInfoByName(*pname);
+      if (producerInfo != nullptr)
       {
         std::string fmiParameterName;
         uint len = mLevelInfoList.getLength();
         for (uint t = 0; t < len; t++)
         {
           T::LevelInfo* levelInfo = mLevelInfoList.getLevelInfoByIndex(t);
-          if (levelInfo != nullptr && levelInfo->mProducerId == producerInfo.mProducerId && levelInfo->mFmiParameterLevelId == fmiParamLevelId
+          if (levelInfo != nullptr && levelInfo->mProducerId == producerInfo->mProducerId && levelInfo->mFmiParameterLevelId == fmiParamLevelId
               && (fmiParameterName.empty() || levelInfo->mFmiParameterName == fmiParameterName))
           {
             fmiParameterName = levelInfo->mFmiParameterName;
@@ -2600,15 +2600,15 @@ void Engine::getProducerParameterLevelIdList(const std::string& producerName, st
 
     for (auto pname = nameList.begin(); pname != nameList.end(); ++pname)
     {
-      T::ProducerInfo producerInfo;
-      if (getProducerInfoByName(*pname, producerInfo))
+      T::ProducerInfo *producerInfo = mProducerInfoList.getProducerInfoByName(*pname);
+      if (producerInfo != nullptr)
       {
         std::string fmiParameterName;
         uint len = mLevelInfoList.getLength();
         for (uint t = 0; t < len; t++)
         {
           T::LevelInfo* levelInfo = mLevelInfoList.getLevelInfoByIndex(t);
-          if (levelInfo != nullptr && levelInfo->mProducerId == producerInfo.mProducerId)
+          if (levelInfo != nullptr && levelInfo->mProducerId == producerInfo->mProducerId)
           {
             // if (levelIdList.find(levelInfo->mFmiParameterLevelId) == levelIdList.end())
             levelIdList.insert(levelInfo->mFmiParameterLevelId);
