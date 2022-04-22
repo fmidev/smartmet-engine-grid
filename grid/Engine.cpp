@@ -889,17 +889,23 @@ void Engine::shutdown()
 
     std::cout << "  -- Shutdown requested (grid engine)\n";
 
-    if (!mContentServer)
-      mContentServer->shutdown();
+    if (!mQueryServer)
+    {
+      mQueryServer->shutdown();
+      sleep(1);
+    }
+
+    if (!mDataServer)
+    {
+      mDataServer->shutdown();
+      sleep(1);
+    }
 
     if (!mContentServerCache)
       mContentServerCache->shutdown();
 
-    if (!mDataServer)
-      mDataServer->shutdown();
-
-    if (!mQueryServer)
-      mQueryServer->shutdown();
+    if (!mContentServer)
+      mContentServer->shutdown();
   }
   catch (...)
   {
@@ -914,7 +920,7 @@ bool Engine::browserRequest(const Spine::HTTP::Request& theRequest, Spine::HTTP:
   FUNCTION_TRACE
   try
   {
-    if (!mEnabled || !mBrowserEnabled)
+    if (!mEnabled || !mBrowserEnabled  || Spine::Reactor::isShuttingDown())
       return false;
 
     return mBrowser.requestHandler(theRequest, theResponse);
@@ -932,7 +938,7 @@ void Engine::browserContent(std::ostringstream& output)
   FUNCTION_TRACE
   try
   {
-    if (!mEnabled || !mBrowserEnabled)
+    if (!mEnabled || !mBrowserEnabled || Spine::Reactor::isShuttingDown())
       return;
 
     mBrowser.browserContent(output);
@@ -953,6 +959,9 @@ int Engine::executeQuery(QueryServer::Query& query) const
     if (!mEnabled)
       return QueryServer::Result::SERVICE_DISABLED;
 
+    if (Spine::Reactor::isShuttingDown())
+      return QueryServer::Result::SERVICE_DISABLED;
+
     return mQueryServer->executeQuery(0, query);
   }
   catch (...)
@@ -969,6 +978,9 @@ Query_sptr Engine::executeQuery(Query_sptr query) const
   try
   {
     if (!mEnabled)
+      return query;
+
+    if (Spine::Reactor::isShuttingDown())
       return query;
 
     if (!mQueryCache_enabled)
@@ -3058,6 +3070,9 @@ void Engine::updateMappings(
     if (!mEnabled)
       return;
 
+    if (Spine::Reactor::isShuttingDown())
+      return;
+
     ContentServer_sptr contentServer = getContentServer_sptr();
 
     T::SessionId sessionId = 0;
@@ -3081,6 +3096,9 @@ void Engine::updateMappings(
     uint plen = producerInfoList.getLength();
     for (uint t = 0; t < plen; t++)
     {
+      if (Spine::Reactor::isShuttingDown())
+        return;
+
       T::ProducerInfo* producerInfo = producerInfoList.getProducerInfoByIndex(t);
       std::set < std::string > infoList;
 
@@ -3089,6 +3107,9 @@ void Engine::updateMappings(
       {
         for (auto it = infoList.begin(); it != infoList.end(); ++it)
         {
+          if (Spine::Reactor::isShuttingDown())
+            return;
+
           std::vector < std::string > pl;
           splitString(it->c_str(), ';', pl);
           if (pl.size() >= 8)
@@ -3364,8 +3385,8 @@ void Engine::updateProcessing()
       catch (...)
       {
       }
-
-      sleep(1);
+      if (!Spine::Reactor::isShuttingDown())
+        sleep(1);
     }
   }
   catch (...)
