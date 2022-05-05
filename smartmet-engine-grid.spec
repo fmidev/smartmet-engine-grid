@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 22.4.25
+Version: 22.5.5
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -91,6 +91,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Thu May  5 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.5.5-1.fmi
+- Commented out mapping files in the test package since /usr/share is not writable in CircleCI tests
+
 * Mon Apr 25 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.4.25-1.fmi
 - Improved shutdown logistics
 
