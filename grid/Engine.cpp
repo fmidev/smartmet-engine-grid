@@ -170,6 +170,7 @@ Engine::Engine(const char* theConfigFile)
     mDataServerProcessingLogTruncateSize = 5000000;
     mDataServerDebugLogMaxSize = 10000000;
     mDataServerDebugLogTruncateSize = 5000000;
+    mDataServerMethodsEnabled = false;
     mQueryServerRemote = false;
     mQueryServerProcessingLogMaxSize = 10000000;
     mQueryServerProcessingLogTruncateSize = 50000000;
@@ -303,6 +304,7 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingFiles", mParameterMappingDefinitions_filenames);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.aliasFiles", mParameterAliasDefinitions_filenames);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.luaFiles", mQueryServerLuaFiles);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.dataServerMethodsEnabled",mDataServerMethodsEnabled);
 
     configurationFile.getAttributeValue("smartmet.engine.grid.browser.enabled", mBrowserEnabled);
     configurationFile.getAttributeValue("smartmet.engine.grid.browser.flags", mBrowserFlags);
@@ -477,7 +479,7 @@ void Engine::init()
     {
       QueryServer::ServiceImplementation* server = new QueryServer::ServiceImplementation();
       server->init(cServer, dServer, mGridConfigFile, mParameterMappingDefinitions_filenames, mParameterAliasDefinitions_filenames, mProducerSearchList_filename,
-          mProducerMappingDefinitions_filenames, mQueryServerLuaFiles,mQueryServerCheckGeometryStatus);
+          mProducerMappingDefinitions_filenames, mQueryServerLuaFiles,mQueryServerCheckGeometryStatus,mDataServerMethodsEnabled);
       qServer = server;
 
       mQueryServer.reset(server);
@@ -1450,6 +1452,49 @@ ulonglong Engine::getProducerHash(uint producerId) const
     throw exception;
   }
 }
+
+
+
+ulonglong Engine::getProducerHash(std::string producerName) const
+{
+  try
+  {
+    ulonglong hash = 0;
+    std::vector<std::string> nameList;
+    getProducerNameList(producerName,nameList);
+    if (nameList.size() > 0)
+    {
+      for (auto it = nameList.begin(); it != nameList.end(); ++it)
+      {
+        T::ProducerInfo producerInfo;
+        getProducerInfoByName(*it,producerInfo);
+        if (producerInfo.mProducerId != 0)
+        {
+          hash += getProducerHash(producerInfo.mProducerId);
+        }
+      }
+    }
+    else
+    {
+      T::ProducerInfo producerInfo;
+      getProducerInfoByName(producerName,producerInfo);
+      if (producerInfo.mProducerId != 0)
+      {
+        hash += getProducerHash(producerInfo.mProducerId);
+      }
+    }
+
+    return hash;
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file", mConfigurationFile_name);
+    throw exception;
+  }
+}
+
+
 
 void Engine::getParameterDetails(const std::string& aliasName, ParameterDetails_vec& parameterDetails) const
 {

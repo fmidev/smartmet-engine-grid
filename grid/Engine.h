@@ -95,6 +95,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                           int levelId) const;
 
     ulonglong           getProducerHash(uint producerId) const;
+    ulonglong           getProducerHash(std::string producerName) const;
 
     ContentTable        getProducerInfo(boost::optional<std::string> producer,std::string timeFormat) const;
     ContentTable        getGenerationInfo(boost::optional<std::string> producer,std::string timeFormat) const;
@@ -315,6 +316,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     bool                mContentSwapEnabled;
     uint                mContentUpdateInterval;
 
+    bool                mDataServerMethodsEnabled;
 
     pthread_t           mThread;
     Browser             mBrowser;
