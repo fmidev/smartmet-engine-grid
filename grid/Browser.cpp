@@ -1327,6 +1327,8 @@ bool Browser::page_generations(const Spine::HTTP::Request& theRequest,Spine::HTT
         if (gInfo.mDeletionTime > 0)
           dt = utcTimeFromTimeT(gInfo.mDeletionTime);
 
+        std::string mt = utcTimeFromTimeT(gInfo.mModificationTime);
+
         output << "<HR>\n";
         output << "<H2>Generation</H2>\n";
         output << "<TABLE border=\"1\" width=\"100%\" style=\"font-size:12;\">\n";
@@ -1337,7 +1339,7 @@ bool Browser::page_generations(const Spine::HTTP::Request& theRequest,Spine::HTT
         output << "<TR><TD width=\"240\" bgColor=\"#D0D0D0\">Flags</TD><TD><INPUT style=\"width:100%;\"  type=\"text\" id=\"generation_flags\" value=\"" << gInfo.mFlags << "\"></TD></TR>";
         output << "<TR><TD width=\"240\" bgColor=\"#D0D0D0\">SourceId</TD><TD><INPUT style=\"width:100%;\"  type=\"text\" id=\"generation_sourceId\" value=\"" << gInfo.mSourceId << "\"></TD></TR>";
         output << "<TR><TD width=\"240\" bgColor=\"#D0D0D0\">Status</TD><TD><INPUT style=\"width:100%;\"  type=\"text\" id=\"generation_status\" value=\"" << (int)gInfo.mStatus << "\"></TD></TR>";
-        output << "<TR><TD width=\"240\" bgColor=\"#D0D0D0\">ModificationTime</TD><TD><INPUT style=\"width:100%;\"  type=\"text\" id=\"generation_modificationTime\" value=\"" << dt << "\"></TD></TR>";
+        output << "<TR><TD width=\"240\" bgColor=\"#D0D0D0\">ModificationTime</TD><TD><INPUT style=\"width:100%;\"  type=\"text\" id=\"generation_modificationTime\" value=\"" << mt << "\"></TD></TR>";
         output << "<TR><TD width=\"240\" bgColor=\"#D0D0D0\">DeletionTime</TD><TD><INPUT style=\"width:100%;\"  type=\"text\" id=\"generation_deletionTime\" value=\"" << dt << "\"></TD></TR>";
         output << "</TABLE>\n";
       }
