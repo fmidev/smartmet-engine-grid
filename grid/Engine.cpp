@@ -318,6 +318,8 @@ Engine::Engine(const char* theConfigFile)
 
     if (!mEnabled)
       std::cout << ANSI_FG_RED << "**** Grid-engine configuration: Engine usage disabled!" << ANSI_FG_DEFAULT << std::endl;
+
+    std::memset(&mThread, 0, sizeof(mThread));
   }
   catch (...)
   {
