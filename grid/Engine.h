@@ -319,6 +319,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     bool                mDataServerMethodsEnabled;
 
     pthread_t           mThread;
+    bool                mShutdownRequested;
     Browser             mBrowser;
     bool                mBrowserEnabled;
     unsigned long long  mBrowserFlags;

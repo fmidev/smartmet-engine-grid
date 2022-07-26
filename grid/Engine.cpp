@@ -332,6 +332,8 @@ Engine::~Engine()
   FUNCTION_TRACE
   try
   {
+    mShutdownRequested = true;
+    pthread_join(mThread, nullptr);
   }
   catch (...)
   {
@@ -888,6 +890,8 @@ void Engine::shutdown()
   {
     if (!mEnabled)
       return;
+
+    mShutdownRequested = true;
 
     std::cout << "  -- Shutdown requested (grid engine)\n";
 
@@ -3362,7 +3366,7 @@ void Engine::updateProcessing()
       return;
 
     ContentServer_sptr contentServer = getContentServer_sptr();
-    while (!Spine::Reactor::isShuttingDown())
+    while (!mShutdownRequested)
     {
       try
       {
@@ -3430,8 +3434,8 @@ void Engine::updateProcessing()
       catch (...)
       {
       }
-      if (!Spine::Reactor::isShuttingDown())
-        sleep(1);
+      if (!mShutdownRequested)
+	sleep(1);
     }
   }
   catch (...)
