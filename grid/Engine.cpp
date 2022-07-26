@@ -896,22 +896,22 @@ void Engine::shutdown()
 
     std::cout << "  -- Shutdown requested (grid engine)\n";
 
-    if (!mQueryServer)
+    if (mQueryServer)
     {
       mQueryServer->shutdown();
       sleep(1);
     }
 
-    if (!mDataServer)
+    if (mDataServer)
     {
       mDataServer->shutdown();
       sleep(1);
     }
 
-    if (!mContentServerCache)
+    if (mContentServerCache)
       mContentServerCache->shutdown();
 
-    if (!mContentServer)
+    if (mContentServer)
       mContentServer->shutdown();
   }
   catch (...)
