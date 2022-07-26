@@ -333,7 +333,8 @@ Engine::~Engine()
   try
   {
     mShutdownRequested = true;
-    pthread_join(mThread, nullptr);
+    if (mEnabled)
+        pthread_join(mThread, nullptr);
   }
   catch (...)
   {
