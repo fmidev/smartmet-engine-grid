@@ -145,6 +145,8 @@ Engine::Engine(const char* theConfigFile)
     mEventListMaxSize = 0;
     mQueryCache_updateTime = time(nullptr);
     mContentServerStartTime = 0;
+    mShutdownRequested = false;
+    mShutdownFinished = false;
 
     mContentServerProcessingLogEnabled = false;
     mContentServerDebugLogEnabled = false;
@@ -318,8 +320,6 @@ Engine::Engine(const char* theConfigFile)
 
     if (!mEnabled)
       std::cout << ANSI_FG_RED << "**** Grid-engine configuration: Engine usage disabled!" << ANSI_FG_DEFAULT << std::endl;
-
-    std::memset(&mThread, 0, sizeof(mThread));
   }
   catch (...)
   {
@@ -334,9 +334,11 @@ Engine::~Engine()
   FUNCTION_TRACE
   try
   {
-    mShutdownRequested = true;
-    if (mEnabled)
-        pthread_join(mThread, nullptr);
+      if (mEnabled && !mShutdownFinished) {
+          std::cout << __PRETTY_FUNCTION__ << ": an attempt to destroy Grid engine before"
+                    << " is shutdown is complete" << std::endl;
+          abort();
+      }
   }
   catch (...)
   {
@@ -894,7 +896,13 @@ void Engine::shutdown()
     if (!mEnabled)
       return;
 
-    mShutdownRequested = true;
+    if (mShutdownRequested.exchange(true)) {
+        std::cout << __PRETTY_FUNCTION__ << " called more than once" << std::endl;
+        return;
+    }
+
+    if (mEnabled)
+        pthread_join(mThread, nullptr);
 
     std::cout << "  -- Shutdown requested (grid engine)\n";
 
@@ -915,6 +923,8 @@ void Engine::shutdown()
 
     if (mContentServer)
       mContentServer->shutdown();
+
+    mShutdownFinished = true;
   }
   catch (...)
   {
