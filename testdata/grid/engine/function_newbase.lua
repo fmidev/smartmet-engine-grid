@@ -493,7 +493,7 @@ function NB_FeelsLikeTemperature(numOfParams,params)
   local a = 15.0;   -- using this the two wind chills are good match at T=0
   local t0 = 37.0;  -- wind chill is horizontal at this T
 
-  local chill = a + (1 - a / t0) * temp + a / t0 * math.pow(wind + 1, 0.16) * (temp - t0);
+  local chill = a + (1 - a / t0) * temp + a / t0 * (wind + 1) ^ 0.16 * (temp - t0);
 
   -- Heat index
 
@@ -573,7 +573,7 @@ function NB_WindChill(numOfParams,params)
     return result.value,result.message;
   end
 
-  local wpow = math.pow(kmh, 0.16);
+  local wpow = kmh ^ 0.16;
 
   result.message = "OK"
   result.value = 13.12 + 0.6215 * temp - 11.37 * wpow + 0.3965 * temp * wpow;
