@@ -145,6 +145,8 @@ Engine::Engine(const char* theConfigFile)
     mEventListMaxSize = 0;
     mQueryCache_updateTime = time(nullptr);
     mContentServerStartTime = 0;
+    mShutdownRequested = false;
+    mShutdownFinished = false;
 
     mContentServerProcessingLogEnabled = false;
     mContentServerDebugLogEnabled = false;
@@ -332,6 +334,11 @@ Engine::~Engine()
   FUNCTION_TRACE
   try
   {
+      if (mEnabled && !mShutdownFinished) {
+          std::cout << __PRETTY_FUNCTION__ << ": an attempt to destroy Grid engine before"
+                    << " is shutdown is complete" << std::endl;
+          abort();
+      }
   }
   catch (...)
   {
@@ -889,25 +896,35 @@ void Engine::shutdown()
     if (!mEnabled)
       return;
 
+    if (mShutdownRequested.exchange(true)) {
+        std::cout << __PRETTY_FUNCTION__ << " called more than once" << std::endl;
+        return;
+    }
+
+    if (mEnabled)
+        pthread_join(mThread, nullptr);
+
     std::cout << "  -- Shutdown requested (grid engine)\n";
 
-    if (!mQueryServer)
+    if (mQueryServer)
     {
       mQueryServer->shutdown();
       sleep(1);
     }
 
-    if (!mDataServer)
+    if (mDataServer)
     {
       mDataServer->shutdown();
       sleep(1);
     }
 
-    if (!mContentServerCache)
+    if (mContentServerCache)
       mContentServerCache->shutdown();
 
-    if (!mContentServer)
+    if (mContentServer)
       mContentServer->shutdown();
+
+    mShutdownFinished = true;
   }
   catch (...)
   {
@@ -3362,7 +3379,7 @@ void Engine::updateProcessing()
       return;
 
     ContentServer_sptr contentServer = getContentServer_sptr();
-    while (!Spine::Reactor::isShuttingDown())
+    while (!mShutdownRequested)
     {
       try
       {
@@ -3430,8 +3447,8 @@ void Engine::updateProcessing()
       catch (...)
       {
       }
-      if (!Spine::Reactor::isShuttingDown())
-        sleep(1);
+      if (!mShutdownRequested)
+	sleep(1);
     }
   }
   catch (...)

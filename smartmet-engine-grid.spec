@@ -10,30 +10,38 @@ Group: SmartMet/Engines
 URL: https://github.com/fmidev/smartmet-engine-grid
 Source0: %{name}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+
+%if 0%{?rhel} && 0%{rhel} < 9
+%define smartmet_boost boost169
+%else
+%define smartmet_boost boost
+%endif
+
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: smartmet-library-grid-content-devel >= 22.6.8
 BuildRequires: smartmet-library-grid-files-devel >= 22.5.24
-BuildRequires: smartmet-library-spine-devel >= 22.6.8
+BuildRequires: smartmet-library-spine-devel >= 22.6.16
 BuildRequires: make
 BuildRequires: omniORB-devel
-BuildRequires: boost169-devel
+BuildRequires: %{smartmet_boost}-devel
 BuildRequires: gdal34-devel
 BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
-Requires: boost169-thread
+Requires: %{smartmet_boost}-thread
 Requires: smartmet-library-grid-content >= 22.6.8
 Requires: smartmet-library-grid-files >= 22.5.24
-Requires: smartmet-library-spine >= 22.6.8
+Requires: smartmet-library-spine >= 22.6.16
 Requires: omniORB-devel
 
 %if %{defined el7}
 Requires: libpqxx < 1:7.0
 BuildRequires: libpqxx-devel < 1:7.0
 %else
-%if %{defined el8}
-Requires: libpqxx >= 6.2.5 libpqxx < 1:7.7.0
-BuildRequires: libpqxx-devel >= 6.2.5 libpqxx-devel < 1:7.7.0
+%if 0%{?rhel} && 0%{rhel} >= 8
+Requires: libpqxx >= 1:7.7.0, libpqxx < 1:7.8.0
+BuildRequires: libpqxx-devel >= 1:7.7.0, libpqxx-devel < 1:7.8.0
+#TestRequires: libpqxx-devel >= 1:7.7.0, libpqxx-devel < 1:7.8.0
 %else
 Requires: libpqxx
 BuildRequires: libpqxx-devel
@@ -93,6 +101,15 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 * Thu Aug  4 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.8.4-1.fmi
 - Replaced Lua Math.pow calls with ^, Math.pow no longer exists in RHEL9
+
+* Thu Jul 28 2022 Andris Pavēnis <andris.pavenis@fmi.fi> 22.7.28-1.fmi
+- Engine shutdown fixes
+
+* Tue Jul 26 2022 Andris Pavenis <andris.pavenis@fmi.fi> 22.7.26-1.fmi
+- Join thread before destroying engine object
+
+* Fri Jun 17 2022 Andris Pavēnis <andris.pavenis@fmi.fi> 22.6.17-1.fmi
+- Add support for RHEL9. Update libpqxx to 7.7.0 (rhel8+) and fmt to 8.1.1
 
 * Wed Jun  8 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.6.8-1.fmi
 - Print true generation modification time

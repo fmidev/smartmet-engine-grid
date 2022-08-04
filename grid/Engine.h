@@ -12,6 +12,7 @@
 #include <grid-files/common/ConfigurationFile.h>
 #include <grid-files/common/Typedefs.h>
 #include <pthread.h>
+#include <atomic>
 #include <unordered_map>
 #include <spine/HTTP.h>
 #include <spine/TableFormatter.h>
@@ -319,6 +320,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     bool                mDataServerMethodsEnabled;
 
     pthread_t           mThread;
+    std::atomic<bool>   mShutdownRequested;
+    bool                mShutdownFinished;
     Browser             mBrowser;
     bool                mBrowserEnabled;
     unsigned long long  mBrowserFlags;
