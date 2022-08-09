@@ -1519,7 +1519,7 @@ bool Browser::page_producers(const Spine::HTTP::Request& theRequest,Spine::HTTP:
     output << "<A href=\"grid-admin?target=grid-engine&page=contentServer\">Content Server</A> / ";
     output << "<A href=\"grid-admin?target=grid-engine&page=contentInformation\">Content Information</A> / ";
     output << "<HR>\n";
-    output << "<H2>Producers (" << sourceStr << ")</H2>\n";
+    output << "<H2>Producers (" << sourceStr << " / " << contentServer->getSourceInfo()  <<  ")</H2>\n";
     output << "<HR>\n";
 
     output << "<TABLE border=\"1\" width=\"100%\" style=\"font-size:12;\">\n";
