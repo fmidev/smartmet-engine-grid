@@ -20,6 +20,7 @@
 #include <spine/Value.h>
 #include "ParameterDetails.h"
 #include "Browser.h"
+#include "MetaData.h"
 
 
 namespace SmartMet
@@ -104,6 +105,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     ContentTable        getParameterInfo(boost::optional<std::string> producer) const;
 
+    std::list<MetaData> getEngineMetadata(const char *producerName) const;
+
     std::string         getParameterString(
                           const std::string& producer,
                           const std::string& parameter) const;
@@ -175,26 +178,31 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                           const std::string& producerName,
                           std::set<T::ParamLevelId>& levelIdList) const;
 
+    void                getProducerLevelIdList(
+                          uint producerId,
+                          std::set<T::ParamLevelId>& levelIdList) const;
+
+
     void                getVerticalGrid(
-                            double lon1,
-                            double lat1,
-                            double lon2,
-                            double lat2,
-                            int steps,
-                            const std::string& utcTime,
-                            const std::string& valueProducerName,
-                            const std::string& valueParameter,
-                            const std::string& heightProducerName,
-                            const std::string& heightParameter,
-                            int geometryId,
-                            int forecastType,
-                            int forecastNumber,
-                            short areaInterpolationMethod,
-                            short timeInterpolationMethod,
-                            std::vector<T::Coordinate>& coordinates,
-                            std::vector<float>& gridData,
-                            uint& gridWidth,
-                            uint& gridHeight) const;
+                          double lon1,
+                          double lat1,
+                          double lon2,
+                          double lat2,
+                          int steps,
+                          const std::string& utcTime,
+                          const std::string& valueProducerName,
+                          const std::string& valueParameter,
+                          const std::string& heightProducerName,
+                          const std::string& heightParameter,
+                          int geometryId,
+                          int forecastType,
+                          int forecastNumber,
+                          short areaInterpolationMethod,
+                          short timeInterpolationMethod,
+                          std::vector<T::Coordinate>& coordinates,
+                          std::vector<float>& gridData,
+                          uint& gridWidth,
+                          uint& gridHeight) const;
 
     bool                isEnabled() const;
     bool                isGridProducer(const std::string& producer) const;
