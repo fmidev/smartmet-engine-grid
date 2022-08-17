@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 22.8.4
+Version: 22.8.17
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -19,7 +19,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
-BuildRequires: smartmet-library-grid-content-devel >= 22.6.8
+BuildRequires: smartmet-library-grid-content-devel >= 22.8.17
 BuildRequires: smartmet-library-grid-files-devel >= 22.5.24
 BuildRequires: smartmet-library-spine-devel >= 22.6.16
 BuildRequires: make
@@ -29,7 +29,7 @@ BuildRequires: gdal34-devel
 BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 Requires: %{smartmet_boost}-thread
-Requires: smartmet-library-grid-content >= 22.6.8
+Requires: smartmet-library-grid-content >= 22.8.17
 Requires: smartmet-library-grid-files >= 22.5.24
 Requires: smartmet-library-spine >= 22.6.16
 Requires: omniORB-devel
@@ -57,7 +57,7 @@ SmartMet grid engine
 Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
-Requires: smartmet-library-grid-content-devel >= 22.6.8
+Requires: smartmet-library-grid-content-devel >= 22.8.17
 Requires: %{SPECNAME} = %{version}-%{release}
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
@@ -99,6 +99,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Wed Aug 17 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.8.17-1.fmi
+- Added support for EDR metadata queries
+
 * Thu Aug  4 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.8.4-1.fmi
 - Replaced Lua Math.pow calls with ^, Math.pow no longer exists in RHEL9
 
