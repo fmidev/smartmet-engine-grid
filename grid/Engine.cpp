@@ -2038,11 +2038,31 @@ ContentTable Engine::getProducerInfo(boost::optional<std::string> producer,std::
   }
 }
 
+
+
 ContentTable Engine::getGenerationInfo(boost::optional<std::string> producer,std::string timeFormat) const
 {
   try
   {
     updateProducerAndGenerationList();
+
+    /*
+     * Almost same information can be fetched with getEngineMetadata() method.
+     * Maybe this could be used also here.
+
+    if (producer)
+    {
+      auto list = getEngineMetadata(producer->c_str());
+      for (auto it=list.begin(); it != list.end();++it)
+        it->print(std::cout,0,0);
+    }
+    else
+    {
+      auto list = getEngineMetadata("");
+      for (auto it=list.begin(); it != list.end();++it)
+        it->print(std::cout,0,0);
+    }
+    */
 
     if (timeFormat.empty())
       timeFormat = "iso";
@@ -2210,6 +2230,8 @@ ContentTable Engine::getGenerationInfo(boost::optional<std::string> producer,std
     throw exception;
   }
 }
+
+
 
 ContentTable Engine::getExtGenerationInfo(boost::optional<std::string> producer,std::string timeFormat) const
 {
@@ -2459,6 +2481,9 @@ ContentTable Engine::getExtGenerationInfo(boost::optional<std::string> producer,
   }
 }
 
+
+
+
 ContentTable Engine::getParameterInfo(boost::optional<std::string> producer) const
 {
   FUNCTION_TRACE
@@ -2515,6 +2540,140 @@ ContentTable Engine::getParameterInfo(boost::optional<std::string> producer) con
     throw exception;
   }
 }
+
+
+
+std::list<MetaData> Engine::getEngineMetadata(const char *producerName) const
+{
+  FUNCTION_TRACE
+  try
+  {
+    std::list<MetaData> metaDataList;
+    if (!mEnabled)
+      return metaDataList;
+
+    updateProducerAndGenerationList();
+
+    ContentServer_sptr contentServer = getContentServer_sptr();
+    time_t currentTime = time(nullptr);
+    AutoReadLock lock(&mProducerInfoList_modificationLock);
+
+    uint len = mProducerInfoList.getLength();
+    for (uint t = 0; t < len; t++)
+    {
+      T::ProducerInfo* pInfo = mProducerInfoList.getProducerInfoByIndex(t);
+
+      if (!producerName || producerName[0] == '\0' || strcasecmp(producerName, pInfo->mName.c_str()) == 0)
+      {
+        std::set<T::ParamLevelId> levelIdList;
+        getProducerLevelIdList(pInfo->mProducerId,levelIdList);
+
+        T::GenerationInfoList generationList;
+        mGenerationInfoList.getGenerationInfoListByProducerId(pInfo->mProducerId, generationList);
+
+        uint glen = generationList.getLength();
+        if (glen > 0  && levelIdList.size() > 0)
+        {
+          generationList.sort(T::GenerationInfo::ComparisonMethod::analysisTime);
+
+          uint glen = generationList.getLength();
+          for (uint g=0; g<glen; g++)
+          {
+            T::GenerationInfo *gInfo = generationList.getGenerationInfoByIndex(g);
+            time_t deletionTime = gInfo->mDeletionTime;
+
+            if (deletionTime == 0 || (currentTime + 120) < deletionTime)
+            {
+              T::GeometryInfoList geometryInfoList;
+              mGeometryInfoList.getGeometryInfoListByGenerationId(gInfo->mGenerationId,geometryInfoList);
+
+              uint geomLen = geometryInfoList.getLength();
+              for (uint gg = 0; gg < geomLen; gg++)
+              {
+                T::GeometryInfo *geom = geometryInfoList.getGeometryInfoByIndex(gg);
+                if (geom != nullptr &&  geom->mStatus == T::GeometryInfo::Status::Ready)
+                {
+                  for (auto levelId = levelIdList.begin(); levelId != levelIdList.end(); ++levelId)
+                  {
+                    MetaData metaData;
+                    contentServer->getContentTimeListByGenerationGeometryAndLevelId(0,geom->mGenerationId,geom->mGeometryId,*levelId,metaData.times);
+                    uint slen = metaData.times.size();
+                    if (slen > 0)
+                    {
+                      std::set<std::string> paramKeyList;
+                      contentServer->getContentParamKeyListByGenerationGeometryAndLevelId(0,geom->mGenerationId,geom->mGeometryId,*levelId,T::ParamKeyTypeValue::FMI_NAME,paramKeyList);
+                      contentServer->getContentLevelListByGenerationGeometryAndLevelId(0,geom->mGenerationId,geom->mGeometryId,*levelId,metaData.levels);
+
+                      metaData.producerId = pInfo->mProducerId;
+                      metaData.producerName = pInfo->mName;
+                      metaData.producerDescription = pInfo->mDescription;
+                      metaData.generationId = gInfo->mGenerationId;
+                      metaData.analysisTime = gInfo->mAnalysisTime;
+                      metaData.geometryId = geom->mGeometryId;
+
+
+                      auto g = Identification::gridDef.getGrib2DefinitionByGeometryId(geom->mGeometryId);
+                      if (g)
+                      {
+                        metaData.xNumber = g->getGridColumnCount();
+                        metaData.yNumber = g->getGridRowCount();
+                        g->getGridLatLonArea(metaData.latlon_topLeft,metaData.latlon_topRight,metaData.latlon_bottomLeft,metaData.latlon_bottomRight);
+                        metaData.projectionId = g->getGridProjection();
+                        metaData.projectionName = T::get_gridProjectionString(metaData.projectionId);
+
+                        metaData.wkt = g->getWKT();
+                        metaData.proj4 = g->getProj4();
+                      }
+
+                      metaData.levelId = *levelId;
+
+                      Identification::LevelDef levelDef;
+                      if (Identification::gridDef.getFmiLevelDef(*levelId,levelDef))
+                      {
+                        metaData.levelName = levelDef.mName;
+                        metaData.levelDescription = levelDef.mDescription;
+                      }
+
+
+                      //std::cout << metaData.producerName << ":" << metaData.analysisTime << ":" << metaData.geometryId << ":" << metaData.levelId << " Levels : " << metaData.levels.size() <<  " Times : " << metaData.times.size() << " Params : " << paramKeyList.size() << "\n";
+
+                      metaData.parameters.reserve(paramKeyList.size());
+                      for (auto pk = paramKeyList.begin(); pk != paramKeyList.end(); ++pk)
+                      {
+                        Identification::FmiParameterDef paramDef;
+                        if (Identification::gridDef.getFmiParameterDefByName(pk->c_str(), paramDef))
+                        {
+                          Parameter param;
+                          param.parameterId = paramDef.mFmiParameterId;
+                          param.parameterName = paramDef.mParameterName;
+                          param.parameterUnits = paramDef.mParameterUnits;
+                          param.parameterDescription = paramDef.mParameterDescription;
+
+                          metaData.parameters.push_back(param);
+                        }
+                      }
+                      metaDataList.push_back(metaData);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+
+    return metaDataList;
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file", mConfigurationFile_name);
+    throw exception;
+  }
+}
+
 
 T::ParamLevelId Engine::getFmiParameterLevelId(uint producerId, int level) const
 {
@@ -2701,6 +2860,40 @@ void Engine::getProducerParameterLevelIdList(const std::string& producerName, st
     throw exception;
   }
 }
+
+
+
+
+void Engine::getProducerLevelIdList(uint producerId, std::set<T::ParamLevelId>& levelIdList) const
+{
+  FUNCTION_TRACE
+  try
+  {
+    if (!mEnabled)
+      return;
+
+    AutoReadLock lock(&mProducerInfoList_modificationLock);
+
+    uint len = mLevelInfoList.getLength();
+    for (uint t = 0; t < len; t++)
+    {
+      T::LevelInfo* levelInfo = mLevelInfoList.getLevelInfoByIndex(t);
+      if (levelInfo != nullptr && levelInfo->mProducerId == producerId)
+      {
+        levelIdList.insert(levelInfo->mFmiParameterLevelId);
+      }
+    }
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file", mConfigurationFile_name);
+    throw exception;
+  }
+}
+
+
+
 
 void Engine::loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings)
 {
