@@ -178,8 +178,9 @@ Engine::Engine(const char* theConfigFile)
     mQueryServerProcessingLogTruncateSize = 50000000;
     mQueryServerDebugLogMaxSize = 10000000;
     mQueryServerDebugLogTruncateSize = 5000000;
-    mQueryCache_enabled = true;
+    mQueryCache_enabled = false;
     mQueryCache_maxAge = 300;
+    mQueryCache_stats.starttime = boost::posix_time::second_clock::universal_time();
     mQueryServerCheckGeometryStatus = false;
     mContentSwapEnabled = false;
     mContentUpdateInterval = 180;
@@ -1035,6 +1036,7 @@ Query_sptr Engine::executeQuery(Query_sptr query) const
       it = mQueryCache.find(hash);
       if (it != mQueryCache.end())
       {
+        mQueryCache_stats.hits++;
         for (auto prod = it->second.producerHashMap.begin(); prod != it->second.producerHashMap.end() && !noMatch; ++prod)
         {
           ulonglong producerHash = getProducerHash(prod->first);
@@ -1049,6 +1051,10 @@ Query_sptr Engine::executeQuery(Query_sptr query) const
           it->second.accessCounter++;
           return it->second.query;
         }
+      }
+      else
+      {
+        mQueryCache_stats.misses++;
       }
     }
 
@@ -1089,6 +1095,8 @@ Query_sptr Engine::executeQuery(Query_sptr query) const
 
       AutoWriteLock lock(&mQueryCache_modificationLock);
       mQueryCache.insert(std::pair<std::size_t, CacheRec>(hash, rec));
+      mQueryCache_stats.inserts++;
+      mQueryCache_stats.size++;
     }
     return query;
   }
@@ -2675,6 +2683,61 @@ std::list<MetaData> Engine::getEngineMetadata(const char *producerName) const
 }
 
 
+
+
+
+void Engine::getCacheStats(Fmi::Cache::CacheStatistics& statistics) const
+{
+  try
+  {
+    if (!mEnabled)
+      return;
+
+    statistics.insert(std::make_pair("Grid::Query_cache", mQueryCache_stats));
+
+    auto cs = getContentServer_sptr();
+    if (cs)
+      cs->getCacheStats(statistics);
+
+    auto ds = getDataServer_sptr();
+    if (ds)
+      ds->getCacheStats(statistics);
+
+    auto qs =getQueryServer_sptr();
+    if (qs)
+      qs->getCacheStats(statistics);
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file", mConfigurationFile_name);
+    throw exception;
+  }
+}
+
+
+
+
+
+Fmi::Cache::CacheStatistics Engine::getCacheStats() const
+{
+  try
+  {
+    Fmi::Cache::CacheStatistics stat;
+    getCacheStats(stat);
+    return stat;
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file", mConfigurationFile_name);
+    throw exception;
+  }
+}
+
+
+
+
 T::ParamLevelId Engine::getFmiParameterLevelId(uint producerId, int level) const
 {
   FUNCTION_TRACE
@@ -3598,6 +3661,7 @@ void Engine::updateProcessing()
 
               {
                 AutoWriteLock lock(&mQueryCache_modificationLock);
+                mQueryCache_stats.size = 0;
                 mQueryCache.clear();
               }
             }
@@ -3722,6 +3786,7 @@ void Engine::updateQueryCache()
       // The producer search order has changed. So we have to clear the query cache.
       mProducerSearchList_modificationTime = tt;
       AutoWriteLock lock(&mQueryCache_modificationLock);
+      mQueryCache_stats.size = 0;
       mQueryCache.clear();
       return;
     }
@@ -3768,6 +3833,7 @@ void Engine::updateQueryCache()
         if (pos != mQueryCache.end())
           mQueryCache.erase(pos);
       }
+      mQueryCache_stats.size -= deleteList.size();
     }
 
     mQueryCache_enabled = true;

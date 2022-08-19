@@ -82,6 +82,10 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                getAnalysisTimes(std::vector<std::vector<std::string>>& table) const;
     void                getExtAnalysisTimes(std::vector<std::vector<std::string>>& table) const;
 
+    void                getCacheStats(Fmi::Cache::CacheStatistics& statistics) const;
+
+    Fmi::Cache::CacheStatistics getCacheStats() const;
+
     T::ParamLevelId     getFmiParameterLevelId(
                           uint producerId,
                           int level) const;
@@ -376,6 +380,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     mutable QueryCache                        mQueryCache;
     mutable ModificationLock                  mQueryCache_modificationLock;
     mutable time_t                            mQueryCache_updateTime;
+    mutable Fmi::Cache::CacheStats            mQueryCache_stats;
     bool                                      mQueryCache_enabled;
     int                                       mQueryCache_maxAge;
 
