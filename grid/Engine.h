@@ -290,6 +290,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     int                 mContentServerDebugLogTruncateSize;
     Log                 mContentServerDebugLog;
     time_t              mContentServerStartTime;
+    uint                mContentServerTimeRangeCache_maxRecordsPerThread;
 
     bool                mDataServerProcessingLogEnabled;
     std::string         mDataServerProcessingLogFile;
@@ -315,6 +316,10 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     int                 mQueryServerDebugLogTruncateSize;
     Log                 mQueryServerDebugLog;
     bool                mQueryServerCheckGeometryStatus;
+    std::size_t         mQueryServerContentCache_maxRecordsPerThread;
+    uint                mQueryServerContentCache_clearInterval;
+    std::size_t         mQueryServerContentSearchCache_maxRecordsPerThread;
+    uint                mQueryServerContentSearchCache_clearInterval;
 
     uint                mNumOfCachedGrids;
     uint                mMaxSizeOfCachedGridsInMegaBytes;

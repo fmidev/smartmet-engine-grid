@@ -181,9 +181,14 @@ Engine::Engine(const char* theConfigFile)
     mQueryCache_enabled = false;
     mQueryCache_maxAge = 300;
     mQueryCache_stats.starttime = boost::posix_time::second_clock::universal_time();
+    mQueryServerContentCache_maxRecordsPerThread = 500000;
+    mQueryServerContentCache_clearInterval = 3600 * 24 * 3;
+    mQueryServerContentSearchCache_maxRecordsPerThread = 500000;
+    mQueryServerContentSearchCache_clearInterval = 3600 * 24 * 3;
     mQueryServerCheckGeometryStatus = false;
     mContentSwapEnabled = false;
     mContentUpdateInterval = 180;
+    mContentServerTimeRangeCache_maxRecordsPerThread = 100000;
     mBrowserEnabled = true;
     mBrowserFlags = 0;
 
@@ -242,6 +247,8 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.contentSwapEnabled", mContentSwapEnabled);
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.contentUpdateInterval", mContentUpdateInterval);
 
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.timeRangeCache.maxRecordsPerThread", mContentServerTimeRangeCache_maxRecordsPerThread);
+
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.enabled", mContentServerProcessingLogEnabled);
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.file", mContentServerProcessingLogFile);
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.maxSize", mContentServerProcessingLogMaxSize);
@@ -281,6 +288,11 @@ Engine::Engine(const char* theConfigFile)
 
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.enabled", mQueryCache_enabled);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.maxAge", mQueryCache_maxAge);
+
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.contentCache.maxRecordsPerThread", mQueryServerContentCache_maxRecordsPerThread);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.contentCache.clearInterval", mQueryServerContentCache_clearInterval);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.contentSearchCache.maxRecordsPerThread", mQueryServerContentSearchCache_maxRecordsPerThread);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.contentSearchCache.clearInterval", mQueryServerContentSearchCache_clearInterval);
 
     // These settings are used when the query server is embedded into the grid engine.
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.producerFile", mProducerSearchList_filename);
@@ -424,6 +436,8 @@ void Engine::init()
       mContentServerCacheImplementation->setContentSwapEnabled(mContentSwapEnabled);
       mContentServerCacheImplementation->setContentUpdateInterval(mContentUpdateInterval);
       mContentServerCacheImplementation->init(0, cServer);
+      mContentServerCacheImplementation->initContentTimeRangeCache(mContentServerTimeRangeCache_maxRecordsPerThread);
+
       mContentServerCache.reset(mContentServerCacheImplementation);
       mContentServerCacheImplementation->startEventProcessing();
       cServer = mContentServerCacheImplementation;
@@ -488,6 +502,10 @@ void Engine::init()
       QueryServer::ServiceImplementation* server = new QueryServer::ServiceImplementation();
       server->init(cServer, dServer, mGridConfigFile, mParameterMappingDefinitions_filenames, mParameterAliasDefinitions_filenames, mProducerSearchList_filename,
           mProducerMappingDefinitions_filenames, mQueryServerLuaFiles,mQueryServerCheckGeometryStatus,mDataServerMethodsEnabled);
+
+      server->initContentCache(mQueryServerContentCache_maxRecordsPerThread,mQueryServerContentCache_clearInterval);
+      server->initContentSearchCache(mQueryServerContentSearchCache_maxRecordsPerThread,mQueryServerContentSearchCache_clearInterval);
+
       qServer = server;
 
       mQueryServer.reset(server);
