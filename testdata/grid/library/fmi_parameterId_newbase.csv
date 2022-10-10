@@ -759,10 +759,6 @@ RR-KGM2;PrecipitationAmount;MUL{$,1000.000000};DIV{$,1000.000000};
 # RRSYM2-N;0;;;
 
 # Rain over the last 6 hours in mm
-# RR-6-MM[181] => SigWaveLength[179]
-RR-6-MM;SigWaveLength;;;
-
-# Rain over the last 6 hours in mm
 # RR-6-MM[181] => Precipitation6h[355]
 RR-6-MM;Precipitation6h;;;
 
