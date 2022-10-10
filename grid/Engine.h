@@ -335,6 +335,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     uint                mContentUpdateInterval;
 
     bool                mDataServerMethodsEnabled;
+    bool                mMemoryMapperEnabled;
 
     pthread_t           mThread;
     std::atomic<bool>   mShutdownRequested;

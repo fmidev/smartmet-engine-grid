@@ -10,6 +10,7 @@
 #include <grid-files/common/GraphFunctions.h>
 #include <grid-files/common/ImageFunctions.h>
 #include <grid-files/common/ImagePaint.h>
+#include <grid-files/common/MemoryMapper.h>
 #include <grid-files/common/ShowFunction.h>
 #include <grid-files/grid/ValueCache.h>
 #include <grid-files/identification/GridDef.h>
@@ -124,6 +125,7 @@ Engine::Engine(const char* theConfigFile)
     };
 
     mEnabled = true;
+    mMemoryMapperEnabled = false;
     mConfigurationFile_name = theConfigFile;
     mConfigurationFile_checkTime = time(nullptr) + 120;
     mConfigurationFile_modificationTime = getFileModificationTime(mConfigurationFile_name.c_str());
@@ -221,6 +223,7 @@ Engine::Engine(const char* theConfigFile)
     }
 
     configurationFile.getAttributeValue("smartmet.library.grid-files.configFile", mGridConfigFile);
+    configurationFile.getAttributeValue("smartmet.library.grid-files.memoryMapper.enabled", mMemoryMapperEnabled);
     configurationFile.getAttributeValue("smartmet.library.grid-files.cache.numOfGrids", mNumOfCachedGrids);
     configurationFile.getAttributeValue("smartmet.library.grid-files.cache.maxSizeInMegaBytes", mMaxSizeOfCachedGridsInMegaBytes);
 
@@ -378,6 +381,8 @@ void Engine::init()
 
       return;
     }
+
+    memoryMapper.setEnabled(mMemoryMapperEnabled);
 
     ContentServer::ServiceInterface* cServer = nullptr;
     DataServer::ServiceInterface* dServer = nullptr;
@@ -914,6 +919,8 @@ void Engine::shutdown()
   {
     if (!mEnabled)
       return;
+
+    memoryMapper.stopFaultHandler();
 
     if (mShutdownRequested.exchange(true)) {
         std::cout << __PRETTY_FUNCTION__ << " called more than once" << std::endl;
@@ -3723,7 +3730,7 @@ void Engine::updateProcessing()
       {
       }
       if (!mShutdownRequested)
-	sleep(1);
+	      sleep(1);
     }
   }
   catch (...)
