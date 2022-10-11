@@ -4,7 +4,7 @@
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
 Version: 22.10.11
-Release: 1%{?dist}.fmi
+Release: 2%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
 URL: https://github.com/fmidev/smartmet-engine-grid
@@ -99,6 +99,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Tue Oct 11 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.10.11-2.fmi
+- Disable own memory mapping implementation in tests
+
 * Tue Oct 11 2022 Mika Heiskanen <mika.heiskanen@fmi.fi> - 22.10.11-1.fmi
 - Re-enable grid-engine in tests
 
