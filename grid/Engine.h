@@ -290,7 +290,6 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     int                 mContentServerDebugLogTruncateSize;
     Log                 mContentServerDebugLog;
     time_t              mContentServerStartTime;
-    uint                mContentServerTimeRangeCache_maxRecordsPerThread;
 
     bool                mDataServerProcessingLogEnabled;
     std::string         mDataServerProcessingLogFile;

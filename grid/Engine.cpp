@@ -190,7 +190,6 @@ Engine::Engine(const char* theConfigFile)
     mQueryServerCheckGeometryStatus = false;
     mContentSwapEnabled = false;
     mContentUpdateInterval = 180;
-    mContentServerTimeRangeCache_maxRecordsPerThread = 100000;
     mBrowserEnabled = true;
     mBrowserFlags = 0;
 
@@ -249,8 +248,6 @@ Engine::Engine(const char* theConfigFile)
 
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.contentSwapEnabled", mContentSwapEnabled);
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.contentUpdateInterval", mContentUpdateInterval);
-
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.timeRangeCache.maxRecordsPerThread", mContentServerTimeRangeCache_maxRecordsPerThread);
 
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.enabled", mContentServerProcessingLogEnabled);
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.file", mContentServerProcessingLogFile);
@@ -441,7 +438,6 @@ void Engine::init()
       mContentServerCacheImplementation->setContentSwapEnabled(mContentSwapEnabled);
       mContentServerCacheImplementation->setContentUpdateInterval(mContentUpdateInterval);
       mContentServerCacheImplementation->init(0, cServer);
-      mContentServerCacheImplementation->initContentTimeRangeCache(mContentServerTimeRangeCache_maxRecordsPerThread);
 
       mContentServerCache.reset(mContentServerCacheImplementation);
       mContentServerCacheImplementation->startEventProcessing();
