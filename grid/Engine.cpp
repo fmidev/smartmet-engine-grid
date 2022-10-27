@@ -2720,6 +2720,9 @@ void Engine::getCacheStats(Fmi::Cache::CacheStatistics& statistics) const
     if (cs)
       cs->getCacheStats(statistics);
 
+
+    GRID::valueCache.getCacheStats(statistics);
+
     auto ds = getDataServer_sptr();
     if (ds)
       ds->getCacheStats(statistics);
