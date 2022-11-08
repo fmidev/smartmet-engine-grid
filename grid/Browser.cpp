@@ -742,6 +742,10 @@ bool Browser::page_files(const Spine::HTTP::Request& theRequest,Spine::HTTP::Res
       if (v)
         fInfo.mProtocol = atoi(v->c_str());
 
+      v = theRequest.getParameter("serverType");
+      if (v)
+        fInfo.mServerType = atoi(v->c_str());
+
       v = theRequest.getParameter("type");
       if (v)
         fInfo.mFileType = atoi(v->c_str());
@@ -863,7 +867,8 @@ bool Browser::page_files(const Spine::HTTP::Request& theRequest,Spine::HTTP::Res
     output << "<TD>Server</TD>";
     output << "<TD>Name</TD>";
     output << "<TD>Protocol</TD>";
-    output << "<TD>Type</TD>";
+    output << "<TD>ServerType</TD>";
+    output << "<TD>FileType</TD>";
     output << "<TD>Flags</TD>";
     output << "<TD>SourceId</TD>";
     output << "<TD>ModificationTime</TD>";
@@ -919,6 +924,7 @@ bool Browser::page_files(const Spine::HTTP::Request& theRequest,Spine::HTTP::Res
       output << "<TD>"<< file->mServer << "</TD>";
       output << "<TD>"<< file->mName << "</TD>";
       output << "<TD>"<< C_INT(file->mProtocol) << "</TD>";
+      output << "<TD>"<< C_INT(file->mServerType) << "</TD>";
       output << "<TD>"<< C_INT(file->mFileType) << "</TD>";
       output << "<TD>"<< file->mFlags << "</TD>";
       output << "<TD>"<< file->mSourceId << "</TD>";
@@ -936,7 +942,7 @@ bool Browser::page_files(const Spine::HTTP::Request& theRequest,Spine::HTTP::Res
 
     for (uint t=len; t<maxRecords; t++)
     {
-      output << "<TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD></TR>\n";
+      output << "<TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD></TR>\n";
     }
 
 
@@ -981,7 +987,8 @@ bool Browser::page_files(const Spine::HTTP::Request& theRequest,Spine::HTTP::Res
         output << "<TR><TD width=\"240\" bgColor=\"#D0D0D0\">Server</TD><TD><INPUT style=\"width:100%;\" type=\"text\" id=\"file_server\" value=\"" << fInfo.mServer << "\"></TD></TR>";
         output << "<TR><TD width=\"240\" bgColor=\"#D0D0D0\">Name</TD><TD><INPUT style=\"width:100%;\" type=\"text\" id=\"file_name\" value=\"" << fInfo.mName << "\"></TD></TR>";
         output << "<TR><TD width=\"240\" bgColor=\"#D0D0D0\">Protocol</TD><TD><INPUT style=\"width:100%;\"  type=\"text\" id=\"file_protocol\" value=\"" << C_INT(fInfo.mProtocol) << "\"></TD></TR>";
-        output << "<TR><TD width=\"240\" bgColor=\"#D0D0D0\">Type</TD><TD><INPUT style=\"width:100%;\"  type=\"text\" id=\"file_type\" value=\"" << C_INT(fInfo.mFileType) << "\"></TD></TR>";
+        output << "<TR><TD width=\"240\" bgColor=\"#D0D0D0\">ServerType</TD><TD><INPUT style=\"width:100%;\"  type=\"text\" id=\"file_serverType\" value=\"" << C_INT(fInfo.mServerType) << "\"></TD></TR>";
+        output << "<TR><TD width=\"240\" bgColor=\"#D0D0D0\">FileType</TD><TD><INPUT style=\"width:100%;\"  type=\"text\" id=\"file_type\" value=\"" << C_INT(fInfo.mFileType) << "\"></TD></TR>";
         output << "<TR><TD width=\"240\" bgColor=\"#D0D0D0\">Flags</TD><TD><INPUT style=\"width:100%;\"  type=\"text\" id=\"file_flags\" value=\"" << fInfo.mFlags << "\"></TD></TR>";
         output << "<TR><TD width=\"240\" bgColor=\"#D0D0D0\">SourceId</TD><TD><INPUT style=\"width:100%;\"  type=\"text\" id=\"file_sourceId\" value=\"" << fInfo.mSourceId << "\"></TD></TR>";
         output << "<TR><TD width=\"240\" bgColor=\"#D0D0D0\">ModificationTime</TD><TD><INPUT style=\"width:100%;\"  type=\"text\" id=\"file_modificationTime\" value=\"" << mt << "\"></TD></TR>";
@@ -1006,12 +1013,12 @@ bool Browser::page_files(const Spine::HTTP::Request& theRequest,Spine::HTTP::Res
           break;
 
         case 1:
-          output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=files&mode=101" << prod << "&server='+file_server.value+'&name='+file_name.value+'&protocol='+file_protocol.value+'&type='+file_type.value+'&flags='+file_flags.value+'&sourceId='+file_sourceId.value+'&modificationTime='+file_modificationTime.value+'&deletionTime='+file_deletionTime.value);\" >Add file</TD>\n";
+          output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=files&mode=101" << prod << "&server='+file_server.value+'&name='+file_name.value+'&protocol='+file_protocol.value+'&serverType='+file_serverType.value+'&type='+file_type.value+'&flags='+file_flags.value+'&sourceId='+file_sourceId.value+'&modificationTime='+file_modificationTime.value+'&deletionTime='+file_deletionTime.value);\" >Add file</TD>\n";
           output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=files&mode=0" << prod << "&fileId=" << fileId << "');\" >Cancel</TD>\n";
           break;
 
         case 2:
-          output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=files&mode=102" << prod << "&fileId=" << fileId << "&server='+encodeURIComponent(file_server.value)+'&name='+encodeURIComponent(file_name.value)+'&protocol='+file_protocol.value+'&type='+file_type.value+'&flags='+file_flags.value+'&sourceId='+file_sourceId.value+'&modificationTime='+file_modificationTime.value+'&deletionTime='+file_deletionTime.value);\" >Update file</TD>\n";
+          output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=files&mode=102" << prod << "&fileId=" << fileId << "&server='+encodeURIComponent(file_server.value)+'&name='+encodeURIComponent(file_name.value)+'&protocol='+file_protocol.value+'&serverType='+file_serverType.value+'&type='+file_type.value+'&flags='+file_flags.value+'&sourceId='+file_sourceId.value+'&modificationTime='+file_modificationTime.value+'&deletionTime='+file_deletionTime.value);\" >Update file</TD>\n";
           output << "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:"+bg+";\" onmouseout=\"this.style='background:"+bg+";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?source=" << sourceStr << "&target=grid-engine&page=files&mode=0" << prod << "&fileId=" << fileId << "');\" >Cancel</TD>\n";
           break;
 
