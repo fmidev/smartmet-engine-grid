@@ -223,6 +223,7 @@ Engine::Engine(const char* theConfigFile)
 
     configurationFile.getAttributeValue("smartmet.library.grid-files.configFile", mGridConfigFile);
     configurationFile.getAttributeValue("smartmet.library.grid-files.memoryMapper.enabled", mMemoryMapperEnabled);
+    configurationFile.getAttributeValue("smartmet.library.grid-files.memoryMapper.accessFile", mAccessFile);
     configurationFile.getAttributeValue("smartmet.library.grid-files.cache.numOfGrids", mNumOfCachedGrids);
     configurationFile.getAttributeValue("smartmet.library.grid-files.cache.maxSizeInMegaBytes", mMaxSizeOfCachedGridsInMegaBytes);
 
@@ -378,6 +379,9 @@ void Engine::init()
 
       return;
     }
+
+    if (!mAccessFile.empty())
+      memoryMapper.loadAccessFile(mAccessFile.c_str());
 
     memoryMapper.setEnabled(mMemoryMapperEnabled);
 
