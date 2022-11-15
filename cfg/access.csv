@@ -1,0 +1,10 @@
+# FIELD:
+#   1) server[:port]
+#   2) authenticationMethod
+#      0 = None
+#      1 = AWS4-HMAC-SHA256
+#   3) username
+#   4) password
+#
+lake.fmi.fi;0;username;password;
+127.0.0.1:9000;1;test;testtest;
