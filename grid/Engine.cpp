@@ -381,7 +381,7 @@ void Engine::init()
     }
 
     if (!mAccessFile.empty())
-      memoryMapper.loadAccessFile(mAccessFile.c_str());
+      memoryMapper.setAccessFile(mAccessFile.c_str());
 
     memoryMapper.setEnabled(mMemoryMapperEnabled);
 
