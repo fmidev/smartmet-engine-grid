@@ -320,20 +320,19 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::size_t         mQueryServerContentSearchCache_maxRecordsPerThread;
     uint                mQueryServerContentSearchCache_clearInterval;
 
+    std::string         mCacheType;
+    std::string         mCacheDir;
     uint                mNumOfCachedGrids;
     uint                mMaxSizeOfCachedGridsInMegaBytes;
 
-    bool                mMemoryMapCheckEnabled;
     bool                mVirtualFilesEnabled;
     std::string         mVirtualFileDefinitions;
-    bool                mContentPreloadEnabled;
-    std::string         mContentPreloadFile;
-    bool                mPreloadMemoryLock;
 
     bool                mContentSwapEnabled;
     uint                mContentUpdateInterval;
 
     bool                mDataServerMethodsEnabled;
+    bool                mPremapEnabled;
     bool                mMemoryMapperEnabled;
     std::string         mAccessFile;
 

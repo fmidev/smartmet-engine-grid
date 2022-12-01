@@ -85,10 +85,6 @@ Engine::Engine(const char* theConfigFile)
         "smartmet.engine.grid.data-server.ior",
         "smartmet.engine.grid.data-server.caching",
         "smartmet.engine.grid.data-server.grid-storage.directory",
-        "smartmet.engine.grid.data-server.grid-storage.memoryMapCheckEnabled",
-        "smartmet.engine.grid.data-server.grid-storage.preloadEnabled",
-        "smartmet.engine.grid.data-server.grid-storage.preloadFile",
-        "smartmet.engine.grid.data-server.grid-storage.preloadMemoryLock",
         "smartmet.engine.grid.data-server.virtualFiles.enabled",
         "smartmet.engine.grid.data-server.virtualFiles.definitionFile",
         "smartmet.engine.grid.data-server.luaFiles",
@@ -126,6 +122,7 @@ Engine::Engine(const char* theConfigFile)
 
     mEnabled = true;
     mMemoryMapperEnabled = false;
+    mPremapEnabled = true;
     mConfigurationFile_name = theConfigFile;
     mConfigurationFile_checkTime = time(nullptr) + 120;
     mConfigurationFile_modificationTime = getFileModificationTime(mConfigurationFile_name.c_str());
@@ -141,7 +138,6 @@ Engine::Engine(const char* theConfigFile)
     mContentSourceHttpUrl = "";
     mContentSourceCorbaIor = "";
     mContentCacheEnabled = true;
-    mPreloadMemoryLock = false;
     mRequestForwardEnabled = false;
     mMemoryContentDir = "/tmp";
     mEventListMaxSize = 0;
@@ -157,9 +153,7 @@ Engine::Engine(const char* theConfigFile)
     mQueryServerProcessingLogEnabled = false;
     mQueryServerDebugLogEnabled = false;
     mVirtualFilesEnabled = false;
-    mMemoryMapCheckEnabled = false;
     mParameterMappingDefinitions_updateTime = 0;
-    mContentPreloadEnabled = true;
     mParameterMappingDefinitions_autoFileKeyType = T::ParamKeyTypeValue::FMI_NAME;
 
     mDataServerCacheEnabled = false;
@@ -193,6 +187,8 @@ Engine::Engine(const char* theConfigFile)
     mBrowserEnabled = true;
     mBrowserFlags = 0;
 
+    mCacheType = "memory";
+    mCacheDir = "/tmp";
     mNumOfCachedGrids = 10000;
     mMaxSizeOfCachedGridsInMegaBytes = 10000;
 
@@ -224,6 +220,9 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.library.grid-files.configFile", mGridConfigFile);
     configurationFile.getAttributeValue("smartmet.library.grid-files.memoryMapper.enabled", mMemoryMapperEnabled);
     configurationFile.getAttributeValue("smartmet.library.grid-files.memoryMapper.accessFile", mAccessFile);
+    configurationFile.getAttributeValue("smartmet.library.grid-files.memoryMapper.premapEnabled", mPremapEnabled);
+    configurationFile.getAttributeValue("smartmet.library.grid-files.cache.type", mCacheType);
+    configurationFile.getAttributeValue("smartmet.library.grid-files.cache.directory", mCacheDir);
     configurationFile.getAttributeValue("smartmet.library.grid-files.cache.numOfGrids", mNumOfCachedGrids);
     configurationFile.getAttributeValue("smartmet.library.grid-files.cache.maxSizeInMegaBytes", mMaxSizeOfCachedGridsInMegaBytes);
 
@@ -264,10 +263,6 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.caching", mDataServerCacheEnabled);
 
     // These settings are used when the data server is embedded into the grid engine.
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.memoryMapCheckEnabled", mMemoryMapCheckEnabled);
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadEnabled", mContentPreloadEnabled);
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadFile", mContentPreloadFile);
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadMemoryLock", mPreloadMemoryLock);
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.directory", mDataServerGridDirectory);
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.clean-up.age", mDataServerCleanupAge);
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.clean-up.checkInterval", mDataServerCleanupInterval);
@@ -383,6 +378,7 @@ void Engine::init()
     if (!mAccessFile.empty())
       memoryMapper.setAccessFile(mAccessFile.c_str());
 
+    memoryMapper.setPremapEnabled(mPremapEnabled);
     memoryMapper.setEnabled(mMemoryMapperEnabled);
 
     ContentServer::ServiceInterface* cServer = nullptr;
@@ -471,8 +467,6 @@ void Engine::init()
     {
       mDataServerImplementation = new DataServer::ServiceImplementation();
       mDataServerImplementation->init(0, 0, "NotRegistered", "NotRegistered", mDataServerGridDirectory, cServer, mDataServerLuaFiles);
-      mDataServerImplementation->setPreload(mContentPreloadEnabled, mPreloadMemoryLock, mContentPreloadFile);
-      mDataServerImplementation->setMemoryMapCheckEnabled(mMemoryMapCheckEnabled);
       mDataServerImplementation->setCleanup(mDataServerCleanupAge,mDataServerCleanupInterval);
 
       if (mVirtualFilesEnabled)
@@ -492,7 +486,15 @@ void Engine::init()
 
       dServer = mDataServerImplementation;
 
-      SmartMet::GRID::valueCache.init(mNumOfCachedGrids, mMaxSizeOfCachedGridsInMegaBytes);
+      if (strcasecmp(mCacheType.c_str(),"filesys") == 0)
+      {
+        SmartMet::GRID::valueCache.setCacheDir(mCacheDir.c_str());
+        SmartMet::GRID::valueCache.init(mNumOfCachedGrids, mMaxSizeOfCachedGridsInMegaBytes,true);
+      }
+      else
+      {
+        SmartMet::GRID::valueCache.init(mNumOfCachedGrids, mMaxSizeOfCachedGridsInMegaBytes);
+      }
     }
 
     if (mQueryServerRemote && mQueryServerIor.length() > 50)
@@ -828,49 +830,6 @@ void Engine::checkConfiguration()
 
     if (mDataServerImplementation != nullptr)
     {
-      // ### Memory map check
-
-      bool memoryMapCheckEnabled = false;
-
-      configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.memoryMapCheckEnabled", memoryMapCheckEnabled);
-      if (mMemoryMapCheckEnabled != memoryMapCheckEnabled)
-      {
-        mMemoryMapCheckEnabled = memoryMapCheckEnabled;
-        mDataServerImplementation->setMemoryMapCheckEnabled(mMemoryMapCheckEnabled);
-
-        if (mMemoryMapCheckEnabled)
-          std::cout << Spine::log_time_str() << " Grid-engine configuration: memory map check enabled" << std::endl;
-        else
-          std::cout << Spine::log_time_str() << " Grid-engine configuration: memory map check disabled" << std::endl;
-      }
-
-      // ### Preload
-
-      bool contentPreloadEnabled = false;
-      std::string contentPreloadFile;
-      bool preloadMemoryLock = false;
-
-      configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadEnabled", contentPreloadEnabled);
-      configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadFile", contentPreloadFile);
-      configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.preloadMemoryLock", preloadMemoryLock);
-
-      if (mContentPreloadEnabled != contentPreloadEnabled)
-      {
-        mContentPreloadEnabled = contentPreloadEnabled;
-        if (mContentPreloadEnabled)
-          std::cout << Spine::log_time_str() << " Grid-engine configuration: content preload enabled" << std::endl;
-        else
-          std::cout << Spine::log_time_str() << " Grid-engine configuration: content preload disabled" << std::endl;
-      }
-
-      if (mContentPreloadFile != contentPreloadFile || mPreloadMemoryLock || preloadMemoryLock)
-      {
-        mContentPreloadFile = contentPreloadFile;
-        mPreloadMemoryLock = preloadMemoryLock;
-        mDataServerImplementation->setPreload(mContentPreloadEnabled, mPreloadMemoryLock, mContentPreloadFile);
-      }
-
-
       time_t cleanupAge = mDataServerCleanupAge;
       time_t cleanupInterval = mDataServerCleanupInterval;
 
