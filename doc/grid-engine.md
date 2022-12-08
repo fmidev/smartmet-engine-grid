@@ -163,7 +163,24 @@ The SmartMet server environment contains tens of different configuration files w
 </pre>
 
 
-The grid engine uses also some external libraries that needs to be configured. That's why the grid engine's configuration file might contain references to other namespaces. For example, all functionality related to extraction of GRIB files comes from the library "smartmet-library-grid-files". The current library is responsible for identification and extraction of GRIB, NetCDF and Newbase parameters, which requires a lot of configuration. Luckily most of this configuration is already done and we just need to define the location of the current module's main configuration file.
+The grid engine uses also some external libraries that needs to be configured. That's why the grid engine's configuration file might contain references to other namespaces. For example, all functionality related to extraction of GRIB files comes from the library "smartmet-library-grid-files". The current library is responsible for identification and extraction of GRIB, NetCDF and Newbase parameters, which requires a lot of configuration. Luckily most of this configuration is already done and we just need to define the location of the current module's main configuration file and few other parameters.
+
+The current library is used for memory mapping and extracting information from grid files. Memory mapping means that information in these files can be accessed by using memory pointers and the operating system automatically loads requested memory pages into the memory. Extraction means that the current library reads grid files and creates C++ objects that corresponds these files and grids in them. After that all information in these files and grids can be accessed through these objects. 
+
+If grid data is packed by using "simple packing" method and if it does not contain any bitmaps then all grid points can be accessed directly by using memory pointers. However, if this is not the case then grid points cannot be accessed directly by using memory pointers, which means that we have to extract this data and put it into the cache so that we can access it faster. The point is that we do not want to extract the whole grid everytime it is accessed.
+
+The current cache implementation supports two different modes:
+
+<ul>
+	<li>When the cache type is "memory" then all cached grids are stored into the memory. If the grids are big or if we have plenty of them then the cache might require a lot of memory.</li>
+	<li>When the cache type is "filesys" then cached grids are stored into temporary files and these files are memory mapped. This means that only actively used grid parts are kept in the memory.</li>
+
+</ul>
+
+
+Usually this library uses "standard" memory mapping, which means that only files in the file system can be memory mapped. However, the current library supports also memory mapping that is based on so called "userfault" mechanism. This allows us to memory map grid files that are located in some other servers. For example, we can memory map grid files in Web or S3 servers as far as they support HTTP Range -headers. It is important to notice, that this "userfault" mechanism requires quite new kernel (starting from RedHat 8), which means that older operating systems should use the "starndard" memory mapping instead (i.e the current memoryMapped should be disabled in these cases).
+
+Because the size of a single memory page is usually quite small (4096 bytes), it usually makes sense to preload the whole grid when it is first time accessed. After that the rest of the requests are much faster. This preloading is controlled by "premapEnabled" parameter. The access file is needed it the Web/S3 server requires authentication.
 
 <pre>
   smartmet :
@@ -173,6 +190,21 @@ The grid engine uses also some external libraries that needs to be configured. T
       grid-files :
       {
         configFile = "%(DIR)/../../libraries/grid-files/grid-files.conf"
+	
+        cache :
+        {
+          type                = "memory"
+          directory           = "/var/smartmet/grid-cache"
+          numOfGrids          = 50000
+          maxSizeInMegaBytes  = 30000
+        }
+
+	memoryMapper :
+        {
+          enabled = false
+          accessFile = "%(DIR)/access.csv"
+          premapEnabled = true;
+        }   
       }
     }
   }
@@ -184,6 +216,13 @@ Actually, we could write the above configuration information also like this:
 
 <pre>
   smartmet.library.grid-files.configFile = "%(DIR)/../../libraries/grid-files/grid-files.conf"
+  smartmet.library.grid-files.cache.type = "memory"
+  smartmet.library.grid-files.cache.directory = "/var/smartmet/grid-cache"
+  smartmet.library.grid-files.cache.numOfGrids = 50000
+  smartmet.library.grid-files.cache.maxSizeInMegaBytes = 30000
+  smartmet.library.grid-files.memoryMapper.enabled = false
+  smartmet.library.grid-files.memoryMapper.accessFile = "%(DIR)/access.csv"
+  smartmet.library.grid-files.memoryMapper.premapEnabled = true;
 </pre>
 
 <hr/>
@@ -470,31 +509,22 @@ The grid filenames that come from the Content Server can usually directly used a
   {
     grid-storage :
     {
-      directory             = ""  
-      memoryMapCheckEnabled = false
-      preloadEnabled        = false
-      preloadFile           = "%(DIR)/preload.csv"
-      preloadMemoryLock     = false
-    }
+      directory = ""  
     
-    clean-up :
-    {
-      age = 3600
-      checkInterval = 300  
-    }    
-
+      clean-up :
+      {
+        age = 3600
+        checkInterval = 300  
+      }    
+    }
   }
 </pre>
 
-
-The "memoryMapCheckedEnabled" parameter is an experimental parameter that was used in order to solve a situation where a memory mapped file was removed from the disk when it was still memory mapped. The idea was that the Data Server tried to check whether the current memory mapped file exist before it tried to access it Unfortunately this did not work well, and that's why it is usually disabled.
 
 Grid files can be released from the memory if they are not accessed in a given time ("clean-up.age" in seconds). The "clean-up.checkInterval" 
 parameter defines the interval for the clean-up operation (in seconds). This feature is useful especially with archive installations that might 
 contains millions of  grids, which are rarely accessed. If the grid files are continuously changing then there is not necessary any need for
 the clean-up.
-
-All preload parameters are also experimental parameters that should not be used. They probably work, but the benefits for preloading grids into memory or locking them into memory are very minimal meanwhile the drawbacks are quite significant. 
 
 <hr/>
 
@@ -700,11 +730,28 @@ If the queried data contains ensemble forecasts but there is no forecast type or
 
 The Query Server is able to cache query results into the memory. This might be useful if exactly same query is repeated continuously. Unfortunately, this does not seem to be so common in real production in spite of that we could cache thousands of query results. In other words, the benefits of caching query results are not usually any significant compared to the increased memory consumption. That' why the query cache is usually disabled.  A query result is automatically removed from the cache if it has not been accessed in the given "maxAge" time (= seconds).
 
+
 <pre>
   queryCache :
   {   
     enabled = false
-    maxAge  = 300
+    maxAge  = 3600
+  }
+</pre>
+
+The content cache and the content search cache are internal caches that are used for caching partial search information. These caches cannot be disabled.
+
+<pre>
+  contentCache:
+  {  
+    maxRecordsPerThread = 100000
+    clearInterval = 3600
+  }
+  
+  contentSearchCache:
+  {  
+    maxRecordsPerThread = 100000
+    clearInterval = 3600
   }
 </pre>
 
