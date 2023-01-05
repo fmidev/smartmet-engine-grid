@@ -107,9 +107,9 @@ function AVG(numOfParams,params)
     local sum = 0;
     for index, value in pairs(params) do
       if (value ~= ParamValueMissing) then
-	    sum = sum + value;
-	    count = count + 1;
-	  end
+  	    sum = sum + value;
+	      count = count + 1;
+  	  end
     end
     result.message = 'OK';
     result.value = sum / count;
@@ -168,7 +168,7 @@ function MAX(numOfParams,params)
   if (numOfParams > 0) then    
     local max = params[1];
     for index, value in pairs(params) do
-      if (value > max and value ~= ParamValueMissing) then
+      if (max == ParamValueMissing or (value > max and value ~= ParamValueMissing)) then
         max = value;
       end
     end
@@ -201,7 +201,7 @@ function MIN(numOfParams,params)
   if (numOfParams > 0) then    
     local min = params[1];
     for index, value in pairs(params) do
-      if (value < min and value ~= ParamValueMissing) then
+      if (min == ParamValueMissing or (value < min and value ~= ParamValueMissing)) then
         min = value;
       end
     end
@@ -949,6 +949,10 @@ end
 -- ***********************************************************************
 
 function YESNO(language,numOfParams,params)
+
+  --for index, value in pairs(params) do
+  --  print(index.." : "..value);
+  -- end
 
   local result = {};
 
