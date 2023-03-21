@@ -274,6 +274,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     bool                mContentSourceRedisReloadRequired;
     std::string         mContentSourceCorbaIor;
     std::string         mContentSourceHttpUrl;
+    std::string         mPrimaryConnectionString;
+    std::string         mSecondaryConnectionString;
 
     std::string         mMemoryContentDir;
     uint                mEventListMaxSize;

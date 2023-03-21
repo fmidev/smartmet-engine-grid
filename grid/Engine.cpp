@@ -2,6 +2,7 @@
 
 #include <grid-content/contentServer/corba/client/ClientImplementation.h>
 #include <grid-content/contentServer/http/client/ClientImplementation.h>
+#include "grid-content/contentServer/postgresql/PostgresqlImplementation.h"
 #include <grid-content/dataServer/corba/client/ClientImplementation.h>
 #include <grid-content/dataServer/implementation/VirtualContentFactory_type1.h>
 #include <grid-content/queryServer/corba/client/ClientImplementation.h>
@@ -236,6 +237,9 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.lockEnabled", mContentSourceRedisLockEnabled);
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.reloadRequired", mContentSourceRedisReloadRequired);
 
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.postgresql.primaryConnectionString", mPrimaryConnectionString);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.postgresql.secondaryConnectionString", mSecondaryConnectionString);
+
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.http.url", mContentSourceHttpUrl);
 
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.corba.ior", mContentSourceCorbaIor);
@@ -394,6 +398,13 @@ void Engine::init()
           mContentSourceRedisSecondaryPort, mContentSourceRedisLockEnabled, mContentSourceRedisReloadRequired);
       mContentServer.reset(redis);
       cServer = redis;
+    }
+    else if (mContentSourceType == "postgresql")
+    {
+      ContentServer::PostgresqlImplementation* postgres = new ContentServer::PostgresqlImplementation();
+      postgres->init(mPrimaryConnectionString.c_str());
+      mContentServer.reset(postgres);
+      cServer = postgres;
     }
     else if (mContentSourceType == "corba")
     {
