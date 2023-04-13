@@ -402,7 +402,7 @@ void Engine::init()
     else if (mContentSourceType == "postgresql")
     {
       ContentServer::PostgresqlImplementation* postgres = new ContentServer::PostgresqlImplementation();
-      postgres->init(mPrimaryConnectionString.c_str());
+      postgres->init(mPrimaryConnectionString.c_str(),mSecondaryConnectionString.c_str(),false);
       mContentServer.reset(postgres);
       cServer = postgres;
     }
