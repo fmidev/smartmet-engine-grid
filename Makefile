@@ -2,7 +2,7 @@ SUBNAME = grid
 SPEC = smartmet-engine-$(SUBNAME)
 INCDIR = smartmet/engines/$(SUBNAME)
 
-REQUIRES = libpqxx configpp gdal
+REQUIRES = libpq configpp gdal
 
 include $(shell echo $${PREFIX-/usr})/share/smartmet/devel/makefile.inc
 
