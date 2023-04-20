@@ -31,7 +31,7 @@ else
   CORBA_INCLUDE = -isystem /usr/include/smartmet/grid-content/contentServer/corba/stubs \
                   -isystem /usr/include/smartmet/grid-content/dataServer/corba/stubs \
                   -isystem /usr/include/smartmet/grid-content/queryServer/corba/stubs
-  CORBA_LIBS = -lomniORB4 -lomnithread  
+  CORBA_LIBS = -lomniORB4 -lomnithread
 endif
 
 INCLUDES += \
