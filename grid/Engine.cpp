@@ -2102,13 +2102,35 @@ ContentTable Engine::getGenerationInfo(boost::optional<std::string> producer,std
           {
             T::GenerationInfo *gInfo = generationList.getGenerationInfoByIndex(g);
             time_t deletionTime = gInfo->mDeletionTime;
-
             if (deletionTime == 0 || (currentTime + 120) < deletionTime)
             {
               T::GeometryInfoList geometryInfoList;
               mGeometryInfoList.getGeometryInfoListByGenerationId(gInfo->mGenerationId,geometryInfoList);
 
               uint geomLen = geometryInfoList.getLength();
+              if (geomLen == 0)
+              {
+                // It seems that there are no geometry status information available. Let's generate it.
+
+                std::set<T::GeometryId> geometryIdList;
+                contentServer->getContentGeometryIdListByGenerationId(0,gInfo->mGenerationId,geometryIdList);
+                if (geometryIdList.size() > 0)
+                {
+                  for (auto gi = geometryIdList.begin(); gi != geometryIdList.end(); ++gi)
+                  {
+                    T::GeometryInfo *geom = new T::GeometryInfo();
+                    geom->mProducerId = info->mProducerId;
+                    geom->mGenerationId = gInfo->mGenerationId;
+                    geom->mGeometryId = *gi;
+                    geom->mModificationTime = gInfo->mModificationTime;
+                    geom->mDeletionTime = gInfo->mDeletionTime;
+                    geom->mStatus = gInfo->mStatus;
+                    geometryInfoList.addGeometryInfo(geom);
+                  }
+                }
+                geomLen = geometryInfoList.getLength();
+              }
+
               for (uint gg = 0; gg < geomLen; gg++)
               {
                 T::GeometryInfo *geom = geometryInfoList.getGeometryInfoByIndex(gg);
@@ -2245,6 +2267,8 @@ ContentTable Engine::getExtGenerationInfo(boost::optional<std::string> producer,
     if (timeFormat.empty())
       timeFormat = "iso";
 
+    T::GeometryInfoList tmpGeometryInfoList;
+
     std::unique_ptr<Fmi::TimeFormatter> timeFormatter(Fmi::TimeFormatter::create(timeFormat));
     boost::shared_ptr < Spine::Table > resultTable(new Spine::Table);
     Spine::TableFormatter::Names headers
@@ -2303,6 +2327,32 @@ ContentTable Engine::getExtGenerationInfo(boost::optional<std::string> producer,
                 mGeometryInfoList.getGeometryInfoListByGenerationId(gInfo->mGenerationId,geometryInfoList);
 
                 uint geomLen = geometryInfoList.getLength();
+
+                if (geomLen == 0)
+                {
+                  // It seems that there are no geometry status information available. Let's generate it.
+
+                  std::set<T::GeometryId> geometryIdList;
+                  contentServer->getContentGeometryIdListByGenerationId(0,gInfo->mGenerationId,geometryIdList);
+                  if (geometryIdList.size() > 0)
+                  {
+                    for (auto gi = geometryIdList.begin(); gi != geometryIdList.end(); ++gi)
+                    {
+                      T::GeometryInfo *geom = new T::GeometryInfo();
+                      geom->mProducerId = gInfo->mProducerId;
+                      geom->mGenerationId = gInfo->mGenerationId;
+                      geom->mGeometryId = *gi;
+                      geom->mModificationTime = gInfo->mModificationTime;
+                      geom->mDeletionTime = gInfo->mDeletionTime;
+                      geom->mStatus = gInfo->mStatus;
+                      tmpGeometryInfoList.addGeometryInfo(geom);
+                    }
+                  }
+
+                  tmpGeometryInfoList.getGeometryInfoListByGenerationId(gInfo->mGenerationId,geometryInfoList);
+                  geomLen = geometryInfoList.getLength();
+                }
+
                 for (uint gg = 0; gg < geomLen; gg++)
                 {
                   T::GeometryInfo *geom = geometryInfoList.getGeometryInfoByIndex(gg);
@@ -2330,6 +2380,9 @@ ContentTable Engine::getExtGenerationInfo(boost::optional<std::string> producer,
           }
         }
 
+        tmpGeometryInfoList.sort(T::GeometryInfo::ComparisonMethod::generationId);
+
+
         for (auto it = counterList.begin(); it != counterList.end(); ++it)
         {
           time_t modTime = 0;
@@ -2353,6 +2406,8 @@ ContentTable Engine::getExtGenerationInfo(boost::optional<std::string> producer,
                 //printf(" --- %u %d\n",g->first,g->second);
                 //T::GenerationInfo *gInfo = mGenerationInfoList.getGenerationInfoById(g->first);
                 T::GeometryInfo *geom = mGeometryInfoList.getGeometryInfoById(g->first,g->second,0);
+                if (!geom)
+                  geom = tmpGeometryInfoList.getGeometryInfoById(g->first,g->second,0);
 
                 if (geom && geom->mModificationTime > modTime)
                 {
@@ -2557,6 +2612,8 @@ std::list<MetaData> Engine::getEngineMetadata(const char *producerName) const
 
     updateProducerAndGenerationList();
 
+    T::GeometryInfoList tmpGeometryInfoList;
+
     ContentServer_sptr contentServer = getContentServer_sptr();
     time_t currentTime = time(nullptr);
     AutoReadLock lock(&mProducerInfoList_modificationLock);
@@ -2591,6 +2648,27 @@ std::list<MetaData> Engine::getEngineMetadata(const char *producerName) const
               mGeometryInfoList.getGeometryInfoListByGenerationId(gInfo->mGenerationId,geometryInfoList);
 
               uint geomLen = geometryInfoList.getLength();
+              if (geomLen == 0)
+              {
+                std::set<T::GeometryId> geometryIdList;
+                contentServer->getContentGeometryIdListByGenerationId(0,gInfo->mGenerationId,geometryIdList);
+                if (geometryIdList.size() > 0)
+                {
+                  for (auto gi = geometryIdList.begin(); gi != geometryIdList.end(); ++gi)
+                  {
+                    T::GeometryInfo *geom = new T::GeometryInfo();
+                    geom->mProducerId = gInfo->mProducerId;
+                    geom->mGenerationId = gInfo->mGenerationId;
+                    geom->mGeometryId = *gi;
+                    geom->mModificationTime = gInfo->mModificationTime;
+                    geom->mDeletionTime = gInfo->mDeletionTime;
+                    geom->mStatus = gInfo->mStatus;
+                    geometryInfoList.addGeometryInfo(geom);
+                  }
+                }
+                geomLen = geometryInfoList.getLength();
+              }
+
               for (uint gg = 0; gg < geomLen; gg++)
               {
                 T::GeometryInfo *geom = geometryInfoList.getGeometryInfoByIndex(gg);
@@ -4062,6 +4140,7 @@ void Engine::setDem(boost::shared_ptr<Fmi::DEM> dem)
 
     mDem = dem;
     mQueryServer->setDem(dem);
+    mDataServer->setDem(dem);
   }
   catch (...)
   {
@@ -4080,6 +4159,7 @@ void Engine::setLandCover(boost::shared_ptr<Fmi::LandCover> landCover)
 
     mLandCover = landCover;
     mQueryServer->setLandCover(landCover);
+    mDataServer->setLandCover(landCover);
   }
   catch (...)
   {
