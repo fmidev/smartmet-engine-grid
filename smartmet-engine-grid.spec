@@ -23,7 +23,7 @@ BuildRequires: smartmet-library-grid-content-devel >= 23.4.17
 BuildRequires: smartmet-library-grid-files-devel >= 23.3.9
 BuildRequires: smartmet-library-spine-devel >= 23.3.14
 BuildRequires: make
-BuildRequires: omniORB-devel
+BuildRequires: omniORB-devel >= 4.3.0
 BuildRequires: %{smartmet_boost}-devel
 BuildRequires: gdal34-devel
 BuildRequires: bzip2-devel
