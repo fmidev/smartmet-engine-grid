@@ -29,6 +29,7 @@ BuildRequires: %{smartmet_boost}-devel
 BuildRequires: gdal34-devel
 BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
+BuildRequires: postgresql13-devel
 Requires: %{smartmet_boost}-thread
 Requires: smartmet-library-grid-content >= 23.4.17
 Requires: smartmet-library-grid-files >= 23.3.9
