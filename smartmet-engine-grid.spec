@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 23.5.26
+Version: 23.6.8
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -19,10 +19,10 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
-BuildRequires: smartmet-library-grid-content-devel >= 23.4.17
-BuildRequires: smartmet-library-grid-files-devel >= 23.3.9
-BuildRequires: smartmet-library-spine-devel >= 23.3.14
-BuildRequires: smartmet-library-macgyver-devel >= 23.5.24
+BuildRequires: smartmet-library-grid-content-devel >= 23.5.26
+BuildRequires: smartmet-library-grid-files-devel >= 23.6.6
+BuildRequires: smartmet-library-spine-devel >= 23.6.6
+BuildRequires: smartmet-library-macgyver-devel >= 23.6.6
 BuildRequires: make
 BuildRequires: omniORB-devel >= 4.3.0
 BuildRequires: %{smartmet_boost}-devel
@@ -31,10 +31,10 @@ BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 BuildRequires: postgresql13-devel
 Requires: %{smartmet_boost}-thread
-Requires: smartmet-library-grid-content >= 23.4.17
-Requires: smartmet-library-grid-files >= 23.3.9
-Requires: smartmet-library-spine >= 23.3.14
-Requires: smartmet-library-macgyver >= 23.5.24
+Requires: smartmet-library-grid-content >= 23.5.26
+Requires: smartmet-library-grid-files >= 23.6.6
+Requires: smartmet-library-spine >= 23.6.6
+Requires: smartmet-library-macgyver >= 23.6.6
 Requires: omniORB-devel
 
 %if %{defined el7}
@@ -60,10 +60,10 @@ SmartMet grid engine
 Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
-Requires: smartmet-library-grid-content-devel >= 23.4.17
+Requires: smartmet-library-grid-content-devel >= 23.5.26
 Requires: %{SPECNAME} = %{version}-%{release}
-Requires: smartmet-library-spine-devel >= 23.3.14
-Requires: smartmet-library-macgyver-devel >= 23.5.24
+Requires: smartmet-library-spine-devel >= 23.6.6
+Requires: smartmet-library-macgyver-devel >= 23.6.6
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
 
@@ -71,7 +71,7 @@ SmartMet %{SPECNAME} development headers.
 Summary: SmartMet %{SPECNAME} - redis server with required data for testing purpose
 Group: SmartMet/Development
 Provides: smartmet-engine-grid-test
-Requires: smartmet-library-grid-files >= 23.3.9
+Requires: smartmet-library-grid-files >= 23.6.6
 %description -n smartmet-engine-grid-test
 SmartMet %{SPECNAME} - redis server with required data for testing purpose
 
@@ -104,6 +104,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Thu Jun  8 2023 Mika Heiskanen <mika.heiskanen@fmi.fi> - 23.6.8-1.fmi
+- Fixed mutex locking order issue
+
 * Fri May 26 2023 Andris Pavēnis <andris.pavenis@fmi.fi> 23.5.26-1.fmi
 - Require omniORB >= 4.3.0
 
