@@ -3011,7 +3011,7 @@ void Engine::getProducerLevelIdList(uint producerId, std::set<T::ParamLevelId>& 
     if (!mEnabled)
       return;
 
-    AutoReadLock lock(&mProducerInfoList_modificationLock);
+    // AutoReadLock lock(&mProducerInfoList_modificationLock);
 
     uint len = mLevelInfoList.getLength();
     for (uint t = 0; t < len; t++)
