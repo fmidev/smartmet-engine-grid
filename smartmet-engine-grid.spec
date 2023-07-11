@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 23.6.8
+Version: 23.7.11
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -104,6 +104,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Tue Jul 11 2023 Andris Pavēnis <andris.pavenis@fmi.fi> 23.7.11-1.fmi
+- Use postgresql 15, gdal 3.5, geos 3.11 and proj-9.0
+
 * Thu Jun  8 2023 Mika Heiskanen <mika.heiskanen@fmi.fi> - 23.6.8-1.fmi
 - Fixed mutex locking order issue
 
