@@ -897,7 +897,7 @@ void Engine::shutdown()
         return;
     }
 
-    if (mEnabled)
+    if (mEnabled && mThread)
         pthread_join(mThread, nullptr);
 
     std::cout << "  -- Shutdown requested (grid engine)\n";
