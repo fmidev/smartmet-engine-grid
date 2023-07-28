@@ -21,8 +21,8 @@ BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: smartmet-library-grid-content-devel >= 23.7.10
 BuildRequires: smartmet-library-grid-files-devel >= 23.7.10
-BuildRequires: smartmet-library-spine-devel >= 23.7.14
-BuildRequires: smartmet-library-macgyver-devel >= 23.7.10
+BuildRequires: smartmet-library-spine-devel >= 23.7.28
+BuildRequires: smartmet-library-macgyver-devel >= 23.7.28
 BuildRequires: make
 BuildRequires: omniORB-devel >= 4.3.0
 BuildRequires: %{smartmet_boost}-devel
@@ -33,8 +33,8 @@ BuildRequires: postgresql15-devel
 Requires: %{smartmet_boost}-thread
 Requires: smartmet-library-grid-content >= 23.7.10
 Requires: smartmet-library-grid-files >= 23.7.10
-Requires: smartmet-library-spine >= 23.7.14
-Requires: smartmet-library-macgyver >= 23.7.10
+Requires: smartmet-library-spine >= 23.7.28
+Requires: smartmet-library-macgyver >= 23.7.28
 Requires: omniORB-devel
 
 %if %{defined el7}
@@ -62,8 +62,8 @@ Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
 Requires: smartmet-library-grid-content-devel >= 23.7.10
 Requires: %{SPECNAME} = %{version}-%{release}
-Requires: smartmet-library-spine-devel >= 23.7.14
-Requires: smartmet-library-macgyver-devel >= 23.7.10
+Requires: smartmet-library-spine-devel >= 23.7.28
+Requires: smartmet-library-macgyver-devel >= 23.7.28
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
 
