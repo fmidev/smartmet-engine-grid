@@ -11,6 +11,7 @@
 #include <grid-files/common/GraphFunctions.h>
 #include <grid-files/common/ImageFunctions.h>
 #include <grid-files/common/ImagePaint.h>
+#include <grid-files/common/BitLine.h>
 #include <grid-files/common/MemoryMapper.h>
 #include <grid-files/common/ShowFunction.h>
 #include <grid-files/grid/ValueCache.h>
@@ -572,6 +573,8 @@ void Engine::init()
 
     mBrowser.init(mConfigurationFile_name.c_str(), mContentServer, this);
     mBrowser.setFlags(mBrowserFlags);
+
+    updateMappings();
 
     startUpdateProcessing();
   }
@@ -4149,6 +4152,21 @@ void Engine::setDem(boost::shared_ptr<Fmi::DEM> dem)
     throw exception;
   }
 }
+
+
+inline bool setBit(uchar *_bits,uint _pos)
+{
+  uint bt = _pos / 8;
+  uint bit = _pos % 8;
+
+  uchar v = 1 << bit;
+
+  if (_bits[bt] & v)
+    return true;
+
+  return false;
+}
+
 
 void Engine::setLandCover(boost::shared_ptr<Fmi::LandCover> landCover)
 {
