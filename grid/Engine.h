@@ -352,6 +352,9 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     boost::shared_ptr<Fmi::DEM>               mDem;
     boost::shared_ptr<Fmi::LandCover>         mLandCover;
 
+    string_vec                                mDataServer_subServers;
+    std::vector<DataServer::ServiceInterface*> mDataServer_clients;
+
     mutable QueryServer::AliasFileCollection  mProducerMappingDefinitions;
     string_vec                                mProducerMappingDefinitions_filenames;
 

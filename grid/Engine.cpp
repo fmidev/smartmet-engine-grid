@@ -267,6 +267,8 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.ior", mDataServerIor);
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.caching", mDataServerCacheEnabled);
 
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.subServers", mDataServer_subServers);
+
     // These settings are used when the data server is embedded into the grid engine.
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.directory", mDataServerGridDirectory);
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.clean-up.age", mDataServerCleanupAge);
@@ -348,11 +350,14 @@ Engine::~Engine()
   FUNCTION_TRACE
   try
   {
-      if (mEnabled && !mShutdownFinished) {
-          std::cout << __PRETTY_FUNCTION__ << ": an attempt to destroy Grid engine before"
+    for (auto it = mDataServer_clients.begin(); it != mDataServer_clients.end(); ++it)
+      delete *it;
+
+    if (mEnabled && !mShutdownFinished) {
+      std::cout << __PRETTY_FUNCTION__ << ": an attempt to destroy Grid engine before"
                     << " is shutdown is complete" << std::endl;
-          abort();
-      }
+        abort();
+    }
   }
   catch (...)
   {
@@ -481,6 +486,23 @@ void Engine::init()
       mDataServerImplementation->init(0, 0, "NotRegistered", "NotRegistered", mDataServerGridDirectory, cServer, mDataServerLuaFiles);
       mDataServerImplementation->setCleanup(mDataServerCleanupAge,mDataServerCleanupInterval);
 
+      for (auto it = mDataServer_subServers.begin(); it != mDataServer_subServers.end(); ++it)
+      {
+        std::vector<std::string> parts;
+        splitString(*it,'/',parts);
+        if (parts.size() == 2)
+        {
+          DataServer::Corba::ClientImplementation* client = new DataServer::Corba::ClientImplementation();
+          client->init(parts[1]);
+
+          mDataServer_clients.push_back(client);
+
+          mDataServerImplementation->addSubServer(parts[0],client);
+
+        }
+      }
+
+
       if (mVirtualFilesEnabled)
       {
         mDataServerImplementation->setVirtualContentEnabled(true);
@@ -492,6 +514,7 @@ void Engine::init()
       {
         mDataServerImplementation->setVirtualContentEnabled(false);
       }
+
 
       mDataServer.reset(mDataServerImplementation);
       mDataServerImplementation->startEventProcessing();
