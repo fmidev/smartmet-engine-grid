@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 23.9.29
+Version: 23.10.12
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -19,8 +19,8 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
-BuildRequires: smartmet-library-grid-content-devel >= 23.9.29
-BuildRequires: smartmet-library-grid-files-devel >= 23.9.29
+BuildRequires: smartmet-library-grid-content-devel >= 23.10.12
+BuildRequires: smartmet-library-grid-files-devel >= 23.10.12
 BuildRequires: smartmet-library-spine-devel >= 23.8.31
 BuildRequires: smartmet-library-macgyver-devel >= 23.8.31
 BuildRequires: make
@@ -31,8 +31,8 @@ BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 BuildRequires: postgresql15-devel
 Requires: %{smartmet_boost}-thread
-Requires: smartmet-library-grid-content >= 23.9.29
-Requires: smartmet-library-grid-files >= 23.9.29
+Requires: smartmet-library-grid-content >= 23.10.12
+Requires: smartmet-library-grid-files >= 23.10.12
 Requires: smartmet-library-spine >= 23.8.31
 Requires: smartmet-library-macgyver >= 23.8.31
 Requires: omniORB-devel
@@ -104,6 +104,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Thu Oct 12 2023 Andris Pavēnis <andris.pavenis@fmi.fi> 23.10.12-1.fmi
+- Repackage due to smartmet-library-grid-files and smartmet-library-grid-files changes
+
 * Fri Sep 29 2023 Mika Heiskanen <mika.heiskanen@fmi.fi> - 23.9.29-1.fmi
 - Improved virtual grid features
 - Initializing also unmapped parameters during the startup
