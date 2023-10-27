@@ -956,7 +956,7 @@ void Engine::shutdown()
   }
 }
 
-bool Engine::browserRequest(const Spine::HTTP::Request& theRequest, Spine::HTTP::Response& theResponse)
+bool Engine::browserRequest(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest, Spine::HTTP::Response& theResponse)
 {
   FUNCTION_TRACE
   try
@@ -964,7 +964,7 @@ bool Engine::browserRequest(const Spine::HTTP::Request& theRequest, Spine::HTTP:
     if (!mEnabled || !mBrowserEnabled  || Spine::Reactor::isShuttingDown())
       return false;
 
-    return mBrowser.requestHandler(theRequest, theResponse);
+    return mBrowser.requestHandler(session,theRequest, theResponse);
   }
   catch (...)
   {
@@ -974,7 +974,7 @@ bool Engine::browserRequest(const Spine::HTTP::Request& theRequest, Spine::HTTP:
   }
 }
 
-void Engine::browserContent(std::ostringstream& output)
+void Engine::browserContent(SessionManagement::SessionInfo& session,std::ostringstream& output)
 {
   FUNCTION_TRACE
   try
@@ -982,7 +982,7 @@ void Engine::browserContent(std::ostringstream& output)
     if (!mEnabled || !mBrowserEnabled || Spine::Reactor::isShuttingDown())
       return;
 
-    mBrowser.browserContent(output);
+    mBrowser.browserContent(session,output);
   }
   catch (...)
   {
