@@ -66,8 +66,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                         Engine(const char *theConfigFile);
     virtual             ~Engine();
 
-    bool                browserRequest(const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
-    void                browserContent(std::ostringstream& output);
+    bool                browserRequest(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
+    void                browserContent(SessionManagement::SessionInfo& session,std::ostringstream& output);
 
     int                 executeQuery(QueryServer::Query& query) const;
     Query_sptr          executeQuery(std::shared_ptr<QueryServer::Query> query) const;
