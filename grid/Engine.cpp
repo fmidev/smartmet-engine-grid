@@ -178,7 +178,7 @@ Engine::Engine(const char* theConfigFile)
     mQueryServerDebugLogTruncateSize = 5000000;
     mQueryCache_enabled = false;
     mQueryCache_maxAge = 300;
-    mQueryCache_stats.starttime = boost::posix_time::second_clock::universal_time();
+    mQueryCache_stats.starttime = Fmi::SecondClock::universal_time();
     mQueryServerContentCache_maxRecordsPerThread = 500000;
     mQueryServerContentCache_clearInterval = 3600 * 24 * 3;
     mQueryServerContentSearchCache_maxRecordsPerThread = 500000;
@@ -2037,11 +2037,11 @@ ContentTable Engine::getProducerInfo(boost::optional<std::string> producer,std::
           if (!timeFormat.empty()  &&  strcasecmp(timeFormat.c_str(),"ISO") != 0)
           {
             // Analysis time
-            boost::posix_time::ptime fTime = toTimeStamp(newest->mAnalysisTime);
+            Fmi::DateTime fTime = toTimeStamp(newest->mAnalysisTime);
             resultTable->set(6, row, timeFormatter->format(fTime));
 
             // Oldest generation
-            boost::posix_time::ptime lTime = toTimeStamp(oldest->mAnalysisTime);
+            Fmi::DateTime lTime = toTimeStamp(oldest->mAnalysisTime);
             resultTable->set(7, row, timeFormatter->format(lTime));
           }
           else
@@ -2226,19 +2226,19 @@ ContentTable Engine::getGenerationInfo(boost::optional<std::string> producer,std
                     if (!timeFormat.empty()  &&  strcasecmp(timeFormat.c_str(),"ISO") != 0  && timeFormatter)
                     {
                       // Analysis time
-                      boost::posix_time::ptime aTime = toTimeStamp(gInfo->mAnalysisTime);
+                      Fmi::DateTime aTime = toTimeStamp(gInfo->mAnalysisTime);
                       resultTable->set(3, row, timeFormatter->format(aTime));
 
                       // Min time
-                      boost::posix_time::ptime fTime = toTimeStamp(*first);
+                      Fmi::DateTime fTime = toTimeStamp(*first);
                       resultTable->set(4, row, timeFormatter->format(fTime));
 
                       // Max time
-                      boost::posix_time::ptime lTime = toTimeStamp(*last);
+                      Fmi::DateTime lTime = toTimeStamp(*last);
                       resultTable->set(5, row, timeFormatter->format(lTime));
 
                       // Modification time
-                      boost::posix_time::ptime mTime = toTimeStamp(utcTimeFromTimeT(geom->mModificationTime));
+                      Fmi::DateTime mTime = toTimeStamp(utcTimeFromTimeT(geom->mModificationTime));
                       resultTable->set(6, row, timeFormatter->format(mTime));
                     }
                     else
@@ -2512,19 +2512,19 @@ ContentTable Engine::getExtGenerationInfo(boost::optional<std::string> producer,
               if (!timeFormat.empty()  &&  strcasecmp(timeFormat.c_str(),"iso") != 0  && timeFormatter)
               {
                 // Analysis time
-                boost::posix_time::ptime aTime = toTimeStamp(ss[0]);
+                Fmi::DateTime aTime = toTimeStamp(ss[0]);
                 resultTable->set(3, row, timeFormatter->format(aTime));
 
                 // Min time
-                boost::posix_time::ptime fTime = toTimeStamp(*first);
+                Fmi::DateTime fTime = toTimeStamp(*first);
                 resultTable->set(4, row, timeFormatter->format(fTime));
 
                 // Max time
-                boost::posix_time::ptime lTime = toTimeStamp(*last);
+                Fmi::DateTime lTime = toTimeStamp(*last);
                 resultTable->set(5, row, timeFormatter->format(lTime));
 
                 // Modification time
-                boost::posix_time::ptime mTime = toTimeStamp(utcTimeFromTimeT(modTime));
+                Fmi::DateTime mTime = toTimeStamp(utcTimeFromTimeT(modTime));
                 resultTable->set(6, row, timeFormatter->format(mTime));
               }
               else
