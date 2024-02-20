@@ -36,8 +36,9 @@
 <li><a href="#chapter-2-3">2.3 Data Server</a>
 <ul>
 <li><a href="#chapter-2-3-1">2.3.1 Grid storage</a>
-<li><a href="#chapter-2-3-2">2.3.2 Virtual grids</a>
-<li><a href="#chapter-2-3-3">2.3.3 Logs</a>
+<li><a href="#chapter-2-3-2">2.3.2 Startup cache</a>
+<li><a href="#chapter-2-3-3">2.3.3 Virtual grids</a>
+<li><a href="#chapter-2-3-4">2.3.4 Logs</a>
 </ul>
 <li><a href="#chapter-2-4">2.4 Query Server</a>
 <ul>
@@ -528,7 +529,31 @@ the clean-up.
 
 <hr/>
 
-### <span id="chapter-2-3-2"></span>2.3.2 Virtual grids
+### <span id="chapter-2-3-2"></span>2.3.2 Startup cache
+
+Startup cache is used for speed up the data loading when the server is started. The idea is that the grid-engine saves the most popular data 
+into the fast disk (maybe M.2 disk) so this data can be loaded quickly back into the memory if the server is restarted. Originally the idea 
+was to store data that was loaded from the network, but it is possible also to save data that is loaded from the mounted disk. This makes 
+sense if the cache disk is much faster than the mounted disk.
+
+<pre>
+  data-server :
+  {
+    startup-cache :
+    {
+      enabled = true
+      saveDiskData = true
+      saveNetworkData = true
+      filename = "/home/koskelam/Disk/Cache/startup-cache"
+      saveIntervalInMinutes = 5
+      maxSizeInMegaBytes = 30000
+    }
+                }
+</pre>
+
+<hr/>
+
+### <span id="chapter-2-3-3"></span>2.3.3 Virtual grids
 
 The Data Server can create "virtual grids" that can be accessed as they were real grid. The idea is that the Data Server can use existing grids in order to calculate new grids on the fly. For example, we might have grids that contains wind vectors (U and V). We can use these in order to create a new grid that contains wind speed values.
 
@@ -566,7 +591,7 @@ Notice that these LUA files are used in the Data Server and only for virtual fil
 
 <hr/>
 
-### <span id="chapter-2-3-3"></span>2.3.3 Logs
+### <span id="chapter-2-3-4"></span>2.3.4 Logs
 
 The Data Server has also the processing log and the debug log. These logs are congfigured in the same way as the logs used by the Content Server.
 

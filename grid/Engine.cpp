@@ -148,6 +148,13 @@ Engine::Engine(const char* theConfigFile)
     mShutdownRequested = false;
     mShutdownFinished = false;
 
+    mStartUpCache_enabled = false;
+    mStartUpCache_saveDiskData = false;
+    mStartUpCache_saveNetworkData = true;
+    mStartUpCache_filename = "";
+    mStartUpCache_saveIntervalInMinutes = 30;
+    mStartUpCache_maxSizeInMegaBytes = 30000;
+
     mContentServerProcessingLogEnabled = false;
     mContentServerDebugLogEnabled = false;
     mDataServerProcessingLogEnabled = false;
@@ -274,6 +281,14 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.clean-up.age", mDataServerCleanupAge);
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.clean-up.checkInterval", mDataServerCleanupInterval);
 
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.startup-cache.enabled", mStartUpCache_enabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.startup-cache.saveDiskData", mStartUpCache_saveDiskData);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.startup-cache.saveNetworkData", mStartUpCache_saveNetworkData);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.startup-cache.filename", mStartUpCache_filename);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.startup-cache.saveIntervalInMinutes", mStartUpCache_saveIntervalInMinutes);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.startup-cache.maxSizeInMegaBytes", mStartUpCache_maxSizeInMegaBytes);
+
+
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.virtualFiles.enabled", mVirtualFilesEnabled);
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.virtualFiles.definitionFile", mVirtualFileDefinitions);
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.luaFiles", mDataServerLuaFiles);
@@ -344,6 +359,8 @@ Engine::Engine(const char* theConfigFile)
     throw exception;
   }
 }
+
+
 
 Engine::~Engine()
 {
@@ -485,6 +502,8 @@ void Engine::init()
       mDataServerImplementation = new DataServer::ServiceImplementation();
       mDataServerImplementation->init(0, 0, "NotRegistered", "NotRegistered", mDataServerGridDirectory, cServer, mDataServerLuaFiles);
       mDataServerImplementation->setCleanup(mDataServerCleanupAge,mDataServerCleanupInterval);
+      mDataServerImplementation->setStartUpCache(mStartUpCache_enabled,mStartUpCache_saveDiskData,mStartUpCache_saveNetworkData,
+          mStartUpCache_filename.c_str(),mStartUpCache_saveIntervalInMinutes,mStartUpCache_maxSizeInMegaBytes);
 
       for (auto it = mDataServer_subServers.begin(); it != mDataServer_subServers.end(); ++it)
       {
@@ -518,6 +537,7 @@ void Engine::init()
 
       mDataServer.reset(mDataServerImplementation);
       mDataServerImplementation->startEventProcessing();
+      mDataServerImplementation->startCacheProcessing();
 
       dServer = mDataServerImplementation;
 
