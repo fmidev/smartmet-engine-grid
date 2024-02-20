@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 24.2.5
+Version: 24.2.20
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -19,9 +19,9 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
-BuildRequires: smartmet-library-grid-content-devel >= 24.2.5
-BuildRequires: smartmet-library-grid-files-devel >= 24.2.5
-BuildRequires: smartmet-library-spine-devel >= 24.1.30
+BuildRequires: smartmet-library-grid-content-devel >= 24.2.20
+BuildRequires: smartmet-library-grid-files-devel >= 24.2.20
+BuildRequires: smartmet-library-spine-devel >= 24.2.8
 BuildRequires: smartmet-library-macgyver-devel >= 24.1.17
 BuildRequires: make
 BuildRequires: omniORB-devel >= 4.3.0
@@ -31,9 +31,9 @@ BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 BuildRequires: postgresql15-devel
 Requires: %{smartmet_boost}-thread
-Requires: smartmet-library-grid-content >= 24.2.5
-Requires: smartmet-library-grid-files >= 24.2.5
-Requires: smartmet-library-spine >= 24.1.30
+Requires: smartmet-library-grid-content >= 24.2.20
+Requires: smartmet-library-grid-files >= 24.2.20
+Requires: smartmet-library-spine >= 24.2.8
 Requires: smartmet-library-macgyver >= 24.1.17
 Requires: omniORB-devel
 
@@ -60,9 +60,9 @@ SmartMet grid engine
 Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
-Requires: smartmet-library-grid-content-devel >= 24.2.5
+Requires: smartmet-library-grid-content-devel >= 24.2.20
 Requires: %{SPECNAME} = %{version}-%{release}
-Requires: smartmet-library-spine-devel >= 24.1.30
+Requires: smartmet-library-spine-devel >= 24.2.8
 Requires: smartmet-library-macgyver-devel >= 24.1.17
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
@@ -71,7 +71,7 @@ SmartMet %{SPECNAME} development headers.
 Summary: SmartMet %{SPECNAME} - redis server with required data for testing purpose
 Group: SmartMet/Development
 Provides: smartmet-engine-grid-test
-Requires: smartmet-library-grid-files >= 24.2.5
+Requires: smartmet-library-grid-files >= 24.2.20
 %description -n smartmet-engine-grid-test
 SmartMet %{SPECNAME} - redis server with required data for testing purpose
 
@@ -104,6 +104,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Tue Feb 20 2024 Mika Heiskanen <mheiskan@rhel8.dev.fmi.fi> - 24.2.20-1.fmi
+- Added configuration settings for enabling caching grids to disk
+
 * Mon Feb  5 2024 Mika Heiskanen <mika.heiskanen@fmi.fi> 24.2.5-1.fmi
 - Repackaged due to grid-files ABI changes
 
