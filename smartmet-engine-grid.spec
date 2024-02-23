@@ -19,8 +19,8 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
-BuildRequires: smartmet-library-grid-content-devel >= 24.2.20
-BuildRequires: smartmet-library-grid-files-devel >= 24.2.20
+BuildRequires: smartmet-library-grid-content-devel >= 24.2.23
+BuildRequires: smartmet-library-grid-files-devel >= 24.2.23
 BuildRequires: smartmet-library-spine-devel >= 24.2.8
 BuildRequires: smartmet-library-macgyver-devel >= 24.1.17
 BuildRequires: make
@@ -31,8 +31,8 @@ BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 BuildRequires: postgresql15-devel
 Requires: %{smartmet_boost}-thread
-Requires: smartmet-library-grid-content >= 24.2.20
-Requires: smartmet-library-grid-files >= 24.2.20
+Requires: smartmet-library-grid-content >= 24.2.23
+Requires: smartmet-library-grid-files >= 24.2.23
 Requires: smartmet-library-spine >= 24.2.8
 Requires: smartmet-library-macgyver >= 24.1.17
 Requires: omniORB-devel
@@ -60,7 +60,7 @@ SmartMet grid engine
 Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
-Requires: smartmet-library-grid-content-devel >= 24.2.20
+Requires: smartmet-library-grid-content-devel >= 24.2.23
 Requires: %{SPECNAME} = %{version}-%{release}
 Requires: smartmet-library-spine-devel >= 24.2.8
 Requires: smartmet-library-macgyver-devel >= 24.1.17
@@ -71,7 +71,7 @@ SmartMet %{SPECNAME} development headers.
 Summary: SmartMet %{SPECNAME} - redis server with required data for testing purpose
 Group: SmartMet/Development
 Provides: smartmet-engine-grid-test
-Requires: smartmet-library-grid-files >= 24.2.20
+Requires: smartmet-library-grid-files >= 24.2.23
 %description -n smartmet-engine-grid-test
 SmartMet %{SPECNAME} - redis server with required data for testing purpose
 
