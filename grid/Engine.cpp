@@ -331,6 +331,11 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingTargetKeyType", tmp);
     mParameterMappingDefinitions_autoFileKeyType = C_UCHAR(tmp);
 
+    std::vector<std::string> vec;
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingLevelSimplification", vec);
+    for (auto it = vec.begin(); it != vec.end(); it++)
+      mParameterMapping_simplifiedLevelIdSet.insert(atoi(it->c_str()));
+
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingUpdateFile.fmi", mParameterMappingDefinitions_autoFile_fmi);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingUpdateFile.newbase", mParameterMappingDefinitions_autoFile_newbase);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingUpdateFile.netCdf", mParameterMappingDefinitions_autoFile_netCdf);
@@ -3562,7 +3567,10 @@ void Engine::updateMappings(
             m.mGeometryId = toInt32(pl[4].c_str());
             //m.mParameterLevelIdType = toUInt8(pl[5].c_str());
             m.mParameterLevelId = toInt8(pl[6].c_str());
-            m.mParameterLevel = toInt32(pl[7].c_str());
+            if (mParameterMapping_simplifiedLevelIdSet.find(m.mParameterLevelId) != mParameterMapping_simplifiedLevelIdSet.end())
+              m.mParameterLevel = 0;
+            else
+              m.mParameterLevel = toInt32(pl[7].c_str());
 
             if (sourceParameterKeyType == T::ParamKeyTypeValue::FMI_NAME)
             {
@@ -3595,7 +3603,11 @@ void Engine::updateMappings(
             }
 
             char key[200];
-            sprintf(key, "%s;%s;%s;%s;%s;%s;%s;%s;", pl[0].c_str(), pl[1].c_str(), pl[2].c_str(), pl[3].c_str(), pl[4].c_str(), pl[5].c_str(), pl[6].c_str(), pl[7].c_str());
+            std::string level = pl[7];
+            if (mParameterMapping_simplifiedLevelIdSet.find(m.mParameterLevelId) != mParameterMapping_simplifiedLevelIdSet.end())
+              level = "*";
+
+            sprintf(key, "%s;%s;%s;%s;%s;%s;%s;%s;", pl[0].c_str(), pl[1].c_str(), pl[2].c_str(), pl[3].c_str(), pl[4].c_str(), pl[5].c_str(), pl[6].c_str(), level.c_str());
             std::string searchKey = m.mProducerName + ":" + m.mParameterName + ":" + std::to_string(m.mGeometryId);
 
             if (mapList.find(std::string(key)) == mapList.end())
@@ -3638,7 +3650,7 @@ void Engine::updateMappings(
                 char s = 'D';
                 if (!searchEnabled || (m.mParameterLevelId == 6 && m.mParameterLevel <= 10) || (m.mParameterLevelId == 1 && m.mParameterLevel == 0))
                 {
-                  if (m.mParameterLevelId != 2 && m.mParameterLevelId != 3 && m.mParameterLevelId != 4)
+                  if (mParameterMapping_simplifiedLevelIdSet.find(m.mParameterLevelId) == mParameterMapping_simplifiedLevelIdSet.end())
                     s = 'E';
                 }
 
@@ -3648,7 +3660,7 @@ void Engine::updateMappings(
                 if (file == nullptr)
                   file = openMappingFile(mappingFile);
 
-                fprintf(file, "%s;%s;%s;%s;%s;%s;%s;%s;", pl[0].c_str(), pl[1].c_str(), pl[2].c_str(), pl[3].c_str(), pl[4].c_str(), pl[5].c_str(), pl[6].c_str(), pl[7].c_str());
+                fprintf(file, "%s;%s;%s;%s;%s;%s;%s;%s;", pl[0].c_str(), pl[1].c_str(), pl[2].c_str(), pl[3].c_str(), pl[4].c_str(), pl[5].c_str(), pl[6].c_str(), level.c_str());
 
                 Identification::FmiParameterDef paramDef;
 
