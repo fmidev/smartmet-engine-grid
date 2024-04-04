@@ -358,6 +358,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     mutable QueryServer::AliasFileCollection  mProducerMappingDefinitions;
     string_vec                                mProducerMappingDefinitions_filenames;
 
+    std::set<std::int16_t>                    mParameterMapping_simplifiedLevelIdSet;
     mutable ParamMappingFile_vec_sptr         mParameterMappingDefinitions;
     mutable ModificationLock                  mParameterMappingDefinitions_modificationLock;
     mutable time_t                            mParameterMappingDefinitions_updateTime;
