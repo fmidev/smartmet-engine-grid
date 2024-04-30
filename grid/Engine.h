@@ -322,6 +322,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::size_t         mQueryServerContentSearchCache_maxRecordsPerThread;
     uint                mQueryServerContentSearchCache_clearInterval;
 
+    std::string         mHeightConversionFile;
     std::string         mCacheType;
     std::string         mCacheDir;
     uint                mNumOfCachedGrids;
