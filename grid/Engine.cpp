@@ -314,6 +314,7 @@ Engine::Engine(const char* theConfigFile)
 
     // These settings are used when the query server is embedded into the grid engine.
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.producerFile", mProducerSearchList_filename);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.heightConversionFile", mHeightConversionFile);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.producerMappingFiles", mProducerMappingDefinitions_filenames);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.producerStatusFile", mProducerStatusFile);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.checkGeometryStatus",mQueryServerCheckGeometryStatus);
@@ -483,6 +484,8 @@ void Engine::init()
       cServer = mContentServerCacheImplementation;
     }
 
+    updateMappings();
+
     if (mDataServerRemote && mDataServerIor.length() > 50)
     {
       DataServer::Corba::ClientImplementation* client = new DataServer::Corba::ClientImplementation();
@@ -567,7 +570,7 @@ void Engine::init()
     else
     {
       QueryServer::ServiceImplementation* server = new QueryServer::ServiceImplementation();
-      server->init(cServer, dServer, mGridConfigFile, mParameterMappingDefinitions_filenames, mParameterAliasDefinitions_filenames, mProducerSearchList_filename,
+      server->init(cServer, dServer, mGridConfigFile, mHeightConversionFile, mParameterMappingDefinitions_filenames, mParameterAliasDefinitions_filenames, mProducerSearchList_filename,
           mProducerMappingDefinitions_filenames, mQueryServerLuaFiles,mQueryServerCheckGeometryStatus,mDataServerMethodsEnabled);
 
       server->initContentCache(mQueryServerContentCache_maxRecordsPerThread,mQueryServerContentCache_clearInterval);
@@ -621,8 +624,6 @@ void Engine::init()
 
     mBrowser.init(mConfigurationFile_name.c_str(), mContentServer, this);
     mBrowser.setFlags(mBrowserFlags);
-
-    updateMappings();
 
     startUpdateProcessing();
   }
