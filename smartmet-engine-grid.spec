@@ -19,10 +19,10 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
-BuildRequires: smartmet-library-grid-content-devel >= 24.4.4
-BuildRequires: smartmet-library-grid-files-devel >= 24.3.26
-BuildRequires: smartmet-library-spine-devel >= 24.3.15
-BuildRequires: smartmet-library-macgyver-devel >= 24.1.17
+BuildRequires: smartmet-library-grid-content-devel >= 24.5.6
+BuildRequires: smartmet-library-grid-files-devel >= 24.5.6
+BuildRequires: smartmet-library-spine-devel >= 24.5.6
+BuildRequires: smartmet-library-macgyver-devel >= 24.5.6
 BuildRequires: make
 BuildRequires: omniORB-devel >= 4.3.0
 BuildRequires: %{smartmet_boost}-devel
@@ -60,9 +60,9 @@ SmartMet grid engine
 Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
-Requires: smartmet-library-grid-content-devel >= 24.4.4
+Requires: smartmet-library-grid-content-devel >= 24.5.3
 Requires: %{SPECNAME} = %{version}-%{release}
-Requires: smartmet-library-spine-devel >= 24.3.15
+Requires: smartmet-library-spine-devel >= 24.4.23
 Requires: smartmet-library-macgyver-devel >= 24.1.17
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
@@ -106,6 +106,9 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 * Tue May  7 2024 Andris Pavēnis <andris.pavenis@fmi.fi> 24.5.7-1.fmi
 - Use Date library (https://github.com/HowardHinnant/date) instead of boost date_time
+
+* Fri May  3 2024 Mika Heiskanen <mika.heiskanen@fmi.fi> - 24.5.3-1.fmi
+- Added height request features
 
 * Thu Apr  4 2024 Mika Heiskanen <mika.heiskanen@fmi.fi> - 24.4.4-1.fmi
 - Added configuration parameter 'mappingLevelSimplification'
