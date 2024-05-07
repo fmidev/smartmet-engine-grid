@@ -31,10 +31,10 @@ BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 BuildRequires: postgresql15-devel
 Requires: %{smartmet_boost}-thread
-Requires: smartmet-library-grid-content >= 24.4.4
-Requires: smartmet-library-grid-files >= 24.3.26
-Requires: smartmet-library-spine >= 24.3.15
-Requires: smartmet-library-macgyver >= 24.1.17
+Requires: smartmet-library-grid-content >= 24.5.6
+Requires: smartmet-library-grid-files >= 24.5.6
+Requires: smartmet-library-spine >= 24.5.6
+Requires: smartmet-library-macgyver >= 24.5.6
 Requires: omniORB-devel
 
 %if %{defined el7}
@@ -71,7 +71,7 @@ SmartMet %{SPECNAME} development headers.
 Summary: SmartMet %{SPECNAME} - redis server with required data for testing purpose
 Group: SmartMet/Development
 Provides: smartmet-engine-grid-test
-Requires: smartmet-library-grid-files >= 24.3.26
+Requires: smartmet-library-grid-files >= 24.5.6
 %description -n smartmet-engine-grid-test
 SmartMet %{SPECNAME} - redis server with required data for testing purpose
 
