@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 24.4.4
+Version: 24.5.7
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -104,6 +104,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Tue May  7 2024 Andris Pavēnis <andris.pavenis@fmi.fi> 24.5.7-1.fmi
+- Use Date library (https://github.com/HowardHinnant/date) instead of boost date_time
+
 * Thu Apr  4 2024 Mika Heiskanen <mika.heiskanen@fmi.fi> - 24.4.4-1.fmi
 - Added configuration parameter 'mappingLevelSimplification'
 
