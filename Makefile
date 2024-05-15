@@ -18,7 +18,6 @@ LIBS += -L$(libdir) \
 	-lsmartmet-gis \
 	-lsmartmet-spine \
 	-lboost_regex \
-	-lboost_date_time \
 	-lboost_thread \
 	-lboost_filesystem \
 	-lboost_iostreams \
