@@ -3,8 +3,8 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 24.5.7
-Release: 2%{?dist}.fmi
+Version: 24.5.16
+Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
 URL: https://github.com/fmidev/smartmet-engine-grid
@@ -104,6 +104,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Thu May 16 2024 Andris Pavēnis <andris.pavenis@fmi.fi> 24.5.16-1.fmi
+- Clean up boost date-time uses
+
 * Tue May  7 2024 Andris Pavēnis <andris.pavenis@fmi.fi> 24.5.7-2.fmi
 - Use Date library (https://github.com/HowardHinnant/date) instead of boost date_time
 
