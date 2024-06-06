@@ -26,7 +26,7 @@ BuildRequires: smartmet-library-macgyver-devel >= 24.5.30
 BuildRequires: make
 BuildRequires: omniORB-devel >= 4.3.0
 BuildRequires: %{smartmet_boost}-devel
-BuildRequires: gdal35-devel
+BuildRequires: gdal38-devel
 BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 BuildRequires: postgresql15-devel
