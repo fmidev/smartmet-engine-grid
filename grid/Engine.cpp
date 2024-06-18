@@ -123,8 +123,11 @@ Engine::Engine(const char* theConfigFile)
     };
 
     mEnabled = true;
-    mMemoryMapperEnabled = false;
-    mPremapEnabled = true;
+    mMemoryMapper_enabled = false;
+    mMemoryMapper_premapEnabled = true;
+    mMemoryMapper_maxProcessingThreads = 30;
+    mMemoryMapper_maxMessages = 100000;
+    mMemoryMapper_pageCacheSize = 2000000;
     mConfigurationFile_name = theConfigFile;
     mConfigurationFile_checkTime = time(nullptr) + 120;
     mConfigurationFile_modificationTime = getFileModificationTime(mConfigurationFile_name.c_str());
@@ -227,9 +230,14 @@ Engine::Engine(const char* theConfigFile)
     }
 
     configurationFile.getAttributeValue("smartmet.library.grid-files.configFile", mGridConfigFile);
-    configurationFile.getAttributeValue("smartmet.library.grid-files.memoryMapper.enabled", mMemoryMapperEnabled);
-    configurationFile.getAttributeValue("smartmet.library.grid-files.memoryMapper.accessFile", mAccessFile);
-    configurationFile.getAttributeValue("smartmet.library.grid-files.memoryMapper.premapEnabled", mPremapEnabled);
+    configurationFile.getAttributeValue("smartmet.library.grid-files.memoryMapper.enabled", mMemoryMapper_enabled);
+    configurationFile.getAttributeValue("smartmet.library.grid-files.memoryMapper.accessFile", mMemoryMapper_accessFile);
+    configurationFile.getAttributeValue("smartmet.library.grid-files.memoryMapper.premapEnabled", mMemoryMapper_premapEnabled);
+    configurationFile.getAttributeValue("smartmet.library.grid-files.memoryMapper.maxProsessingThreads", mMemoryMapper_maxProcessingThreads);
+    configurationFile.getAttributeValue("smartmet.library.grid-files.memoryMapper.maxMessages", mMemoryMapper_maxMessages);
+    configurationFile.getAttributeValue("smartmet.library.grid-files.memoryMapper.pageCacheSize", mMemoryMapper_pageCacheSize);
+    configurationFile.getAttributeValue("smartmet.library.grid-files.memoryMapper.fileHandleLimit", mMemoryMapper_fileHandleLimit);
+
     configurationFile.getAttributeValue("smartmet.library.grid-files.cache.type", mCacheType);
     configurationFile.getAttributeValue("smartmet.library.grid-files.cache.directory", mCacheDir);
     configurationFile.getAttributeValue("smartmet.library.grid-files.cache.numOfGrids", mNumOfCachedGrids);
@@ -408,11 +416,16 @@ void Engine::init()
       return;
     }
 
-    if (!mAccessFile.empty())
-      memoryMapper.setAccessFile(mAccessFile.c_str());
+    if (!mMemoryMapper_accessFile.empty())
+      memoryMapper.setAccessFile(mMemoryMapper_accessFile.c_str());
 
-    memoryMapper.setPremapEnabled(mPremapEnabled);
-    memoryMapper.setEnabled(mMemoryMapperEnabled);
+
+    memoryMapper.setMaxProcessingThreads(mMemoryMapper_maxProcessingThreads);
+    memoryMapper.setMaxMessages(mMemoryMapper_maxMessages);
+    memoryMapper.setPageCacheSize(mMemoryMapper_pageCacheSize);
+    memoryMapper.setFileHandleLimit(mMemoryMapper_fileHandleLimit);
+    memoryMapper.setPremapEnabled(mMemoryMapper_premapEnabled);
+    memoryMapper.setEnabled(mMemoryMapper_enabled);
 
     ContentServer::ServiceInterface* cServer = nullptr;
     DataServer::ServiceInterface* dServer = nullptr;

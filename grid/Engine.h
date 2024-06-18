@@ -335,9 +335,13 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     uint                mContentUpdateInterval;
 
     bool                mDataServerMethodsEnabled;
-    bool                mPremapEnabled;
-    bool                mMemoryMapperEnabled;
-    std::string         mAccessFile;
+    bool                mMemoryMapper_premapEnabled;
+    bool                mMemoryMapper_enabled;
+    std::string         mMemoryMapper_accessFile;
+    uint                mMemoryMapper_maxProcessingThreads;
+    uint                mMemoryMapper_maxMessages;
+    std::size_t         mMemoryMapper_fileHandleLimit;
+    std::size_t         mMemoryMapper_pageCacheSize;
 
     pthread_t           mThread;
     std::atomic<bool>   mShutdownRequested;
