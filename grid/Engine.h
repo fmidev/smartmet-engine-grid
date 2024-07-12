@@ -30,7 +30,7 @@ namespace Engine
 namespace Grid
 {
 
-typedef std::pair<boost::shared_ptr<Spine::Table>, Spine::TableFormatter::Names> ContentTable;
+typedef std::pair<std::shared_ptr<Spine::Table>, Spine::TableFormatter::Names> ContentTable;
 typedef std::shared_ptr<ContentServer::ServiceInterface> ContentServer_sptr;
 typedef std::shared_ptr<DataServer::ServiceInterface> DataServer_sptr;
 typedef std::shared_ptr<QueryServer::ServiceInterface> QueryServer_sptr;
@@ -103,11 +103,11 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     ulonglong           getProducerHash(uint producerId) const;
     ulonglong           getProducerHash(std::string producerName) const;
 
-    ContentTable        getProducerInfo(boost::optional<std::string> producer,std::string timeFormat) const;
-    ContentTable        getGenerationInfo(boost::optional<std::string> producer,std::string timeFormat) const;
-    ContentTable        getExtGenerationInfo(boost::optional<std::string> producer,std::string timeFormat) const;
+    ContentTable        getProducerInfo(std::optional<std::string> producer,std::string timeFormat) const;
+    ContentTable        getGenerationInfo(std::optional<std::string> producer,std::string timeFormat) const;
+    ContentTable        getExtGenerationInfo(std::optional<std::string> producer,std::string timeFormat) const;
 
-    ContentTable        getParameterInfo(boost::optional<std::string> producer) const;
+    ContentTable        getParameterInfo(std::optional<std::string> producer) const;
 
     std::list<MetaData> getEngineMetadata(const char *producerName) const;
 
@@ -210,8 +210,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     bool                isEnabled() const;
     bool                isGridProducer(const std::string& producer) const;
-    void                setDem(boost::shared_ptr<Fmi::DEM> dem);
-    void                setLandCover(boost::shared_ptr<Fmi::LandCover> landCover);
+    void                setDem(std::shared_ptr<Fmi::DEM> dem);
+    void                setLandCover(std::shared_ptr<Fmi::LandCover> landCover);
     void                updateProcessing();
 
   protected:
@@ -354,8 +354,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     DataServer::ServiceImplementation*        mDataServerImplementation;
     ContentServer::CacheImplementation*       mContentServerCacheImplementation;
 
-    boost::shared_ptr<Fmi::DEM>               mDem;
-    boost::shared_ptr<Fmi::LandCover>         mLandCover;
+    std::shared_ptr<Fmi::DEM>               mDem;
+    std::shared_ptr<Fmi::LandCover>         mLandCover;
 
     string_vec                                mDataServer_subServers;
     std::vector<DataServer::ServiceInterface*> mDataServer_clients;
@@ -407,7 +407,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     long long                                 mStartUpCache_maxSizeInMegaBytes;
     uint                                      mStartUpCache_saveIntervalInMinutes;
 
-    boost::shared_ptr<Spine::Table>           mParameterTable;
+    std::shared_ptr<Spine::Table>           mParameterTable;
 };
 
 }  // namespace Grid
