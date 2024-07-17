@@ -19,7 +19,6 @@ LIBS += -L$(libdir) \
 	-lsmartmet-spine \
 	-lboost_regex \
 	-lboost_thread \
-	-lboost_filesystem \
 	-lboost_iostreams \
 	-lboost_system \
 	-lbz2 -lz
