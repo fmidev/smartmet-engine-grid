@@ -12,7 +12,7 @@ CORBA = enabled
 
 DEFINES = -DUNIX -D_REENTRANT
 
-LIBS += -L$(libdir) \
+LIBS += $(PREFIX_LDFLAGS) \
 	$(REQUIRED_LIBS) \
 	-lsmartmet-macgyver \
 	-lsmartmet-gis \
