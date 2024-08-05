@@ -2020,14 +2020,14 @@ std::string Engine::getProducerAlias(const std::string& producerName, int levelI
   }
 }
 
-ContentTable Engine::getProducerInfo(boost::optional<std::string> producer,std::string timeFormat) const
+ContentTable Engine::getProducerInfo(std::optional<std::string> producer,std::string timeFormat) const
 {
   try
   {
     updateProducerAndGenerationList();
 
     std::unique_ptr<Fmi::TimeFormatter> timeFormatter(Fmi::TimeFormatter::create(timeFormat));
-    boost::shared_ptr < Spine::Table > resultTable(new Spine::Table);
+    std::shared_ptr < Spine::Table > resultTable(new Spine::Table);
 
     Spine::TableFormatter::Names headers
     { "#", "ProducerName", "ProducerId", "Title", "Description", "NumOfGenerations", "NewestGeneration", "OldestGeneration" };
@@ -2108,7 +2108,7 @@ ContentTable Engine::getProducerInfo(boost::optional<std::string> producer,std::
 
 
 
-ContentTable Engine::getGenerationInfo(boost::optional<std::string> producer,std::string timeFormat) const
+ContentTable Engine::getGenerationInfo(std::optional<std::string> producer,std::string timeFormat) const
 {
   try
   {
@@ -2137,7 +2137,7 @@ ContentTable Engine::getGenerationInfo(boost::optional<std::string> producer,std
 
     std::unique_ptr<Fmi::TimeFormatter> timeFormatter(Fmi::TimeFormatter::create(timeFormat));
 
-    boost::shared_ptr < Spine::Table > resultTable(new Spine::Table);
+    std::shared_ptr < Spine::Table > resultTable(new Spine::Table);
 
     Spine::TableFormatter::Names headers
     {"ProducerName", "GeometryId", "Timesteps", "AnalysisTime", "MinTime", "MaxTime", "ModificationTime", "FmiParameters", "ParameterAliases" };
@@ -2323,7 +2323,7 @@ ContentTable Engine::getGenerationInfo(boost::optional<std::string> producer,std
 
 
 
-ContentTable Engine::getExtGenerationInfo(boost::optional<std::string> producer,std::string timeFormat) const
+ContentTable Engine::getExtGenerationInfo(std::optional<std::string> producer,std::string timeFormat) const
 {
   try
   {
@@ -2335,7 +2335,7 @@ ContentTable Engine::getExtGenerationInfo(boost::optional<std::string> producer,
     T::GeometryInfoList tmpGeometryInfoList;
 
     std::unique_ptr<Fmi::TimeFormatter> timeFormatter(Fmi::TimeFormatter::create(timeFormat));
-    boost::shared_ptr < Spine::Table > resultTable(new Spine::Table);
+    std::shared_ptr < Spine::Table > resultTable(new Spine::Table);
     Spine::TableFormatter::Names headers
     { "ProducerName", "GeometryId", "Timesteps", "AnalysisTime", "MinTime", "MaxTime", "ModificationTime", "FmiParameters", "ParameterAliases" };
 
@@ -2607,14 +2607,14 @@ ContentTable Engine::getExtGenerationInfo(boost::optional<std::string> producer,
 
 
 
-ContentTable Engine::getParameterInfo(boost::optional<std::string> producer) const
+ContentTable Engine::getParameterInfo(std::optional<std::string> producer) const
 {
   FUNCTION_TRACE
   try
   {
     Spine::TableFormatter::Names headers
     { "#", "Producer", "FmiParameterName", "FmiParameterId", "NewbaseParameterName", "NewbaseParameterId", "Unit", "Description" };
-    boost::shared_ptr < Spine::Table > resultTable(new Spine::Table);
+    std::shared_ptr < Spine::Table > resultTable(new Spine::Table);
 
     AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
 
@@ -4203,7 +4203,7 @@ void Engine::getVerticalGrid(
   }
 }
 
-void Engine::setDem(boost::shared_ptr<Fmi::DEM> dem)
+void Engine::setDem(std::shared_ptr<Fmi::DEM> dem)
 {
   try
   {
@@ -4237,7 +4237,7 @@ inline bool setBit(uchar *_bits,uint _pos)
 }
 
 
-void Engine::setLandCover(boost::shared_ptr<Fmi::LandCover> landCover)
+void Engine::setLandCover(std::shared_ptr<Fmi::LandCover> landCover)
 {
   try
   {

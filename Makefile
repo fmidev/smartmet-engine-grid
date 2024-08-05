@@ -12,14 +12,13 @@ CORBA = enabled
 
 DEFINES = -DUNIX -D_REENTRANT
 
-LIBS += -L$(libdir) \
+LIBS += $(PREFIX_LDFLAGS) \
 	$(REQUIRED_LIBS) \
 	-lsmartmet-macgyver \
 	-lsmartmet-gis \
 	-lsmartmet-spine \
 	-lboost_regex \
 	-lboost_thread \
-	-lboost_filesystem \
 	-lboost_iostreams \
 	-lboost_system \
 	-lbz2 -lz
