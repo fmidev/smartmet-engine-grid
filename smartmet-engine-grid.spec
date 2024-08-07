@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 24.7.17
+Version: 24.8.7
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -104,6 +104,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Wed Aug  7 2024 Andris Pavēnis <andris.pavenis@fmi.fi> 24.8.7-1.fmi
+- Update to gdal-3.8, geos-3.12, proj-94 and fmt-11
+
 * Wed Jul 17 2024 Andris Pavēnis <andris.pavenis@fmi.fi> 24.7.17-1.fmi
 - Do not link with libboost_filesystem
 
