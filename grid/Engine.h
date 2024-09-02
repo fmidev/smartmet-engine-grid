@@ -7,7 +7,6 @@
 #include <grid-content/contentServer/redis/RedisImplementation.h>
 #include <grid-content/contentServer/memory/MemoryImplementation.h>
 #include <grid-content/dataServer/implementation/ServiceImplementation.h>
-#include <grid-content/dataServer/cache/CacheImplementation.h>
 #include <grid-content/queryServer/implementation/ServiceImplementation.h>
 #include <grid-files/common/ConfigurationFile.h>
 #include <grid-files/common/Typedefs.h>
@@ -250,9 +249,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     DataServer_sptr     mDataServer;
     DataServer_sptr     mDataServerClient;
-    string_vec          mDataServerLuaFiles;
     bool                mDataServerRemote;
-    bool                mDataServerCacheEnabled;
     std::string         mDataServerIor;
     time_t              mDataServerCleanupAge;
     time_t              mDataServerCleanupInterval;
@@ -328,9 +325,6 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     uint                mNumOfCachedGrids;
     uint                mMaxSizeOfCachedGridsInMegaBytes;
 
-    bool                mVirtualFilesEnabled;
-    std::string         mVirtualFileDefinitions;
-
     bool                mContentSwapEnabled;
     uint                mContentUpdateInterval;
 
@@ -354,10 +348,9 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     DataServer::ServiceImplementation*        mDataServerImplementation;
     ContentServer::CacheImplementation*       mContentServerCacheImplementation;
 
-    std::shared_ptr<Fmi::DEM>               mDem;
-    std::shared_ptr<Fmi::LandCover>         mLandCover;
+    std::shared_ptr<Fmi::DEM>                 mDem;
+    std::shared_ptr<Fmi::LandCover>           mLandCover;
 
-    string_vec                                mDataServer_subServers;
     std::vector<DataServer::ServiceInterface*> mDataServer_clients;
 
     mutable QueryServer::AliasFileCollection  mProducerMappingDefinitions;
@@ -407,7 +400,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     long long                                 mStartUpCache_maxSizeInMegaBytes;
     uint                                      mStartUpCache_saveIntervalInMinutes;
 
-    std::shared_ptr<Spine::Table>           mParameterTable;
+    std::shared_ptr<Spine::Table>             mParameterTable;
 };
 
 }  // namespace Grid

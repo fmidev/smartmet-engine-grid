@@ -4,7 +4,6 @@
 #include <grid-content/contentServer/http/client/ClientImplementation.h>
 #include "grid-content/contentServer/postgresql/PostgresqlImplementation.h"
 #include <grid-content/dataServer/corba/client/ClientImplementation.h>
-#include <grid-content/dataServer/implementation/VirtualContentFactory_type1.h>
 #include <grid-content/queryServer/corba/client/ClientImplementation.h>
 #include <grid-files/common/CoordinateConversions.h>
 #include <grid-files/common/GeneralFunctions.h>
@@ -85,11 +84,7 @@ Engine::Engine(const char* theConfigFile)
 
         "smartmet.engine.grid.data-server.remote",
         "smartmet.engine.grid.data-server.ior",
-        "smartmet.engine.grid.data-server.caching",
         "smartmet.engine.grid.data-server.grid-storage.directory",
-        "smartmet.engine.grid.data-server.virtualFiles.enabled",
-        "smartmet.engine.grid.data-server.virtualFiles.definitionFile",
-        "smartmet.engine.grid.data-server.luaFiles",
         "smartmet.engine.grid.data-server.processing-log.enabled",
         "smartmet.engine.grid.data-server.processing-log.file",
         "smartmet.engine.grid.data-server.processing-log.maxSize",
@@ -164,11 +159,9 @@ Engine::Engine(const char* theConfigFile)
     mDataServerDebugLogEnabled = false;
     mQueryServerProcessingLogEnabled = false;
     mQueryServerDebugLogEnabled = false;
-    mVirtualFilesEnabled = false;
     mParameterMappingDefinitions_updateTime = 0;
     mParameterMappingDefinitions_autoFileKeyType = T::ParamKeyTypeValue::FMI_NAME;
 
-    mDataServerCacheEnabled = false;
     mDataServerRemote = false;
     mDataServerCleanupAge = 24*3600;
     mDataServerCleanupInterval = 600;
@@ -280,9 +273,6 @@ Engine::Engine(const char* theConfigFile)
 
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.remote", mDataServerRemote);
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.ior", mDataServerIor);
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.caching", mDataServerCacheEnabled);
-
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.subServers", mDataServer_subServers);
 
     // These settings are used when the data server is embedded into the grid engine.
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.directory", mDataServerGridDirectory);
@@ -297,9 +287,6 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.startup-cache.maxSizeInMegaBytes", mStartUpCache_maxSizeInMegaBytes);
 
 
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.virtualFiles.enabled", mVirtualFilesEnabled);
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.virtualFiles.definitionFile", mVirtualFileDefinitions);
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.luaFiles", mDataServerLuaFiles);
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.enabled", mDataServerProcessingLogEnabled);
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.file", mDataServerProcessingLogFile);
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.maxSize", mDataServerProcessingLogMaxSize);
@@ -396,6 +383,8 @@ Engine::~Engine()
     exception.printError();
   }
 }
+
+
 
 void Engine::init()
 {
@@ -504,56 +493,16 @@ void Engine::init()
       DataServer::Corba::ClientImplementation* client = new DataServer::Corba::ClientImplementation();
       client->init(mDataServerIor);
 
-      if (mDataServerCacheEnabled)
-      {
-        DataServer::CacheImplementation* serverCache = new DataServer::CacheImplementation();
-        serverCache->init(client);
-        mDataServerClient.reset(client);
-        mDataServer.reset(serverCache);
-        dServer = serverCache;
-      }
-      else
-      {
-        mDataServer.reset(client);
-        dServer = client;
-      }
+      mDataServer.reset(client);
+      dServer = client;
     }
     else
     {
       mDataServerImplementation = new DataServer::ServiceImplementation();
-      mDataServerImplementation->init(0, 0, "NotRegistered", "NotRegistered", mDataServerGridDirectory, cServer, mDataServerLuaFiles);
+      mDataServerImplementation->init(0, 0, "NotRegistered", "NotRegistered", mDataServerGridDirectory, cServer);
       mDataServerImplementation->setCleanup(mDataServerCleanupAge,mDataServerCleanupInterval);
       mDataServerImplementation->setStartUpCache(mStartUpCache_enabled,mStartUpCache_saveDiskData,mStartUpCache_saveNetworkData,
           mStartUpCache_filename.c_str(),mStartUpCache_saveIntervalInMinutes,mStartUpCache_maxSizeInMegaBytes);
-
-      for (auto it = mDataServer_subServers.begin(); it != mDataServer_subServers.end(); ++it)
-      {
-        std::vector<std::string> parts;
-        splitString(*it,'/',parts);
-        if (parts.size() == 2)
-        {
-          DataServer::Corba::ClientImplementation* client = new DataServer::Corba::ClientImplementation();
-          client->init(parts[1]);
-
-          mDataServer_clients.push_back(client);
-
-          mDataServerImplementation->addSubServer(parts[0],client);
-
-        }
-      }
-
-
-      if (mVirtualFilesEnabled)
-      {
-        mDataServerImplementation->setVirtualContentEnabled(true);
-        DataServer::VirtualContentFactory_type1* factory = new DataServer::VirtualContentFactory_type1();
-        factory->init(mVirtualFileDefinitions);
-        mDataServerImplementation->addVirtualContentFactory(factory);
-      }
-      else
-      {
-        mDataServerImplementation->setVirtualContentEnabled(false);
-      }
 
 
       mDataServer.reset(mDataServerImplementation);
