@@ -1891,7 +1891,7 @@ function getFunctionNames(type)
   end
   
   if (type == 5) then 
-    functionNames = 'NB_WindCompass8,NB_WindCompass16,NB_WindCompass32,NB_WeatherText,NB_TemperatureText,NB_SmartSymbolText';
+    functionNames = 'NB_WindCompass8,NB_WindCompass16,NB_WindCompass32,NB_WeatherText,NB_TemperatureText,NB_SmartSymbolText,MY_TEXT';
   end
 
   return functionNames;

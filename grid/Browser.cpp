@@ -1,6 +1,6 @@
 #include "Browser.h"
 #include "Engine.h"
-#include <grid-files/grid/PhysicalGridFile.h>
+#include <grid-files/grid/GridFile.h>
 
 
 namespace SmartMet
@@ -1164,7 +1164,7 @@ bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HT
         {
           output << "<PRE style=\"background-color: #F0F0F0;\">\n";
           output << "\n";
-          SmartMet::GRID::PhysicalGridFile gridFile;
+          SmartMet::GRID::GridFile gridFile;
           gridFile.read(fInfo.mName,100);
           gridFile.print(output,0,0);
           output << "\n";

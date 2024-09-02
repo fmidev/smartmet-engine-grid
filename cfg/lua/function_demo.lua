@@ -92,6 +92,93 @@ end
 
 
 
+function XMAX(columns,rows,len,params,extParams)
+
+  print("XMAX");
+  local result = {};
+  local inIdx = 1;
+  local outIdx = 1;
+    
+  for r=1,rows do
+    for c=1,columns do
+      local max = ParamValueMissing;
+      for i=1,len do
+        value = params[inIdx];      
+        if (value ~= ParamValueMissing and (max == ParamValueMissing or value > max)) then
+          max = value;
+        end
+        inIdx = inIdx + 1;        
+      end
+      result[outIdx] = max;
+      outIdx = outIdx + 1;
+    end
+  end
+  
+  return result;
+  
+end
+
+
+
+
+-- ***********************************************************************
+--  FUNCTION : SnowWaterRatio
+-- ***********************************************************************
+--  Calculate water to snow conversion factor
+-- 
+-- The formula is based on the table given on page 12 of the
+-- M.Sc thesis by Ivan Dube titled "From mm to cm... Study of
+-- snow/liquid water ratios in Quebec".
+-- 
+-- \param t Temperature in °C
+-- \param ff Wind speed in m/s
+-- \return Snow/water ratio
+-- ***********************************************************************
+function SnowWaterRatio(t, ff)
+
+    if (t == ParamValueMissing or ff == ParamValueMissing) then
+        return 10.0;
+    end
+
+    local knot = 0.51444444444444444444;
+
+    if (ff < 10 * knot) then
+        if (t > 0) then
+            return 10;
+        elseif (t > -5) then
+            return 11;
+        elseif (t > -10) then
+            return 14;
+        elseif (t > -20) then
+            return 17;
+        else
+            return 15;
+        end
+    elseif (ff < 20 * knot) then
+        if (t > -5) then
+            return 10;
+        elseif (t > -10) then
+            return 12;
+        elseif (t > -20) then
+            return 15;
+        else
+            return 13;
+        end
+    end
+
+    if (t > -10) then
+        return 10;
+    elseif (t > -15) then
+        return 11;
+    elseif (t > -20) then
+        return 14;
+    end
+
+    return 12;
+end
+
+
+
 -- ***********************************************************************
 --  FUNCTION : getFunctionNames
 -- ***********************************************************************
@@ -165,6 +252,10 @@ function getFunctionNames(type)
     functionNames = 'COUNT,VALID,PROB_GT';
   end
   
+  if (type == 9) then 
+    functionNames = 'XMAX';
+  end
+
   return functionNames;
 
 end

@@ -2,6 +2,84 @@
 ParamValueMissing = -16777216;
 debug = 0;
 
+local precform = {};
+precform[1]  = 1;                   -- Rain
+precform[2]  = ParamValueMissing;   -- Thunderstorm
+precform[3]  = 5;                   -- Freezing rain
+precform[4]  = ParamValueMissing;   -- Mixed/ice
+precform[5]  = 3;                   -- Snow
+precform[6]  = ParamValueMissing;   -- Wet snow
+precform[7]  = 2;                   -- Mixture of rain and snow
+precform[8]  = ParamValueMissing;   -- Ice pellets (= small hail)
+precform[9]  = ParamValueMissing;   -- Graupel
+precform[10] = ParamValueMissing;   -- Hail
+precform[11] = 0;                   -- Drizzle
+precform[12] = 4;                   -- Freezing drizzle 
+
+local precform_rev = {};
+precform_rev[0]  = 11;
+precform_rev[1]  = 1;
+precform_rev[2]  = 7  
+precform_rev[3]  = 5; 
+precform_rev[4]  = 12;
+precform_rev[5]  = 3;  
+
+
+-- ***********************************************************************
+--  FUNCTION : PRECF
+-- ***********************************************************************
+--  The function converts given PRECFORM2-N parameter value into Newbase 
+--  PrecipitationForm parameter.
+-- ***********************************************************************
+
+function PRECF(numOfParams,params)
+
+  local result = {};
+
+  if (numOfParams == 1) then
+    result.message = 'OK';
+    if (params[1] >= 1 and params[1] <= 12) then  
+      result.value = precform[params[1]];
+    else
+      result.value = ParamValueMissing;
+    end    
+  else
+    result.message = 'Invalid number of parameters given ('..numOfParams..')!';
+    result.value = 0;
+  end
+  
+  return result.value,result.message;
+  
+end
+
+
+-- ***********************************************************************
+--  FUNCTION : REV_PRECF
+-- ***********************************************************************
+--  The function converts given Newbase PrecipitationForm parameter into
+--  PRECFORM2-N parameter.  
+-- ***********************************************************************
+
+function REV_PRECF(numOfParams,params)
+
+  local result = {};
+
+  if (numOfParams == 1) then
+    result.message = 'OK';
+    if (params[1] >= 0 and params[1] <= 5) then  
+      result.value = precform_rev[params[1]];
+    else
+      result.value = ParamValueMissing;
+    end    
+  else
+    result.message = 'Invalid number of parameters given ('..numOfParams..')!';
+    result.value = 0;
+  end
+  
+  return result.value,result.message;
+  
+end
+
 
 -- ***********************************************************************
 --  FUNCTION : C2F
@@ -309,7 +387,7 @@ function getFunctionNames(type)
   local functionNames = '';
 
   if (type == 1) then 
-    functionNames = 'C2F,C2K,F2C,F2K,K2C,K2F,DEG2RAD,RAD2DEG';
+    functionNames = 'PRECF,REV_PRECF,C2F,C2K,F2C,F2K,K2C,K2F,DEG2RAD,RAD2DEG';
   end
   
   return functionNames;

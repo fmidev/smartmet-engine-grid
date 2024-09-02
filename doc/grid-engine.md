@@ -492,7 +492,6 @@ Technically also the Data Server can be distributed in such way that it is runni
   data-server :
   {
     remote  = false
-    caching = false
     ior     = ""
   }
 </pre>
@@ -550,44 +549,6 @@ sense if the cache disk is much faster than the mounted disk.
     }
                 }
 </pre>
-
-<hr/>
-
-### <span id="chapter-2-3-3"></span>2.3.3 Virtual grids
-
-The Data Server can create "virtual grids" that can be accessed as they were real grid. The idea is that the Data Server can use existing grids in order to calculate new grids on the fly. For example, we might have grids that contains wind vectors (U and V). We can use these in order to create a new grid that contains wind speed values.
-
-The Data Server automatically registers virtual grids into the Content Storage when the required input grids are available. After that they can be accessed as they would be real grids. On the other hand, the Data Server automatically removes these registrations when the input grids (= grids that were used for calculations) are removed from the Content Storage.
-
-Virtual grids are a little bit slower to use and to maintain than physical grids. That's why it is not recommended to use them in heavy loaded production. However, for individual research purposes virtual grids could be useful. For example, it is possible to define virtual grids that is counted from multiple ensemble grids (for example, a probability that the temperature value is below 0 Celsius).
-
-Virtual grids are defined in a separate configuration file, which name should be found from the grid engine's main configuration file. The definition file is a CSV file that might look like this:
-
-<pre>
-  # Wind speed
-  VIRT-WIND-SPEED:SMARTMET:1096:6:10;U-MS:SMARTMET:1096:6:10,V-MS:SMARTMET:1096:6:10;WIND_SPEED;9;;
-
-  # Min values
-  VIRT-TG-K-MIN:ECBSF:5009:0:7:3:1;TG-K:ECBSF:5009:0:7:3:1-50;MIN;9;;
-
-  # Values inside the range 273..283
-  VIRT-TG-K-IN-273-283:ECBSF:5009:0:7:3:1;TG-K:ECBSF:5009:0:7:3:1-50;IN_PRCNT;9;273,283;
-</pre>
-
-The first field defines all details related to the new virtual grid parameter. The second field defines the grid parameters that are required for creating the new virtual grid. The third field is the name of the function and the fourth field is the type of the function that is used for creating the virtual grid. The fifth field contains additional parameters that are given to the current function. The idea is that we use the functions for defining multiple virtual grids.
-
-Most common functions used for creating virtual files are implemented (for performance reasons) with C++ language. A normal user cannot create own C++ functions, but he/she can define LUA functions instead. These functions might be a little bit slower that C++ functions, but this is not significant if they are not used in mass production.
-
-LUA functions can be written in multiple LUA files. The names of these files should be listed in the grid engine's main configuration file.
-
-<pre>
-  data-server :
-  {
-    luaFiles = ["%(DIR)/vff_convert.lua"];
-  }
-</pre>
-
-Notice that these LUA files are used in the Data Server and only for virtual file creation. The Query Server also uses own LUA files, but they are used when data is queried.
 
 <hr/>
 
