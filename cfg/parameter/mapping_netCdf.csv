@@ -1,0 +1,489 @@
+# FIELDS:
+#  1) Producer name
+#  2) Mapping name
+#  3) Parameter id type:
+#         1 = FMI_ID
+#         2 = FMI_NAME
+#         3 = GRIB_ID
+#         4 = NEWBASE_ID
+#         5 = NEWBASE_NAME
+#         6 = NETCDF_NAME
+#  4) Parameter id / name
+#  5) Geometry id
+#  6) Parameter level id type:
+#         1 = FMI
+#         2 = GRIB1
+#         3 = GRIB2
+#  7) Level id
+#         FMI level identifiers:
+#            1 Gound or water surface
+#            2 Pressure level
+#            3 Hybrid level
+#            4 Altitude
+#            5 Top of atmosphere
+#            6 Height above ground in meters
+#            7 Mean sea level
+#            8 Entire atmosphere
+#            9 Depth below land surface
+#            10 Depth below some surface
+#            11 Level at specified pressure difference from ground to level
+#            12 Max equivalent potential temperature level
+#            13 Layer between two metric heights above ground
+#            14 Layer between two depths below land surface
+#            15 Isothermal level, temperature in 1/100 K
+#  8) Level
+#  9) Area interpolation method
+#         0 = None
+#         1 = Linear
+#         2 = Nearest
+#         3 = Min
+#         4 = Max
+#         9 = Landscape
+#         10 = Forbidden
+#         500..999 = List
+#         1000..65535 = External (interpolated by an external function)
+# 10) Time interpolation method
+#         0 = None
+#         1 = Linear
+#         2 = Nearest
+#         3 = Min
+#         4 = Max
+#         6 = Previous
+#         7 = Next
+#         1000..65535 = External (interpolated by an external function)
+# 11) Level interpolation method
+#         0 = None
+#         1 = Linear
+#         2 = Nearest
+#         3 = Min
+#         4 = Max
+#         5 = Logarithmic
+#         6 = Previous
+#         7 = Next
+#         1000..65535 = External (interpolated by an external function)
+# 12) Group flags
+#         bit 0 = Climatological parameter (=> ignore year when searching)
+#         bit 1 = Global parameter (=> ignore timestamp when searching, for example LandSeaMask)
+# 13) Search match (Can this mapping used when searching mappings for incomplete parameters)
+#         E = Enabled
+#         D = Disabled
+#         I = Ignore
+# 14) Mapping function (enables data conversions during the mapping)
+# 15) Reverse mapping function
+# 16) Default precision
+# 
+ECG;air_pressure;2;P-PA;1007;1;1;000000;1;1;1;0;E;;;;
+ECG;air_pressure;2;P-PA;1008;1;1;000000;1;1;1;0;E;;;;
+ECG;air_pressure;2;P-PA;1090;1;1;000000;1;1;1;0;E;;;;
+ECG;air_temperature;2;T-K;1007;1;1;000000;1;1;1;0;E;;;;
+ECG;air_temperature;2;T-K;1007;1;2;*;1;1;1;0;D;;;;
+ECG;air_temperature;2;T-K;1007;1;3;*;1;1;1;0;D;;;;
+ECG;air_temperature;2;T-K;1008;1;1;000000;1;1;1;0;E;;;;
+ECG;air_temperature;2;T-K;1008;1;3;*;1;1;1;0;D;;;;
+ECG;air_temperature;2;T-K;1090;1;1;000000;1;1;1;0;E;;;;
+ECG;air_temperature;2;T-K;1090;1;3;*;1;1;1;0;D;;;;
+ECG;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1007;1;1;000000;1;1;1;0;E;;;;
+ECG;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1008;1;1;000000;1;1;1;0;E;;;;
+ECG;atmosphere_convective_inhibition;2;CIN-JKG;1007;1;1;000000;1;1;1;0;E;;;;
+ECG;atmosphere_mass_content_of_cloud_ice;2;CLDICE-KGKG;1008;1;3;*;1;1;1;0;D;;;;
+ECG;atmosphere_mass_content_of_cloud_liquid_water;2;CLDWAT-KGKG;1008;1;3;*;1;1;1;0;D;;;;
+ECG;charnock_coefficient_for_surface_roughness_length_for_momentum_in_air;2;CRNK-N;1008;1;1;000000;1;1;1;0;E;;;;
+ECG;cloud_base_altitude;2;CLDBASE-M;1008;1;1;000000;1;1;1;0;E;;;;
+ECG;sea_ice_area_fraction;2;IC-0TO1;1008;1;1;000000;1;1;1;0;E;;;;
+ECG;sea_water_temperature;2;TSEA-K;1007;1;1;000000;1;1;1;0;E;;;;
+ECG;sea_water_temperature;2;TSEA-K;1008;1;1;000000;1;1;1;0;E;;;;
+ECG;surface_albedo;2;ALBEDO-0TO1;1007;1;1;000000;1;1;1;0;E;;;;
+ECG;surface_albedo;2;ALBEDO-0TO1;1008;1;1;000000;1;1;1;0;E;;;;
+ECG;surface_snow_density;2;SND-KGM3;1008;1;1;000000;1;1;1;0;E;;;;
+ECG;surface_temperature;2;TG-K;1007;1;9;000000;1;1;1;0;E;;;;
+ECG;surface_temperature;2;TG-K;1008;1;9;000000;1;1;1;0;E;;;;
+ECG;surface_temperature;2;TG-K;1090;1;9;000000;1;1;1;0;E;;;;
+ECG;wind_speed_of_gust;2;FFG-MS;1007;1;1;000000;1;1;1;0;E;;;;
+ECG;wind_speed_of_gust;2;FFG-MS;1090;1;1;000000;1;1;1;0;E;;;;
+ECG;x_wind;2;U-MS;1007;1;1;000000;2;2;2;0;E;;;;
+ECG;x_wind;2;U-MS;1007;1;2;*;2;2;2;0;D;;;;
+ECG;x_wind;2;U-MS;1007;1;3;*;2;2;2;0;D;;;;
+ECG;x_wind;2;U-MS;1008;1;1;000000;2;2;2;0;E;;;;
+ECG;x_wind;2;U-MS;1008;1;1;000100;2;2;2;0;D;;;;
+ECG;x_wind;2;U-MS;1008;1;3;*;2;2;2;0;D;;;;
+ECG;x_wind;2;U-MS;1090;1;1;000000;2;2;2;0;E;;;;
+ECG;x_wind;2;U-MS;1090;1;3;*;2;2;2;0;D;;;;
+ECG;y_wind;2;V-MS;1007;1;1;000000;2;2;2;0;E;;;;
+ECG;y_wind;2;V-MS;1007;1;2;*;2;2;2;0;D;;;;
+ECG;y_wind;2;V-MS;1007;1;3;*;2;2;2;0;D;;;;
+ECG;y_wind;2;V-MS;1008;1;1;000000;2;2;2;0;E;;;;
+ECG;y_wind;2;V-MS;1008;1;1;000100;2;2;2;0;D;;;;
+ECG;y_wind;2;V-MS;1008;1;3;*;2;2;2;0;D;;;;
+ECG;y_wind;2;V-MS;1090;1;1;000000;2;2;2;0;E;;;;
+ECG;y_wind;2;V-MS;1090;1;3;*;2;2;2;0;D;;;;
+SMARTMET;air_pressure;2;P-PA;1096;1;7;000000;1;1;1;0;E;;;;
+SMARTMET;air_temperature;2;T-K;1096;1;6;000002;1;1;1;0;E;;;;
+SMARTMET;precipitation_amount;2;RRR-KGM2;1096;1;6;000000;1;1;1;0;E;;;;
+SMARTMET;wind_speed;2;FF-MS;1096;1;16;000000;1;1;1;0;E;;;;
+SMARTMET;wind_speed;2;FF-MS;1096;1;6;000010;1;1;1;0;E;;;;
+SMARTMET;wind_speed_of_gust;2;FFG-MS;1096;1;6;000010;1;1;1;0;E;;;;
+ECGMTA;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1007;1;12;000000;1;1;1;0;E;;;;
+ECGMTA;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1007;1;13;000500;1;1;1;0;D;;;;
+ECGMTA;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1008;1;6;000000;1;1;1;0;E;;;;
+ECGMTA;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1090;1;12;000000;1;1;1;0;E;;;;
+ECGMTA;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1090;1;13;000500;1;1;1;0;D;;;;
+ECGMTA;atmosphere_convective_inhibition;2;CIN-JKG;1007;1;12;000000;1;1;1;0;E;;;;
+ECGMTA;atmosphere_convective_inhibition;2;CIN-JKG;1007;1;13;000500;1;1;1;0;D;;;;
+ECGMTA;atmosphere_convective_inhibition;2;CIN-JKG;1008;1;6;000000;1;1;1;0;E;;;;
+ECGMTA;atmosphere_convective_inhibition;2;CIN-JKG;1090;1;12;000000;1;1;1;0;E;;;;
+ECGMTA;atmosphere_convective_inhibition;2;CIN-JKG;1090;1;13;000500;1;1;1;0;D;;;;
+ECGMTA;precipitation_amount;2;RRR-KGM2;1007;1;6;000000;1;1;1;0;E;;;;
+ECGMTA;precipitation_amount;2;RRR-KGM2;1090;1;6;000000;1;1;1;0;E;;;;
+ECGMTA;wind_speed;2;FF-MS;1007;1;2;*;1;1;1;0;D;;;;
+ECGMTA;wind_speed;2;FF-MS;1007;1;3;*;1;1;1;0;D;;;;
+ECGMTA;wind_speed;2;FF-MS;1007;1;6;000010;1;1;1;0;E;;;;
+ECGMTA;wind_speed;2;FF-MS;1008;1;3;*;1;1;1;0;D;;;;
+ECGMTA;wind_speed;2;FF-MS;1008;1;6;001500;1;1;1;0;D;;;;
+ECGMTA;wind_speed;2;FF-MS;1090;1;3;*;1;1;1;0;D;;;;
+ECGMTA;wind_speed;2;FF-MS;1090;1;6;000010;1;1;1;0;E;;;;
+ECGMTA;wind_speed;2;FF-MS;1090;1;6;001500;1;1;1;0;D;;;;
+SMARTMETMTA;x_wind;2;U-MS;1096;1;6;000010;2;2;2;0;E;;;;
+SMARTMETMTA;y_wind;2;V-MS;1096;1;6;000010;2;2;2;0;E;;;;
+SMARTMETNWC;air_pressure;2;P-PA;1110;1;7;000000;1;1;1;0;E;;;;
+SMARTMETNWC;air_temperature;2;T-K;1110;1;6;000002;1;1;1;0;E;;;;
+SMARTMETNWC;precipitation_amount;2;RRR-KGM2;1110;1;6;000000;1;1;1;0;E;;;;
+SMARTMETNWC;wind_speed;2;FF-MS;1110;1;16;000000;1;1;1;0;E;;;;
+SMARTMETNWC;wind_speed;2;FF-MS;1110;1;6;000010;1;1;1;0;E;;;;
+SMARTMETNWC;wind_speed_of_gust;2;FFG-MS;1110;1;6;000010;1;1;1;0;E;;;;
+SMARTMETNWC;x_wind;2;U-MS;1110;1;6;000010;2;2;2;0;E;;;;
+SMARTMETNWC;y_wind;2;V-MS;1110;1;6;000010;2;2;2;0;E;;;;
+ECMOSKRIGING;air_pressure;2;P-PA;1065;1;6;000000;1;1;1;0;E;;;;
+ECMOSKRIGING;air_temperature;2;T-K;1065;1;6;000002;1;1;1;0;E;;;;
+ECMOSKRIGING;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1065;1;12;000000;1;1;1;0;E;;;;
+ECMOSKRIGING;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1065;1;6;000000;1;1;1;0;E;;;;
+ECMOSKRIGING;precipitation_amount;2;RRR-KGM2;1065;1;6;000000;1;1;1;0;E;;;;
+ECMOSKRIGING;sea_water_temperature;2;TSEA-K;1065;1;6;000000;1;1;1;0;E;;;;
+ECMOSKRIGING;wind_speed;2;FF-MS;1065;1;6;000010;1;1;1;0;E;;;;
+ECMOSKRIGING;wind_speed_of_gust;2;FFG-MS;1065;1;6;000010;1;1;1;0;E;;;;
+ECMOSKRIGING;x_wind;2;U-MS;1065;1;6;000010;2;2;2;0;E;;;;
+ECMOSKRIGING;y_wind;2;V-MS;1065;1;6;000010;2;2;2;0;E;;;;
+MEPS;air_pressure;2;P-PA;1093;1;20;000000;1;1;1;0;E;;;;
+MEPS;air_pressure;2;P-PA;1093;1;6;000000;1;1;1;0;E;;;;
+MEPS;air_pressure;2;P-PA;1093;1;7;000000;1;1;1;0;D;;;;
+MEPS;air_temperature;2;T-K;1093;1;20;000000;1;1;1;0;E;;;;
+MEPS;air_temperature;2;T-K;1093;1;2;*;1;1;1;0;D;;;;
+MEPS;air_temperature;2;T-K;1093;1;3;*;1;1;1;0;D;;;;
+MEPS;air_temperature;2;T-K;1093;1;6;000000;1;1;1;0;E;;;;
+MEPS;air_temperature;2;T-K;1093;1;6;000002;1;1;1;0;E;;;;
+MEPS;air_temperature;2;T-K;1093;1;6;000080;1;1;1;0;D;;;;
+MEPS;air_temperature;2;T-K;1093;1;6;000120;1;1;1;0;D;;;;
+MEPS;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1093;1;6;000000;1;1;1;0;E;;;;
+MEPS;atmosphere_convective_inhibition;2;CIN-JKG;1093;1;6;000000;1;1;1;0;E;;;;
+MEPS;atmosphere_mass_content_of_cloud_ice;2;CLDICE-KGKG;1093;1;2;*;1;1;1;0;D;;;;
+MEPS;atmosphere_mass_content_of_cloud_ice;2;CLDICE-KGKG;1093;1;3;*;1;1;1;0;D;;;;
+MEPS;atmosphere_mass_content_of_cloud_liquid_water;2;CLDWAT-KGKG;1093;1;2;*;1;1;1;0;D;;;;
+MEPS;atmosphere_mass_content_of_cloud_liquid_water;2;CLDWAT-KGKG;1093;1;3;*;1;1;1;0;D;;;;
+MEPS;cloud_base_altitude;2;CLDBASE-M;1093;1;8;000000;1;1;1;0;E;;;;
+MEPS;surface_snow_density;2;SND-KGM3;1093;1;6;000000;1;1;1;0;E;;;;
+MEPS;wind_speed;2;FF-MS;1093;1;6;000010;1;1;1;0;E;;;;
+MEPS;wind_speed_of_gust;2;FFG-MS;1093;1;6;000010;1;1;1;0;E;;;;
+MEPS;x_wind;2;U-MS;1093;1;2;*;2;2;2;0;D;;;;
+MEPS;x_wind;2;U-MS;1093;1;3;*;2;2;2;0;D;;;;
+MEPS;x_wind;2;U-MS;1093;1;6;000010;2;2;2;0;E;;;;
+MEPS;x_wind;2;U-MS;1093;1;6;000080;2;2;2;0;D;;;;
+MEPS;x_wind;2;U-MS;1093;1;6;000120;2;2;2;0;D;;;;
+MEPS;x_wind_gust;2;WGU-MS;1093;1;6;000010;1;1;1;0;E;;;;
+MEPS;y_wind;2;V-MS;1093;1;2;*;2;2;2;0;D;;;;
+MEPS;y_wind;2;V-MS;1093;1;3;*;2;2;2;0;D;;;;
+MEPS;y_wind;2;V-MS;1093;1;6;000010;2;2;2;0;E;;;;
+MEPS;y_wind;2;V-MS;1093;1;6;000080;2;2;2;0;D;;;;
+MEPS;y_wind;2;V-MS;1093;1;6;000120;2;2;2;0;D;;;;
+MEPS;y_wind_gust;2;WGV-MS;1093;1;6;000010;1;1;1;0;E;;;;
+MEPSCALIB;air_temperature;2;T-K;1112;1;6;000002;1;1;1;0;E;;;;
+MEPSCALIB;wind_speed;2;FF-MS;1112;1;6;000010;1;1;1;0;E;;;;
+MEPSCALIB;wind_speed_of_gust;2;FFG-MS;1112;1;6;000010;1;1;1;0;E;;;;
+MNWC;air_pressure;2;P-PA;1093;1;20;000000;1;1;1;0;E;;;;
+MNWC;air_pressure;2;P-PA;1093;1;6;000000;1;1;1;0;E;;;;
+MNWC;air_pressure;2;P-PA;1093;1;7;000000;1;1;1;0;D;;;;
+MNWC;air_temperature;2;T-K;1093;1;20;000000;1;1;1;0;E;;;;
+MNWC;air_temperature;2;T-K;1093;1;2;*;1;1;1;0;D;;;;
+MNWC;air_temperature;2;T-K;1093;1;3;*;1;1;1;0;D;;;;
+MNWC;air_temperature;2;T-K;1093;1;6;000000;1;1;1;0;E;;;;
+MNWC;air_temperature;2;T-K;1093;1;6;000002;1;1;1;0;E;;;;
+MNWC;air_temperature;2;T-K;1093;1;6;000080;1;1;1;0;D;;;;
+MNWC;air_temperature;2;T-K;1093;1;6;000120;1;1;1;0;D;;;;
+MNWC;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1093;1;6;000000;1;1;1;0;E;;;;
+MNWC;atmosphere_convective_inhibition;2;CIN-JKG;1093;1;6;000000;1;1;1;0;E;;;;
+MNWC;atmosphere_mass_content_of_cloud_ice;2;CLDICE-KGKG;1093;1;2;*;1;1;1;0;D;;;;
+MNWC;atmosphere_mass_content_of_cloud_ice;2;CLDICE-KGKG;1093;1;3;*;1;1;1;0;D;;;;
+MNWC;atmosphere_mass_content_of_cloud_liquid_water;2;CLDWAT-KGKG;1093;1;2;*;1;1;1;0;D;;;;
+MNWC;atmosphere_mass_content_of_cloud_liquid_water;2;CLDWAT-KGKG;1093;1;3;*;1;1;1;0;D;;;;
+MNWC;cloud_base_altitude;2;CLDBASE-M;1093;1;8;000000;1;1;1;0;E;;;;
+MNWC;wind_speed;2;FF-MS;1093;1;6;000010;1;1;1;0;E;;;;
+MNWC;wind_speed_of_gust;2;FFG-MS;1093;1;6;000010;1;1;1;0;E;;;;
+MNWC;x_wind;2;U-MS;1093;1;2;*;2;2;2;0;D;;;;
+MNWC;x_wind;2;U-MS;1093;1;3;*;2;2;2;0;D;;;;
+MNWC;x_wind;2;U-MS;1093;1;6;000010;2;2;2;0;E;;;;
+MNWC;x_wind;2;U-MS;1093;1;6;000080;2;2;2;0;D;;;;
+MNWC;x_wind;2;U-MS;1093;1;6;000120;2;2;2;0;D;;;;
+MNWC;x_wind_gust;2;WGU-MS;1093;1;6;000010;1;1;1;0;E;;;;
+MNWC;y_wind;2;V-MS;1093;1;2;*;2;2;2;0;D;;;;
+MNWC;y_wind;2;V-MS;1093;1;3;*;2;2;2;0;D;;;;
+MNWC;y_wind;2;V-MS;1093;1;6;000010;2;2;2;0;E;;;;
+MNWC;y_wind;2;V-MS;1093;1;6;000080;2;2;2;0;D;;;;
+MNWC;y_wind;2;V-MS;1093;1;6;000120;2;2;2;0;D;;;;
+MNWC;y_wind_gust;2;WGV-MS;1093;1;6;000010;1;1;1;0;E;;;;
+MEPS_PREOP;air_pressure;2;P-PA;1093;1;6;000000;1;1;1;0;E;;;;
+MEPS_PREOP;air_temperature;2;T-K;1093;1;3;*;1;1;1;0;D;;;;
+MEPS_PREOP;air_temperature;2;T-K;1093;1;6;000000;1;1;1;0;E;;;;
+MEPS_PREOP;air_temperature;2;T-K;1093;1;6;000002;1;1;1;0;E;;;;
+MEPS_PREOP;air_temperature;2;T-K;1093;1;6;000080;1;1;1;0;D;;;;
+MEPS_PREOP;air_temperature;2;T-K;1093;1;6;000120;1;1;1;0;D;;;;
+MEPS_PREOP;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1093;1;6;000000;1;1;1;0;E;;;;
+MEPS_PREOP;atmosphere_convective_inhibition;2;CIN-JKG;1093;1;6;000000;1;1;1;0;E;;;;
+MEPS_PREOP;atmosphere_mass_content_of_cloud_ice;2;CLDICE-KGKG;1093;1;3;*;1;1;1;0;D;;;;
+MEPS_PREOP;atmosphere_mass_content_of_cloud_liquid_water;2;CLDWAT-KGKG;1093;1;3;*;1;1;1;0;D;;;;
+MEPS_PREOP;wind_speed;2;FF-MS;1093;1;6;000010;1;1;1;0;E;;;;
+MEPS_PREOP;wind_speed_of_gust;2;FFG-MS;1093;1;6;000010;1;1;1;0;E;;;;
+MEPS_PREOP;x_wind;2;U-MS;1093;1;3;*;2;2;2;0;D;;;;
+MEPS_PREOP;x_wind;2;U-MS;1093;1;6;000010;2;2;2;0;E;;;;
+MEPS_PREOP;x_wind;2;U-MS;1093;1;6;000080;2;2;2;0;D;;;;
+MEPS_PREOP;x_wind;2;U-MS;1093;1;6;000120;2;2;2;0;D;;;;
+MEPS_PREOP;x_wind_gust;2;WGU-MS;1093;1;6;000010;1;1;1;0;E;;;;
+MEPS_PREOP;y_wind;2;V-MS;1093;1;3;*;2;2;2;0;D;;;;
+MEPS_PREOP;y_wind;2;V-MS;1093;1;6;000010;2;2;2;0;E;;;;
+MEPS_PREOP;y_wind;2;V-MS;1093;1;6;000080;2;2;2;0;D;;;;
+MEPS_PREOP;y_wind;2;V-MS;1093;1;6;000120;2;2;2;0;D;;;;
+MEPS_PREOP;y_wind_gust;2;WGV-MS;1093;1;6;000010;1;1;1;0;E;;;;
+GEM;air_pressure;2;P-PA;1114;1;1;000000;1;1;1;0;E;;;;
+GEM;air_pressure;2;P-PA;1114;1;7;000000;1;1;1;0;D;;;;
+GEM;air_temperature;2;T-K;1114;1;2;*;1;1;1;0;D;;;;
+GEM;air_temperature;2;T-K;1114;1;6;000002;1;1;1;0;E;;;;
+GEM;precipitation_amount;2;RRR-KGM2;1114;1;1;000000;1;1;1;0;E;;;;
+GEM;sea_water_temperature;2;TSEA-K;1114;1;1;000000;1;1;1;0;E;;;;
+GEM;wind_speed;2;FF-MS;1114;1;2;*;1;1;1;0;D;;;;
+GEM;wind_speed;2;FF-MS;1114;1;6;000010;1;1;1;0;E;;;;
+ENFUSER;AQI;2;AQI-N;52;1;6;000000;1;1;1;0;E;;;;
+ENFUSER;cnc_PM10:ugm-3;2;PM10-UGM3;52;1;6;000000;1;1;1;0;E;;;;
+ENFUSER;cnc_PM2_5:ug/m3;2;PM2_5-UGM3;52;1;6;000000;1;1;1;0;E;;;;
+ENFUSER;mole_concentration_of_nitrogen_dioxide_in_air;2;NO2-UGM3;52;1;6;000000;1;1;1;0;E;;;;
+KWBG;air_pressure;2;P-PA;26;1;1;000000;1;1;1;0;E;;;;
+KWBG;air_pressure;2;P-PA;26;1;7;000000;1;1;1;0;D;;;;
+KWBG;air_temperature;2;T-K;26;1;1;000000;1;1;1;0;E;;;;
+KWBG;air_temperature;2;T-K;26;1;2;*;1;1;1;0;D;;;;
+KWBG;air_temperature;2;T-K;26;1;6;000002;1;1;1;0;E;;;;
+KWBG;atmosphere_convective_available_potential_energy;2;CAPE-JKG;26;1;1;000000;1;1;1;0;E;;;;
+KWBG;atmosphere_convective_inhibition;2;CIN-JKG;26;1;1;000000;1;1;1;0;E;;;;
+KWBG;sea_ice_area_fraction;2;IC-0TO1;26;1;1;000000;1;1;1;0;E;;;;
+KWBG;wind_speed_of_gust;2;FFG-MS;26;1;1;000000;1;1;1;0;E;;;;
+KWBG;x_wind;2;U-MS;26;1;2;*;2;2;2;0;D;;;;
+KWBG;x_wind;2;U-MS;26;1;6;000010;2;2;2;0;E;;;;
+KWBG;y_wind;2;V-MS;26;1;2;*;2;2;2;0;D;;;;
+KWBG;y_wind;2;V-MS;26;1;6;000010;2;2;2;0;E;;;;
+MESAN;air_temperature;2;T-K;13;1;6;000002;1;1;1;0;E;;;;
+MESAN;wind_speed;2;FF-MS;13;1;6;000010;1;1;1;0;E;;;;
+MESAN;wind_speed_of_gust;2;FFG-MS;13;1;6;000010;1;1;1;0;E;;;;
+MTLICE;sea_water_temperature:degree_Celsius;2;TSEA-C;1059;1;6;000000;1;1;1;0;E;;;;
+MTLICE;sea_water_temperature;2;TSEA-K;1059;1;6;000000;1;1;1;0;E;;;;
+LAPSFIN;air_pressure;2;P-PA;40;1;1;000000;1;1;1;0;E;;;;
+LAPSFIN;air_temperature;2;T-K;40;1;1;000000;1;1;1;0;E;;;;
+LAPSFIN;air_temperature;2;T-K;40;1;2;*;1;1;1;0;D;;;;
+LAPSFIN;air_temperature;2;T-K;40;1;6;000002;1;1;1;0;E;;;;
+LAPSFIN;atmosphere_convective_available_potential_energy;2;CAPE-JKG;40;1;1;000000;1;1;1;0;E;;;;
+LAPSFIN;atmosphere_convective_inhibition;2;CIN-JKG;40;1;1;000000;1;1;1;0;E;;;;
+LAPSFIN;wind_speed;2;FF-MS;40;1;6;000010;1;1;1;0;E;;;;
+LAPSFIN;x_wind;2;U-MS;40;1;2;*;2;2;2;0;D;;;;
+LAPSFIN;x_wind;2;U-MS;40;1;6;000010;2;2;2;0;E;;;;
+LAPSFIN;y_wind;2;V-MS;40;1;2;*;2;2;2;0;D;;;;
+LAPSFIN;y_wind;2;V-MS;40;1;6;000010;2;2;2;0;E;;;;
+LAPSSCAN;air_pressure;2;P-PA;1087;1;1;000000;1;1;1;0;E;;;;
+LAPSSCAN;air_pressure;2;P-PA;1087;1;7;000000;1;1;1;0;D;;;;
+LAPSSCAN;air_temperature;2;T-K;1087;1;1;000000;1;1;1;0;E;;;;
+LAPSSCAN;air_temperature;2;T-K;1087;1;2;*;1;1;1;0;D;;;;
+LAPSSCAN;air_temperature;2;T-K;1087;1;6;000002;1;1;1;0;E;;;;
+LAPSSCAN;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1087;1;1;000000;1;1;1;0;E;;;;
+LAPSSCAN;atmosphere_convective_inhibition;2;CIN-JKG;1087;1;1;000000;1;1;1;0;E;;;;
+LAPSSCAN;precipitation_amount;2;RRR-KGM2;1087;1;1;000000;1;1;1;0;E;;;;
+LAPSSCAN;wind_speed;2;FF-MS;1087;1;2;*;1;1;1;0;D;;;;
+LAPSSCAN;wind_speed;2;FF-MS;1087;1;6;000010;1;1;1;0;E;;;;
+LAPSSCAN;x_wind;2;U-MS;1087;1;2;*;2;2;2;0;D;;;;
+LAPSSCAN;x_wind;2;U-MS;1087;1;6;000010;2;2;2;0;E;;;;
+LAPSSCAN;y_wind;2;V-MS;1087;1;2;*;2;2;2;0;D;;;;
+LAPSSCAN;y_wind;2;V-MS;1087;1;6;000010;2;2;2;0;E;;;;
+ECMOSKRIGING_DEV;air_temperature;2;T-K;1065;1;6;000002;1;1;1;0;E;;;;
+PANGUWEATHER;air_pressure;2;P-PA;26;1;7;000000;1;1;1;0;E;;;;
+PANGUWEATHER;air_temperature;2;T-K;26;1;2;*;1;1;1;0;D;;;;
+PANGUWEATHER;air_temperature;2;T-K;26;1;6;000002;1;1;1;0;E;;;;
+PANGUWEATHER;wind_speed;2;FF-MS;26;1;2;*;1;1;1;0;D;;;;
+PANGUWEATHER;wind_speed;2;FF-MS;26;1;6;000010;1;1;1;0;E;;;;
+PANGUWEATHER;x_wind;2;U-MS;26;1;2;*;2;2;2;0;D;;;;
+PANGUWEATHER;x_wind;2;U-MS;26;1;6;000010;2;2;2;0;E;;;;
+PANGUWEATHER;y_wind;2;V-MS;26;1;2;*;2;2;2;0;D;;;;
+PANGUWEATHER;y_wind;2;V-MS;26;1;6;000010;2;2;2;0;E;;;;
+ECGEPS;air_pressure;2;P-PA;1008;1;1;000000;1;1;1;0;E;;;;
+ECGEPS;air_temperature;2;T-K;1007;1;1;000000;1;1;1;0;E;;;;
+ECGEPS;air_temperature;2;T-K;1008;1;1;000000;1;1;1;0;E;;;;
+ECGEPS;air_temperature;2;T-K;1049;1;3;*;1;1;1;0;D;;;;
+ECGEPS;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1008;1;1;000000;1;1;1;0;E;;;;
+ECGEPS;wind_speed_of_gust;2;FFG-MS;1007;1;1;000000;1;1;1;0;E;;;;
+ECGEPS;wind_speed_of_gust;2;FFG-MS;1008;1;1;000000;1;1;1;0;E;;;;
+ECGEPS;x_wind;2;U-MS;1007;1;1;000000;2;2;2;0;E;;;;
+ECGEPS;x_wind;2;U-MS;1008;1;1;000000;2;2;2;0;E;;;;
+ECGEPS;x_wind;2;U-MS;1049;1;3;*;2;2;2;0;D;;;;
+ECGEPS;y_wind;2;V-MS;1007;1;1;000000;2;2;2;0;E;;;;
+ECGEPS;y_wind;2;V-MS;1008;1;1;000000;2;2;2;0;E;;;;
+ECGEPS;y_wind;2;V-MS;1049;1;3;*;2;2;2;0;D;;;;
+NEMO;sea_ice_thickness;2;HICE-M;1115;1;6;000000;1;1;1;0;E;;;;
+NEMO;sea_ice_x_velocity;2;IVELU-MS;1115;1;6;000000;1;1;1;0;E;;;;
+NEMO;sea_ice_y_velocity;2;IVELV-MS;1115;1;6;000000;1;1;1;0;E;;;;
+NEMO;sea_surface_height_above_geoid;2;SSH-M;1115;1;6;000000;1;1;1;0;E;;;;
+NEMO;sea_water_salinity;2;SAL-PSU;1115;1;10;*;1;1;1;0;D;;;;
+NEMO;sea_water_salinity;2;SAL-PSU;1115;1;6;000000;1;1;1;0;E;;;;
+NEMO;sea_water_temperature:degree_Celsius;2;TSEA-C;1115;1;6;000000;1;1;1;0;E;;;;
+NEMO;sea_water_x_velocity;2;WVELU-MS;1115;1;10;*;1;1;1;0;D;;;;
+NEMO;sea_water_x_velocity;2;WVELU-MS;1115;1;6;000000;1;1;1;0;E;;;;
+NEMO;sea_water_y_velocity;2;WVELV-MS;1115;1;10;*;1;1;1;0;D;;;;
+NEMO;sea_water_y_velocity;2;WVELV-MS;1115;1;6;000000;1;1;1;0;E;;;;
+HELMI;sea_ice_x_velocity;2;IVELU-MS;609;1;1;000000;1;1;1;0;E;;;;
+HELMI;sea_ice_y_velocity;2;IVELV-MS;609;1;1;000000;1;1;1;0;E;;;;
+SMHIMESAN;air_pressure;2;P-PA;1066;1;4;*;1;1;1;0;D;;;;
+SMHIMESAN;air_temperature;2;T-K;1066;1;6;000002;1;1;1;0;E;;;;
+SMHIMESAN;wind_speed_of_gust;2;FFG-MS;1066;1;6;000010;1;1;1;0;E;;;;
+SMHIMESAN;x_wind;2;U-MS;1066;1;6;000010;2;2;2;0;E;;;;
+SMHIMESAN;y_wind;2;V-MS;1066;1;6;000010;2;2;2;0;E;;;;
+ICON_GLO;air_pressure;2;P-PA;1082;1;18;*;1;1;1;0;D;;;;
+ICON_GLO;air_pressure;2;P-PA;1082;1;1;000000;1;1;1;0;E;;;;
+ICON_GLO;air_pressure;2;P-PA;1082;1;7;000000;1;1;1;0;D;;;;
+ICON_GLO;air_pressure;2;P-PA;1085;1;7;000000;1;1;1;0;E;;;;
+ICON_GLO;air_temperature;2;T-K;1082;1;18;*;1;1;1;0;D;;;;
+ICON_GLO;air_temperature;2;T-K;1082;1;1;000000;1;1;1;0;E;;;;
+ICON_GLO;air_temperature;2;T-K;1082;1;2;*;1;1;1;0;D;;;;
+ICON_GLO;air_temperature;2;T-K;1082;1;6;000002;1;1;1;0;E;;;;
+ICON_GLO;air_temperature;2;T-K;1085;1;2;*;1;1;1;0;D;;;;
+ICON_GLO;air_temperature;2;T-K;1085;1;6;000002;1;1;1;0;E;;;;
+ICON_GLO;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1082;1;19;000000;1;1;1;0;E;;;;
+ICON_GLO;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1082;1;1;000000;1;1;1;0;E;;;;
+ICON_GLO;surface_snow_density;2;SND-KGM3;1082;1;1;000000;1;1;1;0;E;;;;
+ICON_GLO;wind_speed_of_gust;2;FFG-MS;1082;1;6;000010;1;1;1;0;E;;;;
+ICON_GLO;wind_speed_of_gust;2;FFG-MS;1085;1;6;000010;1;1;1;0;E;;;;
+ICON_GLO;x_wind;2;U-MS;1082;1;18;*;2;2;2;0;D;;;;
+ICON_GLO;x_wind;2;U-MS;1082;1;2;*;2;2;2;0;D;;;;
+ICON_GLO;x_wind;2;U-MS;1082;1;6;000010;2;2;2;0;E;;;;
+ICON_GLO;x_wind;2;U-MS;1085;1;2;*;2;2;2;0;D;;;;
+ICON_GLO;x_wind;2;U-MS;1085;1;6;000010;2;2;2;0;E;;;;
+ICON_GLO;y_wind;2;V-MS;1082;1;18;*;2;2;2;0;D;;;;
+ICON_GLO;y_wind;2;V-MS;1082;1;2;*;2;2;2;0;D;;;;
+ICON_GLO;y_wind;2;V-MS;1082;1;6;000010;2;2;2;0;E;;;;
+ICON_GLO;y_wind;2;V-MS;1085;1;2;*;2;2;2;0;D;;;;
+ICON_GLO;y_wind;2;V-MS;1085;1;6;000010;2;2;2;0;E;;;;
+FMIBLEND;air_temperature;2;T-K;1087;1;6;000002;1;1;1;0;E;;;;
+FMIBLEND;wind_speed;2;FF-MS;1087;1;6;000010;1;1;1;0;E;;;;
+BLENDW;air_temperature;2;T-K;1087;1;6;000002;1;1;1;0;E;;;;
+BLENDW;wind_speed;2;FF-MS;1087;1;6;000010;1;1;1;0;E;;;;
+BLENDR;air_temperature;2;T-K;1087;1;6;000002;1;1;1;0;E;;;;
+BLENDR;wind_speed;2;FF-MS;1087;1;6;000010;1;1;1;0;E;;;;
+BLENDB;air_temperature;2;T-K;1087;1;6;000002;1;1;1;0;E;;;;
+BLENDB;wind_speed;2;FF-MS;1087;1;6;000010;1;1;1;0;E;;;;
+METAN;air_pressure;2;P-PA;1092;1;7;000000;1;1;1;0;D;;;;
+METAN;air_temperature;2;T-K;1092;1;6;000002;1;1;1;0;E;;;;
+METAN;wind_speed;2;FF-MS;1092;1;6;000010;1;1;1;0;E;;;;
+ICONMTA;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1082;1;12;000000;1;1;1;0;E;;;;
+ICONMTA;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1082;1;13;000500;1;1;1;0;D;;;;
+ICONMTA;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1082;1;6;000000;1;1;1;0;E;;;;
+ICONMTA;atmosphere_convective_inhibition;2;CIN-JKG;1082;1;12;000000;1;1;1;0;E;;;;
+ICONMTA;atmosphere_convective_inhibition;2;CIN-JKG;1082;1;13;000500;1;1;1;0;D;;;;
+ICONMTA;atmosphere_convective_inhibition;2;CIN-JKG;1082;1;6;000000;1;1;1;0;E;;;;
+ICONMTA;precipitation_amount;2;RRR-KGM2;1082;1;6;000000;1;1;1;0;E;;;;
+ICONMTA;precipitation_amount;2;RRR-KGM2;1085;1;6;000000;1;1;1;0;E;;;;
+ICONMTA;wind_speed;2;FF-MS;1082;1;18;*;1;1;1;0;D;;;;
+ICONMTA;wind_speed;2;FF-MS;1082;1;2;*;1;1;1;0;D;;;;
+ICONMTA;wind_speed;2;FF-MS;1082;1;6;000010;1;1;1;0;E;;;;
+ICONMTA;wind_speed;2;FF-MS;1082;1;6;001500;1;1;1;0;D;;;;
+ICONMTA;wind_speed;2;FF-MS;1085;1;6;000010;1;1;1;0;E;;;;
+ECGEPSMTA;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1049;1;12;000000;1;1;1;0;E;;;;
+ECGEPSMTA;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1049;1;13;000500;1;1;1;0;D;;;;
+ECGEPSMTA;atmosphere_convective_inhibition;2;CIN-JKG;1049;1;12;000000;1;1;1;0;E;;;;
+ECGEPSMTA;atmosphere_convective_inhibition;2;CIN-JKG;1049;1;13;000500;1;1;1;0;D;;;;
+ECGEPSMTA;precipitation_amount;2;RRR-KGM2;1007;1;6;000000;1;1;1;0;E;;;;
+ECGEPSMTA;precipitation_amount;2;RRR-KGM2;1008;1;6;000000;1;1;1;0;E;;;;
+ECGEPSMTA;wind_speed;2;FF-MS;1007;1;6;000010;1;1;1;0;E;;;;
+ECGEPSMTA;wind_speed;2;FF-MS;1008;1;6;000010;1;1;1;0;E;;;;
+ECGEPSMTA;wind_speed;2;FF-MS;1049;1;3;*;1;1;1;0;D;;;;
+ECGEPSMTA;wind_speed;2;FF-MS;1049;1;6;001500;1;1;1;0;D;;;;
+ECGEPSCALIB;air_temperature;2;T-K;1126;1;6;000002;1;1;1;0;E;;;;
+GFSMTA;precipitation_amount;2;RRR-KGM2;26;1;6;000000;1;1;1;0;E;;;;
+GFSMTA;wind_speed;2;FF-MS;26;1;2;*;1;1;1;0;D;;;;
+GFSMTA;wind_speed;2;FF-MS;26;1;6;000010;1;1;1;0;E;;;;
+MEPSMTA;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1093;1;12;000000;1;1;1;0;E;;;;
+MEPSMTA;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1093;1;13;000500;1;1;1;0;D;;;;
+MEPSMTA;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1093;1;6;000000;1;1;1;0;E;;;;
+MEPSMTA;atmosphere_convective_inhibition;2;CIN-JKG;1093;1;12;000000;1;1;1;0;E;;;;
+MEPSMTA;atmosphere_convective_inhibition;2;CIN-JKG;1093;1;13;000500;1;1;1;0;D;;;;
+MEPSMTA;atmosphere_convective_inhibition;2;CIN-JKG;1093;1;6;000000;1;1;1;0;E;;;;
+MEPSMTA;precipitation_amount;2;RRR-KGM2;1093;1;6;000000;1;1;1;0;E;;;;
+MEPSMTA;wind_speed;2;FF-MS;1093;1;2;*;1;1;1;0;D;;;;
+MEPSMTA;wind_speed;2;FF-MS;1093;1;3;*;1;1;1;0;D;;;;
+MEPSMTA;wind_speed;2;FF-MS;1093;1;6;000010;1;1;1;0;E;;;;
+MEPSMTA;wind_speed;2;FF-MS;1093;1;6;000100;1;1;1;0;D;;;;
+MEPSMTA;wind_speed;2;FF-MS;1093;1;6;000125;1;1;1;0;D;;;;
+MEPSMTA;wind_speed;2;FF-MS;1093;1;6;000150;1;1;1;0;D;;;;
+MEPSMTA;wind_speed;2;FF-MS;1093;1;6;000175;1;1;1;0;D;;;;
+MEPSMTA;wind_speed;2;FF-MS;1093;1;6;000200;1;1;1;0;D;;;;
+MEPSMTA;wind_speed;2;FF-MS;1093;1;6;001500;1;1;1;0;D;;;;
+MEPSMTA;wind_speed_of_gust;2;FFG-MS;1093;1;6;000010;1;1;1;0;E;;;;
+MEPSMTA;x_wind;2;U-MS;1093;1;2;*;2;2;2;0;D;;;;
+MEPSMTA;x_wind;2;U-MS;1093;1;3;*;2;2;2;0;D;;;;
+MEPSMTA;x_wind;2;U-MS;1093;1;6;000010;2;2;2;0;E;;;;
+MEPSMTA;x_wind_gust;2;WGU-MS;1093;1;6;000010;1;1;1;0;E;;;;
+MEPSMTA;y_wind;2;V-MS;1093;1;2;*;2;2;2;0;D;;;;
+MEPSMTA;y_wind;2;V-MS;1093;1;3;*;2;2;2;0;D;;;;
+MEPSMTA;y_wind;2;V-MS;1093;1;6;000010;2;2;2;0;E;;;;
+MEPSMTA;y_wind_gust;2;WGV-MS;1093;1;6;000010;1;1;1;0;E;;;;
+MEPS_PREOPMTA;precipitation_amount;2;RRR-KGM2;1093;1;6;000000;1;1;1;0;E;;;;
+MEPS_PREOPMTA;wind_speed;2;FF-MS;1093;1;6;000010;1;1;1;0;E;;;;
+MEPS_PREOPMTA;wind_speed_of_gust;2;FFG-MS;1093;1;6;000010;1;1;1;0;E;;;;
+MEPS_ML_PREOP;air_temperature;2;T-K;1093;1;6;000002;1;1;1;0;E;;;;
+MEPS_ML_PREOP;wind_speed;2;FF-MS;1093;1;6;000010;1;1;1;0;E;;;;
+MEPS_ML_PREOP;wind_speed_of_gust;2;FFG-MS;1093;1;6;000010;1;1;1;0;E;;;;
+MNWCMTA;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1093;1;12;000000;1;1;1;0;E;;;;
+MNWCMTA;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1093;1;13;000500;1;1;1;0;D;;;;
+MNWCMTA;atmosphere_convective_available_potential_energy;2;CAPE-JKG;1093;1;6;000000;1;1;1;0;E;;;;
+MNWCMTA;atmosphere_convective_inhibition;2;CIN-JKG;1093;1;12;000000;1;1;1;0;E;;;;
+MNWCMTA;atmosphere_convective_inhibition;2;CIN-JKG;1093;1;13;000500;1;1;1;0;D;;;;
+MNWCMTA;atmosphere_convective_inhibition;2;CIN-JKG;1093;1;6;000000;1;1;1;0;E;;;;
+MNWCMTA;precipitation_amount;2;RRR-KGM2;1093;1;6;000000;1;1;1;0;E;;;;
+MNWCMTA;wind_speed;2;FF-MS;1093;1;2;*;1;1;1;0;D;;;;
+MNWCMTA;wind_speed;2;FF-MS;1093;1;3;*;1;1;1;0;D;;;;
+MNWCMTA;wind_speed;2;FF-MS;1093;1;6;000010;1;1;1;0;E;;;;
+MNWCMTA;wind_speed;2;FF-MS;1093;1;6;001500;1;1;1;0;D;;;;
+MNWCMTA;wind_speed_of_gust;2;FFG-MS;1093;1;6;000010;1;1;1;0;E;;;;
+MNWCMTA;x_wind;2;U-MS;1093;1;2;*;2;2;2;0;D;;;;
+MNWCMTA;x_wind;2;U-MS;1093;1;3;*;2;2;2;0;D;;;;
+MNWCMTA;x_wind;2;U-MS;1093;1;6;000010;2;2;2;0;E;;;;
+MNWCMTA;y_wind;2;V-MS;1093;1;2;*;2;2;2;0;D;;;;
+MNWCMTA;y_wind;2;V-MS;1093;1;3;*;2;2;2;0;D;;;;
+MNWCMTA;y_wind;2;V-MS;1093;1;6;000010;2;2;2;0;E;;;;
+SMARTMETNWCDEV;air_pressure;2;P-PA;1110;1;7;000000;1;1;1;0;E;;;;
+SMARTMETNWCDEV;air_temperature;2;T-K;1110;1;6;000002;1;1;1;0;E;;;;
+SMARTMETNWCDEV;precipitation_amount;2;RRR-KGM2;1110;1;6;000000;1;1;1;0;E;;;;
+SMARTMETNWCDEV;wind_speed;2;FF-MS;1110;1;6;000010;1;1;1;0;E;;;;
+SMARTMETNWCDEV;wind_speed;2;FF-MS;1110;1;16;000000;1;1;1;0;E;;;;
+SMARTMETNWCDEV;wind_speed_of_gust;2;FFG-MS;1110;1;6;000010;1;1;1;0;E;;;;
+SMARTMETNWCDEV;x_wind;2;U-MS;1110;1;6;000010;2;2;2;0;E;;;;
+SMARTMETNWCDEV;y_wind;2;V-MS;1110;1;6;000010;2;2;2;0;E;;;;
+SILAM_AQ;cnc_PM10:ugm-3;2;PM10-UGM3;1060;1;6;000000;1;1;1;0;E;;;;
+SILAM_AQ;cnc_PM2_5:ug/m3;2;PM2_5-UGM3;1060;1;6;000000;1;1;1;0;E;;;;
+SILAM_AQ;mole_concentration_of_carbon_monoxide_in_air;2;CO-UGM3;1060;1;6;000000;1;1;1;0;E;;;;
+SILAM_AQ;mole_concentration_of_nitrogen_dioxide_in_air;2;NO2-UGM3;1060;1;6;000000;1;1;1;0;E;;;;
+SILAM_AQ;mole_concentration_of_nitrogen_monoxide_in_air;2;NO-UGM3;1060;1;6;000000;1;1;1;0;E;;;;
+SILAM_AQ;mole_concentration_of_sulfur_dioxide_in_air;2;SO2-UGM3;1060;1;6;000000;1;1;1;0;E;;;;
+VIRE_PREOP;air_pressure;2;P-PA;1110;1;7;000000;1;1;1;0;E;;;;
+VIRE_PREOP;air_pressure;2;P-PA;1125;1;7;000000;1;1;1;0;E;;;;
+VIRE_PREOP;air_temperature;2;T-K;1110;1;6;000002;1;1;1;0;E;;;;
+VIRE_PREOP;air_temperature;2;T-K;1125;1;6;000002;1;1;1;0;E;;;;
+VIRE_PREOP;precipitation_amount;2;RRR-KGM2;1110;1;6;000000;1;1;1;0;E;;;;
+VIRE_PREOP;precipitation_amount;2;RRR-KGM2;1125;1;6;000000;1;1;1;0;E;;;;
+VIRE_PREOP;wind_speed;2;FF-MS;1110;1;6;000010;1;1;1;0;E;;;;
+VIRE_PREOP;wind_speed;2;FF-MS;1125;1;6;000010;1;1;1;0;E;;;;
+VIRE_PREOP;wind_speed_of_gust;2;FFG-MS;1110;1;6;000010;1;1;1;0;E;;;;
+VIRE_PREOP;wind_speed_of_gust;2;FFG-MS;1125;1;6;000010;1;1;1;0;E;;;;
+VIRENWC_PREOP;air_pressure;2;P-PA;1110;1;7;000000;1;1;1;0;E;;;;
+VIRENWC_PREOP;air_temperature;2;T-K;1110;1;6;000002;1;1;1;0;E;;;;
+VIRENWC_PREOP;precipitation_amount;2;RRR-KGM2;1110;1;6;000000;1;1;1;0;E;;;;
+VIRENWC_PREOP;wind_speed;2;FF-MS;1110;1;6;000010;1;1;1;0;E;;;;
+VIRENWC_PREOP;wind_speed_of_gust;2;FFG-MS;1110;1;6;000010;1;1;1;0;E;;;;
