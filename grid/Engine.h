@@ -326,6 +326,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     uint                mMaxSizeOfCachedGridsInMegaBytes;
 
     bool                mContentSwapEnabled;
+    uint                mFileCacheMaxWaitTime;
+    uint                mFileCacheMaxFirstWaitTime;
     uint                mContentUpdateInterval;
 
     bool                mDataServerMethodsEnabled;
@@ -393,12 +395,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     bool                                      mQueryCache_enabled;
     int                                       mQueryCache_maxAge;
 
-    bool                                      mStartUpCache_enabled;
-    bool                                      mStartUpCache_saveDiskData;
-    bool                                      mStartUpCache_saveNetworkData;
-    std::string                               mStartUpCache_filename;
-    long long                                 mStartUpCache_maxSizeInMegaBytes;
-    uint                                      mStartUpCache_saveIntervalInMinutes;
+    bool                                      mFileCache_enabled;
+    std::string                               mFileCache_directory;
 
     std::shared_ptr<Spine::Table>             mParameterTable;
 };
