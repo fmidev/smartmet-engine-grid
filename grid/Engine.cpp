@@ -29,6 +29,11 @@
 
 #define FUNCTION_TRACE FUNCTION_TRACE_OFF
 
+#define CONTENT_SERVER_SESSION_ID 111111111
+#define DATA_SERVER_SESSION_ID 222222222
+
+
+
 namespace SmartMet
 {
 namespace Engine
@@ -146,12 +151,8 @@ Engine::Engine(const char* theConfigFile)
     mShutdownRequested = false;
     mShutdownFinished = false;
 
-    mStartUpCache_enabled = false;
-    mStartUpCache_saveDiskData = false;
-    mStartUpCache_saveNetworkData = true;
-    mStartUpCache_filename = "";
-    mStartUpCache_saveIntervalInMinutes = 30;
-    mStartUpCache_maxSizeInMegaBytes = 30000;
+    mFileCache_enabled = false;
+    mFileCache_directory = "/tmp";
 
     mContentServerProcessingLogEnabled = false;
     mContentServerDebugLogEnabled = false;
@@ -188,6 +189,8 @@ Engine::Engine(const char* theConfigFile)
     mQueryServerContentSearchCache_clearInterval = 3600 * 24 * 3;
     mQueryServerCheckGeometryStatus = false;
     mContentSwapEnabled = false;
+    mFileCacheMaxWaitTime = 0;
+    mFileCacheMaxFirstWaitTime = 0;
     mContentUpdateInterval = 180;
     mBrowserEnabled = true;
     mBrowserFlags = 0;
@@ -199,6 +202,7 @@ Engine::Engine(const char* theConfigFile)
 
     mContentServerCacheImplementation = nullptr;
     mDataServerImplementation = nullptr;
+    mThread = 0;
 
     mParameterTable.reset(new Spine::Table);
 
@@ -260,6 +264,8 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.requestForwardEnabled", mRequestForwardEnabled);
 
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.contentSwapEnabled", mContentSwapEnabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.fileCache.maxFirstWaitTime", mFileCacheMaxFirstWaitTime);
+    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.fileCache.maxWaitTime", mFileCacheMaxWaitTime);
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.contentUpdateInterval", mContentUpdateInterval);
 
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.enabled", mContentServerProcessingLogEnabled);
@@ -279,13 +285,8 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.clean-up.age", mDataServerCleanupAge);
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.grid-storage.clean-up.checkInterval", mDataServerCleanupInterval);
 
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.startup-cache.enabled", mStartUpCache_enabled);
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.startup-cache.saveDiskData", mStartUpCache_saveDiskData);
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.startup-cache.saveNetworkData", mStartUpCache_saveNetworkData);
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.startup-cache.filename", mStartUpCache_filename);
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.startup-cache.saveIntervalInMinutes", mStartUpCache_saveIntervalInMinutes);
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.startup-cache.maxSizeInMegaBytes", mStartUpCache_maxSizeInMegaBytes);
-
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.fileCache.enabled", mFileCache_enabled);
+    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.fileCache.directory", mFileCache_directory);
 
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.enabled", mDataServerProcessingLogEnabled);
     configurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.file", mDataServerProcessingLogFile);
@@ -477,9 +478,9 @@ void Engine::init()
     {
       mContentServerCacheImplementation = new ContentServer::CacheImplementation();
       mContentServerCacheImplementation->setRequestForwardEnabled(mRequestForwardEnabled);
-      mContentServerCacheImplementation->setContentSwapEnabled(mContentSwapEnabled);
+      mContentServerCacheImplementation->setContentSwap(mContentSwapEnabled,mFileCacheMaxFirstWaitTime,mFileCacheMaxWaitTime);
       mContentServerCacheImplementation->setContentUpdateInterval(mContentUpdateInterval);
-      mContentServerCacheImplementation->init(0, cServer);
+      mContentServerCacheImplementation->init(CONTENT_SERVER_SESSION_ID,DATA_SERVER_SESSION_ID,cServer);
 
       mContentServerCache.reset(mContentServerCacheImplementation);
       mContentServerCacheImplementation->startEventProcessing();
@@ -499,10 +500,9 @@ void Engine::init()
     else
     {
       mDataServerImplementation = new DataServer::ServiceImplementation();
-      mDataServerImplementation->init(0, 0, "NotRegistered", "NotRegistered", mDataServerGridDirectory, cServer);
+      mDataServerImplementation->init(DATA_SERVER_SESSION_ID, 0, "NotRegistered", "NotRegistered", mDataServerGridDirectory, cServer);
       mDataServerImplementation->setCleanup(mDataServerCleanupAge,mDataServerCleanupInterval);
-      mDataServerImplementation->setStartUpCache(mStartUpCache_enabled,mStartUpCache_saveDiskData,mStartUpCache_saveNetworkData,
-          mStartUpCache_filename.c_str(),mStartUpCache_saveIntervalInMinutes,mStartUpCache_maxSizeInMegaBytes);
+      mDataServerImplementation->setFileCache(mFileCache_enabled,mFileCache_directory.c_str());
 
 
       mDataServer.reset(mDataServerImplementation);

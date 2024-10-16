@@ -36,9 +36,8 @@
 <li><a href="#chapter-2-3">2.3 Data Server</a>
 <ul>
 <li><a href="#chapter-2-3-1">2.3.1 Grid storage</a>
-<li><a href="#chapter-2-3-2">2.3.2 Startup cache</a>
-<li><a href="#chapter-2-3-3">2.3.3 Virtual grids</a>
-<li><a href="#chapter-2-3-4">2.3.4 Logs</a>
+<li><a href="#chapter-2-3-2">2.3.2 Local file cache</a>
+<li><a href="#chapter-2-3-4">2.3.3 Logs</a>
 </ul>
 <li><a href="#chapter-2-4">2.4 Query Server</a>
 <ul>
@@ -200,7 +199,7 @@ Because the size of a single memory page is usually quite small (4096 bytes), it
           maxSizeInMegaBytes  = 30000
         }
 
-	memoryMapper :
+        memoryMapper :
         {
           enabled = false
           accessFile = "%(DIR)/access.csv"
@@ -418,6 +417,14 @@ In the grid engine's main configuration file, we can enable the cache swapping a
   smartmet.engine.grid.content-server.content-cache.contentUpdateInterval = 180       
 </pre>
 
+
+If the dataServer is caching grid files into the local filesystem, we should define how long time the content server can delay the content swapping when it waits that all required files are cached locally. If the wait time is zero second then the swapping does not wait that the local cache gets ready. This only means that if a file is not in the local cache when it is requested, then the data server uses the original grid file instead. On the other hand,if the content server is waiting the local cache, we should make sure that it does not wait if forever. That's because the local caching might also face some problems (for example, the local filesystem can be full). It is also quite common that if the local cache is empty when the server is started and if there are a lot of data that requires caching, then the first wait time should be longer. That's why we have two different wait times. 
+	
+<pre>
+  smartmet.engine.grid.content-server.content-cache.fileCache.maxFirstWaitTime = 600     
+  smartmet.engine.grid.content-server.content-cache.fileCache.maxWaitTime = 300
+</pre>
+
 **Non-swapping cache**
 
 Non-swapping cache is used when the Content Storage information does not change continuously or if the query response times are not so critical. This kind of cache consumes less memory than the swapping cache. If we want to use non-swapping cache then the cache swapping should be disabled in the grid engine's main configuration file.
@@ -509,13 +516,12 @@ The grid filenames that come from the Content Server can usually directly used a
   {
     grid-storage :
     {
-      directory = ""  
-    
+      directory = ""
       clean-up :
       {
         age = 3600
         checkInterval = 300  
-      }    
+      }        
     }
   }
 </pre>
@@ -528,31 +534,27 @@ the clean-up.
 
 <hr/>
 
-### <span id="chapter-2-3-2"></span>2.3.2 Startup cache
+### <span id="chapter-2-3-2"></span>2.3.2 Local file cache
 
-Startup cache is used for speed up the data loading when the server is started. The idea is that the grid-engine saves the most popular data 
-into the fast disk (maybe M.2 disk) so this data can be loaded quickly back into the memory if the server is restarted. Originally the idea 
-was to store data that was loaded from the network, but it is possible also to save data that is loaded from the mounted disk. This makes 
-sense if the cache disk is much faster than the mounted disk.
+Local file cache is used in order to store some marked grid files locally before they can be taken into use. The actual marking of the files is done by the 'radon2smartmet' program, which stores this information into the FileInfo -records when it writes this informatin into the Content Storage.
+
+The idea is to cache frequently accessed files into the local filesystem, which helps to reduce network traffic. Notice that the following configuration lines enable local file caching in the dataServer. If you want that all marked files are stored locally before they are taken in to used, then you should define how long time the contentServer is allowed wait this local file caching (=> see contentServer "fileCache" definitions above). 
 
 <pre>
   data-server :
   {
-    startup-cache :
+    fileCache :
     {
-      enabled = true
-      saveDiskData = true
-      saveNetworkData = true
-      filename = "/home/koskelam/Disk/Cache/startup-cache"
-      saveIntervalInMinutes = 5
-      maxSizeInMegaBytes = 30000
+      enabled   = true
+      directory = "$(HOME)/Var/Cache"
     }
-                }
+  }
 </pre>
+
 
 <hr/>
 
-### <span id="chapter-2-3-4"></span>2.3.4 Logs
+### <span id="chapter-2-3-3"></span>2.3.3 Logs
 
 The Data Server has also the processing log and the debug log. These logs are congfigured in the same way as the logs used by the Content Server.
 
@@ -696,8 +698,7 @@ The grid engine's main configuration file contains the list of parameter mapping
       "%(DIR)/mapping_newbase.csv",
       "%(DIR)/mapping_newbase_auto.csv",
       "%(DIR)/mapping_netCdf.csv",
-      "%(DIR)/mapping_netCdf_auto.csv",
-      "%(DIR)/mapping_virtual.csv"
+      "%(DIR)/mapping_netCdf_auto.csv"
     ];
   }
 </pre>
