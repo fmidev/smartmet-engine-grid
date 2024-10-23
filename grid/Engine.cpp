@@ -487,8 +487,6 @@ void Engine::init()
       cServer = mContentServerCacheImplementation;
     }
 
-    updateMappings();
-
     if (mDataServerRemote && mDataServerIor.length() > 50)
     {
       DataServer::Corba::ClientImplementation* client = new DataServer::Corba::ClientImplementation();
@@ -579,7 +577,15 @@ void Engine::init()
       qServer->setDebugLog(&mQueryServerDebugLog);
     }
 
+    // Waiting until content server is ready (i.e. all requested files are cached)
+    while (!mShutdownRequested  &&  !cServer->isReady())
+      sleep(1);
+
+    if (mShutdownRequested)
+      return;
+
     updateProducerAndGenerationList();
+    updateMappings();
 
     mProducerMappingDefinitions.init(mProducerMappingDefinitions_filenames, true);
     mParameterAliasDefinitions.init(mParameterAliasDefinitions_filenames);
