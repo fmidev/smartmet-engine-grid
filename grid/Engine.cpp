@@ -593,6 +593,39 @@ void Engine::init()
     mBrowser.init(mConfigurationFile_name.c_str(), mContentServer, this);
     mBrowser.setFlags(mBrowserFlags);
 
+    // Register admin requests if reactor instance is available
+    Spine::Reactor* reactor  = Spine::Reactor::instance;
+    if (reactor)
+    {
+      reactor->addAdminTableRequestHandler(
+        this,
+        "gridgenerations",
+        false,
+        std::bind(&Engine::requestGridGenerationInfo, this, std::placeholders::_2),
+        "Grid generations");
+
+      reactor->addAdminTableRequestHandler(
+        this,
+        "gridgenerationsqd",
+        false,
+        std::bind(&Engine::requestGridQdGenerationInfo, this, std::placeholders::_2),
+        "Grid newbae generations");
+
+      reactor->addAdminTableRequestHandler(
+        this,
+        "gridproducers",
+        false,
+        std::bind(&Engine::requestGridProducerInfo, this, std::placeholders::_2),
+        "Grid producers");
+
+      reactor->addAdminTableRequestHandler(
+        this,
+        "gridproducersqd",
+        false,
+        std::bind(&Engine::requestGridParameterInfo, this, std::placeholders::_2),
+        "Grid producers");
+    }
+
     startUpdateProcessing();
   }
   catch (...)
@@ -1982,10 +2015,12 @@ ContentTable Engine::getProducerInfo(std::optional<std::string> producer,std::st
     updateProducerAndGenerationList();
 
     std::unique_ptr<Fmi::TimeFormatter> timeFormatter(Fmi::TimeFormatter::create(timeFormat));
-    std::shared_ptr < Spine::Table > resultTable(new Spine::Table);
+    std::unique_ptr< Spine::Table > resultTable(new Spine::Table);
 
     Spine::TableFormatter::Names headers
     { "#", "ProducerName", "ProducerId", "Title", "Description", "NumOfGenerations", "NewestGeneration", "OldestGeneration" };
+    resultTable->setNames(headers);
+    resultTable->setTitle("SmartMet Admin");
 
     AutoReadLock lock(&mProducerInfoList_modificationLock);
 
@@ -2051,7 +2086,7 @@ ContentTable Engine::getProducerInfo(std::optional<std::string> producer,std::st
       }
     }
 
-    return std::make_pair(resultTable, headers);
+    return resultTable;
   }
   catch (...)
   {
@@ -2092,10 +2127,12 @@ ContentTable Engine::getGenerationInfo(std::optional<std::string> producer,std::
 
     std::unique_ptr<Fmi::TimeFormatter> timeFormatter(Fmi::TimeFormatter::create(timeFormat));
 
-    std::shared_ptr < Spine::Table > resultTable(new Spine::Table);
+    std::unique_ptr<Spine::Table> resultTable(new Spine::Table);
 
     Spine::TableFormatter::Names headers
     {"ProducerName", "GeometryId", "Timesteps", "AnalysisTime", "MinTime", "MaxTime", "ModificationTime", "FmiParameters", "ParameterAliases" };
+    resultTable->setNames(headers);
+    resultTable->setTitle("SmartMet Admin");
 
     ContentServer_sptr contentServer = getContentServer_sptr();
     time_t currentTime = time(nullptr);
@@ -2266,7 +2303,7 @@ ContentTable Engine::getGenerationInfo(std::optional<std::string> producer,std::
       }
     }
 
-    return std::make_pair(resultTable, headers);
+    return resultTable;
   }
   catch (...)
   {
@@ -2290,13 +2327,14 @@ ContentTable Engine::getExtGenerationInfo(std::optional<std::string> producer,st
     T::GeometryInfoList tmpGeometryInfoList;
 
     std::unique_ptr<Fmi::TimeFormatter> timeFormatter(Fmi::TimeFormatter::create(timeFormat));
-    std::shared_ptr < Spine::Table > resultTable(new Spine::Table);
+    std::unique_ptr<Spine::Table> resultTable(new Spine::Table);
     Spine::TableFormatter::Names headers
     { "ProducerName", "GeometryId", "Timesteps", "AnalysisTime", "MinTime", "MaxTime", "ModificationTime", "FmiParameters", "ParameterAliases" };
-
+    resultTable->setNames(headers);
+    resultTable->setTitle("SmartMet Admin");
 
     if (mProducerStatusFile.empty())
-      return std::make_pair(resultTable, headers);
+      return resultTable;
 
     ContentServer_sptr contentServer = getContentServer_sptr();
 
@@ -2549,7 +2587,7 @@ ContentTable Engine::getExtGenerationInfo(std::optional<std::string> producer,st
       }
     }
 
-    return std::make_pair(resultTable, headers);
+    return resultTable;
   }
   catch (...)
   {
@@ -2569,7 +2607,9 @@ ContentTable Engine::getParameterInfo(std::optional<std::string> producer) const
   {
     Spine::TableFormatter::Names headers
     { "#", "Producer", "FmiParameterName", "FmiParameterId", "NewbaseParameterName", "NewbaseParameterId", "Unit", "Description" };
-    std::shared_ptr < Spine::Table > resultTable(new Spine::Table);
+    std::unique_ptr<Spine::Table> resultTable(new Spine::Table);
+    resultTable->setNames(headers);
+    resultTable->setTitle("Grid parameters");
 
     AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
 
@@ -2609,7 +2649,7 @@ ContentTable Engine::getParameterInfo(std::optional<std::string> producer) const
       }
     }
 
-    return std::make_pair(resultTable, headers);
+    return resultTable;
   }
   catch (...)
   {
@@ -4226,6 +4266,62 @@ void Engine::startUpdateProcessing()
     throw exception;
   }
 }
+
+
+ContentTable  Engine::requestGridGenerationInfo(const Spine::HTTP::Request &theRequest)
+try
+{
+  auto producer = theRequest.getParameter("producer");
+  std::string timeFormat = Spine::optional_string(theRequest.getParameter("timeformat"), "sql");
+  auto producerInfo = getGenerationInfo(producer, timeFormat);
+  return producerInfo;
+}
+catch (...)
+{
+  throw Fmi::Exception(BCP, "Operation failed!");
+}
+
+
+ContentTable  Engine::requestGridQdGenerationInfo(const Spine::HTTP::Request &theRequest)
+try
+{
+  auto producer = theRequest.getParameter("producer");
+  std::string timeFormat = Spine::optional_string(theRequest.getParameter("timeformat"), "sql");
+  auto producerInfo = getExtGenerationInfo(producer, timeFormat);
+  return producerInfo;
+}
+catch (...)
+{
+  throw Fmi::Exception(BCP, "Operation failed!");
+}
+
+
+ContentTable  Engine::requestGridParameterInfo(const Spine::HTTP::Request &theRequest)
+try
+{
+  auto producer = theRequest.getParameter("producer");
+  auto producerInfo = getParameterInfo(producer);
+  return producerInfo;
+}
+catch (...)
+{
+  throw Fmi::Exception(BCP, "Operation failed!");
+}
+
+
+ContentTable  Engine::requestGridProducerInfo(const Spine::HTTP::Request &theRequest)
+try
+{
+  auto producer = theRequest.getParameter("producer");
+  std::string timeFormat = Spine::optional_string(theRequest.getParameter("timeformat"), "sql");
+  auto producerInfo = getProducerInfo(producer, timeFormat);
+  return producerInfo;
+}
+catch (...)
+{
+  throw Fmi::Exception(BCP, "Operation failed!");
+}
+
 
 }  // namespace Grid
 }  // namespace Engine

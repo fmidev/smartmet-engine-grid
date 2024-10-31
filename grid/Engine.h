@@ -29,7 +29,7 @@ namespace Engine
 namespace Grid
 {
 
-typedef std::pair<std::shared_ptr<Spine::Table>, Spine::TableFormatter::Names> ContentTable;
+typedef std::unique_ptr<Spine::Table> ContentTable;
 typedef std::shared_ptr<ContentServer::ServiceInterface> ContentServer_sptr;
 typedef std::shared_ptr<DataServer::ServiceInterface> DataServer_sptr;
 typedef std::shared_ptr<QueryServer::ServiceInterface> QueryServer_sptr;
@@ -235,6 +235,13 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     void                updateQueryCache();
     void                updateProducerAndGenerationList() const;
+
+  private:
+
+    ContentTable        requestGridGenerationInfo(const Spine::HTTP::Request &theRequest);
+    ContentTable        requestGridQdGenerationInfo(const Spine::HTTP::Request &theRequest);
+    ContentTable        requestGridParameterInfo(const Spine::HTTP::Request &theRequest);
+    ContentTable        requestGridProducerInfo(const Spine::HTTP::Request &theRequest);
 
   private:
 
