@@ -620,10 +620,10 @@ void Engine::init()
 
       reactor->addAdminTableRequestHandler(
         this,
-        "gridproducersqd",
+        "gridparameters",
         false,
         std::bind(&Engine::requestGridParameterInfo, this, std::placeholders::_2),
-        "Grid producers");
+        "Grid parameters");
     }
 
     startUpdateProcessing();
