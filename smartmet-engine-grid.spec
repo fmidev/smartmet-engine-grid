@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 24.10.16
+Version: 24.11.1
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -105,6 +105,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Fri Nov  1 2024 Andris Pavēnis <andris.pavenis@fmi.fi> 24.11.1-1.fmi
+- Implement admin request handlers and register them
+
 * Wed Oct 16 2024 Mika Heiskanen <mika.heiskanen@fmi.fi> - 24.10.16-1.fmi
 - Added configuration information for local file caching
 
