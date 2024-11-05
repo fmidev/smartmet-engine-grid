@@ -609,7 +609,7 @@ void Engine::init()
         "gridgenerationsqd",
         false,
         std::bind(&Engine::requestGridQdGenerationInfo, this, std::placeholders::_2),
-        "Grid newbae generations");
+        "Grid newbase generations");
 
       reactor->addAdminTableRequestHandler(
         this,
