@@ -290,6 +290,27 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
       if (v)
         cInfo.mGeometryId = atoi(v->c_str());
 
+
+      v = theRequest.getParameter("aggregationId");
+      if (v)
+        cInfo.mAggregationId = atoi(v->c_str());
+
+      v = theRequest.getParameter("aggregationPeriod");
+      if (v)
+        cInfo.mAggregationPeriod = atoi(v->c_str());
+
+      v = theRequest.getParameter("processingTypeId");
+      if (v)
+        cInfo.mProcessingTypeId = atoi(v->c_str());
+
+      v = theRequest.getParameter("processingTypeValue1");
+      if (v)
+        cInfo.mProcessingTypeValue1 = atof(v->c_str());
+
+      v = theRequest.getParameter("processingTypeValue2");
+      if (v)
+        cInfo.mProcessingTypeValue2 = atof(v->c_str());
+
       v = theRequest.getParameter("flags");
       if (v)
         cInfo.mFlags = atoi(v->c_str());
@@ -436,6 +457,11 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
     output << "<TD>ForecastType</TD>";
     output << "<TD>ForecastNumber</TD>";
     output << "<TD>GeometryId</TD>";
+    output << "<TD>AggregationId</TD>";
+    output << "<TD>AggregationPeriod</TD>";
+    output << "<TD>ProcessingTypeId</TD>";
+    output << "<TD>ProcessingTypeValue1</TD>";
+    output << "<TD>ProcessingTypeValue2</TD>";
     output << "<TD>Flags</TD>";
     output << "<TD>SourceId</TD>";
     output << "<TD>ModificationTime</TD>";
@@ -559,6 +585,11 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
         output << "<TD>"<< content->mForecastType << "</TD>";
         output << "<TD>"<< content->mForecastNumber << "</TD>";
         output << "<TD>"<< content->mGeometryId << "</TD>";
+        output << "<TD>"<< content->mAggregationId << "</TD>";
+        output << "<TD>"<< content->mAggregationPeriod << "</TD>";
+        output << "<TD>"<< content->mProcessingTypeId << "</TD>";
+        output << "<TD>"<< content->mProcessingTypeValue1 << "</TD>";
+        output << "<TD>"<< content->mProcessingTypeValue2 << "</TD>";
         output << "<TD>"<< content->mFlags << "</TD>";
         output << "<TD>"<< content->mSourceId << "</TD>";
         if (content->mModificationTime > 0)
@@ -577,7 +608,7 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
 
     for (uint t=cnt; t<maxRecords; t++)
     {
-      output << "<TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD></TR>\n";
+      output << "<TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD></TD><TD>&nbsp;</TD></TD><TD>&nbsp;</TD></TD><TD>&nbsp;</TD></TD><TD>&nbsp;</TD></TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD></TR>\n";
     }
 
     output << "</TABLE>\n";
@@ -719,6 +750,11 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
         output << p1 << "ForecastType" << p2 << "id=\"content_forecastType\" value=\"" << cInfo.mForecastType << p3;
         output << p1 << "ForecastNumber" << p2 << "id=\"content_forecastNumber\" value=\"" << cInfo.mForecastNumber << p3;
         output << p1 << "GeometryId" << p2 << "id=\"content_geometryId\" value=\"" << cInfo.mGeometryId << p3;
+        output << p1 << "AggregationId" << p2 << "id=\"content_aggregationId\" value=\"" << cInfo.mAggregationId << p3;
+        output << p1 << "AggregationPeriod" << p2 << "id=\"content_aggregationPeriod\" value=\"" << cInfo.mAggregationPeriod << p3;
+        output << p1 << "ProcessingTypeId" << p2 << "id=\"content_processingTypeId\" value=\"" << cInfo.mProcessingTypeId << p3;
+        output << p1 << "ProcessingTypeValue1" << p2 << "id=\"content_processingTypeValue1\" value=\"" << cInfo.mProcessingTypeValue1 << p3;
+        output << p1 << "ProcessingTypeValue2" << p2 << "id=\"content_processingTypeValue2\" value=\"" << cInfo.mProcessingTypeValue2 << p3;
         output << p1 << "Flags" << p2 << "id=\"content_flags\" value=\"" << cInfo.mFlags << p3;
         output << p1 << "SourceId" << p2 << "id=\"content_sourceId\" value=\"" << cInfo.mSourceId << p3;
         output << p1 << "ModificationTime" << p2 << "id=\"content_modificationTime\" value=\"" << mt << p3;
@@ -745,12 +781,12 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
           break;
 
         case MODE_ADD_REQUEST:
-          output << p1 << MODE_ADD_CONFIRM << prod << "&messageIndex=" << messageIndex << "&fmiParameterName='+content_fmiParameterName.value+'&fmiParameterId='+content_fmiParameterId.value+'&fmiParameterLevelId='+content_fmiParameterLevelId.value+'&parameterLevel='+content_parameterLevel.value+'&flags='+content_flags.value+'&sourceId='+content_sourceId.value+'&forecastType='+content_forecastType.value+'&forecastNumber='+content_forecastNumber.value+'&geometryId='+content_geometryId.value+'&modificationTime='+content_modificationTime.value+'&deletionTime='+content_deletionTime.value+'&forecastTime='+content_forecastTime.value+'&filePosition='+content_filePosition.value+'&messageSize='+content_messageSize.value);\" >Add content</TD>\n";
+          output << p1 << MODE_ADD_CONFIRM << prod << "&messageIndex=" << messageIndex << "&fmiParameterName='+content_fmiParameterName.value+'&fmiParameterId='+content_fmiParameterId.value+'&fmiParameterLevelId='+content_fmiParameterLevelId.value+'&parameterLevel='+content_parameterLevel.value+'&flags='+content_flags.value+'&sourceId='+content_sourceId.value+'&forecastType='+content_forecastType.value+'&forecastNumber='+content_forecastNumber.value+'&geometryId='+content_geometryId.value+'&aggregationId='+content_aggregationId.value+'&aggregationPeriod='+content_aggregationPeriod.value+'&processingTypeId='+content_processingTypeId.value+'&processingTypeValue1='+content_processingTypeValue1.value+'&processingTypeValue2='+content_processingTypeValue2.value+'&modificationTime='+content_modificationTime.value+'&deletionTime='+content_deletionTime.value+'&forecastTime='+content_forecastTime.value+'&filePosition='+content_filePosition.value+'&messageSize='+content_messageSize.value);\" >Add content</TD>\n";
           output << p1 << MODE_NONE << "&messageIndex=" << messageIndex << prod << "');\" >Cancel</TD>\n";
           break;
 
         case MODE_EDIT_REQUEST:
-          output << p1 << MODE_EDIT_CONFIRM << prod << "&messageIndex=" << messageIndex << "&fmiParameterName='+content_fmiParameterName.value+'&fmiParameterId='+content_fmiParameterId.value+'&fmiParameterLevelId='+content_fmiParameterLevelId.value+'&parameterLevel='+content_parameterLevel.value+'&flags='+content_flags.value+'&sourceId='+content_sourceId.value+'&forecastType='+content_forecastType.value+'&forecastNumber='+content_forecastNumber.value+'&geometryId='+content_geometryId.value+'&modificationTime='+content_modificationTime.value+'&deletionTime='+content_deletionTime.value+'&forecastTime='+content_forecastTime.value+'&filePosition='+content_filePosition.value+'&messageSize='+content_messageSize.value);\" >Update content</TD>\n";
+          output << p1 << MODE_EDIT_CONFIRM << prod << "&messageIndex=" << messageIndex << "&fmiParameterName='+content_fmiParameterName.value+'&fmiParameterId='+content_fmiParameterId.value+'&fmiParameterLevelId='+content_fmiParameterLevelId.value+'&parameterLevel='+content_parameterLevel.value+'&flags='+content_flags.value+'&sourceId='+content_sourceId.value+'&forecastType='+content_forecastType.value+'&forecastNumber='+content_forecastNumber.value+'&geometryId='+content_geometryId.value+'&aggregationId='+content_aggregationId.value+'&aggregationPeriod='+content_aggregationPeriod.value+'&processingTypeId='+content_processingTypeId.value+'&processingTypeValue1='+content_processingTypeValue1.value+'&processingTypeValue2='+content_processingTypeValue2.value+'&modificationTime='+content_modificationTime.value+'&deletionTime='+content_deletionTime.value+'&forecastTime='+content_forecastTime.value+'&filePosition='+content_filePosition.value+'&messageSize='+content_messageSize.value);\" >Update content</TD>\n";
           output << p1 << MODE_NONE << "&messageIndex=" << messageIndex << prod << "');\" >Cancel</TD>\n";
           break;
 
@@ -2088,9 +2124,6 @@ bool Browser::page_luaFiles(SessionManagement::SessionInfo& session,const Spine:
     string_vec luaFiles;
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.luaFiles",luaFiles);
 
-    string_vec luaFiles2;
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.luaFiles",luaFiles2);
-
     std::ostringstream output;
 
     output << "<HTML>\n";
@@ -2126,13 +2159,6 @@ bool Browser::page_luaFiles(SessionManagement::SessionInfo& session,const Spine:
     output << "    <B>Processing query parameters</B>\n";
     output << "      <P>LUA functions can be used for example in Timeseries queries. In this case the requested parameter values are\n";
     output << "      given as input to a LUA function (for example 'MYFUNC{Temperature;Pressure;WindSpeedMS}').</P>\n";
-    output << "  </LI>\n";
-    output << "  <LI>\n";
-    output << "    <B>Creating virtual grids</B>\n";
-    output << "      <P>LUA functions can be used also for creating virtual grids. The idea is that these functions take one or \n";
-    output << "      several grids as an input and produce a new grid. This grid is created during the request and it is not stored \n";
-    output << "      permanently. Notice that, these LUA files are actually used by the data server (while other are used by the query server),\n";
-    output << "      and that's why they are configured separately.</P>\n";
     output << "  </LI>\n";
     output << "</OL>\n";
 
@@ -2172,31 +2198,6 @@ bool Browser::page_luaFiles(SessionManagement::SessionInfo& session,const Spine:
     output << "</TABLE>\n";
     output << "<HR>\n";
 
-    output << "<P>The current installation contains the following lua files used by the data server (for virtual grid creation):</P>\n";
-
-    output << "<TABLE border=\"1\" width=\"100%\" style=\"font-size:12;\">\n";
-    output << "<TR bgColor=\"#D0D0D0\">";
-    output << "<TD>Filename</TD>";
-    output << "</TR>";
-
-    for (auto it = luaFiles2.begin(); it != luaFiles2.end(); ++it)
-    {
-      std::size_t hash = 0;
-      boost::hash_combine(hash,*it);
-      std::string hashStr = std::to_string(hash);
-      if (mFilenames.find(hashStr) == mFilenames.end())
-        mFilenames.insert(std::pair<std::string,std::string>(hashStr,*it));
-
-      fg = "#000000";
-      bg = "#FFFFFF";
-      output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << ";'\" onmouseover=\"this.style='background:#FFFF00; color:#000000;';\" onClick=\"getPage(this,parent,'/grid-admin?&target=grid-engine&page=luaFile&filename=" << hash << "');\" >\n";
-      output << "<TD>"<< *it << "</TD>";
-      output << "</TR>";
-
-    }
-
-    output << "</TABLE>\n";
-    output << "<HR>\n";
 
     output << "</BODY>\n";
     output << "</HTML>\n";
