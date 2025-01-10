@@ -597,31 +597,33 @@ void Engine::init()
     Spine::Reactor* reactor  = Spine::Reactor::instance;
     if (reactor)
     {
+      using AdminRequestAccess = Spine::Reactor::AdminRequestAccess;
+
       reactor->addAdminTableRequestHandler(
         this,
         "gridgenerations",
-        false,
+        AdminRequestAccess::Public,
         std::bind(&Engine::requestGridGenerationInfo, this, std::placeholders::_2),
         "Grid generations");
 
       reactor->addAdminTableRequestHandler(
         this,
         "gridgenerationsqd",
-        false,
+        AdminRequestAccess::Public,
         std::bind(&Engine::requestGridQdGenerationInfo, this, std::placeholders::_2),
         "Grid newbase generations");
 
       reactor->addAdminTableRequestHandler(
         this,
         "gridproducers",
-        false,
+        AdminRequestAccess::Public,
         std::bind(&Engine::requestGridProducerInfo, this, std::placeholders::_2),
         "Grid producers");
 
       reactor->addAdminTableRequestHandler(
         this,
         "gridparameters",
-        false,
+        AdminRequestAccess::Public,
         std::bind(&Engine::requestGridParameterInfo, this, std::placeholders::_2),
         "Grid parameters");
     }
