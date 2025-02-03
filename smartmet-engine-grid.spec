@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 25.1.9
+Version: 25.1.24
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -19,10 +19,10 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
-BuildRequires: smartmet-library-spine-devel >= 25.1.10
+BuildRequires: smartmet-library-spine-devel >= 25.1.17
 BuildRequires: smartmet-library-grid-content-devel >= 25.1.9
 BuildRequires: smartmet-library-grid-files-devel >= 25.1.9
-BuildRequires: smartmet-library-macgyver-devel >= 24.12.4
+BuildRequires: smartmet-library-macgyver-devel >= 25.1.9
 BuildRequires: make
 BuildRequires: omniORB-devel >= 4.3.0
 BuildRequires: %{smartmet_boost}-devel
@@ -33,8 +33,8 @@ BuildRequires: postgresql15-devel
 Requires: %{smartmet_boost}-thread
 Requires: smartmet-library-grid-content >= 25.1.9
 Requires: smartmet-library-grid-files >= 25.1.9
-Requires: smartmet-library-spine >= 25.1.10
-Requires: smartmet-library-macgyver >= 24.12.4
+Requires: smartmet-library-spine >= 25.1.17
+Requires: smartmet-library-macgyver >= 25.1.9
 Requires: omniORB-devel
 
 %if 0%{?rhel} && 0%{rhel} == 8
@@ -63,8 +63,8 @@ Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
 Requires: smartmet-library-grid-content-devel >= 25.1.9
 Requires: %{SPECNAME} = %{version}-%{release}
-Requires: smartmet-library-spine-devel >= 25.1.10
-Requires: smartmet-library-macgyver-devel >= 24.12.4
+Requires: smartmet-library-spine-devel >= 25.1.17
+Requires: smartmet-library-macgyver-devel >= 25.1.9
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
 
@@ -105,6 +105,12 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Fri Jan 24 2025 Mika Heiskanen <mika.heiskanen@fmi.fi> - 25.1.24-1.fmi
+- Improved grid-admin related browsing
+
+* Fri Jan 10 2025 Andris Pavēnis <andris.pavenis@fmi.fi> 25.1.10-1.fmi
+- Admin/info request update
+
 * Thu Jan  9 2025 Mika Heiskanen <mika.heiskanen@fmi.fi> - 25.1.9-1.fmi
 - Added content info extension for parameter details
 

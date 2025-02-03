@@ -846,6 +846,9 @@ bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HT
     std::string producerName;
     session.getAttribute("grid-engine","producerName",producerName);
 
+    uint prevGenerationId = 0;
+    session.getAttribute("grid-engine","prevGenerationId",prevGenerationId);
+
     uint generationId = 0;
     session.getAttribute("grid-engine","generationId",generationId);
 
@@ -861,6 +864,12 @@ bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HT
     uint endFileId = 0;
     session.getAttribute("grid-engine","endFileId",endFileId);
 
+    if (generationId != prevGenerationId)
+    {
+      startFileId = 0;
+    }
+
+    session.setAttribute("grid-engine","prevGenerationId",generationId);
     session.setAttribute("grid-engine","messageIndex",0);
     session.setAttribute("grid-engine","startMessageIndex",0);
 
@@ -1254,6 +1263,9 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
     uint maxRecords = 30;
     T::GenerationInfo gInfo;
 
+    uint prevProducerId = 0;
+    session.getAttribute("grid-engine","prevProducerId",prevProducerId);
+
     uint producerId = 0;
     session.getAttribute("grid-engine","producerId",producerId);
 
@@ -1265,6 +1277,14 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
 
     uint startGenerationIndex = 0;
     session.getAttribute("grid-engine","startGenerationIndex",startGenerationIndex);
+
+    if (producerId != prevProducerId)
+    {
+      startGenerationIndex = 0;
+      session.setAttribute("grid-engine","startGenerationIndex",startGenerationIndex);
+    }
+
+    session.setAttribute("grid-engine","prevProducerId",producerId);
 
     session.setAttribute("grid-engine","fileId",0);
     session.setAttribute("grid-engine","startFileId",0);
