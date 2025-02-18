@@ -1251,6 +1251,8 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
     ContentServer_sptr contentServer = mMainContentServer;
     std::string sourceStr = "main";
     bool mainSource = true;
+    const char *statusStr[] = {"Unknown","Ready","Not Ready"};
+
 
     session.getAttribute("grid-engine","source",sourceStr);
 
@@ -1472,7 +1474,7 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
         output << "<TD>"<< generation->mAnalysisTime << "</TD>";
         output << "<TD>"<< generation->mFlags << "</TD>";
         output << "<TD>"<< generation->mSourceId << "</TD>";
-        output << "<TD>"<< (int)generation->mStatus << "</TD>";
+        output << "<TD>"<< statusStr[(int)generation->mStatus % 3] << "</TD>";
         if (generation->mModificationTime > 0)
           output << "<TD>"<< utcTimeFromTimeT(generation->mModificationTime) << "</TD>";
         else
@@ -1519,7 +1521,6 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
 
       output << "</TR></TABLE>\n";
     }
-
 
     if ((mFlags & Flags::contentModificationEnabled) && mainSource && (session.mUserInfo.getUserId() == 0 || session.mUserInfo.isUserGroupMember("grid-admin")))
     {
