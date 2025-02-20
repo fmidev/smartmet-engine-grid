@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 25.1.24
+Version: 25.2.20
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -105,6 +105,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Thu Feb 20 2025 Andris Pavēnis <andris.pavenis@fmi.fi> 25.2.20-1.fmi
+- Update to gdal-3.10, geos-3.13 and proj-9.5
+
 * Fri Jan 24 2025 Mika Heiskanen <mika.heiskanen@fmi.fi> - 25.1.24-1.fmi
 - Improved grid-admin related browsing
 
