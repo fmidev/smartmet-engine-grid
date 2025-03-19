@@ -3695,6 +3695,49 @@ bool Browser::page_configuration(SessionManagement::SessionInfo& session,const S
 
 
 
+bool Browser::page_stateInformation(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
+{
+  try
+  {
+
+    std::shared_ptr<T::AttributeNode> gridEngineAttributes(new T::AttributeNode("Grid-Engine"));
+    mGridEngine->getStateAttributes(gridEngineAttributes);
+
+    std::ostringstream output;
+
+    output << "<HTML>\n";
+    output << "<BODY style=\"font-size:12;\">\n";
+    output << "<HR>\n";
+    output << "<A href=\"grid-admin?target=grid-admin&page=start\">SmartMet Server</A> / ";
+    output << "<A href=\"grid-admin?target=grid-admin&page=engines\">Engines</A> / ";
+    output << "<A href=\"grid-admin?target=grid-engine&page=start\">Grid Engine</A> / ";
+    output << "<HR>\n";
+    output << "<H2>State Information</H2>\n";
+    output << "<HR>\n";
+    output << "<PRE>\n";
+
+    gridEngineAttributes->print(output,0,0);
+
+    output << "</PRE>\n";
+    output << "<HR>\n";
+    output << "</BODY>\n";
+    output << "</HTML>\n";
+
+
+    theResponse.setContent(output.str());
+    theResponse.setHeader("Content-Type", "text/html; charset=UTF-8");
+
+    return true;
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+
 bool Browser::page_start(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
@@ -3757,6 +3800,9 @@ void Browser::browserContent(SessionManagement::SessionInfo& session,std::ostrin
     output << "                <A href=\"/grid-admin?&target=grid-engine&page=producerFile\">Producer search file</A>";
     output << "              </LI>";
     output << "            </OL>\n";
+    output << "          </LI>";
+    output << "          <LI>";
+    output << "            <H4><A href=\"/grid-admin?&target=grid-engine&page=stateInformation\">StateInformation</A></H4>";
     output << "          </LI>";
     output << "          <LI>";
     output << "            <H4><A href=\"/grid-admin?&target=grid-engine&page=contentServer\">Content Server</A></H4>";
@@ -3889,6 +3935,9 @@ bool Browser::requestHandler(SessionManagement::SessionInfo& session,const Spine
 
     if (page == "files")
       return page_files(session,theRequest,theResponse);
+
+    if (page == "stateInformation")
+      return page_stateInformation(session,theRequest,theResponse);
 
     if (page == "contentList")
       return page_contentList(session,theRequest,theResponse);

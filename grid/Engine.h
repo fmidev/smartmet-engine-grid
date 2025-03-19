@@ -82,6 +82,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                getExtAnalysisTimes(std::vector<std::vector<std::string>>& table) const;
 
     void                getCacheStats(Fmi::Cache::CacheStatistics& statistics) const;
+    void                getStateAttributes(std::shared_ptr<T::AttributeNode> parent);
 
     Fmi::Cache::CacheStatistics getCacheStats() const;
 

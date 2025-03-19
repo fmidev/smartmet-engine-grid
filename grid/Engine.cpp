@@ -1370,7 +1370,7 @@ std::string Engine::getParameterString(const std::string& producer, const std::s
 
     if (len > 0 && strcasecmp(parameters[0].mProducerName.c_str(), key.c_str()) != 0)
     {
-      for (size_t t = 0; t < len; t++)
+      for (size_t t = 0; t < 1; t++)
       {
         if (parameters[t].mLevelId > "")
           levelId = parameters[t].mLevelId;
@@ -2873,6 +2873,53 @@ Fmi::Cache::CacheStatistics Engine::getCacheStats() const
   }
 }
 
+
+
+
+void Engine::getStateAttributes(std::shared_ptr<T::AttributeNode> parent)
+{
+  try
+  {
+    if (!mEnabled)
+      return;
+
+    auto configuration = parent->addAttribute("Configuration");
+    configuration->addAttribute("Configuration file",mConfigurationFile_name);
+
+    auto mm = parent->addAttribute("Memory mapper");
+    memoryMapper.getStateAttributes(mm);
+
+    auto modules = parent->addAttribute("Modules");
+
+    // ### Content Server
+
+    auto contentServer = modules->addAttribute("Content Server");
+    auto contentSource = contentServer->addAttribute("Content Source");
+    mContentServer->getStateAttributes(contentSource);
+
+    if (mContentServerCache)
+    {
+      auto contentCache = contentServer->addAttribute("Content Cache");
+      mContentServerCache->getStateAttributes(contentCache);
+    }
+
+    // ### Data Server
+
+    auto dataServer = parent->addAttribute("Data Server");
+    mDataServer->getStateAttributes(dataServer);
+
+    // ### Query Server
+
+    auto queryServer = parent->addAttribute("Query Server");
+    mQueryServer->getStateAttributes(queryServer);
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file", mConfigurationFile_name);
+    throw exception;
+  }
+}
 
 
 
