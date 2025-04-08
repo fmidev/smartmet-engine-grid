@@ -337,6 +337,10 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingUpdateFile.newbase", mParameterMappingDefinitions_autoFile_newbase);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingUpdateFile.netCdf", mParameterMappingDefinitions_autoFile_netCdf);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingFiles", mParameterMappingDefinitions_filenames);
+
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.unitConversionFile", mUnitConversionFile);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingAliasFiles",mParameterMappingAliasDefinitions_filenames);
+
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.aliasFiles", mParameterAliasDefinitions_filenames);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.luaFiles", mQueryServerLuaFiles);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.dataServerMethodsEnabled",mDataServerMethodsEnabled);
@@ -530,7 +534,9 @@ void Engine::init()
     else
     {
       QueryServer::ServiceImplementation* server = new QueryServer::ServiceImplementation();
-      server->init(cServer, dServer, mGridConfigFile, mHeightConversionFile, mParameterMappingDefinitions_filenames, mParameterAliasDefinitions_filenames, mProducerSearchList_filename,
+      server->init(cServer, dServer, mGridConfigFile, mHeightConversionFile,
+          mParameterMappingDefinitions_filenames,mUnitConversionFile,mParameterMappingAliasDefinitions_filenames,
+          mParameterAliasDefinitions_filenames, mProducerSearchList_filename,
           mProducerMappingDefinitions_filenames, mQueryServerLuaFiles,mQueryServerCheckGeometryStatus,mDataServerMethodsEnabled);
 
       server->initContentCache(mQueryServerContentCache_maxRecordsPerThread,mQueryServerContentCache_clearInterval);
@@ -3560,6 +3566,61 @@ FILE* Engine::openMappingFile(const std::string& mappingFile)
   }
 }
 
+
+
+bool filesEqual(const char *filename1,const char *filename2)
+{
+  FUNCTION_TRACE
+  try
+  {
+    if (getFileSize(filename1) != getFileSize(filename2))
+      return false;
+
+    FILE* file1 = fopen(filename1, "re");
+    if (file1 == nullptr)
+    {
+      Fmi::Exception exception(BCP, "Cannot open a file for reading!");
+      exception.addParameter("Filaname", filename1);
+      throw exception;
+    }
+
+    FILE* file2 = fopen(filename2, "re");
+    if (file2 == nullptr)
+    {
+      Fmi::Exception exception(BCP, "Cannot open a file for reading!");
+      exception.addParameter("Filaname", filename2);
+      throw exception;
+    }
+
+    uchar buf1[10000];
+    uchar buf2[10000];
+
+    while (!feof(file1) &&  !feof(file2))
+    {
+      int n1 = fread(buf1,1,10000,file1);
+      int n2 = fread(buf2,1,10000,file2);
+
+      if (n1 != n2 || memcmp(buf1,buf2,n1) != 0)
+      {
+        fclose(file1);
+        fclose(file2);
+        return false;
+      }
+    }
+    fclose(file1);
+    fclose(file2);
+    return true;
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
+    throw exception;
+  }
+}
+
+
+
+
 void Engine::updateMappings(
     T::ParamKeyType sourceParameterKeyType,
     T::ParamKeyType targetParameterKeyType,
@@ -3575,6 +3636,8 @@ void Engine::updateMappings(
 
     if (Spine::Reactor::isShuttingDown())
       return;
+
+    std::string tmpMappingFile = mappingFile + ".tmp";
 
     ContentServer_sptr contentServer = getContentServer_sptr();
 
@@ -3716,7 +3779,7 @@ void Engine::updateMappings(
                 searchList.insert(searchKey);
 
                 if (file == nullptr)
-                  file = openMappingFile(mappingFile);
+                  file = openMappingFile(tmpMappingFile);
 
                 fprintf(file, "%s;%s;%s;%s;%s;%s;%s;%s;", pl[0].c_str(), pl[1].c_str(), pl[2].c_str(), pl[3].c_str(), pl[4].c_str(), pl[5].c_str(), pl[6].c_str(), level.c_str());
 
@@ -3805,11 +3868,16 @@ void Engine::updateMappings(
       // We found all mappings from the other files. That's why we should remove them
       // from the update file.
 
-      file = openMappingFile(mappingFile);
+      file = openMappingFile(tmpMappingFile);
     }
 
     if (file != nullptr)
       fclose(file);
+
+    if (!filesEqual(tmpMappingFile.c_str(), mappingFile.c_str()))
+      rename(tmpMappingFile.c_str(), mappingFile.c_str());
+    else
+      remove(tmpMappingFile.c_str());
   }
   catch (...)
   {

@@ -372,6 +372,9 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     mutable time_t                            mParameterMappingDefinitions_updateTime;
     string_vec                                mParameterMappingDefinitions_filenames;
 
+    std::string                               mUnitConversionFile;
+    string_vec                                mParameterMappingAliasDefinitions_filenames;
+
     T::ParamKeyType                           mParameterMappingDefinitions_autoFileKeyType;
     std::string                               mParameterMappingDefinitions_autoFile_fmi;
     std::string                               mParameterMappingDefinitions_autoFile_newbase;
