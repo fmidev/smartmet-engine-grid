@@ -8,6 +8,8 @@
 #include <grid-content/contentServer/memory/MemoryImplementation.h>
 #include <grid-content/dataServer/implementation/ServiceImplementation.h>
 #include <grid-content/queryServer/implementation/ServiceImplementation.h>
+#include <grid-content/queryServer/definition/ParameterMappingFile.h>
+#include <grid-content/queryServer/definition/UnitConversion.h>
 #include <grid-files/common/ConfigurationFile.h>
 #include <grid-files/common/Typedefs.h>
 #include <pthread.h>
@@ -222,6 +224,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                clearMappings();
     void                checkConfiguration();
     void                loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings);
+    void                loadUnitConversionFile();
     FILE*               openMappingFile(const std::string& mappingFile);
     void                updateMappings();
 
@@ -373,6 +376,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     string_vec                                mParameterMappingDefinitions_filenames;
 
     std::string                               mUnitConversionFile;
+    QueryServer::UnitConversion_vec           mUnitConversions;
+    mutable QueryServer::ParamMappingFile_vec mParameterAliasMappings;
     string_vec                                mParameterMappingAliasDefinitions_filenames;
 
     T::ParamKeyType                           mParameterMappingDefinitions_autoFileKeyType;
