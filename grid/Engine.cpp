@@ -1815,6 +1815,11 @@ void Engine::getParameterMappings(
     {
       m->getMappings(producerName, parameterName, geometryId, onlySearchEnabled, mappings);
     }
+
+    for (auto m = mParameterAliasMappings.begin(); m != mParameterAliasMappings.end(); ++m)
+    {
+      m->getMappings(producerName, parameterName, geometryId, onlySearchEnabled, mappings);
+    }
   }
   catch (...)
   {
@@ -1835,6 +1840,11 @@ void Engine::getParameterMappings(const std::string& producerName, const std::st
     AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
 
     for (auto m = mParameterMappingDefinitions->begin(); m != mParameterMappingDefinitions->end(); ++m)
+    {
+      m->getMappings(producerName, parameterName, onlySearchEnabled, mappings);
+    }
+
+    for (auto m = mParameterAliasMappings.begin(); m != mParameterAliasMappings.end(); ++m)
     {
       m->getMappings(producerName, parameterName, onlySearchEnabled, mappings);
     }
@@ -1868,6 +1878,11 @@ void Engine::getParameterMappings(
     {
       m->getMappings(producerName, parameterName, geometryId, levelId, level, onlySearchEnabled, mappings);
     }
+
+    for (auto m = mParameterAliasMappings.begin(); m != mParameterAliasMappings.end(); ++m)
+    {
+      m->getMappings(producerName, parameterName, geometryId, levelId, level, onlySearchEnabled, mappings);
+    }
   }
   catch (...)
   {
@@ -1894,6 +1909,11 @@ void Engine::getParameterMappings(
     AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
 
     for (auto m = mParameterMappingDefinitions->begin(); m != mParameterMappingDefinitions->end(); ++m)
+    {
+      m->getMappings(producerName, parameterName, levelId, level, onlySearchEnabled, mappings);
+    }
+
+    for (auto m = mParameterAliasMappings.begin(); m != mParameterAliasMappings.end(); ++m)
     {
       m->getMappings(producerName, parameterName, levelId, level, onlySearchEnabled, mappings);
     }
@@ -3149,6 +3169,80 @@ void Engine::getProducerLevelIdList(uint producerId, std::set<T::ParamLevelId>& 
 
 
 
+void Engine::loadUnitConversionFile()
+{
+  FUNCTION_TRACE
+  try
+  {
+    if (mShutdownRequested)
+      return;
+
+    FILE* file = fopen(mUnitConversionFile.c_str(), "re");
+    if (file == nullptr)
+    {
+      Fmi::Exception exception(BCP, "Cannot open the unit conversion file!");
+      exception.addParameter("Filename", mUnitConversionFile);
+      throw exception;
+    }
+
+    mUnitConversions.clear();
+
+    char st[1000];
+
+    while (!feof(file))
+    {
+      if (fgets(st, 1000, file) != nullptr && st[0] != '#')
+      {
+        bool ind = false;
+        char* field[100];
+        uint c = 1;
+        field[0] = st;
+        char* p = st;
+        while (*p != '\0' && c < 100)
+        {
+          if (*p == '"')
+            ind = !ind;
+
+          if ((*p == ';' || *p == '\n') && !ind)
+          {
+            *p = '\0';
+            p++;
+            field[c] = p;
+            c++;
+          }
+          else
+          {
+            p++;
+          }
+        }
+        c--;
+
+        if (c >= 4)
+        {
+          QueryServer::UnitConversion rec;
+
+          rec.mSourceUnit = field[0];
+          rec.mTargetUnit = field[1];
+          rec.mConversionFunction = field[2];
+          rec.mReverseConversionFunction = field[3];
+
+          //rec.print(std::cout,0,0);
+
+          mUnitConversions.push_back(rec);
+        }
+      }
+    }
+    fclose(file);
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+
 void Engine::loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings)
 {
   FUNCTION_TRACE
@@ -3156,6 +3250,9 @@ void Engine::loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings)
   {
     if (!mEnabled)
       return;
+
+    if (!mUnitConversionFile.empty())
+      loadUnitConversionFile();
 
     for (auto it = mParameterMappingDefinitions_filenames.begin(); it != mParameterMappingDefinitions_filenames.end(); ++it)
     {
@@ -3167,7 +3264,22 @@ void Engine::loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings)
     {
       // Loading parameter mappings if the mapping file exists and it is not empty.
       if (getFileSize(it->getFilename().c_str()) > 0)
+      {
         it->init();
+
+        for (auto itm = mParameterMappingAliasDefinitions_filenames.begin(); itm != mParameterMappingAliasDefinitions_filenames.end(); ++itm)
+        {
+          if (*itm == it->getFilename())
+          {
+            QueryServer::ParameterMapping_vec aliasMappings;
+            it->getAliasMappings(aliasMappings,mUnitConversions);
+
+            QueryServer::ParameterMappingFile mapping;
+            mapping.setParameterMappings(aliasMappings);
+            mParameterAliasMappings.emplace_back(mapping);
+          }
+        }
+      }
     }
   }
   catch (...)
