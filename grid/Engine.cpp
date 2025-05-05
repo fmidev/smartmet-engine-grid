@@ -3749,7 +3749,7 @@ void Engine::updateMappings(
     if (Spine::Reactor::isShuttingDown())
       return;
 
-    std::string tmpMappingFile = mappingFile + ".tmp";
+    std::string tmpMappingFile = mappingFile + ".tmp." + std::to_string(getpid());
 
     ContentServer_sptr contentServer = getContentServer_sptr();
 
