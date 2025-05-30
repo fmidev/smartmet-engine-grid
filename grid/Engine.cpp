@@ -1587,7 +1587,7 @@ void Engine::getParameterDetails(const std::string& aliasName, ParameterDetails_
 
     mProducerMappingDefinitions.checkUpdates(false);
 
-    std::vector < std::string > aliasStrings;
+    std::vector <std::string> aliasStrings;
     mProducerMappingDefinitions.getAliasList(aliasName, aliasStrings);
 
     for (auto it = aliasStrings.begin(); it != aliasStrings.end(); it++)
@@ -1662,6 +1662,7 @@ void Engine::getParameterAlias(const std::string& aliasName, std::string& aliasV
   }
 }
 
+
 void Engine::getParameterDetails(const std::string& producerName, const std::string& parameterName, ParameterDetails_vec& parameterDetails) const
 {
   FUNCTION_TRACE
@@ -1673,6 +1674,8 @@ void Engine::getParameterDetails(const std::string& producerName, const std::str
     mProducerMappingDefinitions.checkUpdates(false);
     mParameterAliasDefinitions.checkUpdates(false);
 
+
+    //std::cout << "DETAILS [" << producerName << "] [" << parameterName << "]\n";
     std::string prod = producerName;
     std::string tmp;
 
@@ -1693,8 +1696,8 @@ void Engine::getParameterDetails(const std::string& producerName, const std::str
     //   fog:FogIntensity
     //   rtype:PrecipitationType
 
-    std::string param = parameterName;
-    mParameterAliasDefinitions.getAlias(parameterName, param);
+    std::string fullParam = parameterName;
+    mParameterAliasDefinitions.getAlias(parameterName, fullParam);
 
     // Finding producer mapping for the parameter. The point is that different (newbase) parameters
     // might be mapped to different (Radon) producers.The mapping list looks like this:
@@ -1710,13 +1713,26 @@ void Engine::getParameterDetails(const std::string& producerName, const std::str
     //   SMARTMET;FogIntensity;2;FOGINT-N;1096;1;6;00000;2;2;2;0;E;;;;
     //   SMARTMETMTA;PrecipitationType;2;PRECTYPE-N;1096;1;6;00000;2;2;2;0;E;;;;
 
+
+    std::vector<std::string> list;
+    splitString(fullParam,':',list);
+
+    std::string param;
+    uint plen = list.size();
+    if (plen > 1)
+      param = list[0];
+    else
+      param = fullParam;
+
+    //std::cout << "PARAM [" << fullParam << "] [" << param << "] [" << parameterName << "]\n";
+
     std::string key = prod + ";" + param;
     std::vector < std::string > mappingList;
     mProducerMappingDefinitions.getAliasList(key, mappingList);
 
     for (auto it = mappingList.begin(); it != mappingList.end(); it++)
     {
-      std::vector < std::string > partList;
+      std::vector <std::string> partList;
       splitString(*it, ';', partList);
 
       ParameterDetails p;
@@ -1724,36 +1740,42 @@ void Engine::getParameterDetails(const std::string& producerName, const std::str
       p.mOriginalParameter = parameterName;
 
       uint len = partList.size();
+
       for (uint t = 0; t < len; t++)
       {
+        std::string val = partList[t];
+        if (plen > (t+1)  &&  !list[t+1].empty())
+          val = list[t+1];
+
         switch (t)
         {
           case 0:
-            p.mProducerName = partList[t];
+            p.mProducerName = val;
             break;
 
           case 1:
-            p.mGeometryId = partList[t];
+            p.mGeometryId = val;
             break;
 
           case 2:
-            p.mLevelId = partList[t];
+            p.mLevelId = val;
             break;
 
           case 3:
-            p.mLevel = partList[t];
+            p.mLevel = val;
             break;
 
           case 4:
-            p.mForecastType = partList[t];
+            p.mForecastType = val;
             break;
 
           case 5:
-            p.mForecastNumber = partList[t];
+            p.mForecastNumber = val;
             break;
         }
       }
 
+      //p.print(std::cout,0,0);
       parameterDetails.emplace_back(p);
     }
 
@@ -1761,8 +1783,9 @@ void Engine::getParameterDetails(const std::string& producerName, const std::str
     {
       ParameterDetails p;
       p.mOriginalProducer = producerName;
-      p.mOriginalParameter = param;
+      p.mOriginalParameter = parameterName;
       p.mProducerName = key;
+      //p.print(std::cout,0,0);
       parameterDetails.emplace_back(p);
     }
   }
@@ -1773,6 +1796,8 @@ void Engine::getParameterDetails(const std::string& producerName, const std::str
     throw exception;
   }
 }
+
+
 
 void Engine::getParameterDetails(const std::string& producerName, const std::string& parameterName, std::string& level, ParameterDetails_vec& parameterDetails) const
 {
