@@ -1783,8 +1783,8 @@ void Engine::getParameterDetails(const std::string& producerName, const std::str
     {
       ParameterDetails p;
       p.mOriginalProducer = producerName;
-      p.mOriginalParameter = parameterName;
-      p.mProducerName = key;
+      p.mOriginalParameter = fullParam;
+      p.mProducerName = producerName + ";" + fullParam;
       //p.print(std::cout,0,0);
       parameterDetails.emplace_back(p);
     }
