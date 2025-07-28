@@ -1,6 +1,7 @@
 #include "Browser.h"
 #include "Engine.h"
 #include <grid-files/grid/GridFile.h>
+#include <macgyver/Hash.h>
 
 
 namespace SmartMet
@@ -2202,8 +2203,7 @@ bool Browser::page_luaFiles(SessionManagement::SessionInfo& session,const Spine:
 
     for (auto it = luaFiles.begin(); it != luaFiles.end(); ++it)
     {
-      std::size_t hash = 0;
-      boost::hash_combine(hash,*it);
+      const std::size_t hash = Fmi::hash(*it);
       std::string hashStr = std::to_string(hash);
       if (mFilenames.find(hashStr) == mFilenames.end())
         mFilenames.insert(std::pair<std::string,std::string>(hashStr,*it));
@@ -2345,8 +2345,7 @@ bool Browser::page_parameterAliasFiles(SessionManagement::SessionInfo& session,c
 
     for (auto it = parameterAliasFiles.begin(); it != parameterAliasFiles.end(); ++it)
     {
-      std::size_t hash = 0;
-      boost::hash_combine(hash,*it);
+      const std::size_t hash = Fmi::hash(*it);
       std::string hashStr = std::to_string(hash);
       if (mFilenames.find(hashStr) == mFilenames.end())
         mFilenames.insert(std::pair<std::string,std::string>(hashStr,*it));
@@ -2504,8 +2503,7 @@ bool Browser::page_producerMappingFiles(SessionManagement::SessionInfo& session,
 
     for (auto it = producerMappingFiles.begin(); it != producerMappingFiles.end(); ++it)
     {
-      std::size_t hash = 0;
-      boost::hash_combine(hash,*it);
+      const std::size_t hash = Fmi::hash(*it);
       std::string hashStr = std::to_string(hash);
       if (mFilenames.find(hashStr) == mFilenames.end())
         mFilenames.insert(std::pair<std::string,std::string>(hashStr,*it));
@@ -2770,8 +2768,7 @@ bool Browser::page_parameterMappingFiles(SessionManagement::SessionInfo& session
 
     for (auto it = parameterMappingFiles.begin(); it != parameterMappingFiles.end(); ++it)
     {
-      std::size_t hash = 0;
-      boost::hash_combine(hash,*it);
+      const std::size_t hash = Fmi::hash(*it);
       std::string hashStr = std::to_string(hash);
       if (mFilenames.find(hashStr) == mFilenames.end())
         mFilenames.insert(std::pair<std::string,std::string>(hashStr,*it));

@@ -25,7 +25,7 @@ BuildRequires: gcc-c++
 BuildRequires: smartmet-library-spine-devel >= 25.5.13
 BuildRequires: smartmet-library-grid-content-devel >= 25.5.22
 BuildRequires: smartmet-library-grid-files-devel >= 25.5.22
-BuildRequires: smartmet-library-macgyver-devel >= 25.5.30
+BuildRequires: smartmet-library-macgyver-devel >= 25.7.28
 BuildRequires: make
 BuildRequires: omniORB-devel >= 4.3.0
 BuildRequires: %{smartmet_boost}-devel
@@ -37,7 +37,7 @@ Requires: %{smartmet_boost}-thread
 Requires: smartmet-library-grid-content >= 25.5.22
 Requires: smartmet-library-grid-files >= 25.5.22
 Requires: smartmet-library-spine >= 25.5.13
-Requires: smartmet-library-macgyver >= 25.5.30
+Requires: smartmet-library-macgyver >= 25.7.28
 Requires: omniORB-devel
 
 %if 0%{?rhel} && 0%{rhel} == 8
