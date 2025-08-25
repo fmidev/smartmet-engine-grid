@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 25.6.3
+Version: 25.8.25
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -115,6 +115,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Mon Aug 25 2025 Andris Pavēnis <andris.pavenis@fmi.fi> 25.8.25-1.fmi
+- Repackage due to smartmet-engine-grid changes
+
 * Tue Jun  3 2025 Mika Heiskanen <mika.heiskanen@fmi.fi> - 25.6.3-1.fmi
 - Parameter alias mapping fix
 
