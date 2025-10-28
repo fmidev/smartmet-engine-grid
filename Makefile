@@ -20,7 +20,6 @@ LIBS += $(PREFIX_LDFLAGS) \
 	-lboost_regex \
 	-lboost_thread \
 	-lboost_iostreams \
-	-lboost_system \
 	-lbz2 -lz
 
 ifeq ($(CORBA), disabled)
@@ -43,7 +42,6 @@ LIBS += -L$(libdir) \
 	-lsmartmet-grid-files \
 	-lsmartmet-grid-content \
 	-lboost_thread \
-	-lboost_system \
 	-lpthread
 
 # What to install
