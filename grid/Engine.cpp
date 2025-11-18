@@ -585,7 +585,7 @@ void Engine::init()
 
     // Waiting until content server is ready (i.e. all requested files are cached)
     while (!mShutdownRequested  &&  !cServer->isReady())
-      sleep(1);
+      boost::this_thread::sleep(boost::posix_time::seconds(1));
 
     if (mShutdownRequested)
       return;
@@ -966,13 +966,13 @@ void Engine::shutdown()
     if (mQueryServer)
     {
       mQueryServer->shutdown();
-      sleep(1);
+      boost::this_thread::sleep(boost::posix_time::seconds(1));
     }
 
     if (mDataServer)
     {
       mDataServer->shutdown();
-      sleep(1);
+      boost::this_thread::sleep(boost::posix_time::seconds(1));
     }
 
     if (mContentServerCache)
@@ -4102,7 +4102,7 @@ void Engine::updateProcessing()
       {
       }
       if (!mShutdownRequested)
-	      sleep(1);
+	      boost::this_thread::sleep(boost::posix_time::seconds(1));
     }
   }
   catch (...)
