@@ -24,7 +24,7 @@ install:
 	mkdir -p $(datadir)/smartmet/test/grid/redis
 	$(INSTALL_DATA) grid/engine/*.cfg grid/engine/*.conf grid/engine/*.lua grid/engine/*.csv \
 		$(datadir)/smartmet/test/grid/engine/
-	$(INSTALL_DATA) grid/library/*csv grid/library/grid-files.conf \
+	$(INSTALL_DATA) grid/library/*csv grid/library/*dat grid/library/*png grid/library/grid-files.conf \
 		$(datadir)/smartmet/test/grid/library/
 	$(INSTALL_DATA) grid/library/test/*csv \
 		$(datadir)/smartmet/test/grid/library/test/
