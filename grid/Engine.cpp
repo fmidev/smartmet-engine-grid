@@ -432,30 +432,30 @@ void Engine::init()
     if (mContentSourceType == "redis")
     {
       ContentServer::RedisImplementation* redis = new ContentServer::RedisImplementation();
+      mContentServer.reset(redis);
       redis->init(mContentSourceRedisAddress.c_str(), mContentSourceRedisPort, mContentSourceRedisTablePrefix.c_str(), mContentSourceRedisSecondaryAddress.c_str(),
           mContentSourceRedisSecondaryPort, mContentSourceRedisLockEnabled, mContentSourceRedisReloadRequired);
-      mContentServer.reset(redis);
       cServer = redis;
     }
     else if (mContentSourceType == "postgresql")
     {
       ContentServer::PostgresqlImplementation* postgres = new ContentServer::PostgresqlImplementation();
-      postgres->init(mPrimaryConnectionString.c_str(),mSecondaryConnectionString.c_str(),false);
       mContentServer.reset(postgres);
+      postgres->init(mPrimaryConnectionString.c_str(),mSecondaryConnectionString.c_str(),false);
       cServer = postgres;
     }
     else if (mContentSourceType == "corba")
     {
       ContentServer::Corba::ClientImplementation* client = new ContentServer::Corba::ClientImplementation();
-      client->init(mContentSourceCorbaIor.c_str());
       mContentServer.reset(client);
+      client->init(mContentSourceCorbaIor.c_str());
       cServer = client;
     }
     else if (mContentSourceType == "http")
     {
       ContentServer::HTTP::ClientImplementation* client = new ContentServer::HTTP::ClientImplementation();
-      client->init(mContentSourceHttpUrl.c_str());
       mContentServer.reset(client);
+      client->init(mContentSourceHttpUrl.c_str());
       cServer = client;
     }
     else if (mContentSourceType == "file")
@@ -468,9 +468,9 @@ void Engine::init()
       }
 
       ContentServer::MemoryImplementation* memoryImplementation = new ContentServer::MemoryImplementation();
+      mContentServer.reset(memoryImplementation);
       memoryImplementation->init(true, false, true, eventstEnabled, mMemoryContentDir, 0);
       memoryImplementation->setEventListMaxLength(mEventListMaxSize);
-      mContentServer.reset(memoryImplementation);
       cServer = memoryImplementation;
     }
     else
