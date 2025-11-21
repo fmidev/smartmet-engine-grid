@@ -15,7 +15,7 @@
 #include <grid-files/common/ShowFunction.h>
 #include <grid-files/grid/ValueCache.h>
 #include <grid-files/identification/GridDef.h>
-#include <grid-files/map/Topology.h>
+#include <grid-files/map/Topography.h>
 #include <macgyver/AnsiEscapeCodes.h>
 #include <macgyver/Exception.h>
 #include <macgyver/StringConversion.h>
@@ -355,7 +355,7 @@ Engine::Engine(const char* theConfigFile)
     // Initializing information that is needed for identifying the content of the grid files.
 
     SmartMet::Identification::gridDef.init(mGridConfigFile.c_str());
-    Map::topology.init(mGridConfigFile.c_str(),true,true,true);
+    Map::topography.init(mGridConfigFile.c_str(),true,true,true);
 
     if (!mEnabled)
       std::cout << ANSI_FG_RED << "**** Grid-engine configuration: Engine usage disabled!" << ANSI_FG_DEFAULT << std::endl;
