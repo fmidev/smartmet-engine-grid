@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 25.10.15
+Version: 25.11.27
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -115,6 +115,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Thu Nov 27 2025 Andris Pavēnis <andris.pavenis@fmi.fi> 25.11.27-1.fmi
+- Repackage to smartmet-library-grid-files changes
+
 * Wed Oct 15 2025 Mika Heiskanen <mika.heiskanen@fmi.fi> - 25.10.15-1.fmi
 - Repackaged due to grid-files API changes
 
