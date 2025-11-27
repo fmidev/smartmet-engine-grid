@@ -24,7 +24,7 @@ BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: smartmet-library-spine-devel >= 25.9.16
 BuildRequires: smartmet-library-grid-content-devel >= 25.10.15
-BuildRequires: smartmet-library-grid-files-devel >= 25.10.15
+BuildRequires: smartmet-library-grid-files-devel >= 25.11.27
 BuildRequires: smartmet-library-macgyver-devel >= 25.9.30
 BuildRequires: make
 BuildRequires: omniORB-devel >= 4.3.0
@@ -35,7 +35,7 @@ BuildRequires: zlib-devel
 BuildRequires: postgresql15-devel
 Requires: %{smartmet_boost}-thread
 Requires: smartmet-library-grid-content >= 25.10.15
-Requires: smartmet-library-grid-files >= 25.10.15
+Requires: smartmet-library-grid-files >= 25.11.27
 Requires: smartmet-library-spine >= 25.9.16
 Requires: smartmet-library-macgyver >= 25.9.30
 Requires: omniORB-devel

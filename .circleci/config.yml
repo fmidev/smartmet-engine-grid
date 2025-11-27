@@ -55,7 +55,7 @@ jobs:
   upload-rhel10:
     docker:
       # No need to use smartmet-cibase-10
-      - image: fmidev/smartmet-cibase-8:latest
+      - image: quay.io/fmi/smartmet-cibase-8:latest
     steps:
       - attach_workspace:
           at: /dist
