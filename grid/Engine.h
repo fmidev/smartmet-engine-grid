@@ -6,6 +6,7 @@
 #include <grid-content/contentServer/cache/CacheImplementation.h>
 #include <grid-content/contentServer/redis/RedisImplementation.h>
 #include <grid-content/contentServer/memory/MemoryImplementation.h>
+#include <grid-content/contentServer/merge/MergeImplementation.h>
 #include <grid-content/dataServer/implementation/ServiceImplementation.h>
 #include <grid-content/queryServer/implementation/ServiceImplementation.h>
 #include <grid-content/queryServer/definition/ParameterMappingFile.h>
@@ -33,6 +34,7 @@ namespace Grid
 
 typedef std::unique_ptr<Spine::Table> ContentTable;
 typedef std::shared_ptr<ContentServer::ServiceInterface> ContentServer_sptr;
+typedef std::vector<ContentServer_sptr> ContentServer_sptr_vec;
 typedef std::shared_ptr<DataServer::ServiceInterface> DataServer_sptr;
 typedef std::shared_ptr<QueryServer::ServiceInterface> QueryServer_sptr;
 typedef std::shared_ptr<QueryServer::Query> Query_sptr;
@@ -40,7 +42,7 @@ typedef std::shared_ptr<QueryServer::Query> Query_sptr;
 struct CacheRec
 {
   Query_sptr query;
-  std::unordered_map<uint,ulonglong> producerHashMap;
+  std::unordered_map<uint,UInt64> producerHashMap;
   time_t cacheTime;
   time_t lastAccessTime;
   uint   accessCounter;
@@ -53,10 +55,33 @@ typedef std::shared_ptr<QueryServer::ParamMappingFile_vec> ParamMappingFile_vec_
 struct HashRec
 {
   time_t checkTime;
-  ulonglong hash;
+  UInt64 hash;
 };
 
-typedef std::unordered_map<uint,HashRec> ProducerHash_map;
+typedef std::unordered_map<T::ProducerId,HashRec> ProducerHash_map;
+
+
+struct ContentSource
+{
+  bool        mEnabled = true;
+  std::string mType = "redis";
+  std::string mRedisAddress= "127.0.0.1";
+  int         mRedisPort = 6379;
+  std::string mRedisTablePrefix = "a.";
+  std::string mRedisSecondaryAddress = "127.0.0.1";;
+  int         mRedisSecondaryPort = 0;
+  bool        mRedisLockEnabled = false;
+  bool        mRedisReloadRequired = true;
+  std::string mCorbaIor;
+  std::string mHttpUrl;
+  std::string mPrimaryConnectionString;
+  std::string mSecondaryConnectionString;
+  std::string mMemoryContentDir = "/tmp";
+  uint        mEventListMaxSize = 0;
+};
+
+typedef std::vector<ContentSource> ContentSource_vec;
+
 
 
 
@@ -74,7 +99,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     Query_sptr          executeQuery(std::shared_ptr<QueryServer::Query> query) const;
 
     ContentServer_sptr  getContentServer_sptr() const;
-    ContentServer_sptr  getContentSourceServer_sptr() const;
+    ContentServer_sptr  getContentSourceServer_sptr(uint idx) const;
     DataServer_sptr     getDataServer_sptr() const;
     QueryServer_sptr    getQueryServer_sptr() const;
 
@@ -88,8 +113,10 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     Fmi::Cache::CacheStatistics getCacheStats() const;
 
+    ContentSource_vec&  getContentSources() {return mContentSources;}
+
     T::ParamLevelId     getFmiParameterLevelId(
-                          uint producerId,
+                          T::ProducerId producerId,
                           int level) const;
 
     void                getProducerNameList(
@@ -102,8 +129,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                           const std::string& producerName,
                           int levelId) const;
 
-    ulonglong           getProducerHash(uint producerId) const;
-    ulonglong           getProducerHash(std::string producerName) const;
+    UInt64              getProducerHash(T::ProducerId producerId) const;
+    UInt64              getProducerHash(std::string producerName) const;
 
     ContentTable        getProducerInfo(std::optional<std::string> producer,std::string timeFormat) const;
     ContentTable        getGenerationInfo(std::optional<std::string> producer,std::string timeFormat) const;
@@ -171,8 +198,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                getProducerList(string_vec& producerList) const;
 
     bool                getProducerInfoByName(const std::string& name,T::ProducerInfo& producerInfo) const;
-    bool                getProducerInfoById(uint producerId,T::ProducerInfo& producerInfo) const;
-    bool                getGenerationInfoById(uint generationId,T::GenerationInfo& generationInfo);
+    bool                getProducerInfoById(T::ProducerId producerId,T::ProducerInfo& producerInfo) const;
+    bool                getGenerationInfoById(T::GenerationId generationId,T::GenerationInfo& generationInfo);
 
     void                getProducerParameterLevelList(
                           const std::string& producerName,
@@ -185,7 +212,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                           std::set<T::ParamLevelId>& levelIdList) const;
 
     void                getProducerLevelIdList(
-                          uint producerId,
+                          T::ProducerId producerId,
                           std::set<T::ParamLevelId>& levelIdList) const;
 
 
@@ -255,7 +282,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     time_t              mConfigurationFile_modificationTime;
     time_t              mConfigurationFile_checkTime;
 
-    ContentServer_sptr  mContentServer;
+    ContentServer_sptr_vec  mContentServers;
     ContentServer_sptr  mContentServerCache;
 
     DataServer_sptr     mDataServer;
@@ -272,21 +299,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     bool                mRequestForwardEnabled;
     std::string         mDataServerGridDirectory;
 
-    std::string         mContentSourceType;
-    std::string         mContentSourceRedisAddress;
-    int                 mContentSourceRedisPort;
-    std::string         mContentSourceRedisTablePrefix;
-    std::string         mContentSourceRedisSecondaryAddress;
-    int                 mContentSourceRedisSecondaryPort;
-    bool                mContentSourceRedisLockEnabled;
-    bool                mContentSourceRedisReloadRequired;
-    std::string         mContentSourceCorbaIor;
-    std::string         mContentSourceHttpUrl;
-    std::string         mPrimaryConnectionString;
-    std::string         mSecondaryConnectionString;
-
-    std::string         mMemoryContentDir;
-    uint                mEventListMaxSize;
+    ContentSource_vec   mContentSources;
     bool                mContentCacheEnabled;
 
     bool                mContentServerProcessingLogEnabled;
@@ -355,11 +368,12 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     bool                mShutdownFinished;
     Browser             mBrowser;
     bool                mBrowserEnabled;
-    unsigned long long  mBrowserFlags;
+    UInt64              mBrowserFlags;
 
 
     DataServer::ServiceImplementation*        mDataServerImplementation;
     ContentServer::CacheImplementation*       mContentServerCacheImplementation;
+    ContentServer::MergeImplementation*       mContentServerMergeImplementation;
 
     std::shared_ptr<Fmi::DEM>                 mDem;
     std::shared_ptr<Fmi::LandCover>           mLandCover;

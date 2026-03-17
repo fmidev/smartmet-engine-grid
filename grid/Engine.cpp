@@ -69,7 +69,7 @@ Engine::Engine(const char* theConfigFile)
         "smartmet.library.grid-files.cache.maxSizeInMegaBytes",
 
         "smartmet.engine.grid.enabled",
-
+/*
         "smartmet.engine.grid.content-server.content-source.type",
         "smartmet.engine.grid.content-server.content-source.redis.address",
         "smartmet.engine.grid.content-server.content-source.redis.port",
@@ -78,6 +78,7 @@ Engine::Engine(const char* theConfigFile)
         "smartmet.engine.grid.content-server.content-source.corba.ior",
         "smartmet.engine.grid.content-server.cache.enabled",
         "smartmet.engine.grid.content-server.cache.requestForwardEnabled",
+*/
 
         "smartmet.engine.grid.content-server.processing-log.enabled",
         "smartmet.engine.grid.content-server.processing-log.file",
@@ -134,6 +135,7 @@ Engine::Engine(const char* theConfigFile)
     mConfigurationFile_modificationTime = getFileModificationTime(mConfigurationFile_name.c_str());
     mLevelInfoList_lastUpdate = 0;
     mProducerInfoList_updateTime = 0;
+    /*
     mContentSourceRedisAddress = "127.0.0.1";
     mContentSourceRedisPort = 6379;
     mContentSourceRedisSecondaryAddress = "127.0.0.1";
@@ -143,10 +145,11 @@ Engine::Engine(const char* theConfigFile)
     mContentSourceRedisReloadRequired = false;
     mContentSourceHttpUrl = "";
     mContentSourceCorbaIor = "";
-    mContentCacheEnabled = true;
-    mRequestForwardEnabled = false;
     mMemoryContentDir = "/tmp";
     mEventListMaxSize = 0;
+    */
+    mContentCacheEnabled = true;
+    mRequestForwardEnabled = false;
     mQueryCache_updateTime = time(nullptr);
     mContentServerStartTime = 0;
     mShutdownRequested = false;
@@ -202,6 +205,7 @@ Engine::Engine(const char* theConfigFile)
     mMaxSizeOfCachedGridsInMegaBytes = 10000;
 
     mContentServerCacheImplementation = nullptr;
+    mContentServerMergeImplementation = nullptr;
     mDataServerImplementation = nullptr;
     mThread = 0;
 
@@ -213,6 +217,9 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.engine.grid.enabled", mEnabled);
     if (!mEnabled)
       return;
+
+    uint slen = configurationFile.getArraySize("smartmet.engine.grid.content-server.content-source");
+    //printf("SOURCES %u\n",slen);
 
     uint t = 0;
     while (configAttribute[t] != nullptr)
@@ -226,6 +233,7 @@ Engine::Engine(const char* theConfigFile)
       }
       t++;
     }
+
 
     configurationFile.getAttributeValue("smartmet.library.grid-files.configFile", mGridConfigFile);
     configurationFile.getAttributeValue("smartmet.library.grid-files.memoryMapper.enabled", mMemoryMapper_enabled);
@@ -241,25 +249,87 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.library.grid-files.cache.numOfGrids", mNumOfCachedGrids);
     configurationFile.getAttributeValue("smartmet.library.grid-files.cache.maxSizeInMegaBytes", mMaxSizeOfCachedGridsInMegaBytes);
 
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.type", mContentSourceType);
+    if (slen == 0)
+    {
+      ContentSource rec;
+      configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.enabled", rec.mEnabled);
+      configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.type", rec.mType);
+      configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.address", rec.mRedisAddress);
+      configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.port", rec.mRedisPort);
+      configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.tablePrefix", rec.mRedisTablePrefix);
+      configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.secondaryAddress", rec.mRedisSecondaryAddress);
+      configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.secondaryPort", rec.mRedisSecondaryPort);
+      configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.lockEnabled", rec.mRedisLockEnabled);
+      configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.reloadRequired", rec.mRedisReloadRequired);
 
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.address", mContentSourceRedisAddress);
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.port", mContentSourceRedisPort);
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.tablePrefix", mContentSourceRedisTablePrefix);
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.secondaryAddress", mContentSourceRedisSecondaryAddress);
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.secondaryPort", mContentSourceRedisSecondaryPort);
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.lockEnabled", mContentSourceRedisLockEnabled);
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.reloadRequired", mContentSourceRedisReloadRequired);
+      configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.postgresql.primaryConnectionString", rec.mPrimaryConnectionString);
+      configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.postgresql.secondaryConnectionString", rec.mSecondaryConnectionString);
 
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.postgresql.primaryConnectionString", mPrimaryConnectionString);
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.postgresql.secondaryConnectionString", mSecondaryConnectionString);
+      configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.http.url", rec.mHttpUrl);
 
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.http.url", mContentSourceHttpUrl);
+      configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.corba.ior", rec.mCorbaIor);
 
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.corba.ior", mContentSourceCorbaIor);
+      configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.file.contentDir", rec.mMemoryContentDir);
+      configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.file.eventListMaxSize", rec.mEventListMaxSize);
 
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.file.contentDir", mMemoryContentDir);
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.file.eventListMaxSize", mEventListMaxSize);
+      mContentSources.push_back(rec);
+    }
+    else
+    {
+      char aname[200];
+      for (uint t=0; t<slen; t++)
+      {
+        ContentSource rec;
+
+        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.enabled",t);
+        configurationFile.getAttributeValue(aname,rec.mEnabled);
+
+        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.type",t);
+        configurationFile.getAttributeValue(aname,rec.mType);
+
+        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.redis.address",t);
+        configurationFile.getAttributeValue(aname,rec.mRedisAddress);
+
+        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.redis.port",t);
+        configurationFile.getAttributeValue(aname,rec.mRedisPort);
+
+        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.redis.tablePrefix",t);
+        configurationFile.getAttributeValue(aname,rec.mRedisTablePrefix);
+
+        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.redis.secondaryAddress",t);
+        configurationFile.getAttributeValue(aname,rec.mRedisSecondaryAddress);
+
+        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.redis.secondaryPort",t);
+        configurationFile.getAttributeValue(aname,rec.mRedisSecondaryPort);
+
+        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.redis.lockEnabled",t);
+        configurationFile.getAttributeValue(aname,rec.mRedisLockEnabled);
+
+        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.redis.reloadRequired",t);
+        configurationFile.getAttributeValue(aname,rec.mRedisReloadRequired);
+
+        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.postgresql.primaryConnectionString",t);
+        configurationFile.getAttributeValue(aname,rec.mPrimaryConnectionString);
+
+        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.postgresql.secondaryConnectionString",t);
+        configurationFile.getAttributeValue(aname,rec.mSecondaryConnectionString);
+
+        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.http.url",t);
+        configurationFile.getAttributeValue(aname,rec.mHttpUrl);
+
+        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.corba.ior",t);
+        configurationFile.getAttributeValue(aname,rec.mCorbaIor);
+
+        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.file.contentDir",t);
+        configurationFile.getAttributeValue(aname,rec.mMemoryContentDir);
+
+        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.file.eventListMaxSize",t);
+        configurationFile.getAttributeValue(aname,rec.mEventListMaxSize);
+
+        mContentSources.push_back(rec);
+      }
+    }
+
 
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.enabled", mContentCacheEnabled);
     configurationFile.getAttributeValue("smartmet.engine.grid.content-server.cache.requestForwardEnabled", mRequestForwardEnabled);
@@ -400,8 +470,9 @@ void Engine::init()
   {
     if (!mEnabled)
     {
-      mContentServer.reset(new ContentServer::ServiceInterface());
-      mContentServer->setEnabled(false);
+      ContentServer_sptr contentServer(new ContentServer::ServiceInterface());
+      contentServer->setEnabled(false);
+      mContentServers.push_back(contentServer);
 
       mDataServer.reset(new DataServer::ServiceInterface());
       mDataServer->setEnabled(false);
@@ -429,68 +500,95 @@ void Engine::init()
 
     clearMappings();
 
-    if (mContentSourceType == "redis")
+    for (auto contentSource = mContentSources.begin(); contentSource != mContentSources.end(); ++contentSource)
     {
-      ContentServer::RedisImplementation* redis = new ContentServer::RedisImplementation();
-      mContentServer.reset(redis);
-      redis->init(mContentSourceRedisAddress.c_str(), mContentSourceRedisPort, mContentSourceRedisTablePrefix.c_str(), mContentSourceRedisSecondaryAddress.c_str(),
-          mContentSourceRedisSecondaryPort, mContentSourceRedisLockEnabled, mContentSourceRedisReloadRequired);
-      cServer = redis;
-    }
-    else if (mContentSourceType == "postgresql")
-    {
-      ContentServer::PostgresqlImplementation* postgres = new ContentServer::PostgresqlImplementation();
-      mContentServer.reset(postgres);
-      postgres->init(mPrimaryConnectionString.c_str(),mSecondaryConnectionString.c_str(),false);
-      cServer = postgres;
-    }
-    else if (mContentSourceType == "corba")
-    {
-      ContentServer::Corba::ClientImplementation* client = new ContentServer::Corba::ClientImplementation();
-      mContentServer.reset(client);
-      client->init(mContentSourceCorbaIor.c_str());
-      cServer = client;
-    }
-    else if (mContentSourceType == "http")
-    {
-      ContentServer::HTTP::ClientImplementation* client = new ContentServer::HTTP::ClientImplementation();
-      mContentServer.reset(client);
-      client->init(mContentSourceHttpUrl.c_str());
-      cServer = client;
-    }
-    else if (mContentSourceType == "file")
-    {
-      bool eventstEnabled = true;
-      if (mEventListMaxSize == 0)
+      if (contentSource->mEnabled)
       {
-        eventstEnabled = false;
-        mContentCacheEnabled = false;
-      }
+        if (contentSource->mType == "redis")
+        {
+          ContentServer::RedisImplementation* redis = new ContentServer::RedisImplementation();
+          redis->init(contentSource->mRedisAddress.c_str(), contentSource->mRedisPort, contentSource->mRedisTablePrefix.c_str(),
+              contentSource->mRedisSecondaryAddress.c_str(), contentSource->mRedisSecondaryPort,
+              contentSource->mRedisLockEnabled, contentSource->mRedisReloadRequired);
 
-      ContentServer::MemoryImplementation* memoryImplementation = new ContentServer::MemoryImplementation();
-      mContentServer.reset(memoryImplementation);
-      memoryImplementation->init(true, false, true, eventstEnabled, mMemoryContentDir, 0);
-      memoryImplementation->setEventListMaxLength(mEventListMaxSize);
-      cServer = memoryImplementation;
-    }
-    else
-    {
-      Fmi::Exception exception(BCP, "Unknown content source type!");
-      exception.addParameter("Content source type", mContentSourceType);
-      throw exception;
+          ContentServer_sptr contentServer(redis);
+          mContentServers.push_back(contentServer);
+
+          cServer = redis;
+        }
+        else if (contentSource->mType == "postgresql")
+        {
+          ContentServer::PostgresqlImplementation* postgres = new ContentServer::PostgresqlImplementation();
+          postgres->init(contentSource->mPrimaryConnectionString.c_str(),contentSource->mSecondaryConnectionString.c_str(),false);
+
+          ContentServer_sptr contentServer(postgres);
+          mContentServers.push_back(contentServer);
+          cServer = postgres;
+        }
+        else if (contentSource->mType == "corba")
+        {
+          ContentServer::Corba::ClientImplementation* client = new ContentServer::Corba::ClientImplementation();
+          client->init(contentSource->mCorbaIor.c_str());
+
+          ContentServer_sptr contentServer(client);
+          mContentServers.push_back(contentServer);
+          cServer = client;
+        }
+        else if (contentSource->mType == "http")
+        {
+          ContentServer::HTTP::ClientImplementation* client = new ContentServer::HTTP::ClientImplementation();
+          client->init(contentSource->mHttpUrl.c_str());
+
+          ContentServer_sptr contentServer(client);
+          mContentServers.push_back(contentServer);
+          cServer = client;
+        }
+        else if (contentSource->mType == "file")
+        {
+          bool eventstEnabled = true;
+          if (contentSource->mEventListMaxSize == 0)
+          {
+            eventstEnabled = false;
+            mContentCacheEnabled = false;
+          }
+
+          ContentServer::MemoryImplementation* memoryImplementation = new ContentServer::MemoryImplementation();
+          memoryImplementation->init(true, false, true, eventstEnabled, contentSource->mMemoryContentDir, 0);
+          memoryImplementation->setEventListMaxLength(contentSource->mEventListMaxSize);
+
+          ContentServer_sptr contentServer(memoryImplementation);
+          mContentServers.push_back(contentServer);
+          cServer = memoryImplementation;
+        }
+        else
+        {
+          Fmi::Exception exception(BCP, "Unknown content source type!");
+          exception.addParameter("Content source type", contentSource->mType);
+          throw exception;
+        }
+      }
     }
 
     if (mContentCacheEnabled)
     {
-      mContentServerCacheImplementation = new ContentServer::CacheImplementation();
-      mContentServerCacheImplementation->setRequestForwardEnabled(mRequestForwardEnabled);
-      mContentServerCacheImplementation->setContentSwap(mContentSwapEnabled,mFileCacheMaxFirstWaitTime,mFileCacheMaxWaitTime);
-      mContentServerCacheImplementation->setContentUpdateInterval(mContentUpdateInterval);
-      mContentServerCacheImplementation->init(CONTENT_SERVER_SESSION_ID,DATA_SERVER_SESSION_ID,cServer);
+      mContentServerMergeImplementation = new ContentServer::MergeImplementation();
+      mContentServerMergeImplementation->setContentSwap(mFileCacheMaxFirstWaitTime,mFileCacheMaxWaitTime);
+      mContentServerMergeImplementation->setContentUpdateInterval(mContentUpdateInterval);
+      mContentServerMergeImplementation->init(CONTENT_SERVER_SESSION_ID,DATA_SERVER_SESSION_ID,mContentServers);
+      mContentServerCache.reset(mContentServerMergeImplementation);
+      mContentServerMergeImplementation->startEventProcessing();
+      cServer = mContentServerMergeImplementation;
+  /*
+        mContentServerCacheImplementation = new ContentServer::CacheImplementation();
+        mContentServerCacheImplementation->setRequestForwardEnabled(mRequestForwardEnabled);
+        mContentServerCacheImplementation->setContentSwap(mContentSwapEnabled,mFileCacheMaxFirstWaitTime,mFileCacheMaxWaitTime);
+        mContentServerCacheImplementation->setContentUpdateInterval(mContentUpdateInterval);
+        mContentServerCacheImplementation->init(CONTENT_SERVER_SESSION_ID,DATA_SERVER_SESSION_ID,cServer);
 
-      mContentServerCache.reset(mContentServerCacheImplementation);
-      mContentServerCacheImplementation->startEventProcessing();
-      cServer = mContentServerCacheImplementation;
+        mContentServerCache.reset(mContentServerCacheImplementation);
+        mContentServerCacheImplementation->startEventProcessing();
+        cServer = mContentServerCacheImplementation;
+        */
     }
 
     if (mDataServerRemote && mDataServerIor.length() > 50)
@@ -598,7 +696,7 @@ void Engine::init()
     mProducerMappingDefinitions.init(mProducerMappingDefinitions_filenames, true);
     mParameterAliasDefinitions.init(mParameterAliasDefinitions_filenames);
 
-    mBrowser.init(mConfigurationFile_name.c_str(), mContentServer, this);
+    mBrowser.init(mConfigurationFile_name.c_str(), this);
     mBrowser.setFlags(mBrowserFlags);
 
     // Register admin requests if reactor instance is available
@@ -669,7 +767,7 @@ void Engine::checkConfiguration()
     ConfigurationFile configurationFile;
     configurationFile.readFile(mConfigurationFile_name.c_str());
 
-    ContentServer_sptr contentServer = getContentServer_sptr();
+    //ContentServer_sptr contentServer = getContentServer_sptr();
 
     bool enabled = true;
     configurationFile.getAttributeValue("smartmet.engine.grid.enabled", enabled);
@@ -679,7 +777,9 @@ void Engine::checkConfiguration()
       // if it is started in the disabled state.
 
       mEnabled = false;
-      mContentServer->setEnabled(false);
+      for (auto it = mContentServers.begin(); it != mContentServers.end(); ++it)
+        (*it)->setEnabled(false);
+
       mDataServer->setEnabled(false);
       mQueryServer->setEnabled(false);
 
@@ -711,8 +811,15 @@ void Engine::checkConfiguration()
 
       mContentServerProcessingLog.init(mContentServerProcessingLogEnabled, mContentServerProcessingLogFile.c_str(), mContentServerProcessingLogMaxSize,
           mContentServerProcessingLogTruncateSize);
-      if (contentServer->getProcessingLog() == nullptr)
-        contentServer->setProcessingLog(&mContentServerProcessingLog);
+
+      for (auto it = mContentServers.begin(); it != mContentServers.end(); ++it)
+      {
+        if ((*it)->getProcessingLog() == nullptr)
+          (*it)->setProcessingLog(&mContentServerProcessingLog);
+      }
+
+      //if (contentServer->getProcessingLog() == nullptr)
+      //  contentServer->setProcessingLog(&mContentServerProcessingLog);
     }
 
     // ### Content server debug log
@@ -738,8 +845,14 @@ void Engine::checkConfiguration()
       mContentServerDebugLogTruncateSize = contentServerDebugLogTruncateSize;
 
       mContentServerDebugLog.init(mContentServerDebugLogEnabled, mContentServerDebugLogFile.c_str(), mContentServerDebugLogMaxSize, mContentServerDebugLogTruncateSize);
-      if (contentServer->getDebugLog() == nullptr)
-        contentServer->setDebugLog(&mContentServerDebugLog);
+
+      for (auto it = mContentServers.begin(); it != mContentServers.end(); ++it)
+      {
+        if ((*it)->getDebugLog() == nullptr)
+          (*it)->setDebugLog(&mContentServerDebugLog);
+      }
+      //if (contentServer->getDebugLog() == nullptr)
+      //  contentServer->setDebugLog(&mContentServerDebugLog);
     }
 
     // ### Data server processing log
@@ -868,7 +981,7 @@ void Engine::checkConfiguration()
     }
 
 
-    unsigned long long browserFlags = 0;
+    UInt64 browserFlags = 0;
     configurationFile.getAttributeValue("smartmet.engine.grid.browser.flags", browserFlags);
 
     if (mBrowserFlags != browserFlags)
@@ -980,8 +1093,14 @@ void Engine::shutdown()
     if (mContentServerCache)
       mContentServerCache->shutdown();
 
-    if (mContentServer)
-      mContentServer->shutdown();
+    if (mContentServerMergeImplementation)
+      mContentServerMergeImplementation->shutdown();
+
+    for (auto it = mContentServers.begin(); it != mContentServers.end(); ++it)
+      (*it)->shutdown();
+
+    //if (mContentServer)
+    //  mContentServer->shutdown();
 
     mShutdownFinished = true;
   }
@@ -1097,7 +1216,7 @@ Query_sptr Engine::executeQuery(Query_sptr query) const
         mQueryCache_stats.hits++;
         for (auto prod = it->second.producerHashMap.begin(); prod != it->second.producerHashMap.end() && !noMatch; ++prod)
         {
-          ulonglong producerHash = getProducerHash(prod->first);
+          UInt64 producerHash = getProducerHash(prod->first);
           if (producerHash != prod->second)
             noMatch = true;
         }
@@ -1142,13 +1261,13 @@ Query_sptr Engine::executeQuery(Query_sptr query) const
       rec.lastAccessTime = currentTime;
       rec.accessCounter = 0;
 
-      std::set < uint > producerIdList;
+      std::set<T::ProducerId> producerIdList;
       query->getResultProducerIdList(producerIdList);
 
       for (auto it = producerIdList.begin(); it != producerIdList.end(); ++it)
       {
-        ulonglong producerHash = getProducerHash(*it);
-        rec.producerHashMap.insert(std::pair<uint, ulonglong>(*it, producerHash));
+        UInt64 producerHash = getProducerHash(*it);
+        rec.producerHashMap.insert(std::pair<T::ProducerId, UInt64>(*it, producerHash));
       }
 
       AutoWriteLock lock(&mQueryCache_modificationLock);
@@ -1251,7 +1370,11 @@ ContentServer_sptr Engine::getContentServer_sptr() const
     if (mEnabled && mContentCacheEnabled)
       return mContentServerCache;
     else
-      return mContentServer;
+    if (mContentServers.size())
+      return mContentServers[0];
+
+    ContentServer_sptr sptr;
+    return sptr;
   }
   catch (...)
   {
@@ -1261,12 +1384,16 @@ ContentServer_sptr Engine::getContentServer_sptr() const
   }
 }
 
-ContentServer_sptr Engine::getContentSourceServer_sptr() const
+ContentServer_sptr Engine::getContentSourceServer_sptr(uint idx) const
 {
   FUNCTION_TRACE
   try
   {
-    return mContentServer;
+    if (idx < mContentServers.size())
+      return mContentServers[idx];
+
+    ContentServer_sptr sptr;
+    return sptr;
   }
   catch (...)
   {
@@ -1484,7 +1611,7 @@ void Engine::getProducerNameList(const std::string& mappingName, std::vector<std
   }
 }
 
-ulonglong Engine::getProducerHash(uint producerId) const
+UInt64 Engine::getProducerHash(T::ProducerId producerId) const
 {
   FUNCTION_TRACE
   try
@@ -1498,7 +1625,7 @@ ulonglong Engine::getProducerHash(uint producerId) const
 
     ContentServer_sptr contentServer = getContentServer_sptr();
     time_t currentTime = time(nullptr);
-    ulonglong hash = 0;
+    UInt64 hash = 0;
 
     auto rec = mProducerHashMap.find(producerId);
     if (rec != mProducerHashMap.end())
@@ -1522,7 +1649,7 @@ ulonglong Engine::getProducerHash(uint producerId) const
       hrec.checkTime = currentTime;
       hrec.hash = hash;
 
-      mProducerHashMap.insert(std::pair<uint, HashRec>(producerId, hrec));
+      mProducerHashMap.insert(std::pair<T::ProducerId, HashRec>(producerId, hrec));
       return hash;
     }
 
@@ -1538,11 +1665,11 @@ ulonglong Engine::getProducerHash(uint producerId) const
 
 
 
-ulonglong Engine::getProducerHash(std::string producerName) const
+UInt64 Engine::getProducerHash(std::string producerName) const
 {
   try
   {
-    ulonglong hash = 0;
+    UInt64 hash = 0;
     std::vector<std::string> nameList;
     getProducerNameList(producerName,nameList);
     if (nameList.size() > 0)
@@ -2474,11 +2601,11 @@ ContentTable Engine::getExtGenerationInfo(std::optional<std::string> producer,st
                     std::string key = gInfo->mAnalysisTime + ":" + std::to_string(geom->mGeometryId);
                     auto p = counterList.find(key);
                     if (p != counterList.end())
-                      p->second.push_back(std::pair<uint,int>(geom->mGenerationId,geom->mGeometryId));
+                      p->second.push_back(std::pair<T::GenerationId,int>(geom->mGenerationId,geom->mGeometryId));
                     else
                     {
                       std::vector<std::pair<uint,int>> cntList;
-                      cntList.push_back(std::pair<uint,int>(geom->mGenerationId,geom->mGeometryId));
+                      cntList.push_back(std::pair<T::GenerationId,int>(geom->mGenerationId,geom->mGeometryId));
                       counterList.insert(std::pair<std::string,std::vector<std::pair<uint,int>>>(key,cntList));
                     }
                   }
@@ -2948,7 +3075,7 @@ void Engine::getStateAttributes(std::shared_ptr<T::AttributeNode> parent)
 
     auto contentServer = modules->addAttribute("Content Server");
     auto contentSource = contentServer->addAttribute("Content Source");
-    mContentServer->getStateAttributes(contentSource);
+    //mContentServer->getStateAttributes(contentSource);
 
     if (mContentServerCache)
     {
@@ -2976,7 +3103,7 @@ void Engine::getStateAttributes(std::shared_ptr<T::AttributeNode> parent)
 
 
 
-T::ParamLevelId Engine::getFmiParameterLevelId(uint producerId, int level) const
+T::ParamLevelId Engine::getFmiParameterLevelId(T::ProducerId producerId, int level) const
 {
   FUNCTION_TRACE
   try
@@ -3041,7 +3168,7 @@ bool Engine::getProducerInfoByName(const std::string& name, T::ProducerInfo& pro
   }
 }
 
-bool Engine::getProducerInfoById(uint producerId, T::ProducerInfo& producerInfo) const
+bool Engine::getProducerInfoById(T::ProducerId producerId, T::ProducerInfo& producerInfo) const
 {
   FUNCTION_TRACE
   try
@@ -3058,7 +3185,7 @@ bool Engine::getProducerInfoById(uint producerId, T::ProducerInfo& producerInfo)
   }
 }
 
-bool Engine::getGenerationInfoById(uint generationId, T::GenerationInfo& generationInfo)
+bool Engine::getGenerationInfoById(T::GenerationId generationId, T::GenerationInfo& generationInfo)
 {
   FUNCTION_TRACE
   try
@@ -3165,7 +3292,7 @@ void Engine::getProducerParameterLevelIdList(const std::string& producerName, st
 
 
 
-void Engine::getProducerLevelIdList(uint producerId, std::set<T::ParamLevelId>& levelIdList) const
+void Engine::getProducerLevelIdList(T::ProducerId producerId, std::set<T::ParamLevelId>& levelIdList) const
 {
   FUNCTION_TRACE
   try
@@ -3413,7 +3540,7 @@ void Engine::getExtAnalysisTimes(std::vector<std::vector<std::string>>& table) c
       uint sz = rec->size();
       bool available = true;
       std::map<std::string,uint> counterList;
-      std::map<std::string,uint> generationList;
+      std::map<std::string,T::GenerationId> generationList;
       for (uint t=1; t<sz && available; t++)
       {
         AutoReadLock lock(&mProducerInfoList_modificationLock);
@@ -3441,7 +3568,7 @@ void Engine::getExtAnalysisTimes(std::vector<std::vector<std::string>>& table) c
                 else
                 {
                   counterList.insert(std::pair<std::string,uint>(gInfo->mAnalysisTime,1));
-                  generationList.insert(std::pair<std::string,uint>(gInfo->mAnalysisTime,gInfo->mGenerationId));
+                  generationList.insert(std::pair<std::string,T::GenerationId>(gInfo->mAnalysisTime,gInfo->mGenerationId));
                 }
               }
             }
@@ -4194,7 +4321,7 @@ void Engine::updateQueryCache()
 
     mQueryCache_updateTime = currentTime;
     time_t lastAccess = currentTime - mQueryCache_maxAge;
-    std::vector < ulonglong > deleteList;
+    std::vector < UInt64 > deleteList;
 
     {
       AutoReadLock lock(&mQueryCache_modificationLock);
@@ -4212,7 +4339,7 @@ void Engine::updateQueryCache()
           bool noMatch = false;
           for (auto prod = it->second.producerHashMap.begin(); prod != it->second.producerHashMap.end() && !noMatch; ++prod)
           {
-            ulonglong producerHash = getProducerHash(prod->first);
+            UInt64 producerHash = getProducerHash(prod->first);
             if (producerHash != prod->second)
               noMatch = true;
           }

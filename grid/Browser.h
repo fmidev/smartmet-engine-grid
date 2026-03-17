@@ -31,11 +31,11 @@ class Browser
                           Browser();
     virtual               ~Browser();
 
-    void                  init(const char *theConfigurationFile,ContentServer_sptr theMainContentServer,Engine *theGridEngine);
+    void                  init(const char *theConfigurationFile,Engine *theGridEngine);
     bool                  requestHandler(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
     void                  browserContent(SessionManagement::SessionInfo& session,std::ostringstream& output);
-    unsigned long long    getFlags();
-    void                  setFlags(unsigned long long flags);
+    UInt64                getFlags();
+    void                  setFlags(UInt64 flags);
 
   private:
 
@@ -75,11 +75,11 @@ class Browser
     ContentServer_sptr    mMainContentServer;
     ContentServer_sptr    mCacheContentServer;
     ConfigurationFile     mConfigurationFile;
-    uint                  mCachedFileId[20];
+    T::FileId             mCachedFileId[20];
     T::ContentInfoList    mCachedContentInfoList[20];
     uint                  mCachedContentCount;
     Filenames             mFilenames;
-    unsigned long long    mFlags;
+    UInt64                mFlags;
 
 
   public:
@@ -87,8 +87,8 @@ class Browser
     class Flags
     {
       public:
-        static const unsigned long long   contentModificationEnabled  = 1 << 0;
-        static const unsigned long long   logModificationEnabled      = 1 << 1;
+        static const UInt64 contentModificationEnabled  = 1 << 0;
+        static const UInt64 logModificationEnabled      = 1 << 1;
     };
 };
 

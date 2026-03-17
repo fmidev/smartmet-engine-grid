@@ -92,13 +92,13 @@ struct MetaData
   }
 
 
-  uint                    producerId;
+  T::ProducerId           producerId;
   std::string             producerName;
   std::string             producerDescription;
-  uint                    generationId;
+  T::GenerationId         generationId;
   std::string             analysisTime;     // All times are UTC time string (format "YYYYMMDDTHHMISS")
 
-  int                     geometryId;
+  T::GeometryId           geometryId;
   int                     projectionId;
   std::string             projectionName;
   std::string             wkt;

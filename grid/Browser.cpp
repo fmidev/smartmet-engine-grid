@@ -57,13 +57,12 @@ Browser::~Browser()
 
 
 
-void Browser::init(const char *theConfigurationFile,ContentServer_sptr theMainContentServer,Engine *theGridEngine)
+void Browser::init(const char *theConfigurationFile,Engine *theGridEngine)
 {
   try
   {
     mConfigurationFile.readFile(theConfigurationFile);
     mGridEngine = theGridEngine;
-    mMainContentServer = theMainContentServer;
     mCacheContentServer = mGridEngine->getContentServer_sptr();
   }
   catch (...)
@@ -76,7 +75,7 @@ void Browser::init(const char *theConfigurationFile,ContentServer_sptr theMainCo
 
 
 
-void Browser::setFlags(unsigned long long flags)
+void Browser::setFlags(UInt64 flags)
 {
   try
   {
@@ -92,7 +91,7 @@ void Browser::setFlags(unsigned long long flags)
 
 
 
-unsigned long long Browser::getFlags()
+UInt64 Browser::getFlags()
 {
   try
   {
@@ -187,6 +186,9 @@ void Browser::updateSessionParameters(SessionManagement::SessionInfo& session,co
     if (v)
       session.setAttribute("grid-engine","source",v->c_str());
 
+    v = theRequest.getParameter("sourceIdx");
+    if (v)
+      session.setAttribute("grid-engine","sourceIdx",v->c_str());
 
     //session.print(std::cout,0,0);
   }
@@ -203,7 +205,10 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
 {
   try
   {
-    ContentServer_sptr contentServer = mMainContentServer;
+    uint sourceIdx = 0;
+    session.getAttribute("grid-engine","sourceIdx",sourceIdx);
+    ContentServer_sptr contentServer = mGridEngine->getContentSourceServer_sptr(sourceIdx);
+
     std::string sourceStr = "main";
     bool mainSource = true;
 
@@ -219,25 +224,25 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
     uint nextMessageIndex = 0;
     uint maxRecords = 30;
 
-    uint producerId = 0;
+    T::ProducerId producerId = 0;
     session.getAttribute("grid-engine","producerId",producerId);
 
     std::string producerName;
     session.getAttribute("grid-engine","producerName",producerName);
 
-    uint generationId = 0;
+    T::GenerationId generationId = 0;
     session.getAttribute("grid-engine","generationId",generationId);
 
     std::string generationName;
     session.getAttribute("grid-engine","generationName",generationName);
 
-    uint fileId = 0;
+    T::FileId fileId = 0;
     session.getAttribute("grid-engine","fileId",fileId);
 
-    uint startMessageIndex = 0;
+    T::MessageIndex startMessageIndex = 0;
     session.getAttribute("grid-engine","startMessageIndex",startMessageIndex);
 
-    uint messageIndex = 0;
+    T::MessageIndex messageIndex = 0;
     session.getAttribute("grid-engine","messageIndex",messageIndex);
 
     uint mode = 0;
@@ -519,6 +524,7 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
             fg = "#FFFFFF";
             bg = "#FF0000";
 
+#if 0
             std::ostringstream url;
 
             url << "/grid-gui";
@@ -563,6 +569,8 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
             url << ";yy=";
 
             output << "<TR style=\"background:" << bg <<"; color:" << fg << ";\" onClick=\"window.open('" << url.str() << "','_blank');\" >\n";
+#endif
+            output << "<TR style=\"background:" << bg <<"; color:" << fg << ";\" >\n";
           }
           else
           {
@@ -824,7 +832,10 @@ bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HT
 {
   try
   {
-    ContentServer_sptr contentServer = mMainContentServer;
+    uint sourceIdx = 0;
+    session.getAttribute("grid-engine","sourceIdx",sourceIdx);
+    ContentServer_sptr contentServer = mGridEngine->getContentSourceServer_sptr(sourceIdx);
+
     std::string sourceStr = "main";
     bool mainSource = true;
 
@@ -836,33 +847,33 @@ bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HT
       mainSource = false;
     }
 
-    uint nextFileId = 0;
+    T::FileId nextFileId = 0;
     uint maxRecords = 30;
 
     T::FileInfo fInfo;
 
-    uint producerId = 0;
+    T::ProducerId producerId = 0;
     session.getAttribute("grid-engine","producerId",producerId);
 
     std::string producerName;
     session.getAttribute("grid-engine","producerName",producerName);
 
-    uint prevGenerationId = 0;
+    T::GenerationId prevGenerationId = 0;
     session.getAttribute("grid-engine","prevGenerationId",prevGenerationId);
 
-    uint generationId = 0;
+    T::GenerationId generationId = 0;
     session.getAttribute("grid-engine","generationId",generationId);
 
     std::string generationName;
     session.getAttribute("grid-engine","generationName",generationName);
 
-    uint fileId = 0;
+    T::FileId fileId = 0;
     session.getAttribute("grid-engine","fileId",fileId);
 
-    uint startFileId = 0;
+    T::FileId startFileId = 0;
     session.getAttribute("grid-engine","startFileId",startFileId);
 
-    uint endFileId = 0;
+    T::FileId endFileId = 0;
     session.getAttribute("grid-engine","endFileId",endFileId);
 
     if (generationId != prevGenerationId)
@@ -1022,6 +1033,11 @@ bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HT
     output << "<TABLE border=\"1\" width=\"100%\" style=\"font-size:12;\">\n";
     output << "<TR bgColor=\"#D0D0D0\">";
     output << "<TD>Id</TD>";
+    if (!mainSource)
+    {
+      output << "<TD>StorageId</TD>";
+      output << "<TD>LocalId</TD>";
+    }
     output << "<TD>Server</TD>";
     output << "<TD>Name</TD>";
     output << "<TD>Protocol</TD>";
@@ -1080,6 +1096,11 @@ bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HT
       }
 
       output << "<TD>"<< file->mFileId << "</TD>";
+      if (!mainSource)
+      {
+        output << "<TD>"<< ((file->mFileId % 0xFF00000000L) >> 32) << "</TD>";
+        output << "<TD>"<< (file->mFileId & 0xFFFFFFFF) << "</TD>";
+      }
       output << "<TD>"<< file->mServer << "</TD>";
       output << "<TD>"<< file->mName << "</TD>";
       output << "<TD>"<< C_INT(file->mProtocol) << "</TD>";
@@ -1249,7 +1270,10 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
 {
   try
   {
-    ContentServer_sptr contentServer = mMainContentServer;
+    uint sourceIdx = 0;
+    session.getAttribute("grid-engine","sourceIdx",sourceIdx);
+    ContentServer_sptr contentServer = mGridEngine->getContentSourceServer_sptr(sourceIdx);
+
     std::string sourceStr = "main";
     bool mainSource = true;
     const char *statusStr[] = {"Unknown","Ready","Not Ready"};
@@ -1266,16 +1290,16 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
     uint maxRecords = 30;
     T::GenerationInfo gInfo;
 
-    uint prevProducerId = 0;
+    T::ProducerId prevProducerId = 0;
     session.getAttribute("grid-engine","prevProducerId",prevProducerId);
 
-    uint producerId = 0;
+    T::ProducerId producerId = 0;
     session.getAttribute("grid-engine","producerId",producerId);
 
     std::string producerName;
     session.getAttribute("grid-engine","producerName",producerName);
 
-    uint generationId = 0;
+    T::GenerationId generationId = 0;
     session.getAttribute("grid-engine","generationId",generationId);
 
     uint startGenerationIndex = 0;
@@ -1430,6 +1454,13 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
     output << "<TABLE border=\"1\" width=\"100%\" style=\"font-size:12;\">\n";
     output << "<TR bgColor=\"#D0D0D0\">";
     output << "<TD>Id</TD>";
+
+    if (!mainSource)
+    {
+      output << "<TD>StorageId</TD>";
+      output << "<TD>LocalId</TD>";
+    }
+
     output << "<TD>Name</TD>";
     output << "<TD>Description</TD>";
     output << "<TD>AnalysisTime</TD>";
@@ -1470,6 +1501,11 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
 
 
         output << "<TD>"<< generation->mGenerationId << "</TD>";
+        if (!mainSource)
+        {
+          output << "<TD>"<< ((generation->mGenerationId % 0xFF00000000L) >> 32) << "</TD>";
+          output << "<TD>"<< (generation->mGenerationId & 0xFFFFFFFF) << "</TD>";
+        }
         output << "<TD>"<< generation->mName << "</TD>";
         output << "<TD>"<< generation->mDescription << "</TD>";
         output << "<TD>"<< generation->mAnalysisTime << "</TD>";
@@ -1614,7 +1650,10 @@ bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine
 {
   try
   {
-    ContentServer_sptr contentServer = mMainContentServer;
+    uint sourceIdx = 0;
+    session.getAttribute("grid-engine","sourceIdx",sourceIdx);
+    ContentServer_sptr contentServer = mGridEngine->getContentSourceServer_sptr(sourceIdx);
+
     std::string sourceStr = "main";
     bool mainSource = true;
 
@@ -1629,7 +1668,7 @@ bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine
     T::ProducerInfo pInfo;
     uint maxRecords = 30;
 
-    uint producerId = 0;
+    T::ProducerId producerId = 0;
     session.getAttribute("grid-engine","producerId",producerId);
 
     uint startProducerIndex = 0;
@@ -1639,6 +1678,8 @@ bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine
     auto modeStr = theRequest.getParameter("mode");
     if (modeStr)
       mode = atoi(modeStr->c_str());
+
+
 
     if ((mFlags & Flags::contentModificationEnabled) && mainSource  &&  mode >= 100 && (session.mUserInfo.getUserId() == 0 || session.mUserInfo.isUserGroupMember("grid-admin")))
     {
@@ -1728,12 +1769,18 @@ bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine
     output << "<A href=\"grid-admin?target=grid-engine&page=contentServer\">Content Server</A> / ";
     output << "<A href=\"grid-admin?target=grid-engine&page=contentInformation\">Content Information</A> / ";
     output << "<HR>\n";
-    output << "<H2>Producers (" << sourceStr << " / " << contentServer->getSourceInfo()  <<  ")</H2>\n";
+    //output << "<H2>Producers (" << sourceStr << " / " << contentServer->getSourceInfo()  <<  ")</H2>\n";
+    output << "<H2>Producers (" << sourceStr << ")</H2>\n";
     output << "<HR>\n";
 
     output << "<TABLE border=\"1\" width=\"100%\" style=\"font-size:12;\">\n";
     output << "<TR bgColor=\"#D0D0D0\">";
     output << "<TD>Id</TD>";
+    if (!mainSource)
+    {
+      output << "<TD>StorageId</TD>";
+      output << "<TD>LocalId</TD>";
+    }
     output << "<TD>Name</TD>";
     output << "<TD>Title</TD>";
     output << "<TD>Description</TD>";
@@ -1768,6 +1815,11 @@ bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine
         }
 
         output << "<TD>"<< producer->mProducerId << "</TD>";
+        if (!mainSource)
+        {
+          output << "<TD>"<< ((producer->mProducerId % 0xFF000000) >> 24) << "</TD>";
+          output << "<TD>"<< (producer->mProducerId & 0x00FFFFFF) << "</TD>";
+        }
         output << "<TD>"<< producer->mName << "</TD>";
         output << "<TD>"<< producer->mTitle << "</TD>";
         output << "<TD>"<< producer->mDescription << "</TD>";
@@ -1890,6 +1942,8 @@ bool Browser::page_contentInformation(SessionManagement::SessionInfo& session,co
 {
   try
   {
+    auto contentSources = mGridEngine->getContentSources();
+
     std::ostringstream output;
 
     output << "<HTML>\n";
@@ -1904,10 +1958,24 @@ bool Browser::page_contentInformation(SessionManagement::SessionInfo& session,co
     output << "<HR>\n";
     output << "<OL>\n";
     output << "  <LI>";
-    output << "    <A href=\"/grid-admin?&target=grid-engine&page=producers&source=main\">Main content information (Redis)</A>";
+    output << "    Content storages";
+    output << "    <OL>\n";
+    uint idx = 0;
+    for (auto it = contentSources.begin(); it != contentSources.end(); ++it)
+    {
+      std::string sourceStr = it->mType + " " + std::to_string(idx);
+      if (it->mType == "redis")
+        sourceStr = "Redis:" + it->mRedisAddress + ":" + std::to_string(it->mRedisPort) + ":" + it->mRedisTablePrefix;
+
+      output << "    <LI>";
+      output << "      <A href=\"/grid-admin?&target=grid-engine&page=producers&startProducerIndex=0&source=" << sourceStr << "&sourceIdx=" << idx << "\">" << sourceStr << "</A>\n";
+      output << "    </LI>";
+      idx++;
+    }
+    output << "    </OL>\n";
     output << "  </LI>";
     output << "  <LI>";
-    output << "     <A href=\"/grid-admin?&target=grid-engine&page=producers&source=cache\">Cached content information (Grid Engine)</A>";
+    output << "     <A href=\"/grid-admin?&target=grid-engine&page=producers&startProducerIndex=0&source=cache\">Cached content information (Grid Engine)</A>";
     output << "  </LI>";
     output << "</OL>\n";
     output << "<HR>\n";
@@ -1933,6 +2001,8 @@ bool Browser::page_contentServer(SessionManagement::SessionInfo& session,const S
 {
   try
   {
+    auto contentSources = mGridEngine->getContentSources();
+
     std::ostringstream output;
 
     output << "<HTML>\n";
@@ -1949,10 +2019,24 @@ bool Browser::page_contentServer(SessionManagement::SessionInfo& session,const S
     output << "    <A href=\"/grid-admin?&target=grid-engine&page=contentInformation\">Content Information</A>";
     output << "    <OL>\n";
     output << "      <LI>";
-    output << "        <A href=\"/grid-admin?&target=grid-engine&page=producers&source=main\">Main content information (Redis)</A>";
+    output << "                    Content storages";
+    output << "                    <OL>\n";
+
+    uint idx = 0;
+    for (auto it = contentSources.begin(); it != contentSources.end(); ++it)
+    {
+      std::string sourceStr = it->mType + " " + std::to_string(idx);
+      if (it->mType == "redis")
+        sourceStr = "Redis:" + it->mRedisAddress + ":" + std::to_string(it->mRedisPort) + ":" + it->mRedisTablePrefix;
+
+      output << "                      <LI>";
+      output << "                        <A href=\"/grid-admin?&target=grid-engine&page=producers&startProducerIndex=0&source=" << sourceStr << "&sourceIdx=" << idx << "\">" << sourceStr << "</A>\n";
+      output << "                      </LI>";
+      idx++;
+    }
     output << "      </LI>";
     output << "      <LI>";
-    output << "         <A href=\"/grid-admin?&target=grid-engine&page=producers&source=cache\">Cached content information (Grid Engine)</A>";
+    output << "         <A href=\"/grid-admin?&target=grid-engine&page=producers&startProducerIndex=0&source=cache\">Cached content information (Grid Engine)</A>";
     output << "      </LI>";
     output << "    </OL>\n";
     output << "  </LI>";
@@ -3774,6 +3858,8 @@ void Browser::browserContent(SessionManagement::SessionInfo& session,std::ostrin
 {
   try
   {
+    auto contentSources = mGridEngine->getContentSources();
+
     output << "        <OL>\n";
     output << "          <LI>";
     output << "            <H4><A href=\"/grid-admin?&target=grid-engine&page=configuration\">Configuration</A></H4>";
@@ -3808,10 +3894,25 @@ void Browser::browserContent(SessionManagement::SessionInfo& session,std::ostrin
     output << "                <H4><A href=\"/grid-admin?&target=grid-engine&page=contentInformation\">Content Information</A></H4>";
     output << "                <OL>\n";
     output << "                  <LI>";
-    output << "                    <A href=\"/grid-admin?&target=grid-engine&page=producers&source=main\">Main content information (Redis)</A>";
+    output << "                    Content storages";
+    output << "                    <OL>\n";
+
+    uint idx = 0;
+    for (auto it = contentSources.begin(); it != contentSources.end(); ++it)
+    {
+      std::string sourceStr = it->mType + " " + std::to_string(idx);
+      if (it->mType == "redis")
+        sourceStr = "Redis:" + it->mRedisAddress + ":" + std::to_string(it->mRedisPort) + ":" + it->mRedisTablePrefix;
+
+      output << "                      <LI>";
+      output << "                        <A href=\"/grid-admin?&target=grid-engine&page=producers&startProducerIndex=0&source=" << sourceStr << "&sourceIdx=" << idx << "\">" << sourceStr << "</A>\n";
+      output << "                      </LI>";
+      idx++;
+    }
+    output << "                    </OL>\n";
     output << "                  </LI>";
     output << "                  <LI>";
-    output << "                    <A href=\"/grid-admin?&target=grid-engine&page=producers&source=cache\">Cached content information (Grid Engine)</A>";
+    output << "                    <A href=\"/grid-admin?&target=grid-engine&page=producers&startProducerIndex=0&source=cache\">Cached content information (Grid Engine)</A>";
     output << "                  </LI>";
     output << "                </OL>\n";
     output << "              </LI>";
