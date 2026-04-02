@@ -1,5 +1,7 @@
-Grid Engine
-===============
+# smartmet-engine-grid
+
+Part of [SmartMet Server](https://github.com/fmidev/smartmet-server). See the [SmartMet Server documentation](https://github.com/fmidev/smartmet-server) for a full overview of the ecosystem.
+
 ## Introduction
 
 The Grid Engine allows SmartMet Plugins to access services related to the grid support. This mean in practice that they can access information stored into the Content Information Storage by using **the Content Server API**, fetch grid data from the grid files by using **the Data Server API** or make queries by using **the Query Server API**. 
@@ -19,35 +21,16 @@ When the actual implementations of the grid services are embedded into the Grid 
 
 The Grid Engine can be configured also in a such way that all grid services are used remotely. In this case the Content Server API, the Data Server API and the Query Server API are client implementations that communicate with the remote services.
 
-
-## Licence
-The Grid Engine is a part of <a href="https://github.com/fmidev/smartmet-server">the SmartMet Server</a>, which is published with MIT-license.
-
-## How to contribute
-Found a bug? Want to implement a new feature? Your contribution is very welcome!
-
-Small changes and bug fixes can be submitted via pull request. In larger contributions, premilinary plan is recommended (in GitHub wiki). 
-
-CLA is required in order to contribute. Please contact us for more information!
-
 ## Documentation
 
-<a href="https://github.com/fmidev/smartmet-engine-grid/blob/master/doc/grid-engine.md">Grid Engine</a>
+- [Grid Engine documentation](https://github.com/fmidev/smartmet-engine-grid/blob/master/doc/grid-engine.md)
+- [Quick Setup](https://github.com/fmidev/smartmet-tools-grid/blob/master/doc/quick-setup.md)
+- [Grid Support overview](https://github.com/fmidev/smartmet-tools-grid/blob/master/doc/grid-support.md)
 
-<a href="https://github.com/fmidev/smartmet-tools-grid/blob/master/doc/quick-setup.md">Quick Setup</a>
+## License
 
-<a href="https://github.com/fmidev/smartmet-tools-grid/blob/master/doc/grid-support.md">Grid Support</a>
+MIT — see [LICENSE](LICENSE)
 
+## Contributing
 
-## Communication and Resources
-You may contact us from following channels:
-* Email: beta@fmi.fi
-* Facebook: https://www.facebook.com/fmibeta/
-* GitHub: [issues](../../issues)
-
-Other resources which may be useful:  
-* Presentation about the server: http://www.slideshare.net/tervo/smartmet-server-providing-metocean-data  
-* Our public web pages (in Finnish): http://ilmatieteenlaitos.fi/avoin-lahdekoodi   
-
-
-
+Bug reports and pull requests are welcome on [GitHub](../../issues).
