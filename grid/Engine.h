@@ -424,6 +424,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     mutable Fmi::Cache::CacheStats            mQueryCache_stats;
     bool                                      mQueryCache_enabled;
     int                                       mQueryCache_maxAge;
+    std::size_t                               mQueryCache_maxSize;
 
     bool                                      mFileCache_enabled;
     std::string                               mFileCache_directory;

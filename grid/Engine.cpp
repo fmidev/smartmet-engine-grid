@@ -24,6 +24,7 @@
 #include <spine/Reactor.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <unordered_set>
 
 #include "Browser.h"
@@ -186,6 +187,7 @@ Engine::Engine(const char* theConfigFile)
     mQueryServerDebugLogTruncateSize = 5000000;
     mQueryCache_enabled = false;
     mQueryCache_maxAge = 300;
+    mQueryCache_maxSize = 10000;
     mQueryCache_stats.starttime = Fmi::SecondClock::universal_time();
     mQueryServerContentCache_maxRecordsPerThread = 500000;
     mQueryServerContentCache_clearInterval = 3600 * 24 * 3;
@@ -373,6 +375,7 @@ Engine::Engine(const char* theConfigFile)
 
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.enabled", mQueryCache_enabled);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.maxAge", mQueryCache_maxAge);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.maxSize", mQueryCache_maxSize);
 
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.contentCache.maxRecordsPerThread", mQueryServerContentCache_maxRecordsPerThread);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.contentCache.clearInterval", mQueryServerContentCache_clearInterval);
@@ -998,6 +1001,7 @@ void Engine::checkConfiguration()
 
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.enabled", queryCacheEnabled);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.maxAge", queryCacheMaxAge);
+    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.maxSize", mQueryCache_maxSize);
 
     if (mQueryCache_enabled != queryCacheEnabled)
     {
@@ -4189,6 +4193,7 @@ void Engine::updateProcessing()
                 AutoWriteLock lock(&mQueryCache_modificationLock);
                 mQueryCache_stats.size = 0;
                 mQueryCache.clear();
+                mProducerHashMap.clear();
               }
             }
           }
@@ -4359,7 +4364,36 @@ void Engine::updateQueryCache()
         if (pos != mQueryCache.end())
           mQueryCache.erase(pos);
       }
-      mQueryCache_stats.size -= deleteList.size();
+      if (mQueryCache_stats.size >= deleteList.size())
+        mQueryCache_stats.size -= deleteList.size();
+      else
+        mQueryCache_stats.size = 0;
+    }
+
+    // Enforce maximum cache size by evicting LRU entries
+    if (mQueryCache_maxSize > 0 && mQueryCache.size() > mQueryCache_maxSize)
+    {
+      // Collect all entries sorted by lastAccessTime to evict the oldest ones
+      std::vector<std::pair<time_t, std::size_t>> lruList;
+      {
+        AutoReadLock lock(&mQueryCache_modificationLock);
+        lruList.reserve(mQueryCache.size());
+        for (auto it = mQueryCache.begin(); it != mQueryCache.end(); ++it)
+          lruList.emplace_back(it->second.lastAccessTime, it->first);
+      }
+      std::sort(lruList.begin(), lruList.end());
+      std::size_t evictCount = mQueryCache.size() - mQueryCache_maxSize;
+      AutoWriteLock lock(&mQueryCache_modificationLock);
+      for (std::size_t i = 0; i < evictCount && i < lruList.size(); ++i)
+      {
+        auto pos = mQueryCache.find(lruList[i].second);
+        if (pos != mQueryCache.end())
+        {
+          mQueryCache.erase(pos);
+          if (mQueryCache_stats.size > 0)
+            mQueryCache_stats.size--;
+        }
+      }
     }
 
     mQueryCache_enabled = true;
