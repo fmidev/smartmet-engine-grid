@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 26.4.13
+Version: 26.4.17
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -23,8 +23,8 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: smartmet-library-spine-devel >= 26.4.13
-BuildRequires: smartmet-library-grid-content-devel >= 26.4.13
-BuildRequires: smartmet-library-grid-files-devel >= 26.4.13
+BuildRequires: smartmet-library-grid-content-devel >= 26.4.17
+BuildRequires: smartmet-library-grid-files-devel >= 26.4.17
 BuildRequires: smartmet-library-macgyver-devel >= 26.4.13
 BuildRequires: make
 BuildRequires: omniORB-devel >= 4.3.0
@@ -34,8 +34,8 @@ BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 BuildRequires: postgresql15-devel
 Requires: %{smartmet_boost}-thread
-Requires: smartmet-library-grid-content >= 26.4.13
-Requires: smartmet-library-grid-files >= 26.4.13
+Requires: smartmet-library-grid-content >= 26.4.17
+Requires: smartmet-library-grid-files >= 26.4.17
 Requires: smartmet-library-spine >= 26.4.13
 Requires: smartmet-library-macgyver >= 26.4.13
 Requires: omniORB-devel
@@ -71,7 +71,7 @@ SmartMet grid engine
 Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
-Requires: smartmet-library-grid-content-devel >= 26.4.13
+Requires: smartmet-library-grid-content-devel >= 26.4.17
 Requires: %{SPECNAME} = %{version}-%{release}
 Requires: smartmet-library-spine-devel >= 26.4.13
 Requires: smartmet-library-macgyver-devel >= 26.4.13
@@ -82,7 +82,7 @@ SmartMet %{SPECNAME} development headers.
 Summary: SmartMet %{SPECNAME} - redis server with required data for testing purpose
 Group: SmartMet/Development
 Provides: smartmet-engine-grid-test
-Requires: smartmet-library-grid-files >= 26.4.13
+Requires: smartmet-library-grid-files >= 26.4.17
 %description -n smartmet-engine-grid-test
 SmartMet %{SPECNAME} - redis server with required data for testing purpose
 
@@ -115,6 +115,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Fri Apr 17 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.4.17-1.fmi
+- Repackaged due to grid-files API changes
+
 * Mon Apr 13 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.4.13-1.fmi
 - Repackaged due to API changes
 
