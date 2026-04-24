@@ -69,16 +69,6 @@ Engine::Engine(const char* theConfigFile)
         "smartmet.library.grid-files.cache.maxSizeInMegaBytes",
 
         "smartmet.engine.grid.enabled",
-/*
-        "smartmet.engine.grid.content-server.content-source.type",
-        "smartmet.engine.grid.content-server.content-source.redis.address",
-        "smartmet.engine.grid.content-server.content-source.redis.port",
-        "smartmet.engine.grid.content-server.content-source.redis.tablePrefix",
-        "smartmet.engine.grid.content-server.content-source.http.url",
-        "smartmet.engine.grid.content-server.content-source.corba.ior",
-        "smartmet.engine.grid.content-server.cache.enabled",
-        "smartmet.engine.grid.content-server.cache.requestForwardEnabled",
-*/
 
         "smartmet.engine.grid.content-server.processing-log.enabled",
         "smartmet.engine.grid.content-server.processing-log.file",
@@ -135,19 +125,6 @@ Engine::Engine(const char* theConfigFile)
     mConfigurationFile_modificationTime = getFileModificationTime(mConfigurationFile_name.c_str());
     mLevelInfoList_lastUpdate = 0;
     mProducerInfoList_updateTime = 0;
-    /*
-    mContentSourceRedisAddress = "127.0.0.1";
-    mContentSourceRedisPort = 6379;
-    mContentSourceRedisSecondaryAddress = "127.0.0.1";
-    mContentSourceRedisSecondaryPort = 0;
-    mContentSourceRedisLockEnabled = false;
-    mContentSourceRedisTablePrefix = "";
-    mContentSourceRedisReloadRequired = false;
-    mContentSourceHttpUrl = "";
-    mContentSourceCorbaIor = "";
-    mMemoryContentDir = "/tmp";
-    mEventListMaxSize = 0;
-    */
     mContentCacheEnabled = true;
     mRequestForwardEnabled = false;
     mQueryCache_updateTime = time(nullptr);
@@ -219,7 +196,6 @@ Engine::Engine(const char* theConfigFile)
       return;
 
     uint slen = configurationFile.getArraySize("smartmet.engine.grid.content-server.content-source");
-    //printf("SOURCES %u\n",slen);
 
     uint t = 0;
     while (configAttribute[t] != nullptr)
@@ -571,14 +547,8 @@ void Engine::init()
 
     if (mContentCacheEnabled)
     {
-      mContentServerMergeImplementation = new ContentServer::MergeImplementation();
-      mContentServerMergeImplementation->setContentSwap(mFileCacheMaxFirstWaitTime,mFileCacheMaxWaitTime);
-      mContentServerMergeImplementation->setContentUpdateInterval(mContentUpdateInterval);
-      mContentServerMergeImplementation->init(CONTENT_SERVER_SESSION_ID,DATA_SERVER_SESSION_ID,mContentServers);
-      mContentServerCache.reset(mContentServerMergeImplementation);
-      mContentServerMergeImplementation->startEventProcessing();
-      cServer = mContentServerMergeImplementation;
-  /*
+      if (mContentSources.size() == 1)
+      {
         mContentServerCacheImplementation = new ContentServer::CacheImplementation();
         mContentServerCacheImplementation->setRequestForwardEnabled(mRequestForwardEnabled);
         mContentServerCacheImplementation->setContentSwap(mContentSwapEnabled,mFileCacheMaxFirstWaitTime,mFileCacheMaxWaitTime);
@@ -588,7 +558,17 @@ void Engine::init()
         mContentServerCache.reset(mContentServerCacheImplementation);
         mContentServerCacheImplementation->startEventProcessing();
         cServer = mContentServerCacheImplementation;
-        */
+      }
+      else
+      {
+        mContentServerMergeImplementation = new ContentServer::MergeImplementation();
+        mContentServerMergeImplementation->setContentSwap(mFileCacheMaxFirstWaitTime,mFileCacheMaxWaitTime);
+        mContentServerMergeImplementation->setContentUpdateInterval(mContentUpdateInterval);
+        mContentServerMergeImplementation->init(CONTENT_SERVER_SESSION_ID,DATA_SERVER_SESSION_ID,mContentServers);
+        mContentServerCache.reset(mContentServerMergeImplementation);
+        mContentServerMergeImplementation->startEventProcessing();
+        cServer = mContentServerMergeImplementation;
+      }
     }
 
     if (mDataServerRemote && mDataServerIor.length() > 50)
