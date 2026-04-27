@@ -39,17 +39,6 @@ typedef std::shared_ptr<DataServer::ServiceInterface> DataServer_sptr;
 typedef std::shared_ptr<QueryServer::ServiceInterface> QueryServer_sptr;
 typedef std::shared_ptr<QueryServer::Query> Query_sptr;
 
-struct CacheRec
-{
-  Query_sptr query;
-  std::unordered_map<uint,UInt64> producerHashMap;
-  time_t cacheTime;
-  time_t lastAccessTime;
-  uint   accessCounter;
-};
-
-typedef std::unordered_map<std::size_t,CacheRec> QueryCache;
-typedef std::unordered_map<std::size_t,CacheRec>::iterator QueryCacheIterator;
 typedef std::shared_ptr<QueryServer::ParamMappingFile_vec> ParamMappingFile_vec_sptr;
 
 struct HashRec
@@ -255,8 +244,6 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     FILE*               openMappingFile(const std::string& mappingFile);
     void                updateMappings();
 
-    bool                isCacheable(std::shared_ptr<QueryServer::Query> query) const;
-
     void                updateMappings(
                           T::ParamKeyType sourceParameterKeyType,
                           T::ParamKeyType targetParameterKeyType,
@@ -264,7 +251,6 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                           QueryServer::ParamMappingFile_vec& parameterMappings,
                           Spine::Table& paramTable);
 
-    void                updateQueryCache();
     void                updateProducerAndGenerationList() const;
 
   private:
@@ -404,7 +390,6 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     mutable string_vec                        mProducerSearchList;
     std::string                               mProducerSearchList_filename;
-    time_t                                    mProducerSearchList_modificationTime;
 
     mutable T::ProducerInfoList               mProducerInfoList;
     mutable time_t                            mProducerInfoList_updateTime;
@@ -417,13 +402,6 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     mutable T::LevelInfoList                  mLevelInfoList;
     mutable time_t                            mLevelInfoList_lastUpdate;
-
-    mutable QueryCache                        mQueryCache;
-    mutable ModificationLock                  mQueryCache_modificationLock;
-    mutable time_t                            mQueryCache_updateTime;
-    mutable Fmi::Cache::CacheStats            mQueryCache_stats;
-    bool                                      mQueryCache_enabled;
-    int                                       mQueryCache_maxAge;
 
     bool                                      mFileCache_enabled;
     std::string                               mFileCache_directory;

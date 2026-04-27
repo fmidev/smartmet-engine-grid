@@ -103,8 +103,6 @@ Engine::Engine(const char* theConfigFile)
 
         "smartmet.engine.grid.query-server.remote",
         "smartmet.engine.grid.query-server.ior",
-        "smartmet.engine.grid.query-server.queryCache.enabled",
-        "smartmet.engine.grid.query-server.queryCache.maxAge",
         "smartmet.engine.grid.query-server.producerFile",
         "smartmet.engine.grid.query-server.producerMappingFiles",
         "smartmet.engine.grid.query-server.luaFiles",
@@ -150,7 +148,6 @@ Engine::Engine(const char* theConfigFile)
     */
     mContentCacheEnabled = true;
     mRequestForwardEnabled = false;
-    mQueryCache_updateTime = time(nullptr);
     mContentServerStartTime = 0;
     mShutdownRequested = false;
     mShutdownFinished = false;
@@ -184,9 +181,6 @@ Engine::Engine(const char* theConfigFile)
     mQueryServerProcessingLogTruncateSize = 50000000;
     mQueryServerDebugLogMaxSize = 10000000;
     mQueryServerDebugLogTruncateSize = 5000000;
-    mQueryCache_enabled = false;
-    mQueryCache_maxAge = 300;
-    mQueryCache_stats.starttime = Fmi::SecondClock::universal_time();
     mQueryServerContentCache_maxRecordsPerThread = 500000;
     mQueryServerContentCache_clearInterval = 3600 * 24 * 3;
     mQueryServerContentSearchCache_maxRecordsPerThread = 500000;
@@ -371,9 +365,6 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.remote", mQueryServerRemote);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.ior", mQueryServerIor);
 
-    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.enabled", mQueryCache_enabled);
-    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.maxAge", mQueryCache_maxAge);
-
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.contentCache.maxRecordsPerThread", mQueryServerContentCache_maxRecordsPerThread);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.contentCache.clearInterval", mQueryServerContentCache_clearInterval);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.contentSearchCache.maxRecordsPerThread", mQueryServerContentSearchCache_maxRecordsPerThread);
@@ -419,8 +410,6 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.engine.grid.browser.enabled", mBrowserEnabled);
     configurationFile.getAttributeValue("smartmet.engine.grid.browser.flags", mBrowserFlags);
 
-
-    mProducerSearchList_modificationTime = getFileModificationTime(mProducerSearchList_filename.c_str());
 
     // Initializing information that is needed for identifying the content of the grid files.
 
@@ -991,30 +980,6 @@ void Engine::checkConfiguration()
       mBrowser.setFlags(mBrowserFlags);
     }
 
-    // ### Query cache
-
-    bool queryCacheEnabled = false;
-    int queryCacheMaxAge = 0;
-
-    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.enabled", queryCacheEnabled);
-    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.queryCache.maxAge", queryCacheMaxAge);
-
-    if (mQueryCache_enabled != queryCacheEnabled)
-    {
-      mQueryCache_enabled = queryCacheEnabled;
-
-      if (mQueryCache_enabled)
-        std::cout << Spine::log_time_str() << " Grid-engine configuration: query cache enabled" << std::endl;
-      else
-        std::cout << Spine::log_time_str() << " Grid-engine configuration: query cache disabled" << std::endl;
-    }
-
-    if (mQueryCache_maxAge != queryCacheMaxAge)
-    {
-      mQueryCache_maxAge = queryCacheMaxAge;
-      std::cout << Spine::log_time_str() << " Grid-engine configuration: query cache max age set to " << mQueryCache_maxAge << " seconds" << std::endl;
-    }
-
     if (mDataServerImplementation != nullptr)
     {
       time_t cleanupAge = mDataServerCleanupAge;
@@ -1180,61 +1145,6 @@ Query_sptr Engine::executeQuery(Query_sptr query) const
     if (Spine::Reactor::isShuttingDown())
       return query;
 
-    if (!mQueryCache_enabled)
-    {
-      int result = mQueryServer->executeQuery(0, *query);
-      if (result != 0)
-      {
-        Fmi::Exception exception(BCP, "The query server returns an error message!");
-        exception.addParameter("Result", Fmi::to_string(result));
-        exception.addParameter("Message", QueryServer::getResultString(result));
-
-        switch (result)
-        {
-          case QueryServer::Result::NO_PRODUCERS_FOUND:
-            exception.addDetail("The reason for this situation is usually that the given producer is unknown");
-            exception.addDetail("or there are no producer list available in the grid engine's configuration "
-                "file.");
-            break;
-        }
-        throw exception;
-      }
-      return query;
-    }
-
-    time_t currentTime = time(nullptr);
-    std::size_t hash = query->getHash();
-
-    QueryCacheIterator it;
-    bool noMatch = false;
-
-    {
-      AutoReadLock lock(&mQueryCache_modificationLock);
-      it = mQueryCache.find(hash);
-      if (it != mQueryCache.end())
-      {
-        mQueryCache_stats.hits++;
-        for (auto prod = it->second.producerHashMap.begin(); prod != it->second.producerHashMap.end() && !noMatch; ++prod)
-        {
-          UInt64 producerHash = getProducerHash(prod->first);
-          if (producerHash != prod->second)
-            noMatch = true;
-        }
-
-        if (!noMatch)
-        {
-          // The cache entry is valid. We can return it.
-          it->second.lastAccessTime = currentTime;
-          it->second.accessCounter++;
-          return it->second.query;
-        }
-      }
-      else
-      {
-        mQueryCache_stats.misses++;
-      }
-    }
-
     int result = mQueryServer->executeQuery(0, *query);
     if (result != 0)
     {
@@ -1252,77 +1162,7 @@ Query_sptr Engine::executeQuery(Query_sptr query) const
       }
       throw exception;
     }
-
-    if (isCacheable(query))
-    {
-      CacheRec rec;
-      rec.query = query;
-      rec.cacheTime = currentTime;
-      rec.lastAccessTime = currentTime;
-      rec.accessCounter = 0;
-
-      std::set<T::ProducerId> producerIdList;
-      query->getResultProducerIdList(producerIdList);
-
-      for (auto it = producerIdList.begin(); it != producerIdList.end(); ++it)
-      {
-        UInt64 producerHash = getProducerHash(*it);
-        rec.producerHashMap.insert(std::pair<T::ProducerId, UInt64>(*it, producerHash));
-      }
-
-      AutoWriteLock lock(&mQueryCache_modificationLock);
-      mQueryCache.insert(std::pair<std::size_t, CacheRec>(hash, rec));
-      mQueryCache_stats.inserts++;
-      mQueryCache_stats.size++;
-    }
     return query;
-  }
-  catch (...)
-  {
-    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file", mConfigurationFile_name);
-    throw exception;
-  }
-}
-
-bool Engine::isCacheable(std::shared_ptr<QueryServer::Query> query) const
-{
-  FUNCTION_TRACE
-  try
-  {
-    if (!mEnabled)
-      return false;
-
-    for (auto param = query->mQueryParameterList.begin(); param != query->mQueryParameterList.end(); ++param)
-    {
-      switch (param->mType)
-      {
-        case QueryServer::QueryParameter::Type::PointValues:
-        case QueryServer::QueryParameter::Type::Isoline:
-        case QueryServer::QueryParameter::Type::Isoband:
-          break;
-
-        case QueryServer::QueryParameter::Type::Vector:
-        case QueryServer::QueryParameter::Type::GridFile:
-          return false;
-      }
-
-      switch (param->mLocationType)
-      {
-        case QueryServer::QueryParameter::LocationType::Point:
-        case QueryServer::QueryParameter::LocationType::Polygon:
-        case QueryServer::QueryParameter::LocationType::Path:
-        case QueryServer::QueryParameter::LocationType::Circle:
-          break;
-
-        case QueryServer::QueryParameter::LocationType::Grid:
-          return false;
-
-        case QueryServer::QueryParameter::LocationType::Geometry:
-          break;
-      }
-    }
-    return true;
   }
   catch (...)
   {
@@ -3008,8 +2848,6 @@ void Engine::getCacheStats(Fmi::Cache::CacheStatistics& statistics) const
     if (!mEnabled)
       return;
 
-    statistics.insert(std::make_pair("Grid::Query_cache", mQueryCache_stats));
-
     auto cs = getContentServer_sptr();
     if (cs)
       cs->getCacheStats(statistics);
@@ -4184,12 +4022,6 @@ void Engine::updateProcessing()
                 mProducerInfoList_updateTime = 0;
                 mLevelInfoList_lastUpdate = 0;
               }
-
-              {
-                AutoWriteLock lock(&mQueryCache_modificationLock);
-                mQueryCache_stats.size = 0;
-                mQueryCache.clear();
-              }
             }
           }
           mContentServerStartTime = eventInfo.mServerTime;
@@ -4202,14 +4034,6 @@ void Engine::updateProcessing()
       try
       {
         updateMappings();
-      }
-      catch (...)
-      {
-      }
-
-      try
-      {
-        updateQueryCache();
       }
       catch (...)
       {
@@ -4283,86 +4107,6 @@ void Engine::updateProducerAndGenerationList() const
         mLevelInfoList = levelInfoList;
       }
     }
-  }
-  catch (...)
-  {
-    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file", mConfigurationFile_name);
-    throw exception;
-  }
-}
-
-void Engine::updateQueryCache()
-{
-  try
-  {
-    if (!mEnabled)
-      return;
-
-    if (!mQueryCache_enabled)
-      return;
-
-    time_t currentTime = time(nullptr);
-    if ((currentTime - mQueryCache_updateTime) < 60)
-      return;
-
-    time_t tt = getFileModificationTime(mProducerSearchList_filename.c_str());
-    if (mProducerSearchList_modificationTime != tt && (tt + 3) < currentTime)
-    {
-      // The producer search order has changed. So we have to clear the query cache.
-      mProducerSearchList_modificationTime = tt;
-      AutoWriteLock lock(&mQueryCache_modificationLock);
-      mQueryCache_stats.size = 0;
-      mQueryCache.clear();
-      return;
-    }
-
-    mQueryCache_enabled = false;
-
-    mQueryCache_updateTime = currentTime;
-    time_t lastAccess = currentTime - mQueryCache_maxAge;
-    std::vector < UInt64 > deleteList;
-
-    {
-      AutoReadLock lock(&mQueryCache_modificationLock);
-
-      for (auto it = mQueryCache.begin(); it != mQueryCache.end(); ++it)
-      {
-        if (it->second.lastAccessTime < lastAccess)
-        {
-          // The cache entry has not been accessed for awhile, so we should remove it.
-          deleteList.emplace_back(it->first);
-        }
-        else
-        {
-          // If the producer information has changed then we should remove the cache entry.
-          bool noMatch = false;
-          for (auto prod = it->second.producerHashMap.begin(); prod != it->second.producerHashMap.end() && !noMatch; ++prod)
-          {
-            UInt64 producerHash = getProducerHash(prod->first);
-            if (producerHash != prod->second)
-              noMatch = true;
-          }
-
-          if (noMatch)
-            deleteList.emplace_back(it->first);
-        }
-      }
-    }
-
-    if (deleteList.size() > 0)
-    {
-      AutoWriteLock lock(&mQueryCache_modificationLock);
-      for (auto it = deleteList.begin(); it != deleteList.end(); ++it)
-      {
-        auto pos = mQueryCache.find(*it);
-        if (pos != mQueryCache.end())
-          mQueryCache.erase(pos);
-      }
-      mQueryCache_stats.size -= deleteList.size();
-    }
-
-    mQueryCache_enabled = true;
   }
   catch (...)
   {
