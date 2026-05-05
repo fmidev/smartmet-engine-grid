@@ -1122,7 +1122,10 @@ bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HT
 
     for (uint t=len; t<maxRecords; t++)
     {
-      output << "<TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD></TR>\n";
+      output << "<TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD>";
+      if (!mainSource)
+        output << "<TD>&nbsp;</TD><TD>&nbsp;</TD>";
+      output << "</TR>\n";
     }
 
 
@@ -1526,7 +1529,10 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
       }
       else
       {
-        output << "<TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD></TR>\n";
+        output << "<TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD>";
+        if (!mainSource)
+          output << "<TD>&nbsp;</TD><TD>&nbsp;</TD>";
+        output << "</TR>\n";
       }
     }
 
