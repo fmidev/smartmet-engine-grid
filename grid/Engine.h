@@ -1,5 +1,6 @@
 #pragma once
 
+#include <fstream>
 #include <spine/SmartMetEngine.h>
 #include <gis/DEM.h>
 #include <gis/LandCover.h>
@@ -241,7 +242,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                checkConfiguration();
     void                loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings);
     void                loadUnitConversionFile();
-    FILE*               openMappingFile(const std::string& mappingFile);
+    std::ofstream       openMappingFile(const std::string& mappingFile);
     void                updateMappings();
 
     void                updateMappings(
