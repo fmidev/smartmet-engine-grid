@@ -3971,6 +3971,8 @@ void Engine::updateProcessing()
       }
       catch (...)
       {
+        Fmi::Exception exception(BCP, "Content server event check failed!", nullptr);
+        exception.printError();
       }
 
       try
@@ -3979,6 +3981,8 @@ void Engine::updateProcessing()
       }
       catch (...)
       {
+        Fmi::Exception exception(BCP, "Parameter mapping update failed!", nullptr);
+        exception.printError();
       }
 
       try
@@ -3987,6 +3991,8 @@ void Engine::updateProcessing()
       }
       catch (...)
       {
+        Fmi::Exception exception(BCP, "Producer and generation list update failed!", nullptr);
+        exception.printError();
       }
 
       try
@@ -3995,6 +4001,8 @@ void Engine::updateProcessing()
       }
       catch (...)
       {
+        Fmi::Exception exception(BCP, "Configuration check failed!", nullptr);
+        exception.printError();
       }
       if (!mShutdownRequested)
 	      boost::this_thread::sleep(boost::posix_time::seconds(1));
