@@ -246,55 +246,26 @@ Engine::Engine(const char* theConfigFile)
     }
     else
     {
-      char aname[200];
       for (uint t=0; t<slen; t++)
       {
         ContentSource rec;
+        std::string pfx = "smartmet.engine.grid.content-server.content-source." + std::to_string(t) + ".";
 
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.enabled",t);
-        configurationFile.getAttributeValue(aname,rec.mEnabled);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.type",t);
-        configurationFile.getAttributeValue(aname,rec.mType);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.redis.address",t);
-        configurationFile.getAttributeValue(aname,rec.mRedisAddress);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.redis.port",t);
-        configurationFile.getAttributeValue(aname,rec.mRedisPort);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.redis.tablePrefix",t);
-        configurationFile.getAttributeValue(aname,rec.mRedisTablePrefix);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.redis.secondaryAddress",t);
-        configurationFile.getAttributeValue(aname,rec.mRedisSecondaryAddress);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.redis.secondaryPort",t);
-        configurationFile.getAttributeValue(aname,rec.mRedisSecondaryPort);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.redis.lockEnabled",t);
-        configurationFile.getAttributeValue(aname,rec.mRedisLockEnabled);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.redis.reloadRequired",t);
-        configurationFile.getAttributeValue(aname,rec.mRedisReloadRequired);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.postgresql.primaryConnectionString",t);
-        configurationFile.getAttributeValue(aname,rec.mPrimaryConnectionString);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.postgresql.secondaryConnectionString",t);
-        configurationFile.getAttributeValue(aname,rec.mSecondaryConnectionString);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.http.url",t);
-        configurationFile.getAttributeValue(aname,rec.mHttpUrl);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.corba.ior",t);
-        configurationFile.getAttributeValue(aname,rec.mCorbaIor);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.file.contentDir",t);
-        configurationFile.getAttributeValue(aname,rec.mMemoryContentDir);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.file.eventListMaxSize",t);
-        configurationFile.getAttributeValue(aname,rec.mEventListMaxSize);
+        configurationFile.getAttributeValue((pfx + "enabled").c_str(), rec.mEnabled);
+        configurationFile.getAttributeValue((pfx + "type").c_str(), rec.mType);
+        configurationFile.getAttributeValue((pfx + "redis.address").c_str(), rec.mRedisAddress);
+        configurationFile.getAttributeValue((pfx + "redis.port").c_str(), rec.mRedisPort);
+        configurationFile.getAttributeValue((pfx + "redis.tablePrefix").c_str(), rec.mRedisTablePrefix);
+        configurationFile.getAttributeValue((pfx + "redis.secondaryAddress").c_str(), rec.mRedisSecondaryAddress);
+        configurationFile.getAttributeValue((pfx + "redis.secondaryPort").c_str(), rec.mRedisSecondaryPort);
+        configurationFile.getAttributeValue((pfx + "redis.lockEnabled").c_str(), rec.mRedisLockEnabled);
+        configurationFile.getAttributeValue((pfx + "redis.reloadRequired").c_str(), rec.mRedisReloadRequired);
+        configurationFile.getAttributeValue((pfx + "postgresql.primaryConnectionString").c_str(), rec.mPrimaryConnectionString);
+        configurationFile.getAttributeValue((pfx + "postgresql.secondaryConnectionString").c_str(), rec.mSecondaryConnectionString);
+        configurationFile.getAttributeValue((pfx + "http.url").c_str(), rec.mHttpUrl);
+        configurationFile.getAttributeValue((pfx + "corba.ior").c_str(), rec.mCorbaIor);
+        configurationFile.getAttributeValue((pfx + "file.contentDir").c_str(), rec.mMemoryContentDir);
+        configurationFile.getAttributeValue((pfx + "file.eventListMaxSize").c_str(), rec.mEventListMaxSize);
 
         mContentSources.push_back(rec);
       }
@@ -3494,22 +3465,14 @@ void Engine::updateMappings()
 
     mParameterMappingDefinitions_updateTime = currentTime;
 
-    QueryServer::ParamMappingFile_vec* parameterMappings = new QueryServer::ParamMappingFile_vec();
+    auto parameterMappings = std::make_unique<QueryServer::ParamMappingFile_vec>();
 
     loadMappings(*parameterMappings);
 
-    if (parameterMappings->size() > 0)
-    {
-      AutoWriteLock lock(&mParameterMappingDefinitions_modificationLock);
-      mParameterMappingDefinitions.reset(parameterMappings);
-    }
-    else
-    {
-      delete parameterMappings;
+    if (parameterMappings->empty())
       return;
-    }
 
-    Spine::Table* paramTable = new Spine::Table();
+    auto paramTable = std::make_unique<Spine::Table>();
     if (!mParameterMappingDefinitions_autoFile_fmi.empty())
     {
       updateMappings(T::ParamKeyTypeValue::FMI_NAME, mParameterMappingDefinitions_autoFileKeyType, mParameterMappingDefinitions_autoFile_fmi, *parameterMappings, *paramTable);
@@ -3528,7 +3491,8 @@ void Engine::updateMappings()
     }
 
     AutoWriteLock lock(&mParameterMappingDefinitions_modificationLock);
-    mParameterTable.reset(paramTable);
+    mParameterMappingDefinitions.reset(parameterMappings.release());
+    mParameterTable.reset(paramTable.release());
   }
   catch (...)
   {
@@ -3779,10 +3743,9 @@ void Engine::updateMappings(
 
             if (sourceParameterKeyType == T::ParamKeyTypeValue::FMI_NAME)
             {
-              char tmp[200];
-              sprintf(tmp, "%s;%s", pl[0].c_str(), pl[1].c_str());
+              std::string tmp = pl[0] + ";" + pl[1];
 
-              auto res = pList.insert(std::string(tmp));
+              auto res = pList.insert(tmp);
               if (res.second)
               {
                 paramTable.set(0, row, std::to_string(row + 1));
@@ -3807,17 +3770,16 @@ void Engine::updateMappings(
               }
             }
 
-            char key[200];
             std::string level = pl[7];
             if (mParameterMapping_simplifiedLevelIdSet.find(m.mParameterLevelId) != mParameterMapping_simplifiedLevelIdSet.end())
               level = "*";
 
-            sprintf(key, "%s;%s;%s;%s;%s;%s;%s;%s;", pl[0].c_str(), pl[1].c_str(), pl[2].c_str(), pl[3].c_str(), pl[4].c_str(), pl[5].c_str(), pl[6].c_str(), level.c_str());
+            std::string key = pl[0] + ";" + pl[1] + ";" + pl[2] + ";" + pl[3] + ";" + pl[4] + ";" + pl[5] + ";" + pl[6] + ";" + level + ";";
             std::string searchKey = m.mProducerName + ":" + m.mParameterName + ":" + std::to_string(m.mGeometryId);
 
-            if (mapList.find(std::string(key)) == mapList.end())
+            if (mapList.find(key) == mapList.end())
             {
-              mapList.insert(std::string(key));
+              mapList.insert(key);
 
               bool found = false;
               bool searchEnabled = false;
@@ -4194,29 +4156,19 @@ void Engine::getVerticalGrid(
     for (auto level = levels1.rbegin(); level != levels1.rend(); ++level)
     {
       int lev = C_INT(*level);
-      char param[100];
-      char* p = param;
-      p += sprintf(p, "%s:%s", valueParameter.c_str(), valueProducerName.c_str());
-      if (geometryId > 0)
-        p += sprintf(p, ":%u:3:%u", geometryId, lev);
-      else
-        p += sprintf(p, "::3:%u", lev);
+      std::string levelSuffix = (geometryId > 0)
+          ? (":" + std::to_string(geometryId) + ":3:" + std::to_string(lev))
+          : ("::3:" + std::to_string(lev));
+
+      std::string pa = valueParameter + ":" + valueProducerName + levelSuffix;
 
       std::vector < T::ParamValue > valueVec;
       std::vector < T::ParamValue > heightVec;
 
-      std::string pa(param);
       int result1 = queryServer->getParameterValuesByPointListAndTime(sessionId, valueProducerName, pa, T::CoordinateTypeValue::LATLON_COORDINATES, points.first, utcTime,
           areaInterpolationMethod, timeInterpolationMethod, 1, valueVec);
 
-      p = param;
-      p += sprintf(p, "%s:%s", heightParameter.c_str(), heightProducerName.c_str());
-      if (geometryId > 0)
-        p += sprintf(p, ":%u:3:%u", geometryId, lev);
-      else
-        p += sprintf(p, "::3:%u", lev);
-
-      pa = param;
+      pa = heightParameter + ":" + heightProducerName + levelSuffix;
       int result2 = queryServer->getParameterValuesByPointListAndTime(sessionId, heightProducerName, pa, T::CoordinateTypeValue::LATLON_COORDINATES, points.first, utcTime,
           areaInterpolationMethod, timeInterpolationMethod, 1, heightVec);
 
