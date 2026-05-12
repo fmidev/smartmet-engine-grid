@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <spine/SmartMetPlugin.h>
 #include <spine/Reactor.h>
 #include <spine/HTTP.h>
@@ -71,12 +72,14 @@ class Browser
     void                  updateSessionParameters(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
 
 
+    static constexpr std::size_t CONTENT_CACHE_SIZE = 20;
+
     Engine*               mGridEngine = nullptr;
     ContentServer_sptr    mMainContentServer;
     ContentServer_sptr    mCacheContentServer;
     ConfigurationFile     mConfigurationFile;
-    T::FileId             mCachedFileId[20];
-    T::ContentInfoList    mCachedContentInfoList[20];
+    std::array<T::FileId, CONTENT_CACHE_SIZE>          mCachedFileId{};
+    std::array<T::ContentInfoList, CONTENT_CACHE_SIZE> mCachedContentInfoList;
     uint                  mCachedContentCount;
     Filenames             mFilenames;
     UInt64                mFlags;

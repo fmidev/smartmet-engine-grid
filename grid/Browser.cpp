@@ -2,6 +2,7 @@
 #include "Engine.h"
 #include <grid-files/grid/GridFile.h>
 #include <macgyver/Hash.h>
+#include <fstream>
 
 
 namespace SmartMet
@@ -33,9 +34,6 @@ Browser::Browser()
 {
   try
   {
-    for (uint t=0; t<20; t++)
-      mCachedFileId[t] = 0;
-
     mFlags = 0;
     mCachedContentCount = 0;
   }
@@ -111,18 +109,11 @@ bool Browser::includeFile(std::ostringstream& output,const char *filename)
 {
   try
   {
-    FILE *file = fopen(filename,"r");
-    if (file == nullptr)
+    std::ifstream file(filename);
+    if (!file)
       return false;
 
-    char st[100000];
-    while (!feof(file))
-    {
-      if (fgets(st,100000,file) != 0)
-        output << st;
-    }
-    fclose(file);
-
+    output << file.rdbuf();
     return true;
   }
   catch (...)
@@ -375,7 +366,7 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
           }
           else
           {
-            for (uint t=0; t<20; t++)
+            for (std::size_t t=0; t<CONTENT_CACHE_SIZE; t++)
             {
               if (mCachedFileId[t] == fileId)
                 mCachedFileId[t] = 0;
@@ -393,7 +384,7 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
           }
           else
           {
-            for (uint t=0; t<20; t++)
+            for (std::size_t t=0; t<CONTENT_CACHE_SIZE; t++)
             {
               if (mCachedFileId[t] == fileId)
                 mCachedFileId[t] = 0;
@@ -411,12 +402,12 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
           }
           else
           {
-            for (uint t=0; t<20; t++)
+            for (std::size_t t=0; t<CONTENT_CACHE_SIZE; t++)
             {
               if (mCachedFileId[t] == fileId)
               {
                 mCachedContentInfoList[t].deleteContentInfoByFileIdAndMessageIndex(fileId,messageIndex);
-                t = 20;
+                break;
               }
             }
             messageIndex = 0xFFFFFFFF;
@@ -478,12 +469,12 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
     T::ContentInfoList contentInfoList;
     T::ContentInfoList *cList = &contentInfoList;
 
-    for (uint t=0; t<20; t++)
+    for (std::size_t t=0; t<CONTENT_CACHE_SIZE; t++)
     {
       if (mCachedFileId[t] == fileId)
       {
         cList = &mCachedContentInfoList[t];
-        t = 20;
+        break;
       }
     }
 
@@ -492,7 +483,7 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
       contentServer->getContentListByFileId(0,fileId,contentInfoList);
       if (contentInfoList.getLength() > 1000)
       {
-        uint idx = mCachedContentCount % 20;
+        uint idx = mCachedContentCount % CONTENT_CACHE_SIZE;
         mCachedContentInfoList[idx] = contentInfoList;
         mCachedFileId[idx] = fileId;
         cList = &mCachedContentInfoList[idx];

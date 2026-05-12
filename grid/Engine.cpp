@@ -246,55 +246,26 @@ Engine::Engine(const char* theConfigFile)
     }
     else
     {
-      char aname[200];
       for (uint t=0; t<slen; t++)
       {
         ContentSource rec;
+        std::string pfx = "smartmet.engine.grid.content-server.content-source." + std::to_string(t) + ".";
 
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.enabled",t);
-        configurationFile.getAttributeValue(aname,rec.mEnabled);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.type",t);
-        configurationFile.getAttributeValue(aname,rec.mType);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.redis.address",t);
-        configurationFile.getAttributeValue(aname,rec.mRedisAddress);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.redis.port",t);
-        configurationFile.getAttributeValue(aname,rec.mRedisPort);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.redis.tablePrefix",t);
-        configurationFile.getAttributeValue(aname,rec.mRedisTablePrefix);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.redis.secondaryAddress",t);
-        configurationFile.getAttributeValue(aname,rec.mRedisSecondaryAddress);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.redis.secondaryPort",t);
-        configurationFile.getAttributeValue(aname,rec.mRedisSecondaryPort);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.redis.lockEnabled",t);
-        configurationFile.getAttributeValue(aname,rec.mRedisLockEnabled);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.redis.reloadRequired",t);
-        configurationFile.getAttributeValue(aname,rec.mRedisReloadRequired);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.postgresql.primaryConnectionString",t);
-        configurationFile.getAttributeValue(aname,rec.mPrimaryConnectionString);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.postgresql.secondaryConnectionString",t);
-        configurationFile.getAttributeValue(aname,rec.mSecondaryConnectionString);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.http.url",t);
-        configurationFile.getAttributeValue(aname,rec.mHttpUrl);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.corba.ior",t);
-        configurationFile.getAttributeValue(aname,rec.mCorbaIor);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.file.contentDir",t);
-        configurationFile.getAttributeValue(aname,rec.mMemoryContentDir);
-
-        sprintf(aname,"smartmet.engine.grid.content-server.content-source.%u.file.eventListMaxSize",t);
-        configurationFile.getAttributeValue(aname,rec.mEventListMaxSize);
+        configurationFile.getAttributeValue((pfx + "enabled").c_str(), rec.mEnabled);
+        configurationFile.getAttributeValue((pfx + "type").c_str(), rec.mType);
+        configurationFile.getAttributeValue((pfx + "redis.address").c_str(), rec.mRedisAddress);
+        configurationFile.getAttributeValue((pfx + "redis.port").c_str(), rec.mRedisPort);
+        configurationFile.getAttributeValue((pfx + "redis.tablePrefix").c_str(), rec.mRedisTablePrefix);
+        configurationFile.getAttributeValue((pfx + "redis.secondaryAddress").c_str(), rec.mRedisSecondaryAddress);
+        configurationFile.getAttributeValue((pfx + "redis.secondaryPort").c_str(), rec.mRedisSecondaryPort);
+        configurationFile.getAttributeValue((pfx + "redis.lockEnabled").c_str(), rec.mRedisLockEnabled);
+        configurationFile.getAttributeValue((pfx + "redis.reloadRequired").c_str(), rec.mRedisReloadRequired);
+        configurationFile.getAttributeValue((pfx + "postgresql.primaryConnectionString").c_str(), rec.mPrimaryConnectionString);
+        configurationFile.getAttributeValue((pfx + "postgresql.secondaryConnectionString").c_str(), rec.mSecondaryConnectionString);
+        configurationFile.getAttributeValue((pfx + "http.url").c_str(), rec.mHttpUrl);
+        configurationFile.getAttributeValue((pfx + "corba.ior").c_str(), rec.mCorbaIor);
+        configurationFile.getAttributeValue((pfx + "file.contentDir").c_str(), rec.mMemoryContentDir);
+        configurationFile.getAttributeValue((pfx + "file.eventListMaxSize").c_str(), rec.mEventListMaxSize);
 
         mContentSources.push_back(rec);
       }
@@ -3149,8 +3120,8 @@ void Engine::loadUnitConversionFile()
     if (mShutdownRequested)
       return;
 
-    FILE* file = fopen(mUnitConversionFile.c_str(), "re");
-    if (file == nullptr)
+    std::ifstream file(mUnitConversionFile);
+    if (!file)
     {
       Fmi::Exception exception(BCP, "Cannot open the unit conversion file!");
       exception.addParameter("Filename", mUnitConversionFile);
@@ -3159,52 +3130,39 @@ void Engine::loadUnitConversionFile()
 
     mUnitConversions.clear();
 
-    char st[1000];
-
-    while (!feof(file))
+    std::string line;
+    while (std::getline(file, line))
     {
-      if (fgets(st, 1000, file) != nullptr && st[0] != '#')
+      if (line.empty() || line[0] == '#')
+        continue;
+
+      std::vector<std::string> fields;
+      std::string field;
+      bool inQuotes = false;
+      for (char c : line)
       {
-        bool ind = false;
-        char* field[100];
-        uint c = 1;
-        field[0] = st;
-        char* p = st;
-        while (*p != '\0' && c < 100)
+        if (c == '"')
+          inQuotes = !inQuotes;
+        else if (c == ';' && !inQuotes)
         {
-          if (*p == '"')
-            ind = !ind;
-
-          if ((*p == ';' || *p == '\n') && !ind)
-          {
-            *p = '\0';
-            p++;
-            field[c] = p;
-            c++;
-          }
-          else
-          {
-            p++;
-          }
+          fields.push_back(field);
+          field.clear();
         }
-        c--;
+        else
+          field += c;
+      }
+      fields.push_back(field);
 
-        if (c >= 4)
-        {
-          QueryServer::UnitConversion rec;
-
-          rec.mSourceUnit = field[0];
-          rec.mTargetUnit = field[1];
-          rec.mConversionFunction = field[2];
-          rec.mReverseConversionFunction = field[3];
-
-          //rec.print(std::cout,0,0);
-
-          mUnitConversions.push_back(rec);
-        }
+      if (fields.size() >= 4)
+      {
+        QueryServer::UnitConversion rec;
+        rec.mSourceUnit = fields[0];
+        rec.mTargetUnit = fields[1];
+        rec.mConversionFunction = fields[2];
+        rec.mReverseConversionFunction = fields[3];
+        mUnitConversions.push_back(rec);
       }
     }
-    fclose(file);
   }
   catch (...)
   {
@@ -3451,25 +3409,13 @@ void Engine::clearMappings()
     QueryServer::ParamMappingFile_vec parameterMappings;
 
     if (!mParameterMappingDefinitions_autoFile_fmi.empty())
-    {
-      FILE* file = openMappingFile(mParameterMappingDefinitions_autoFile_fmi);
-      if (file != nullptr)
-        fclose(file);
-    }
+      openMappingFile(mParameterMappingDefinitions_autoFile_fmi);
 
     if (!mParameterMappingDefinitions_autoFile_newbase.empty())
-    {
-      FILE* file = openMappingFile(mParameterMappingDefinitions_autoFile_newbase);
-      if (file != nullptr)
-        fclose(file);
-    }
+      openMappingFile(mParameterMappingDefinitions_autoFile_newbase);
 
     if (!mParameterMappingDefinitions_autoFile_netCdf.empty())
-    {
-      FILE* file = openMappingFile(mParameterMappingDefinitions_autoFile_netCdf);
-      if (file != nullptr)
-        fclose(file);
-    }
+      openMappingFile(mParameterMappingDefinitions_autoFile_netCdf);
   }
   catch (...)
   {
@@ -3494,22 +3440,14 @@ void Engine::updateMappings()
 
     mParameterMappingDefinitions_updateTime = currentTime;
 
-    QueryServer::ParamMappingFile_vec* parameterMappings = new QueryServer::ParamMappingFile_vec();
+    auto parameterMappings = std::make_unique<QueryServer::ParamMappingFile_vec>();
 
     loadMappings(*parameterMappings);
 
-    if (parameterMappings->size() > 0)
-    {
-      AutoWriteLock lock(&mParameterMappingDefinitions_modificationLock);
-      mParameterMappingDefinitions.reset(parameterMappings);
-    }
-    else
-    {
-      delete parameterMappings;
+    if (parameterMappings->empty())
       return;
-    }
 
-    Spine::Table* paramTable = new Spine::Table();
+    auto paramTable = std::make_unique<Spine::Table>();
     if (!mParameterMappingDefinitions_autoFile_fmi.empty())
     {
       updateMappings(T::ParamKeyTypeValue::FMI_NAME, mParameterMappingDefinitions_autoFileKeyType, mParameterMappingDefinitions_autoFile_fmi, *parameterMappings, *paramTable);
@@ -3528,7 +3466,8 @@ void Engine::updateMappings()
     }
 
     AutoWriteLock lock(&mParameterMappingDefinitions_modificationLock);
-    mParameterTable.reset(paramTable);
+    mParameterMappingDefinitions.reset(parameterMappings.release());
+    mParameterTable.reset(paramTable.release());
   }
   catch (...)
   {
@@ -3538,107 +3477,107 @@ void Engine::updateMappings()
   }
 }
 
-FILE* Engine::openMappingFile(const std::string& mappingFile)
+std::ofstream Engine::openMappingFile(const std::string& mappingFile)
 {
   FUNCTION_TRACE
   try
   {
     if (!mEnabled)
-      return nullptr;
+      return {};
 
-    FILE* file = fopen(mappingFile.c_str(), "we");
-    if (file == nullptr)
+    std::ofstream file(mappingFile);
+    if (!file)
     {
       Fmi::Exception exception(BCP, "Cannot open a mapping file for writing!");
-      exception.addParameter("Filaname", mappingFile);
+      exception.addParameter("Filename", mappingFile);
       throw exception;
     }
 
-    fprintf(file, "# This file is automatically generated by the grid engine. The file contains\n");
-    fprintf(file, "# mappings for the parameters found from the content server, which do not have\n");
-    fprintf(file, "# mappings already defined. The point is that the query server cannot find \n");
-    fprintf(file, "# requested parameters without mappings. On the other hand, the order of the mappings\n");
-    fprintf(file, "# is also the search order of the parameters that do not contain complete search \n");
-    fprintf(file, "# information (parameterIdType,levelIdType,levelId,level,etc.)\n");
-    fprintf(file, "# \n");
-    fprintf(file, "# If you want to change some of the mappings or their order, then you should move\n");
-    fprintf(file, "# them to a permanent mapping file (which is not automatically overridden.\n");
-    fprintf(file, "# \n");
-    fprintf(file, "# FIELDS:\n");
-    fprintf(file, "#  1) Producer name\n");
-    fprintf(file, "#  2) Mapping name\n");
-    fprintf(file, "#  3) Parameter id type:\n");
-    fprintf(file, "#         1 = FMI_ID\n");
-    fprintf(file, "#         2 = FMI_NAME\n");
-    fprintf(file, "#         3 = GRIB_ID\n");
-    fprintf(file, "#         4 = NEWBASE_ID\n");
-    fprintf(file, "#         5 = NEWBASE_NAME\n");
-    fprintf(file, "#         6 = NETCDF_NAME\n");
-    fprintf(file, "#  4) Parameter id / name\n");
-    fprintf(file, "#  5) Geometry id\n");
-    fprintf(file, "#  6) Parameter level id type:\n");
-    fprintf(file, "#         1 = FMI\n");
-    fprintf(file, "#         2 = GRIB1\n");
-    fprintf(file, "#         3 = GRIB2\n");
-    fprintf(file, "#  7) Level id\n");
-    fprintf(file, "#         FMI level identifiers:\n");
-    fprintf(file, "#            1 Gound or water surface\n");
-    fprintf(file, "#            2 Pressure level\n");
-    fprintf(file, "#            3 Hybrid level\n");
-    fprintf(file, "#            4 Altitude\n");
-    fprintf(file, "#            5 Top of atmosphere\n");
-    fprintf(file, "#            6 Height above ground in meters\n");
-    fprintf(file, "#            7 Mean sea level\n");
-    fprintf(file, "#            8 Entire atmosphere\n");
-    fprintf(file, "#            9 Depth below land surface\n");
-    fprintf(file, "#            10 Depth below some surface\n");
-    fprintf(file, "#            11 Level at specified pressure difference from ground to level\n");
-    fprintf(file, "#            12 Max equivalent potential temperature level\n");
-    fprintf(file, "#            13 Layer between two metric heights above ground\n");
-    fprintf(file, "#            14 Layer between two depths below land surface\n");
-    fprintf(file, "#            15 Isothermal level, temperature in 1/100 K\n");
-    fprintf(file, "#  8) Level\n");
-    fprintf(file, "#  9) Area interpolation method\n");
-    fprintf(file, "#         0 = None\n");
-    fprintf(file, "#         1 = Linear\n");
-    fprintf(file, "#         2 = Nearest\n");
-    fprintf(file, "#         3 = Min\n");
-    fprintf(file, "#         4 = Max\n");
-    fprintf(file, "#         9 = Landscape\n");
-    fprintf(file, "#         10 = Forbidden\n");
-    fprintf(file, "#         500..999 = List\n");
-    fprintf(file, "#         1000..65535 = External (interpolated by an external function)\n");
-    fprintf(file, "# 10) Time interpolation method\n");
-    fprintf(file, "#         0 = None\n");
-    fprintf(file, "#         1 = Linear\n");
-    fprintf(file, "#         2 = Nearest\n");
-    fprintf(file, "#         3 = Min\n");
-    fprintf(file, "#         4 = Max\n");
-    fprintf(file, "#         6 = Previous\n");
-    fprintf(file, "#         7 = Next\n");
-    fprintf(file, "#         1000..65535 = External (interpolated by an external function)\n");
-    fprintf(file, "# 11) Level interpolation method\n");
-    fprintf(file, "#         0 = None\n");
-    fprintf(file, "#         1 = Linear\n");
-    fprintf(file, "#         2 = Nearest\n");
-    fprintf(file, "#         3 = Min\n");
-    fprintf(file, "#         4 = Max\n");
-    fprintf(file, "#         5 = Logarithmic\n");
-    fprintf(file, "#         6 = Previous\n");
-    fprintf(file, "#         7 = Next\n");
-    fprintf(file, "#         1000..65535 = External (interpolated by an external function)\n");
-    fprintf(file, "# 12) Group flags\n");
-    fprintf(file, "#         bit 0 = Climatological parameter (=> ignore year when searching)\n");
-    fprintf(file, "#         bit 1 = Global parameter (=> ignore timestamp when searching, for example LandSeaMask)\n");
-    fprintf(file, "# 13) Search match (Can this mapping used when searching mappings for incomplete "
-        "parameters)\n");
-    fprintf(file, "#         E = Enabled\n");
-    fprintf(file, "#         D = Disabled\n");
-    fprintf(file, "#         I = Ignore\n");
-    fprintf(file, "# 14) Mapping function (enables data conversions during the mapping)\n");
-    fprintf(file, "# 15) Reverse mapping function\n");
-    fprintf(file, "# 16) Default precision\n");
-    fprintf(file, "# \n");
+    file <<
+      "# This file is automatically generated by the grid engine. The file contains\n"
+      "# mappings for the parameters found from the content server, which do not have\n"
+      "# mappings already defined. The point is that the query server cannot find \n"
+      "# requested parameters without mappings. On the other hand, the order of the mappings\n"
+      "# is also the search order of the parameters that do not contain complete search \n"
+      "# information (parameterIdType,levelIdType,levelId,level,etc.)\n"
+      "# \n"
+      "# If you want to change some of the mappings or their order, then you should move\n"
+      "# them to a permanent mapping file (which is not automatically overridden.\n"
+      "# \n"
+      "# FIELDS:\n"
+      "#  1) Producer name\n"
+      "#  2) Mapping name\n"
+      "#  3) Parameter id type:\n"
+      "#         1 = FMI_ID\n"
+      "#         2 = FMI_NAME\n"
+      "#         3 = GRIB_ID\n"
+      "#         4 = NEWBASE_ID\n"
+      "#         5 = NEWBASE_NAME\n"
+      "#         6 = NETCDF_NAME\n"
+      "#  4) Parameter id / name\n"
+      "#  5) Geometry id\n"
+      "#  6) Parameter level id type:\n"
+      "#         1 = FMI\n"
+      "#         2 = GRIB1\n"
+      "#         3 = GRIB2\n"
+      "#  7) Level id\n"
+      "#         FMI level identifiers:\n"
+      "#            1 Gound or water surface\n"
+      "#            2 Pressure level\n"
+      "#            3 Hybrid level\n"
+      "#            4 Altitude\n"
+      "#            5 Top of atmosphere\n"
+      "#            6 Height above ground in meters\n"
+      "#            7 Mean sea level\n"
+      "#            8 Entire atmosphere\n"
+      "#            9 Depth below land surface\n"
+      "#            10 Depth below some surface\n"
+      "#            11 Level at specified pressure difference from ground to level\n"
+      "#            12 Max equivalent potential temperature level\n"
+      "#            13 Layer between two metric heights above ground\n"
+      "#            14 Layer between two depths below land surface\n"
+      "#            15 Isothermal level, temperature in 1/100 K\n"
+      "#  8) Level\n"
+      "#  9) Area interpolation method\n"
+      "#         0 = None\n"
+      "#         1 = Linear\n"
+      "#         2 = Nearest\n"
+      "#         3 = Min\n"
+      "#         4 = Max\n"
+      "#         9 = Landscape\n"
+      "#         10 = Forbidden\n"
+      "#         500..999 = List\n"
+      "#         1000..65535 = External (interpolated by an external function)\n"
+      "# 10) Time interpolation method\n"
+      "#         0 = None\n"
+      "#         1 = Linear\n"
+      "#         2 = Nearest\n"
+      "#         3 = Min\n"
+      "#         4 = Max\n"
+      "#         6 = Previous\n"
+      "#         7 = Next\n"
+      "#         1000..65535 = External (interpolated by an external function)\n"
+      "# 11) Level interpolation method\n"
+      "#         0 = None\n"
+      "#         1 = Linear\n"
+      "#         2 = Nearest\n"
+      "#         3 = Min\n"
+      "#         4 = Max\n"
+      "#         5 = Logarithmic\n"
+      "#         6 = Previous\n"
+      "#         7 = Next\n"
+      "#         1000..65535 = External (interpolated by an external function)\n"
+      "# 12) Group flags\n"
+      "#         bit 0 = Climatological parameter (=> ignore year when searching)\n"
+      "#         bit 1 = Global parameter (=> ignore timestamp when searching, for example LandSeaMask)\n"
+      "# 13) Search match (Can this mapping used when searching mappings for incomplete parameters)\n"
+      "#         E = Enabled\n"
+      "#         D = Disabled\n"
+      "#         I = Ignore\n"
+      "# 14) Mapping function (enables data conversions during the mapping)\n"
+      "# 15) Reverse mapping function\n"
+      "# 16) Default precision\n"
+      "# \n";
 
     return file;
   }
@@ -3660,40 +3599,25 @@ bool filesEqual(const char *filename1,const char *filename2)
     if (getFileSize(filename1) != getFileSize(filename2))
       return false;
 
-    FILE* file1 = fopen(filename1, "re");
-    if (file1 == nullptr)
+    std::ifstream f1(filename1, std::ios::binary);
+    if (!f1)
     {
       Fmi::Exception exception(BCP, "Cannot open a file for reading!");
-      exception.addParameter("Filaname", filename1);
+      exception.addParameter("Filename", filename1);
       throw exception;
     }
 
-    FILE* file2 = fopen(filename2, "re");
-    if (file2 == nullptr)
+    std::ifstream f2(filename2, std::ios::binary);
+    if (!f2)
     {
       Fmi::Exception exception(BCP, "Cannot open a file for reading!");
-      exception.addParameter("Filaname", filename2);
+      exception.addParameter("Filename", filename2);
       throw exception;
     }
 
-    uchar buf1[10000];
-    uchar buf2[10000];
-
-    while (!feof(file1) &&  !feof(file2))
-    {
-      int n1 = fread(buf1,1,10000,file1);
-      int n2 = fread(buf2,1,10000,file2);
-
-      if (n1 != n2 || memcmp(buf1,buf2,n1) != 0)
-      {
-        fclose(file1);
-        fclose(file2);
-        return false;
-      }
-    }
-    fclose(file1);
-    fclose(file2);
-    return true;
+    return std::equal(
+        std::istreambuf_iterator<char>(f1), std::istreambuf_iterator<char>(),
+        std::istreambuf_iterator<char>(f2));
   }
   catch (...)
   {
@@ -3739,7 +3663,7 @@ void Engine::updateMappings(
       return;
     }
 
-    FILE* file = nullptr;
+    std::ofstream file;
     std::unordered_set < std::string > pList;
     auto row = paramTable.maxj();
 
@@ -3779,10 +3703,9 @@ void Engine::updateMappings(
 
             if (sourceParameterKeyType == T::ParamKeyTypeValue::FMI_NAME)
             {
-              char tmp[200];
-              sprintf(tmp, "%s;%s", pl[0].c_str(), pl[1].c_str());
+              std::string tmp = pl[0] + ";" + pl[1];
 
-              auto res = pList.insert(std::string(tmp));
+              auto res = pList.insert(tmp);
               if (res.second)
               {
                 paramTable.set(0, row, std::to_string(row + 1));
@@ -3807,17 +3730,16 @@ void Engine::updateMappings(
               }
             }
 
-            char key[200];
             std::string level = pl[7];
             if (mParameterMapping_simplifiedLevelIdSet.find(m.mParameterLevelId) != mParameterMapping_simplifiedLevelIdSet.end())
               level = "*";
 
-            sprintf(key, "%s;%s;%s;%s;%s;%s;%s;%s;", pl[0].c_str(), pl[1].c_str(), pl[2].c_str(), pl[3].c_str(), pl[4].c_str(), pl[5].c_str(), pl[6].c_str(), level.c_str());
+            std::string key = pl[0] + ";" + pl[1] + ";" + pl[2] + ";" + pl[3] + ";" + pl[4] + ";" + pl[5] + ";" + pl[6] + ";" + level + ";";
             std::string searchKey = m.mProducerName + ":" + m.mParameterName + ":" + std::to_string(m.mGeometryId);
 
-            if (mapList.find(std::string(key)) == mapList.end())
+            if (mapList.find(key) == mapList.end())
             {
-              mapList.insert(std::string(key));
+              mapList.insert(key);
 
               bool found = false;
               bool searchEnabled = false;
@@ -3862,53 +3784,54 @@ void Engine::updateMappings(
                 // if (searchList.find(searchKey) == searchList.end())
                 searchList.insert(searchKey);
 
-                if (file == nullptr)
+                if (!file.is_open())
                   file = openMappingFile(tmpMappingFile);
 
-                fprintf(file, "%s;%s;%s;%s;%s;%s;%s;%s;", pl[0].c_str(), pl[1].c_str(), pl[2].c_str(), pl[3].c_str(), pl[4].c_str(), pl[5].c_str(), pl[6].c_str(), level.c_str());
+                file << pl[0] << ";" << pl[1] << ";" << pl[2] << ";" << pl[3] << ";"
+                     << pl[4] << ";" << pl[5] << ";" << pl[6] << ";" << level << ";";
 
                 Identification::FmiParameterDef paramDef;
 
-                bool found = false;
+                bool mappingFound = false;
                 if (targetParameterKeyType == T::ParamKeyTypeValue::FMI_NAME)
-                  found = Identification::gridDef.getFmiParameterDefByName(pl[3], paramDef);
+                  mappingFound = Identification::gridDef.getFmiParameterDefByName(pl[3], paramDef);
                 else if (targetParameterKeyType == T::ParamKeyTypeValue::FMI_ID)
-                  found = Identification::gridDef.getFmiParameterDefById(toUInt32(pl[3]), paramDef);
+                  mappingFound = Identification::gridDef.getFmiParameterDefById(toUInt32(pl[3]), paramDef);
                 else if (targetParameterKeyType == T::ParamKeyTypeValue::NEWBASE_ID)
-                  found = Identification::gridDef.getFmiParameterDefByNewbaseId(toUInt32(pl[3]), paramDef);
+                  mappingFound = Identification::gridDef.getFmiParameterDefByNewbaseId(toUInt32(pl[3]), paramDef);
                 else if (targetParameterKeyType == T::ParamKeyTypeValue::NETCDF_NAME)
-                  found = Identification::gridDef.getFmiParameterDefByNetCdfName(pl[3], paramDef);
+                  mappingFound = Identification::gridDef.getFmiParameterDefByNetCdfName(pl[3], paramDef);
 
-                if (found)
+                if (mappingFound)
                 {
                   if (paramDef.mAreaInterpolationMethod >= 0)
-                    fprintf(file, "%d;", paramDef.mAreaInterpolationMethod);
+                    file << paramDef.mAreaInterpolationMethod << ";";
                   else
-                    fprintf(file, ";");
+                    file << ";";
 
                   if (paramDef.mTimeInterpolationMethod >= 0)
-                    fprintf(file, "%d;", paramDef.mTimeInterpolationMethod);
+                    file << paramDef.mTimeInterpolationMethod << ";";
                   else
-                    fprintf(file, ";");
+                    file << ";";
 
                   if (paramDef.mLevelInterpolationMethod >= 0)
-                    fprintf(file, "%d;", paramDef.mLevelInterpolationMethod);
+                    file << paramDef.mLevelInterpolationMethod << ";";
                   else
-                    fprintf(file, ";");
+                    file << ";";
 
-                  fprintf(file, "0;%c;", s);
+                  file << "0;" << s << ";";
 
                   if (sourceParameterKeyType == T::ParamKeyTypeValue::NEWBASE_ID || sourceParameterKeyType == T::ParamKeyTypeValue::NEWBASE_NAME)
                   {
                     Identification::FmiParameterId_newbase paramMapping;
                     if (Identification::gridDef.getNewbaseParameterMappingByFmiId(paramDef.mFmiParameterId, paramMapping))
                     {
-                      fprintf(file, "%s;", paramMapping.mConversionFunction.c_str());
-                      fprintf(file, "%s;", paramMapping.mReverseConversionFunction.c_str());
+                      file << paramMapping.mConversionFunction << ";";
+                      file << paramMapping.mReverseConversionFunction << ";";
                     }
                     else
                     {
-                      fprintf(file, ";;");
+                      file << ";;";
                     }
                   }
                   if (sourceParameterKeyType == T::ParamKeyTypeValue::NETCDF_NAME)
@@ -3916,29 +3839,29 @@ void Engine::updateMappings(
                     Identification::FmiParameterId_netCdf paramMapping;
                     if (Identification::gridDef.getNetCdfParameterMappingByFmiId(paramDef.mFmiParameterId, paramMapping))
                     {
-                      fprintf(file, "%s;", paramMapping.mConversionFunction.c_str());
-                      fprintf(file, "%s;", paramMapping.mReverseConversionFunction.c_str());
+                      file << paramMapping.mConversionFunction << ";";
+                      file << paramMapping.mReverseConversionFunction << ";";
                     }
                     else
                     {
-                      fprintf(file, ";;");
+                      file << ";;";
                     }
                   }
                   else
                   {
-                    fprintf(file, ";;");
+                    file << ";;";
                   }
 
                   if (paramDef.mDefaultPrecision >= 0)
-                    fprintf(file, "%d;", (int) paramDef.mDefaultPrecision);
+                    file << (int)paramDef.mDefaultPrecision << ";";
                   else
-                    fprintf(file, ";");
+                    file << ";";
 
-                  fprintf(file, "\n");
+                  file << "\n";
                 }
                 else
                 {
-                  fprintf(file, "1;1;1;0;D;;;;\n");
+                  file << "1;1;1;0;D;;;;\n";
                 }
               }
             }
@@ -3947,16 +3870,15 @@ void Engine::updateMappings(
       }
     }
 
-    if (file == nullptr && numOfNewMappings == 0)
+    if (!file.is_open() && numOfNewMappings == 0)
     {
       // We found all mappings from the other files. That's why we should remove them
       // from the update file.
-
       file = openMappingFile(tmpMappingFile);
     }
 
-    if (file != nullptr)
-      fclose(file);
+    if (file.is_open())
+      file.close();
 
     if (!filesEqual(tmpMappingFile.c_str(), mappingFile.c_str()))
       rename(tmpMappingFile.c_str(), mappingFile.c_str());
@@ -4009,6 +3931,8 @@ void Engine::updateProcessing()
       }
       catch (...)
       {
+        Fmi::Exception exception(BCP, "Content server event check failed!", nullptr);
+        exception.printError();
       }
 
       try
@@ -4017,6 +3941,8 @@ void Engine::updateProcessing()
       }
       catch (...)
       {
+        Fmi::Exception exception(BCP, "Parameter mapping update failed!", nullptr);
+        exception.printError();
       }
 
       try
@@ -4025,6 +3951,8 @@ void Engine::updateProcessing()
       }
       catch (...)
       {
+        Fmi::Exception exception(BCP, "Producer and generation list update failed!", nullptr);
+        exception.printError();
       }
 
       try
@@ -4033,6 +3961,8 @@ void Engine::updateProcessing()
       }
       catch (...)
       {
+        Fmi::Exception exception(BCP, "Configuration check failed!", nullptr);
+        exception.printError();
       }
       if (!mShutdownRequested)
 	      boost::this_thread::sleep(boost::posix_time::seconds(1));
@@ -4194,29 +4124,19 @@ void Engine::getVerticalGrid(
     for (auto level = levels1.rbegin(); level != levels1.rend(); ++level)
     {
       int lev = C_INT(*level);
-      char param[100];
-      char* p = param;
-      p += sprintf(p, "%s:%s", valueParameter.c_str(), valueProducerName.c_str());
-      if (geometryId > 0)
-        p += sprintf(p, ":%u:3:%u", geometryId, lev);
-      else
-        p += sprintf(p, "::3:%u", lev);
+      std::string levelSuffix = (geometryId > 0)
+          ? (":" + std::to_string(geometryId) + ":3:" + std::to_string(lev))
+          : ("::3:" + std::to_string(lev));
+
+      std::string pa = valueParameter + ":" + valueProducerName + levelSuffix;
 
       std::vector < T::ParamValue > valueVec;
       std::vector < T::ParamValue > heightVec;
 
-      std::string pa(param);
       int result1 = queryServer->getParameterValuesByPointListAndTime(sessionId, valueProducerName, pa, T::CoordinateTypeValue::LATLON_COORDINATES, points.first, utcTime,
           areaInterpolationMethod, timeInterpolationMethod, 1, valueVec);
 
-      p = param;
-      p += sprintf(p, "%s:%s", heightParameter.c_str(), heightProducerName.c_str());
-      if (geometryId > 0)
-        p += sprintf(p, ":%u:3:%u", geometryId, lev);
-      else
-        p += sprintf(p, "::3:%u", lev);
-
-      pa = param;
+      pa = heightParameter + ":" + heightProducerName + levelSuffix;
       int result2 = queryServer->getParameterValuesByPointListAndTime(sessionId, heightProducerName, pa, T::CoordinateTypeValue::LATLON_COORDINATES, points.first, utcTime,
           areaInterpolationMethod, timeInterpolationMethod, 1, heightVec);
 
