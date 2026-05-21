@@ -57,6 +57,8 @@ static void* gridEngine_updateThread(void* arg)
   }
 }
 
+/*! \brief Engine: Constructor. */
+
 Engine::Engine(const char* theConfigFile)
 {
   FUNCTION_TRACE
@@ -376,6 +378,8 @@ Engine::Engine(const char* theConfigFile)
 
 
 
+/*! \brief Engine: Destructor. */
+
 Engine::~Engine()
 {
   FUNCTION_TRACE
@@ -398,6 +402,8 @@ Engine::~Engine()
 }
 
 
+
+/*! \brief Engine: Init. */
 
 void Engine::init()
 {
@@ -684,6 +690,8 @@ void Engine::init()
   }
 }
 
+/*! \brief Engine: Check configuration. */
+
 void Engine::checkConfiguration()
 {
   FUNCTION_TRACE
@@ -959,6 +967,8 @@ void Engine::checkConfiguration()
   }
 }
 
+/*! \brief Engine: Is enabled. */
+
 bool Engine::isEnabled() const
 {
   FUNCTION_TRACE
@@ -973,6 +983,8 @@ bool Engine::isEnabled() const
     throw exception;
   }
 }
+
+/*! \brief Engine: Shutdown. */
 
 void Engine::shutdown()
 {
@@ -1028,6 +1040,8 @@ void Engine::shutdown()
   }
 }
 
+/*! \brief Engine: Browser request. */
+
 bool Engine::browserRequest(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest, Spine::HTTP::Response& theResponse)
 {
   FUNCTION_TRACE
@@ -1046,6 +1060,8 @@ bool Engine::browserRequest(SessionManagement::SessionInfo& session,const Spine:
   }
 }
 
+/*! \brief Engine: Browser content. */
+
 void Engine::browserContent(SessionManagement::SessionInfo& session,std::ostringstream& output)
 {
   FUNCTION_TRACE
@@ -1063,6 +1079,8 @@ void Engine::browserContent(SessionManagement::SessionInfo& session,std::ostring
     throw exception;
   }
 }
+
+/*! \brief Engine: Execute query. */
 
 int Engine::executeQuery(QueryServer::Query& query) const
 {
@@ -1084,6 +1102,8 @@ int Engine::executeQuery(QueryServer::Query& query) const
     throw exception;
   }
 }
+
+/*! \brief Engine: Execute query. */
 
 Query_sptr Engine::executeQuery(Query_sptr query) const
 {
@@ -1123,6 +1143,8 @@ Query_sptr Engine::executeQuery(Query_sptr query) const
   }
 }
 
+/*! \brief Engine: Get configuration file name. */
+
 std::string Engine::getConfigurationFileName()
 {
   FUNCTION_TRACE
@@ -1138,6 +1160,8 @@ std::string Engine::getConfigurationFileName()
   }
 }
 
+/*! \brief Engine: Get producer file name. */
+
 std::string Engine::getProducerFileName()
 {
   FUNCTION_TRACE
@@ -1152,6 +1176,8 @@ std::string Engine::getProducerFileName()
     throw exception;
   }
 }
+
+/*! \brief Engine: Get content server sptr. */
 
 ContentServer_sptr Engine::getContentServer_sptr() const
 {
@@ -1175,6 +1201,8 @@ ContentServer_sptr Engine::getContentServer_sptr() const
   }
 }
 
+/*! \brief Engine: Get content source server sptr. */
+
 ContentServer_sptr Engine::getContentSourceServer_sptr(uint idx) const
 {
   FUNCTION_TRACE
@@ -1194,6 +1222,8 @@ ContentServer_sptr Engine::getContentSourceServer_sptr(uint idx) const
   }
 }
 
+/*! \brief Engine: Get data server sptr. */
+
 DataServer_sptr Engine::getDataServer_sptr() const
 {
   FUNCTION_TRACE
@@ -1209,6 +1239,8 @@ DataServer_sptr Engine::getDataServer_sptr() const
   }
 }
 
+/*! \brief Engine: Get query server sptr. */
+
 QueryServer_sptr Engine::getQueryServer_sptr() const
 {
   FUNCTION_TRACE
@@ -1223,6 +1255,8 @@ QueryServer_sptr Engine::getQueryServer_sptr() const
     throw exception;
   }
 }
+
+/*! \brief Engine: Is grid producer. */
 
 bool Engine::isGridProducer(const std::string& producer) const
 {
@@ -1271,6 +1305,8 @@ bool Engine::isGridProducer(const std::string& producer) const
     throw exception;
   }
 }
+
+/*! \brief Engine: Get parameter string. */
 
 std::string Engine::getParameterString(const std::string& producer, const std::string& parameter) const
 {
@@ -1333,6 +1369,8 @@ std::string Engine::getParameterString(const std::string& producer, const std::s
   }
 }
 
+/*! \brief Engine: Get producer name. */
+
 std::string Engine::getProducerName(const std::string& aliasName) const
 {
   FUNCTION_TRACE
@@ -1363,6 +1401,8 @@ std::string Engine::getProducerName(const std::string& aliasName) const
     throw exception;
   }
 }
+
+/*! \brief Engine: Get producer name list. */
 
 void Engine::getProducerNameList(const std::string& mappingName, std::vector<std::string>& nameList) const
 {
@@ -1401,6 +1441,8 @@ void Engine::getProducerNameList(const std::string& mappingName, std::vector<std
     throw exception;
   }
 }
+
+/*! \brief Engine: Get producer hash. */
 
 UInt64 Engine::getProducerHash(T::ProducerId producerId) const
 {
@@ -1456,6 +1498,8 @@ UInt64 Engine::getProducerHash(T::ProducerId producerId) const
 
 
 
+/*! \brief Engine: Get producer hash. */
+
 UInt64 Engine::getProducerHash(std::string producerName) const
 {
   try
@@ -1496,6 +1540,8 @@ UInt64 Engine::getProducerHash(std::string producerName) const
 }
 
 
+
+/*! \brief Engine: Get parameter details. */
 
 void Engine::getParameterDetails(const std::string& aliasName, ParameterDetails_vec& parameterDetails) const
 {
@@ -1568,6 +1614,8 @@ void Engine::getParameterDetails(const std::string& aliasName, ParameterDetails_
   }
 }
 
+/*! \brief Engine: Get parameter alias. */
+
 void Engine::getParameterAlias(const std::string& aliasName, std::string& aliasValue) const
 {
   try
@@ -1582,6 +1630,8 @@ void Engine::getParameterAlias(const std::string& aliasName, std::string& aliasV
   }
 }
 
+
+/*! \brief Engine: Get parameter details. */
 
 void Engine::getParameterDetails(const std::string& producerName, const std::string& parameterName, ParameterDetails_vec& parameterDetails) const
 {
@@ -1719,6 +1769,8 @@ void Engine::getParameterDetails(const std::string& producerName, const std::str
 
 
 
+/*! \brief Engine: Get parameter details. */
+
 void Engine::getParameterDetails(const std::string& producerName, const std::string& parameterName, std::string& level, ParameterDetails_vec& parameterDetails) const
 {
   FUNCTION_TRACE
@@ -1738,6 +1790,8 @@ void Engine::getParameterDetails(const std::string& producerName, const std::str
     throw exception;
   }
 }
+
+/*! \brief Engine: Get parameter mappings. */
 
 void Engine::getParameterMappings(
     const std::string& producerName,
@@ -1771,6 +1825,8 @@ void Engine::getParameterMappings(
     throw Fmi::Exception(BCP, "Operation failed!", nullptr);
   }
 }
+
+/*! \brief Engine: Get parameter mappings. */
 
 void Engine::getParameterMappings(const std::string& producerName, const std::string& parameterName, bool onlySearchEnabled, QueryServer::ParameterMapping_vec& mappings) const
 {
@@ -1800,6 +1856,8 @@ void Engine::getParameterMappings(const std::string& producerName, const std::st
   }
 }
 
+/*! \brief Engine: Get parameter mappings. */
+
 void Engine::getParameterMappings(
     const std::string& producerName,
     const std::string& parameterName,
@@ -1835,6 +1893,8 @@ void Engine::getParameterMappings(
   }
 }
 
+/*! \brief Engine: Get parameter mappings. */
+
 void Engine::getParameterMappings(
     const std::string& producerName,
     const std::string& parameterName,
@@ -1868,6 +1928,8 @@ void Engine::getParameterMappings(
     throw Fmi::Exception(BCP, "Operation failed!", nullptr);
   }
 }
+
+/*! \brief Engine: Map parameter details. */
 
 void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails) const
 {
@@ -1945,6 +2007,8 @@ void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails) const
   }
 }
 
+/*! \brief Engine: Get producer alias. */
+
 std::string Engine::getProducerAlias(const std::string& producerName, int levelId) const
 {
   FUNCTION_TRACE
@@ -1980,6 +2044,8 @@ std::string Engine::getProducerAlias(const std::string& producerName, int levelI
     throw exception;
   }
 }
+
+/*! \brief Engine: Get producer info. */
 
 ContentTable Engine::getProducerInfo(std::optional<std::string> producer,std::string timeFormat) const
 {
@@ -2070,6 +2136,8 @@ ContentTable Engine::getProducerInfo(std::optional<std::string> producer,std::st
 }
 
 
+
+/*! \brief Engine: Get generation info. */
 
 ContentTable Engine::getGenerationInfo(std::optional<std::string> producer,std::string timeFormat) const
 {
@@ -2287,6 +2355,8 @@ ContentTable Engine::getGenerationInfo(std::optional<std::string> producer,std::
 }
 
 
+
+/*! \brief Engine: Get ext generation info. */
 
 ContentTable Engine::getExtGenerationInfo(std::optional<std::string> producer,std::string timeFormat) const
 {
@@ -2573,6 +2643,8 @@ ContentTable Engine::getExtGenerationInfo(std::optional<std::string> producer,st
 
 
 
+/*! \brief Engine: Get parameter info. */
+
 ContentTable Engine::getParameterInfo(std::optional<std::string> producer) const
 {
   FUNCTION_TRACE
@@ -2633,6 +2705,8 @@ ContentTable Engine::getParameterInfo(std::optional<std::string> producer) const
 }
 
 
+
+/*! \brief Engine: Get engine metadata. */
 
 std::list<MetaData> Engine::getEngineMetadata(const char *producerName) const
 {
@@ -2792,6 +2866,8 @@ std::list<MetaData> Engine::getEngineMetadata(const char *producerName) const
 
 
 
+/*! \brief Engine: Get cache stats. */
+
 void Engine::getCacheStats(Fmi::Cache::CacheStatistics& statistics) const
 {
   try
@@ -2826,6 +2902,8 @@ void Engine::getCacheStats(Fmi::Cache::CacheStatistics& statistics) const
 
 
 
+/*! \brief Engine: Get cache stats. */
+
 Fmi::Cache::CacheStatistics Engine::getCacheStats() const
 {
   try
@@ -2844,6 +2922,8 @@ Fmi::Cache::CacheStatistics Engine::getCacheStats() const
 
 
 
+
+/*! \brief Engine: Get state attributes. */
 
 void Engine::getStateAttributes(std::shared_ptr<T::AttributeNode> parent)
 {
@@ -2892,6 +2972,8 @@ void Engine::getStateAttributes(std::shared_ptr<T::AttributeNode> parent)
 
 
 
+/*! \brief Engine: Get fmi parameter level id. */
+
 T::ParamLevelId Engine::getFmiParameterLevelId(T::ProducerId producerId, int level) const
 {
   FUNCTION_TRACE
@@ -2922,6 +3004,8 @@ T::ParamLevelId Engine::getFmiParameterLevelId(T::ProducerId producerId, int lev
   }
 }
 
+/*! \brief Engine: Get producer list. */
+
 void Engine::getProducerList(string_vec& producerList) const
 {
   FUNCTION_TRACE
@@ -2940,6 +3024,8 @@ void Engine::getProducerList(string_vec& producerList) const
   }
 }
 
+/*! \brief Engine: Get producer info by name. */
+
 bool Engine::getProducerInfoByName(const std::string& name, T::ProducerInfo& producerInfo) const
 {
   FUNCTION_TRACE
@@ -2956,6 +3042,8 @@ bool Engine::getProducerInfoByName(const std::string& name, T::ProducerInfo& pro
     throw Fmi::Exception(BCP, "Operation failed!", nullptr);
   }
 }
+
+/*! \brief Engine: Get producer info by id. */
 
 bool Engine::getProducerInfoById(T::ProducerId producerId, T::ProducerInfo& producerInfo) const
 {
@@ -2974,6 +3062,8 @@ bool Engine::getProducerInfoById(T::ProducerId producerId, T::ProducerInfo& prod
   }
 }
 
+/*! \brief Engine: Get generation info by id. */
+
 bool Engine::getGenerationInfoById(T::GenerationId generationId, T::GenerationInfo& generationInfo)
 {
   FUNCTION_TRACE
@@ -2990,6 +3080,8 @@ bool Engine::getGenerationInfoById(T::GenerationId generationId, T::GenerationIn
     throw Fmi::Exception(BCP, "Operation failed!", nullptr);
   }
 }
+
+/*! \brief Engine: Get producer parameter level list. */
 
 void Engine::getProducerParameterLevelList(const std::string& producerName, T::ParamLevelId fmiParamLevelId, double multiplier, std::set<double>& levels) const
 {
@@ -3034,6 +3126,8 @@ void Engine::getProducerParameterLevelList(const std::string& producerName, T::P
     throw exception;
   }
 }
+
+/*! \brief Engine: Get producer parameter level id list. */
 
 void Engine::getProducerParameterLevelIdList(const std::string& producerName, std::set<T::ParamLevelId>& levelIdList) const
 {
@@ -3081,6 +3175,8 @@ void Engine::getProducerParameterLevelIdList(const std::string& producerName, st
 
 
 
+/*! \brief Engine: Get producer level id list. */
+
 void Engine::getProducerLevelIdList(T::ProducerId producerId, std::set<T::ParamLevelId>& levelIdList) const
 {
   FUNCTION_TRACE
@@ -3111,6 +3207,8 @@ void Engine::getProducerLevelIdList(T::ProducerId producerId, std::set<T::ParamL
 
 
 
+
+/*! \brief Engine: Load unit conversion file. */
 
 void Engine::loadUnitConversionFile()
 {
@@ -3173,6 +3271,8 @@ void Engine::loadUnitConversionFile()
 
 
 
+/*! \brief Engine: Load mappings. */
+
 void Engine::loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings)
 {
   FUNCTION_TRACE
@@ -3223,6 +3323,8 @@ void Engine::loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings)
 
 
 
+
+/*! \brief Engine: Get analysis times. */
 
 void Engine::getAnalysisTimes(std::vector<std::vector<std::string>>& table) const
 {
@@ -3288,6 +3390,8 @@ void Engine::getAnalysisTimes(std::vector<std::vector<std::string>>& table) cons
   }
 }
 
+
+/*! \brief Engine: Get ext analysis times. */
 
 void Engine::getExtAnalysisTimes(std::vector<std::vector<std::string>>& table) const
 {
@@ -3398,6 +3502,8 @@ void Engine::getExtAnalysisTimes(std::vector<std::vector<std::string>>& table) c
 
 
 
+/*! \brief Engine: Clear mappings. */
+
 void Engine::clearMappings()
 {
   FUNCTION_TRACE
@@ -3424,6 +3530,8 @@ void Engine::clearMappings()
     throw exception;
   }
 }
+
+/*! \brief Engine: Update mappings. */
 
 void Engine::updateMappings()
 {
@@ -3476,6 +3584,8 @@ void Engine::updateMappings()
     throw exception;
   }
 }
+
+/*! \brief Engine: Open mapping file. */
 
 std::ofstream Engine::openMappingFile(const std::string& mappingFile)
 {
@@ -3628,6 +3738,8 @@ bool filesEqual(const char *filename1,const char *filename2)
 
 
 
+
+/*! \brief Engine: Update mappings. */
 
 void Engine::updateMappings(
     T::ParamKeyType sourceParameterKeyType,
@@ -3893,6 +4005,8 @@ void Engine::updateMappings(
   }
 }
 
+/*! \brief Engine: Update processing. */
+
 void Engine::updateProcessing()
 {
   try
@@ -3976,6 +4090,8 @@ void Engine::updateProcessing()
   }
 }
 
+/*! \brief Engine: Update producer and generation list. */
+
 void Engine::updateProducerAndGenerationList() const
 {
   FUNCTION_TRACE
@@ -4025,6 +4141,8 @@ void Engine::updateProducerAndGenerationList() const
     throw exception;
   }
 }
+
+/*! \brief Engine: Get vertical grid. */
 
 void Engine::getVerticalGrid(
     double lon1,
@@ -4225,6 +4343,8 @@ void Engine::getVerticalGrid(
   }
 }
 
+/*! \brief Engine: Set dem. */
+
 void Engine::setDem(std::shared_ptr<Fmi::DEM> dem)
 {
   try
@@ -4259,6 +4379,8 @@ inline bool setBit(uchar *_bits,uint _pos)
 }
 
 
+/*! \brief Engine: Set land cover. */
+
 void Engine::setLandCover(std::shared_ptr<Fmi::LandCover> landCover)
 {
   try
@@ -4276,6 +4398,8 @@ void Engine::setLandCover(std::shared_ptr<Fmi::LandCover> landCover)
     throw exception;
   }
 }
+
+/*! \brief Engine: Start update processing. */
 
 void Engine::startUpdateProcessing()
 {
@@ -4295,6 +4419,8 @@ void Engine::startUpdateProcessing()
 }
 
 
+/*! \brief Engine: Request grid generation info. */
+
 ContentTable  Engine::requestGridGenerationInfo(const Spine::HTTP::Request &theRequest)
 try
 {
@@ -4308,6 +4434,8 @@ catch (...)
   throw Fmi::Exception(BCP, "Operation failed!");
 }
 
+
+/*! \brief Engine: Request grid qd generation info. */
 
 ContentTable  Engine::requestGridQdGenerationInfo(const Spine::HTTP::Request &theRequest)
 try
@@ -4323,6 +4451,8 @@ catch (...)
 }
 
 
+/*! \brief Engine: Request grid parameter info. */
+
 ContentTable  Engine::requestGridParameterInfo(const Spine::HTTP::Request &theRequest)
 try
 {
@@ -4335,6 +4465,8 @@ catch (...)
   throw Fmi::Exception(BCP, "Operation failed!");
 }
 
+
+/*! \brief Engine: Request grid producer info. */
 
 ContentTable  Engine::requestGridProducerInfo(const Spine::HTTP::Request &theRequest)
 try

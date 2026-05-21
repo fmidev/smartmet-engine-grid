@@ -30,6 +30,8 @@ namespace Grid
 #define MODE_GENERATE_CONFIRM  104
 
 
+/*! \brief Engine: Constructor. */
+
 Browser::Browser()
 {
   try
@@ -47,6 +49,8 @@ Browser::Browser()
 
 
 
+/*! \brief Engine: Destructor. */
+
 Browser::~Browser()
 {
 }
@@ -54,6 +58,8 @@ Browser::~Browser()
 
 
 
+
+/*! \brief Engine: Init. */
 
 void Browser::init(const char *theConfigurationFile,Engine *theGridEngine)
 {
@@ -73,6 +79,8 @@ void Browser::init(const char *theConfigurationFile,Engine *theGridEngine)
 
 
 
+/*! \brief Engine: Set flags. */
+
 void Browser::setFlags(UInt64 flags)
 {
   try
@@ -89,6 +97,8 @@ void Browser::setFlags(UInt64 flags)
 
 
 
+/*! \brief Engine: Get flags. */
+
 UInt64 Browser::getFlags()
 {
   try
@@ -104,6 +114,8 @@ UInt64 Browser::getFlags()
 
 
 
+
+/*! \brief Engine: Include file. */
 
 bool Browser::includeFile(std::ostringstream& output,const char *filename)
 {
@@ -124,6 +136,8 @@ bool Browser::includeFile(std::ostringstream& output,const char *filename)
 
 
 
+
+/*! \brief Engine: Update session parameters. */
 
 void Browser::updateSessionParameters(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
@@ -191,6 +205,8 @@ void Browser::updateSessionParameters(SessionManagement::SessionInfo& session,co
 
 
 
+
+/*! \brief Engine: Page content list. */
 
 bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
@@ -819,6 +835,8 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
 
 
 
+/*! \brief Engine: Page files. */
+
 bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
@@ -1260,6 +1278,8 @@ bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HT
 
 
 
+/*! \brief Engine: Page generations. */
+
 bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
@@ -1643,6 +1663,8 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
 
 
 
+/*! \brief Engine: Page producers. */
+
 bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
@@ -1766,7 +1788,6 @@ bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine
     output << "<A href=\"grid-admin?target=grid-engine&page=contentServer\">Content Server</A> / ";
     output << "<A href=\"grid-admin?target=grid-engine&page=contentInformation\">Content Information</A> / ";
     output << "<HR>\n";
-    //output << "<H2>Producers (" << sourceStr << " / " << contentServer->getSourceInfo()  <<  ")</H2>\n";
     output << "<H2>Producers (" << sourceStr << ")</H2>\n";
     output << "<HR>\n";
 
@@ -1935,6 +1956,8 @@ bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine
 
 
 
+/*! \brief Engine: Page content information. */
+
 bool Browser::page_contentInformation(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
@@ -1993,6 +2016,8 @@ bool Browser::page_contentInformation(SessionManagement::SessionInfo& session,co
 
 
 
+
+/*! \brief Engine: Page content server. */
 
 bool Browser::page_contentServer(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
@@ -2068,6 +2093,8 @@ bool Browser::page_contentServer(SessionManagement::SessionInfo& session,const S
 
 
 
+/*! \brief Engine: Page data server. */
+
 bool Browser::page_dataServer(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
@@ -2115,6 +2142,8 @@ bool Browser::page_dataServer(SessionManagement::SessionInfo& session,const Spin
 
 
 
+/*! \brief Engine: Page query server. */
+
 bool Browser::page_queryServer(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
@@ -2161,6 +2190,8 @@ bool Browser::page_queryServer(SessionManagement::SessionInfo& session,const Spi
 
 
 
+
+/*! \brief Engine: Page lua file. */
 
 bool Browser::page_luaFile(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
@@ -2216,6 +2247,8 @@ bool Browser::page_luaFile(SessionManagement::SessionInfo& session,const Spine::
 
 
 
+
+/*! \brief Engine: Page lua files. */
 
 bool Browser::page_luaFiles(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
@@ -2319,6 +2352,8 @@ bool Browser::page_luaFiles(SessionManagement::SessionInfo& session,const Spine:
 
 
 
+/*! \brief Engine: Page parameter alias file. */
+
 bool Browser::page_parameterAliasFile(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
@@ -2372,6 +2407,8 @@ bool Browser::page_parameterAliasFile(SessionManagement::SessionInfo& session,co
 
 
 
+
+/*! \brief Engine: Page parameter alias files. */
 
 bool Browser::page_parameterAliasFiles(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
@@ -2459,6 +2496,8 @@ bool Browser::page_parameterAliasFiles(SessionManagement::SessionInfo& session,c
 
 
 
+/*! \brief Engine: Page producer mapping file. */
+
 bool Browser::page_producerMappingFile(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
@@ -2512,6 +2551,8 @@ bool Browser::page_producerMappingFile(SessionManagement::SessionInfo& session,c
 
 
 
+
+/*! \brief Engine: Page producer mapping files. */
 
 bool Browser::page_producerMappingFiles(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
@@ -2616,6 +2657,8 @@ bool Browser::page_producerMappingFiles(SessionManagement::SessionInfo& session,
 
 
 
+
+/*! \brief Engine: Page parameter mapping file. */
 
 bool Browser::page_parameterMappingFile(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
@@ -2750,6 +2793,8 @@ bool Browser::page_parameterMappingFile(SessionManagement::SessionInfo& session,
 
 
 
+/*! \brief Engine: Page parameter mapping files. */
+
 bool Browser::page_parameterMappingFiles(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
@@ -2882,6 +2927,8 @@ bool Browser::page_parameterMappingFiles(SessionManagement::SessionInfo& session
 
 
 
+/*! \brief Engine: Page producer file. */
+
 bool Browser::page_producerFile(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
@@ -2942,6 +2989,8 @@ bool Browser::page_producerFile(SessionManagement::SessionInfo& session,const Sp
 
 
 
+/*! \brief Engine: Page configuration file. */
+
 bool Browser::page_configurationFile(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
@@ -2986,6 +3035,8 @@ bool Browser::page_configurationFile(SessionManagement::SessionInfo& session,con
 
 
 
+
+/*! \brief Engine: Page content server processing log. */
 
 bool Browser::page_contentServer_processingLog(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
@@ -3109,6 +3160,8 @@ bool Browser::page_contentServer_processingLog(SessionManagement::SessionInfo& s
 
 
 
+/*! \brief Engine: Page content server debug log. */
+
 bool Browser::page_contentServer_debugLog(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
@@ -3230,6 +3283,8 @@ bool Browser::page_contentServer_debugLog(SessionManagement::SessionInfo& sessio
 
 
 
+
+/*! \brief Engine: Page data server processing log. */
 
 bool Browser::page_dataServer_processingLog(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
@@ -3353,6 +3408,8 @@ bool Browser::page_dataServer_processingLog(SessionManagement::SessionInfo& sess
 
 
 
+/*! \brief Engine: Page data server debug log. */
+
 bool Browser::page_dataServer_debugLog(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
@@ -3474,6 +3531,8 @@ bool Browser::page_dataServer_debugLog(SessionManagement::SessionInfo& session,c
 
 
 
+
+/*! \brief Engine: Page query server processing log. */
 
 bool Browser::page_queryServer_processingLog(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
@@ -3597,6 +3656,8 @@ bool Browser::page_queryServer_processingLog(SessionManagement::SessionInfo& ses
 
 
 
+/*! \brief Engine: Page query server debug log. */
+
 bool Browser::page_queryServer_debugLog(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
@@ -3719,6 +3780,8 @@ bool Browser::page_queryServer_debugLog(SessionManagement::SessionInfo& session,
 
 
 
+/*! \brief Engine: Page configuration. */
+
 bool Browser::page_configuration(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
@@ -3773,6 +3836,8 @@ bool Browser::page_configuration(SessionManagement::SessionInfo& session,const S
 
 
 
+/*! \brief Engine: Page state information. */
+
 bool Browser::page_stateInformation(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
@@ -3816,6 +3881,8 @@ bool Browser::page_stateInformation(SessionManagement::SessionInfo& session,cons
 
 
 
+/*! \brief Engine: Page start. */
+
 bool Browser::page_start(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
@@ -3850,6 +3917,8 @@ bool Browser::page_start(SessionManagement::SessionInfo& session,const Spine::HT
 
 
 
+
+/*! \brief Engine: Browser content. */
 
 void Browser::browserContent(SessionManagement::SessionInfo& session,std::ostringstream& output)
 {
@@ -3969,6 +4038,8 @@ void Browser::browserContent(SessionManagement::SessionInfo& session,std::ostrin
 
 
 
+
+/*! \brief Engine: Request handler. */
 
 bool Browser::requestHandler(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {

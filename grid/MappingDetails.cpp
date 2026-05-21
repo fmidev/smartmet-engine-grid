@@ -12,6 +12,8 @@ namespace Grid
 
 
 
+/*! \brief Engine: Constructor. */
+
 MappingDetails::MappingDetails()
 {
   try
@@ -26,6 +28,8 @@ MappingDetails::MappingDetails()
 
 
 
+
+/*! \brief Engine: Constructor. */
 
 MappingDetails::MappingDetails(const MappingDetails& mappingDetails)
 {
@@ -44,6 +48,8 @@ MappingDetails::MappingDetails(const MappingDetails& mappingDetails)
 
 
 
+/*! \brief Engine: Destructor. */
+
 MappingDetails::~MappingDetails()
 {
   try
@@ -59,6 +65,8 @@ MappingDetails::~MappingDetails()
 
 
 
+
+/*! \brief Engine: Print. */
 
 void MappingDetails::print(std::ostream& stream,uint level,uint optionFlags)
 {

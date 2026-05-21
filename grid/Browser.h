@@ -18,12 +18,21 @@ namespace Engine
 namespace Grid
 {
 
-typedef std::map<std::string,std::string> Filenames;
-typedef std::vector<std::pair<std::string,std::string>> UrlPath;
-typedef std::shared_ptr<ContentServer::ServiceInterface> ContentServer_sptr;
+typedef std::map<std::string,std::string> Filenames;                          //!< Map of resource name to file path for statically served browser assets.
+typedef std::vector<std::pair<std::string,std::string>> UrlPath;              //!< Ordered (URL path, label) pairs used for breadcrumb navigation.
+typedef std::shared_ptr<ContentServer::ServiceInterface> ContentServer_sptr;  //!< Shared pointer to a ContentServer service interface.
 
 class Engine;
 
+
+// ====================================================================================
+/*! \brief Web-based admin browser for the grid engine.
+ *
+ *  Handles HTTP requests from the grid-admin plugin and renders HTML pages that expose
+ *  live state from all three embedded servers (ContentServer, DataServer, QueryServer):
+ *  producer/generation/file/content listings, server logs, parameter mapping files, and
+ *  Lua function files.  Pages are gated by the `Flags` bitmask. */
+// ====================================================================================
 
 class Browser
 {
@@ -74,24 +83,25 @@ class Browser
 
     static constexpr std::size_t CONTENT_CACHE_SIZE = 20;
 
-    Engine*               mGridEngine = nullptr;
-    ContentServer_sptr    mMainContentServer;
-    ContentServer_sptr    mCacheContentServer;
-    ConfigurationFile     mConfigurationFile;
-    std::array<T::FileId, CONTENT_CACHE_SIZE>          mCachedFileId{};
-    std::array<T::ContentInfoList, CONTENT_CACHE_SIZE> mCachedContentInfoList;
-    uint                  mCachedContentCount;
-    Filenames             mFilenames;
-    UInt64                mFlags;
+    Engine*               mGridEngine = nullptr;         //!< Back-pointer to the owning Engine (not owned).
+    ContentServer_sptr    mMainContentServer;            //!< Main (source) content server for metadata queries.
+    ContentServer_sptr    mCacheContentServer;           //!< Cache-layer content server for fast read access.
+    ConfigurationFile     mConfigurationFile;            //!< Parsed engine configuration file.
+    std::array<T::FileId, CONTENT_CACHE_SIZE>          mCachedFileId{};           //!< Ring buffer of recently accessed file IDs.
+    std::array<T::ContentInfoList, CONTENT_CACHE_SIZE> mCachedContentInfoList;    //!< Cached content info lists corresponding to mCachedFileId.
+    uint                  mCachedContentCount;           //!< Number of valid entries in the content cache ring buffer.
+    Filenames             mFilenames;                    //!< Map of resource name to file path for static browser assets.
+    UInt64                mFlags;                        //!< Feature flags controlling which browser actions are permitted.
 
 
   public:
 
+    /*! \brief Feature flag constants that control browser capabilities. */
     class Flags
     {
       public:
-        static const UInt64 contentModificationEnabled  = 1 << 0;
-        static const UInt64 logModificationEnabled      = 1 << 1;
+        static const UInt64 contentModificationEnabled  = 1 << 0;  //!< Allow content modifications (add/delete) via the browser.
+        static const UInt64 logModificationEnabled      = 1 << 1;  //!< Allow log level changes via the browser.
     };
 };
 
