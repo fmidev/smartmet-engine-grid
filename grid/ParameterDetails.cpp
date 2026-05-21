@@ -12,6 +12,8 @@ namespace Grid
 
 
 
+/*! \brief Engine: Constructor. */
+
 ParameterDetails::ParameterDetails()
 {
   try
@@ -26,6 +28,8 @@ ParameterDetails::ParameterDetails()
 
 
 
+
+/*! \brief Engine: Constructor. */
 
 ParameterDetails::ParameterDetails(const ParameterDetails& parameterDetails)
 {
@@ -51,6 +55,8 @@ ParameterDetails::ParameterDetails(const ParameterDetails& parameterDetails)
 
 
 
+/*! \brief Engine: Destructor. */
+
 ParameterDetails::~ParameterDetails()
 {
   try
@@ -66,6 +72,8 @@ ParameterDetails::~ParameterDetails()
 
 
 
+
+/*! \brief Engine: Print. */
 
 void ParameterDetails::print(std::ostream& stream,uint level,uint optionFlags)
 {

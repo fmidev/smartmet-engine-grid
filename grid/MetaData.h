@@ -12,6 +12,7 @@ namespace Grid
 {
 
 
+/*! \brief Minimal descriptor for one meteorological parameter. */
 struct Parameter
 {
   public:
@@ -32,13 +33,19 @@ struct Parameter
       stream << space(level) << "- parameterDescription = " << parameterDescription << "\n";
     }
 
-    uint          parameterId;
-    std::string   parameterName;
-    std::string   parameterUnits;
-    std::string   parameterDescription;
+    uint          parameterId;         //!< FMI parameter identifier.
+    std::string   parameterName;       //!< Short parameter name.
+    std::string   parameterUnits;      //!< Unit string (e.g. "K", "m/s").
+    std::string   parameterDescription;//!< Human-readable description.
 };
 
 
+/*! \brief Full metadata record for one producer/generation/geometry/level slice as
+ *  returned by Engine::getEngineMetadata().
+ *
+ *  Aggregates producer identity, grid geometry and projection, bounding box, level
+ *  type, all available level values, all available forecast times, and the list of
+ *  parameters that exist in this slice. */
 struct MetaData
 {
   MetaData()
@@ -92,31 +99,31 @@ struct MetaData
   }
 
 
-  T::ProducerId           producerId;
-  std::string             producerName;
-  std::string             producerDescription;
-  T::GenerationId         generationId;
-  std::string             analysisTime;     // All times are UTC time string (format "YYYYMMDDTHHMISS")
+  T::ProducerId           producerId;           //!< FMI producer identifier.
+  std::string             producerName;         //!< Producer short name.
+  std::string             producerDescription;  //!< Producer human-readable description.
+  T::GenerationId         generationId;         //!< Generation (model run) identifier.
+  std::string             analysisTime;         //!< Analysis time in UTC (format "YYYYMMDDTHHMISS").
 
-  T::GeometryId           geometryId;
-  int                     projectionId;
-  std::string             projectionName;
-  std::string             wkt;
-  std::string             proj4;
-  T::Coordinate           latlon_topLeft;           // Latlon koordinates
-  T::Coordinate           latlon_topRight;
-  T::Coordinate           latlon_bottomLeft;
-  T::Coordinate           latlon_bottomRight;
-  int                     xNumber;           // Horizontal grid points
-  int                     yNumber;           // Vertical grid points
+  T::GeometryId           geometryId;           //!< FMI grid geometry identifier.
+  int                     projectionId;         //!< Projection type code.
+  std::string             projectionName;       //!< Projection short name.
+  std::string             wkt;                  //!< Well-known text projection string.
+  std::string             proj4;                //!< Proj4 projection string.
+  T::Coordinate           latlon_topLeft;       //!< Bounding box top-left corner in lat/lon.
+  T::Coordinate           latlon_topRight;      //!< Bounding box top-right corner in lat/lon.
+  T::Coordinate           latlon_bottomLeft;    //!< Bounding box bottom-left corner in lat/lon.
+  T::Coordinate           latlon_bottomRight;   //!< Bounding box bottom-right corner in lat/lon.
+  int                     xNumber;              //!< Number of grid columns.
+  int                     yNumber;              //!< Number of grid rows.
 
-  T::ParamLevelId         levelId;
-  std::string             levelName;
-  std::string             levelDescription;
-  std::set<T::ParamLevel> levels;     // Level values
+  T::ParamLevelId         levelId;              //!< FMI level type identifier.
+  std::string             levelName;            //!< Level type short name.
+  std::string             levelDescription;     //!< Level type human-readable description.
+  std::set<T::ParamLevel> levels;               //!< Available level values in this geometry slice.
 
-  std::set<std::string>   times;
-  std::vector<Parameter>  parameters;
+  std::set<std::string>   times;                //!< Available forecast times (UTC "YYYYMMDDTHHMISS").
+  std::vector<Parameter>  parameters;           //!< Parameters present in this geometry/level slice.
 };
 
 }  // namespace Grid
