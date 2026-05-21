@@ -10,11 +10,12 @@ The **Grid Engine** (`smartmet-engine-grid`) is a SmartMet Server engine that pr
 
 ```bash
 make                # Build grid.so shared library
-make clean          # Clean build artifacts
+make clean          # Clean build artifacts (removes doc/html/)
 make format         # Run clang-format (NOTE: .clang-format has DisableFormat: true)
 make install        # Install to $(PREFIX)/share/smartmet/engines/ and headers to $(includedir)/smartmet/engines/grid/
 make rpm            # Build RPM package
 make configtest     # Validate test config with cfgvalidate
+make doc            # Generate Doxygen HTML documentation in doc/html/
 ```
 
 There is no test suite in this repo (the `test/` Makefile target is a no-op). The `testdata/` directory builds a helper tool `smartmet-grid-test-config-creator`.
