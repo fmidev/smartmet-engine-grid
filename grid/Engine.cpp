@@ -425,6 +425,85 @@ void Engine::init()
       return;
     }
 
+    initMemoryMapper();
+    clearMappings();
+
+    ContentServer::ServiceInterface* cServer = initContentSources();
+    cServer = initContentCache(cServer);
+    DataServer::ServiceInterface* dServer = initDataServerImpl(cServer);
+    QueryServer::ServiceInterface* qServer = initQueryServerImpl(cServer, dServer);
+    initLogs(cServer, dServer, qServer);
+
+    // Waiting until content server is ready (i.e. all requested files are cached)
+    while (!mShutdownRequested  &&  !cServer->isReady())
+      boost::this_thread::sleep(boost::posix_time::seconds(1));
+
+    if (mShutdownRequested)
+      return;
+
+    updateProducerAndGenerationList();
+    updateMappings();
+
+    mProducerMappingDefinitions.init(mProducerMappingDefinitions_filenames, true);
+    mParameterAliasDefinitions.init(mParameterAliasDefinitions_filenames);
+
+    mBrowser.init(mConfigurationFile_name.c_str(), this);
+    mBrowser.setFlags(mBrowserFlags);
+
+    // Register admin requests if reactor instance is available
+    Spine::Reactor* reactor  = Spine::Reactor::instance;
+    if (reactor)
+    {
+      using AdminRequestAccess = Spine::Reactor::AdminRequestAccess;
+
+      reactor->addAdminTableRequestHandler(
+        this,
+        "gridgenerations",
+        AdminRequestAccess::Public,
+        std::bind(&Engine::requestGridGenerationInfo, this, std::placeholders::_2),
+        "Grid generations");
+
+      reactor->addAdminTableRequestHandler(
+        this,
+        "gridgenerationsqd",
+        AdminRequestAccess::Public,
+        std::bind(&Engine::requestGridQdGenerationInfo, this, std::placeholders::_2),
+        "Grid newbase generations");
+
+      reactor->addAdminTableRequestHandler(
+        this,
+        "gridproducers",
+        AdminRequestAccess::Public,
+        std::bind(&Engine::requestGridProducerInfo, this, std::placeholders::_2),
+        "Grid producers");
+
+      reactor->addAdminTableRequestHandler(
+        this,
+        "gridparameters",
+        AdminRequestAccess::Public,
+        std::bind(&Engine::requestGridParameterInfo, this, std::placeholders::_2),
+        "Grid parameters");
+    }
+
+    startUpdateProcessing();
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Configuration file", mConfigurationFile_name);
+    throw exception;
+  }
+}
+
+
+
+
+/*! \brief Engine: Apply memory-mapper configuration from member fields. */
+
+void Engine::initMemoryMapper()
+{
+  try
+  {
     if (!mMemoryMapper_accessFile.empty())
       memoryMapper.setAccessFile(mMemoryMapper_accessFile.c_str());
 
@@ -435,12 +514,23 @@ void Engine::init()
     memoryMapper.setFileHandleLimit(mMemoryMapper_fileHandleLimit);
     memoryMapper.setPremapEnabled(mMemoryMapper_premapEnabled);
     memoryMapper.setEnabled(mMemoryMapper_enabled);
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP,"Operation failed!",nullptr);
+  }
+}
 
+
+
+
+/*! \brief Engine: Build one ContentServer per configured mContentSources entry; returns the last one. */
+
+ContentServer::ServiceInterface* Engine::initContentSources()
+{
+  try
+  {
     ContentServer::ServiceInterface* cServer = nullptr;
-    DataServer::ServiceInterface* dServer = nullptr;
-    QueryServer::ServiceInterface* qServer = nullptr;
-
-    clearMappings();
 
     for (auto contentSource = mContentSources.begin(); contentSource != mContentSources.end(); ++contentSource)
     {
@@ -510,7 +600,23 @@ void Engine::init()
         }
       }
     }
+    return cServer;
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP,"Operation failed!",nullptr);
+  }
+}
 
+
+
+
+/*! \brief Engine: Wrap a single content source in a CacheImplementation, or build a MergeImplementation; returns the active cServer. */
+
+ContentServer::ServiceInterface* Engine::initContentCache(ContentServer::ServiceInterface* cServer)
+{
+  try
+  {
     if (mContentCacheEnabled)
     {
       if (mContentSources.size() == 1)
@@ -536,6 +642,24 @@ void Engine::init()
         cServer = mContentServerMergeImplementation;
       }
     }
+    return cServer;
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP,"Operation failed!",nullptr);
+  }
+}
+
+
+
+
+/*! \brief Engine: Build the local DataServer impl (or a CORBA client) and initialise the grid value cache. */
+
+DataServer::ServiceInterface* Engine::initDataServerImpl(ContentServer::ServiceInterface* cServer)
+{
+  try
+  {
+    DataServer::ServiceInterface* dServer = nullptr;
 
     if (mDataServerRemote && mDataServerIor.length() > 50)
     {
@@ -569,6 +693,24 @@ void Engine::init()
         SmartMet::GRID::valueCache.init(mNumOfCachedGrids, mMaxSizeOfCachedGridsInMegaBytes);
       }
     }
+    return dServer;
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP,"Operation failed!",nullptr);
+  }
+}
+
+
+
+
+/*! \brief Engine: Build the local QueryServer impl (or a CORBA client). */
+
+QueryServer::ServiceInterface* Engine::initQueryServerImpl(ContentServer::ServiceInterface* cServer, DataServer::ServiceInterface* dServer)
+{
+  try
+  {
+    QueryServer::ServiceInterface* qServer = nullptr;
 
     if (mQueryServerRemote && mQueryServerIor.length() > 50)
     {
@@ -592,7 +734,23 @@ void Engine::init()
 
       mQueryServer.reset(server);
     }
+    return qServer;
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP,"Operation failed!",nullptr);
+  }
+}
 
+
+
+
+/*! \brief Engine: Initialise the six per-server processing/debug logs (no-op for empty file paths). */
+
+void Engine::initLogs(ContentServer::ServiceInterface* cServer, DataServer::ServiceInterface* dServer, QueryServer::ServiceInterface* qServer)
+{
+  try
+  {
     if (mContentServerProcessingLogFile.length() > 0)
     {
       mContentServerProcessingLog.init(mContentServerProcessingLogEnabled, mContentServerProcessingLogFile.c_str(), mContentServerProcessingLogMaxSize, mContentServerProcessingLogTruncateSize);
@@ -628,67 +786,16 @@ void Engine::init()
       mQueryServerDebugLog.init(mQueryServerDebugLogEnabled, mQueryServerDebugLogFile.c_str(), mQueryServerDebugLogMaxSize, mQueryServerDebugLogTruncateSize);
       qServer->setDebugLog(&mQueryServerDebugLog);
     }
-
-    // Waiting until content server is ready (i.e. all requested files are cached)
-    while (!mShutdownRequested  &&  !cServer->isReady())
-      boost::this_thread::sleep(boost::posix_time::seconds(1));
-
-    if (mShutdownRequested)
-      return;
-
-    updateProducerAndGenerationList();
-    updateMappings();
-
-    mProducerMappingDefinitions.init(mProducerMappingDefinitions_filenames, true);
-    mParameterAliasDefinitions.init(mParameterAliasDefinitions_filenames);
-
-    mBrowser.init(mConfigurationFile_name.c_str(), this);
-    mBrowser.setFlags(mBrowserFlags);
-
-    // Register admin requests if reactor instance is available
-    Spine::Reactor* reactor  = Spine::Reactor::instance;
-    if (reactor)
-    {
-      using AdminRequestAccess = Spine::Reactor::AdminRequestAccess;
-
-      reactor->addAdminTableRequestHandler(
-        this,
-        "gridgenerations",
-        AdminRequestAccess::Public,
-        std::bind(&Engine::requestGridGenerationInfo, this, std::placeholders::_2),
-        "Grid generations");
-
-      reactor->addAdminTableRequestHandler(
-        this,
-        "gridgenerationsqd",
-        AdminRequestAccess::Public,
-        std::bind(&Engine::requestGridQdGenerationInfo, this, std::placeholders::_2),
-        "Grid newbase generations");
-
-      reactor->addAdminTableRequestHandler(
-        this,
-        "gridproducers",
-        AdminRequestAccess::Public,
-        std::bind(&Engine::requestGridProducerInfo, this, std::placeholders::_2),
-        "Grid producers");
-
-      reactor->addAdminTableRequestHandler(
-        this,
-        "gridparameters",
-        AdminRequestAccess::Public,
-        std::bind(&Engine::requestGridParameterInfo, this, std::placeholders::_2),
-        "Grid parameters");
-    }
-
-    startUpdateProcessing();
   }
   catch (...)
   {
-    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.addParameter("Configuration file", mConfigurationFile_name);
-    throw exception;
+    throw Fmi::Exception(BCP,"Operation failed!",nullptr);
   }
 }
+
+
+
+
 
 /*! \brief Engine: Check configuration. */
 
@@ -736,181 +843,72 @@ void Engine::checkConfiguration()
     }
 
     // ### Content server processing log
-
-    bool contentServerProcessingLogEnabled = false;
-    std::string contentServerProcessingLogFile;
-    int contentServerProcessingLogMaxSize = 0;
-    int contentServerProcessingLogTruncateSize = 0;
-
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.enabled", contentServerProcessingLogEnabled);
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.file", contentServerProcessingLogFile);
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.maxSize", contentServerProcessingLogMaxSize);
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.processing-log.truncateSize", contentServerProcessingLogTruncateSize);
-
-    if (mContentServerProcessingLogEnabled != contentServerProcessingLogEnabled || mContentServerProcessingLogFile != contentServerProcessingLogFile
-        || mContentServerProcessingLogMaxSize != contentServerProcessingLogMaxSize || mContentServerProcessingLogTruncateSize != contentServerProcessingLogTruncateSize)
-    {
-      mContentServerProcessingLog.close();
-
-      mContentServerProcessingLogEnabled = contentServerProcessingLogEnabled;
-      mContentServerProcessingLogFile = contentServerProcessingLogFile;
-      mContentServerProcessingLogMaxSize = contentServerProcessingLogMaxSize;
-      mContentServerProcessingLogTruncateSize = contentServerProcessingLogTruncateSize;
-
-      mContentServerProcessingLog.init(mContentServerProcessingLogEnabled, mContentServerProcessingLogFile.c_str(), mContentServerProcessingLogMaxSize,
-          mContentServerProcessingLogTruncateSize);
-
-      for (auto it = mContentServers.begin(); it != mContentServers.end(); ++it)
-      {
-        if ((*it)->getProcessingLog() == nullptr)
-          (*it)->setProcessingLog(&mContentServerProcessingLog);
-      }
-
-      //if (contentServer->getProcessingLog() == nullptr)
-      //  contentServer->setProcessingLog(&mContentServerProcessingLog);
-    }
+    applyLogConfiguration(configurationFile,
+      "smartmet.engine.grid.content-server.processing-log",
+      mContentServerProcessingLogEnabled, mContentServerProcessingLogFile,
+      mContentServerProcessingLogMaxSize, mContentServerProcessingLogTruncateSize,
+      mContentServerProcessingLog,
+      [this](Log* l) {
+        for (auto it = mContentServers.begin(); it != mContentServers.end(); ++it)
+          if ((*it)->getProcessingLog() == nullptr)
+            (*it)->setProcessingLog(l);
+      });
 
     // ### Content server debug log
-
-    bool contentServerDebugLogEnabled = false;
-    std::string contentServerDebugLogFile;
-    int contentServerDebugLogMaxSize = 0;
-    int contentServerDebugLogTruncateSize = 0;
-
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.enabled", contentServerDebugLogEnabled);
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.file", contentServerDebugLogFile);
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.maxSize", contentServerDebugLogMaxSize);
-    configurationFile.getAttributeValue("smartmet.engine.grid.content-server.debug-log.truncateSize", contentServerDebugLogTruncateSize);
-
-    if (mContentServerDebugLogEnabled != contentServerDebugLogEnabled || mContentServerDebugLogFile != contentServerDebugLogFile
-        || mContentServerDebugLogMaxSize != contentServerDebugLogMaxSize || mContentServerDebugLogTruncateSize != contentServerDebugLogTruncateSize)
-    {
-      mContentServerDebugLog.close();
-
-      mContentServerDebugLogEnabled = contentServerDebugLogEnabled;
-      mContentServerDebugLogFile = contentServerDebugLogFile;
-      mContentServerDebugLogMaxSize = contentServerDebugLogMaxSize;
-      mContentServerDebugLogTruncateSize = contentServerDebugLogTruncateSize;
-
-      mContentServerDebugLog.init(mContentServerDebugLogEnabled, mContentServerDebugLogFile.c_str(), mContentServerDebugLogMaxSize, mContentServerDebugLogTruncateSize);
-
-      for (auto it = mContentServers.begin(); it != mContentServers.end(); ++it)
-      {
-        if ((*it)->getDebugLog() == nullptr)
-          (*it)->setDebugLog(&mContentServerDebugLog);
-      }
-      //if (contentServer->getDebugLog() == nullptr)
-      //  contentServer->setDebugLog(&mContentServerDebugLog);
-    }
+    applyLogConfiguration(configurationFile,
+      "smartmet.engine.grid.content-server.debug-log",
+      mContentServerDebugLogEnabled, mContentServerDebugLogFile,
+      mContentServerDebugLogMaxSize, mContentServerDebugLogTruncateSize,
+      mContentServerDebugLog,
+      [this](Log* l) {
+        for (auto it = mContentServers.begin(); it != mContentServers.end(); ++it)
+          if ((*it)->getDebugLog() == nullptr)
+            (*it)->setDebugLog(l);
+      });
 
     // ### Data server processing log
-
-    bool dataServerProcessingLogEnabled = false;
-    std::string dataServerProcessingLogFile;
-    int dataServerProcessingLogMaxSize = 0;
-    int dataServerProcessingLogTruncateSize = 0;
-
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.enabled", dataServerProcessingLogEnabled);
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.file", dataServerProcessingLogFile);
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.maxSize", dataServerProcessingLogMaxSize);
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.processing-log.truncateSize", dataServerProcessingLogTruncateSize);
-
-    if (mDataServerProcessingLogEnabled != dataServerProcessingLogEnabled || mDataServerProcessingLogFile != dataServerProcessingLogFile
-        || mDataServerProcessingLogMaxSize != dataServerProcessingLogMaxSize || mDataServerProcessingLogTruncateSize != dataServerProcessingLogTruncateSize)
-    {
-      mDataServerProcessingLog.close();
-
-      mDataServerProcessingLogEnabled = dataServerProcessingLogEnabled;
-      mDataServerProcessingLogFile = dataServerProcessingLogFile;
-      mDataServerProcessingLogMaxSize = dataServerProcessingLogMaxSize;
-      mDataServerProcessingLogTruncateSize = dataServerProcessingLogTruncateSize;
-
-      mDataServerProcessingLog.init(mDataServerProcessingLogEnabled, mDataServerProcessingLogFile.c_str(), mDataServerProcessingLogMaxSize, mDataServerProcessingLogTruncateSize);
-      if (mDataServer->getProcessingLog() == nullptr)
-        mDataServer->setProcessingLog(&mDataServerProcessingLog);
-    }
+    applyLogConfiguration(configurationFile,
+      "smartmet.engine.grid.data-server.processing-log",
+      mDataServerProcessingLogEnabled, mDataServerProcessingLogFile,
+      mDataServerProcessingLogMaxSize, mDataServerProcessingLogTruncateSize,
+      mDataServerProcessingLog,
+      [this](Log* l) {
+        if (mDataServer->getProcessingLog() == nullptr)
+          mDataServer->setProcessingLog(l);
+      });
 
     // ### Data server debug log
-
-    bool dataServerDebugLogEnabled = false;
-    std::string dataServerDebugLogFile;
-    int dataServerDebugLogMaxSize = 0;
-    int dataServerDebugLogTruncateSize = 0;
-
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.enabled", dataServerDebugLogEnabled);
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.file", dataServerDebugLogFile);
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.maxSize", dataServerDebugLogMaxSize);
-    configurationFile.getAttributeValue("smartmet.engine.grid.data-server.debug-log.truncateSize", dataServerDebugLogTruncateSize);
-
-    if (mDataServerDebugLogEnabled != dataServerDebugLogEnabled || mDataServerDebugLogFile != dataServerDebugLogFile || mDataServerDebugLogMaxSize != dataServerDebugLogMaxSize
-        || mDataServerDebugLogTruncateSize != dataServerDebugLogTruncateSize)
-    {
-      mDataServerDebugLog.close();
-
-      mDataServerDebugLogEnabled = dataServerDebugLogEnabled;
-      mDataServerDebugLogFile = dataServerDebugLogFile;
-      mDataServerDebugLogMaxSize = dataServerDebugLogMaxSize;
-      mDataServerDebugLogTruncateSize = dataServerDebugLogTruncateSize;
-
-      mDataServerDebugLog.init(mDataServerDebugLogEnabled, mDataServerDebugLogFile.c_str(), mDataServerDebugLogMaxSize, mDataServerDebugLogTruncateSize);
-      if (mDataServer->getDebugLog() == nullptr)
-        mDataServer->setDebugLog(&mDataServerDebugLog);
-    }
+    applyLogConfiguration(configurationFile,
+      "smartmet.engine.grid.data-server.debug-log",
+      mDataServerDebugLogEnabled, mDataServerDebugLogFile,
+      mDataServerDebugLogMaxSize, mDataServerDebugLogTruncateSize,
+      mDataServerDebugLog,
+      [this](Log* l) {
+        if (mDataServer->getDebugLog() == nullptr)
+          mDataServer->setDebugLog(l);
+      });
 
     // ### Query server processing log
-
-    bool queryServerProcessingLogEnabled = false;
-    std::string queryServerProcessingLogFile;
-    int queryServerProcessingLogMaxSize = 0;
-    int queryServerProcessingLogTruncateSize = 0;
-
-    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.enabled", queryServerProcessingLogEnabled);
-    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.file", queryServerProcessingLogFile);
-    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.maxSize", queryServerProcessingLogMaxSize);
-    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.processing-log.truncateSize", queryServerProcessingLogTruncateSize);
-
-    if (mQueryServerProcessingLogEnabled != queryServerProcessingLogEnabled || mQueryServerProcessingLogFile != queryServerProcessingLogFile
-        || mQueryServerProcessingLogMaxSize != queryServerProcessingLogMaxSize || mQueryServerProcessingLogTruncateSize != queryServerProcessingLogTruncateSize)
-    {
-      mQueryServerProcessingLog.close();
-
-      mQueryServerProcessingLogEnabled = queryServerProcessingLogEnabled;
-      mQueryServerProcessingLogFile = queryServerProcessingLogFile;
-      mQueryServerProcessingLogMaxSize = queryServerProcessingLogMaxSize;
-      mQueryServerProcessingLogTruncateSize = queryServerProcessingLogTruncateSize;
-
-      mQueryServerProcessingLog.init(mQueryServerProcessingLogEnabled, mQueryServerProcessingLogFile.c_str(), mQueryServerProcessingLogMaxSize,
-          mQueryServerProcessingLogTruncateSize);
-      if (mQueryServer->getProcessingLog() == nullptr)
-        mQueryServer->setProcessingLog(&mQueryServerProcessingLog);
-    }
+    applyLogConfiguration(configurationFile,
+      "smartmet.engine.grid.query-server.processing-log",
+      mQueryServerProcessingLogEnabled, mQueryServerProcessingLogFile,
+      mQueryServerProcessingLogMaxSize, mQueryServerProcessingLogTruncateSize,
+      mQueryServerProcessingLog,
+      [this](Log* l) {
+        if (mQueryServer->getProcessingLog() == nullptr)
+          mQueryServer->setProcessingLog(l);
+      });
 
     // ### Query server debug log
-
-    bool queryServerDebugLogEnabled = false;
-    std::string queryServerDebugLogFile;
-    int queryServerDebugLogMaxSize = 0;
-    int queryServerDebugLogTruncateSize = 0;
-
-    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.enabled", queryServerDebugLogEnabled);
-    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.file", queryServerDebugLogFile);
-    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.maxSize", queryServerDebugLogMaxSize);
-    configurationFile.getAttributeValue("smartmet.engine.grid.query-server.debug-log.truncateSize", queryServerDebugLogTruncateSize);
-
-    if (mQueryServerDebugLogEnabled != queryServerDebugLogEnabled || mQueryServerDebugLogFile != queryServerDebugLogFile
-        || mQueryServerDebugLogMaxSize != queryServerDebugLogMaxSize || mQueryServerDebugLogTruncateSize != queryServerDebugLogTruncateSize)
-    {
-      mQueryServerDebugLog.close();
-
-      mQueryServerDebugLogEnabled = queryServerDebugLogEnabled;
-      mQueryServerDebugLogFile = queryServerDebugLogFile;
-      mQueryServerDebugLogMaxSize = queryServerDebugLogMaxSize;
-      mQueryServerDebugLogTruncateSize = queryServerDebugLogTruncateSize;
-
-      mQueryServerDebugLog.init(mQueryServerDebugLogEnabled, mQueryServerDebugLogFile.c_str(), mQueryServerDebugLogMaxSize, mQueryServerDebugLogTruncateSize);
-      if (mQueryServer->getDebugLog() == nullptr)
-        mQueryServer->setDebugLog(&mQueryServerDebugLog);
-    }
+    applyLogConfiguration(configurationFile,
+      "smartmet.engine.grid.query-server.debug-log",
+      mQueryServerDebugLogEnabled, mQueryServerDebugLogFile,
+      mQueryServerDebugLogMaxSize, mQueryServerDebugLogTruncateSize,
+      mQueryServerDebugLog,
+      [this](Log* l) {
+        if (mQueryServer->getDebugLog() == nullptr)
+          mQueryServer->setDebugLog(l);
+      });
 
     // ### Browser
 
@@ -966,6 +964,53 @@ void Engine::checkConfiguration()
     throw exception;
   }
 }
+
+
+
+/*! \brief Engine: Re-read one per-server log configuration block; if it changed, reopen the log and apply it to the relevant server(s). */
+
+void Engine::applyLogConfiguration(ConfigurationFile& configurationFile,
+                                   const std::string& keyPrefix,
+                                   bool& enabledMember,
+                                   std::string& fileMember,
+                                   int& maxSizeMember,
+                                   int& truncateSizeMember,
+                                   Log& log,
+                                   std::function<void(Log*)> applyLogToServers)
+{
+  try
+  {
+    bool enabled = false;
+    std::string file;
+    int maxSize = 0;
+    int truncateSize = 0;
+
+    configurationFile.getAttributeValue((keyPrefix + ".enabled").c_str(), enabled);
+    configurationFile.getAttributeValue((keyPrefix + ".file").c_str(), file);
+    configurationFile.getAttributeValue((keyPrefix + ".maxSize").c_str(), maxSize);
+    configurationFile.getAttributeValue((keyPrefix + ".truncateSize").c_str(), truncateSize);
+
+    if (enabledMember != enabled || fileMember != file
+        || maxSizeMember != maxSize || truncateSizeMember != truncateSize)
+    {
+      log.close();
+
+      enabledMember = enabled;
+      fileMember = file;
+      maxSizeMember = maxSize;
+      truncateSizeMember = truncateSize;
+
+      log.init(enabledMember, fileMember.c_str(), maxSizeMember, truncateSizeMember);
+      applyLogToServers(&log);
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
 
 /*! \brief Engine: Is enabled. */
 
@@ -3739,6 +3784,102 @@ bool filesEqual(const char *filename1,const char *filename2)
 
 
 
+/*! \brief Engine: Write one new auto-mapping entry to the mapping file. */
+
+void Engine::writeMappingLine(std::ofstream& file,
+                              std::vector<std::string>& pl,
+                              const std::string& level,
+                              char searchFlag,
+                              T::ParamKeyType sourceParameterKeyType,
+                              T::ParamKeyType targetParameterKeyType)
+{
+  try
+  {
+    file << pl[0] << ";" << pl[1] << ";" << pl[2] << ";" << pl[3] << ";"
+         << pl[4] << ";" << pl[5] << ";" << pl[6] << ";" << level << ";";
+
+    Identification::FmiParameterDef paramDef;
+
+    bool mappingFound = false;
+    if (targetParameterKeyType == T::ParamKeyTypeValue::FMI_NAME)
+      mappingFound = Identification::gridDef.getFmiParameterDefByName(pl[3], paramDef);
+    else if (targetParameterKeyType == T::ParamKeyTypeValue::FMI_ID)
+      mappingFound = Identification::gridDef.getFmiParameterDefById(toUInt32(pl[3]), paramDef);
+    else if (targetParameterKeyType == T::ParamKeyTypeValue::NEWBASE_ID)
+      mappingFound = Identification::gridDef.getFmiParameterDefByNewbaseId(toUInt32(pl[3]), paramDef);
+    else if (targetParameterKeyType == T::ParamKeyTypeValue::NETCDF_NAME)
+      mappingFound = Identification::gridDef.getFmiParameterDefByNetCdfName(pl[3], paramDef);
+
+    if (!mappingFound)
+    {
+      file << "1;1;1;0;D;;;;\n";
+      return;
+    }
+
+    if (paramDef.mAreaInterpolationMethod >= 0)
+      file << paramDef.mAreaInterpolationMethod << ";";
+    else
+      file << ";";
+
+    if (paramDef.mTimeInterpolationMethod >= 0)
+      file << paramDef.mTimeInterpolationMethod << ";";
+    else
+      file << ";";
+
+    if (paramDef.mLevelInterpolationMethod >= 0)
+      file << paramDef.mLevelInterpolationMethod << ";";
+    else
+      file << ";";
+
+    file << "0;" << searchFlag << ";";
+
+    if (sourceParameterKeyType == T::ParamKeyTypeValue::NEWBASE_ID || sourceParameterKeyType == T::ParamKeyTypeValue::NEWBASE_NAME)
+    {
+      Identification::FmiParameterId_newbase paramMapping;
+      if (Identification::gridDef.getNewbaseParameterMappingByFmiId(paramDef.mFmiParameterId, paramMapping))
+      {
+        file << paramMapping.mConversionFunction << ";";
+        file << paramMapping.mReverseConversionFunction << ";";
+      }
+      else
+      {
+        file << ";;";
+      }
+    }
+    if (sourceParameterKeyType == T::ParamKeyTypeValue::NETCDF_NAME)
+    {
+      Identification::FmiParameterId_netCdf paramMapping;
+      if (Identification::gridDef.getNetCdfParameterMappingByFmiId(paramDef.mFmiParameterId, paramMapping))
+      {
+        file << paramMapping.mConversionFunction << ";";
+        file << paramMapping.mReverseConversionFunction << ";";
+      }
+      else
+      {
+        file << ";;";
+      }
+    }
+    else
+    {
+      file << ";;";
+    }
+
+    if (paramDef.mDefaultPrecision >= 0)
+      file << (int)paramDef.mDefaultPrecision << ";";
+    else
+      file << ";";
+
+    file << "\n";
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+
 /*! \brief Engine: Update mappings. */
 
 void Engine::updateMappings(
@@ -3899,82 +4040,7 @@ void Engine::updateMappings(
                 if (!file.is_open())
                   file = openMappingFile(tmpMappingFile);
 
-                file << pl[0] << ";" << pl[1] << ";" << pl[2] << ";" << pl[3] << ";"
-                     << pl[4] << ";" << pl[5] << ";" << pl[6] << ";" << level << ";";
-
-                Identification::FmiParameterDef paramDef;
-
-                bool mappingFound = false;
-                if (targetParameterKeyType == T::ParamKeyTypeValue::FMI_NAME)
-                  mappingFound = Identification::gridDef.getFmiParameterDefByName(pl[3], paramDef);
-                else if (targetParameterKeyType == T::ParamKeyTypeValue::FMI_ID)
-                  mappingFound = Identification::gridDef.getFmiParameterDefById(toUInt32(pl[3]), paramDef);
-                else if (targetParameterKeyType == T::ParamKeyTypeValue::NEWBASE_ID)
-                  mappingFound = Identification::gridDef.getFmiParameterDefByNewbaseId(toUInt32(pl[3]), paramDef);
-                else if (targetParameterKeyType == T::ParamKeyTypeValue::NETCDF_NAME)
-                  mappingFound = Identification::gridDef.getFmiParameterDefByNetCdfName(pl[3], paramDef);
-
-                if (mappingFound)
-                {
-                  if (paramDef.mAreaInterpolationMethod >= 0)
-                    file << paramDef.mAreaInterpolationMethod << ";";
-                  else
-                    file << ";";
-
-                  if (paramDef.mTimeInterpolationMethod >= 0)
-                    file << paramDef.mTimeInterpolationMethod << ";";
-                  else
-                    file << ";";
-
-                  if (paramDef.mLevelInterpolationMethod >= 0)
-                    file << paramDef.mLevelInterpolationMethod << ";";
-                  else
-                    file << ";";
-
-                  file << "0;" << s << ";";
-
-                  if (sourceParameterKeyType == T::ParamKeyTypeValue::NEWBASE_ID || sourceParameterKeyType == T::ParamKeyTypeValue::NEWBASE_NAME)
-                  {
-                    Identification::FmiParameterId_newbase paramMapping;
-                    if (Identification::gridDef.getNewbaseParameterMappingByFmiId(paramDef.mFmiParameterId, paramMapping))
-                    {
-                      file << paramMapping.mConversionFunction << ";";
-                      file << paramMapping.mReverseConversionFunction << ";";
-                    }
-                    else
-                    {
-                      file << ";;";
-                    }
-                  }
-                  if (sourceParameterKeyType == T::ParamKeyTypeValue::NETCDF_NAME)
-                  {
-                    Identification::FmiParameterId_netCdf paramMapping;
-                    if (Identification::gridDef.getNetCdfParameterMappingByFmiId(paramDef.mFmiParameterId, paramMapping))
-                    {
-                      file << paramMapping.mConversionFunction << ";";
-                      file << paramMapping.mReverseConversionFunction << ";";
-                    }
-                    else
-                    {
-                      file << ";;";
-                    }
-                  }
-                  else
-                  {
-                    file << ";;";
-                  }
-
-                  if (paramDef.mDefaultPrecision >= 0)
-                    file << (int)paramDef.mDefaultPrecision << ";";
-                  else
-                    file << ";";
-
-                  file << "\n";
-                }
-                else
-                {
-                  file << "1;1;1;0;D;;;;\n";
-                }
+                writeMappingLine(file, pl, level, s, sourceParameterKeyType, targetParameterKeyType);
               }
             }
           }

@@ -3036,119 +3036,23 @@ bool Browser::page_configurationFile(SessionManagement::SessionInfo& session,con
 
 
 
-/*! \brief Engine: Page content server processing log. */
+/*! \brief Engine: Render the Content Server processing log page. */
 
 bool Browser::page_contentServer_processingLog(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
   {
-    std::ostringstream output;
-
+    auto cs = mGridEngine->getContentServer_sptr();
     Log *log = nullptr;
     std::string filename;
-
-    auto cs = mGridEngine->getContentServer_sptr();
     if (cs)
     {
       log = cs->getProcessingLog();
       if (log)
         filename = log->getFileName();
     }
-
-    uint mode = 0;
-    auto modeStr = theRequest.getParameter("mode");
-    if (modeStr)
-      mode = atoi(modeStr->c_str());
-
-    output << "<HTML>\n";
-    output << "<SCRIPT>\n";
-    output << "function getPage(obj,frm,url)\n";
-    output << "{\n";
-    output << "  frm.location.href=url;\n";
-    output << "}\n";
-    output << "</SCRIPT>\n";
-    output << "<BODY style=\"font-size:12;\">\n";
-
-    output << "<HR>\n";
-    output << "<A href=\"grid-admin?target=grid-admin&page=start\">SmartMet Server</A> / ";
-    output << "<A href=\"grid-admin?target=grid-admin&page=engines\">Engines</A> / ";
-    output << "<A href=\"grid-admin?target=grid-engine&page=start\">Grid Engine</A> / ";
-    output << "<A href=\"grid-admin?target=grid-engine&page=contentServer\">Content Server</A> / ";
-    output << "<HR>\n";
-    output << "<H2>Content Server: Processing log</H2>\n";
-
-    if ((mFlags & Flags::logModificationEnabled)  && log && (session.mUserInfo.getUserId() == 0 || session.mUserInfo.isUserGroupMember("grid-admin")))
-    {
-      switch (mode)
-      {
-        case MODE_LOG_DISABLE:
-          log->disable();
-          break;
-
-        case MODE_LOG_ENABLE:
-          log->enable();
-          break;
-
-        case MODE_LOG_CLEAR:
-          log->clear();
-          break;
-      }
-
-      std::string bg = "#C0C0C0";
-      std::string p1 = "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:" + bg + ";\" onmouseout=\"this.style='background:" + bg + ";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?mode=";
-
-      output << "<HR>\n";
-      output << "<TABLE style=\"font-size:12;\">\n";
-      output << "<TR>\n";
-      if (log->isEnabled())
-      {
-        output << p1 << MODE_NONE << "');\" >Refresh</TD>\n";
-        output << p1 << MODE_LOG_DISABLE << "');\" >Disable</TD>\n";
-      }
-      else
-        output << p1 << MODE_LOG_ENABLE << "');\" >Enable</TD>\n";
-
-      output << p1 << MODE_LOG_CLEAR << "');\" >Clear</TD>\n";
-      output << "</TR>\n";
-      output << "</TABLE>\n";
-    }
-
-
-    output << "<HR>\n";
-    output << "<H3>File (" << filename << ")</H3>\n";
-
-    output << "<PRE style=\"background-color: #F0F0F0;\">\n";
-
-    output << "\n";
-
-    if (filename > " ")
-    {
-      std::vector<std::string> lines;
-      try
-      {
-        readEofLines(filename.c_str(),100,lines);
-      }
-      catch (...)
-      {
-      }
-      for (auto it=lines.begin(); it!=lines.end();++it)
-        output << *it << "\n";
-
-      //includeFile(output,filename.c_str());
-    }
-
-    output << "\n";
-
-    output << "</PRE>\n";
-    output << "<HR>\n";
-
-    output << "</BODY>\n";
-    output << "</HTML>\n";
-
-    theResponse.setContent(output.str());
-    theResponse.setHeader("Content-Type", "text/html; charset=UTF-8");
-
-    return true;
+    return page_serverLog(session,theRequest,theResponse,log,filename,
+                          "Content Server","Processing log","contentServer",100);
   }
   catch (...)
   {
@@ -3160,119 +3064,23 @@ bool Browser::page_contentServer_processingLog(SessionManagement::SessionInfo& s
 
 
 
-/*! \brief Engine: Page content server debug log. */
+/*! \brief Engine: Render the Content Server debug log page. */
 
 bool Browser::page_contentServer_debugLog(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
   {
-    std::ostringstream output;
-
+    auto cs = mGridEngine->getContentServer_sptr();
     Log *log = nullptr;
     std::string filename;
-
-    auto cs = mGridEngine->getContentServer_sptr();
     if (cs)
     {
       log = cs->getDebugLog();
       if (log)
         filename = log->getFileName();
     }
-
-    uint mode = 0;
-    auto modeStr = theRequest.getParameter("mode");
-    if (modeStr)
-      mode = atoi(modeStr->c_str());
-
-    output << "<HTML>\n";
-    output << "<SCRIPT>\n";
-    output << "function getPage(obj,frm,url)\n";
-    output << "{\n";
-    output << "  frm.location.href=url;\n";
-    output << "}\n";
-    output << "</SCRIPT>\n";
-    output << "<BODY style=\"font-size:12;\">\n";
-
-    output << "<HR>\n";
-    output << "<A href=\"grid-admin?target=grid-admin&page=start\">SmartMet Server</A> / ";
-    output << "<A href=\"grid-admin?target=grid-admin&page=engines\">Engines</A> / ";
-    output << "<A href=\"grid-admin?target=grid-engine&page=start\">Grid Engine</A> / ";
-    output << "<A href=\"grid-admin?target=grid-engine&page=contentServer\">Content Server</A> / ";
-    output << "<HR>\n";
-    output << "<H2>Content Server: Debug log</H2>\n";
-
-    if ((mFlags & Flags::logModificationEnabled)  && log && (session.mUserInfo.getUserId() == 0 || session.mUserInfo.isUserGroupMember("grid-admin")))
-    {
-      switch (mode)
-      {
-        case MODE_LOG_DISABLE:
-          log->disable();
-          break;
-
-        case MODE_LOG_ENABLE:
-          log->enable();
-          break;
-
-        case MODE_LOG_CLEAR:
-          log->clear();
-          break;
-      }
-
-      std::string bg = "#C0C0C0";
-      std::string p1 = "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:" + bg + ";\" onmouseout=\"this.style='background:" + bg + ";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?mode=";
-
-      output << "<HR>\n";
-      output << "<TABLE style=\"font-size:12;\">\n";
-      output << "<TR>\n";
-      if (log->isEnabled())
-      {
-        output << p1 << MODE_NONE << "');\" >Refresh</TD>\n";
-        output << p1 << MODE_LOG_DISABLE << "');\" >Disable</TD>\n";
-      }
-      else
-        output << p1 << MODE_LOG_ENABLE << "');\" >Enable</TD>\n";
-
-      output << p1 << MODE_LOG_CLEAR << "');\" >Clear</TD>\n";
-      output << "</TR>\n";
-      output << "</TABLE>\n";
-    }
-
-
-    output << "<HR>\n";
-    output << "<H3>File (" << filename << ")</H3>\n";
-
-    output << "<PRE style=\"background-color: #F0F0F0;\">\n";
-
-    output << "\n";
-
-    if (filename > " ")
-    {
-      std::vector<std::string> lines;
-      try
-      {
-        readEofLines(filename.c_str(),10000,lines);
-      }
-      catch (...)
-      {
-      }
-      for (auto it=lines.rbegin(); it!=lines.rend();++it)
-        output << *it << "\n";
-
-      //includeFile(output,filename.c_str());
-    }
-
-    output << "\n";
-
-    output << "</PRE>\n";
-    output << "<HR>\n";
-
-    output << "</BODY>\n";
-    output << "</HTML>\n";
-
-    theResponse.setContent(output.str());
-    theResponse.setHeader("Content-Type", "text/html; charset=UTF-8");
-
-    return true;
+    return page_serverLog(session,theRequest,theResponse,log,filename,
+                          "Content Server","Debug log","contentServer",10000);
   }
   catch (...)
   {
@@ -3284,119 +3092,23 @@ bool Browser::page_contentServer_debugLog(SessionManagement::SessionInfo& sessio
 
 
 
-/*! \brief Engine: Page data server processing log. */
+/*! \brief Engine: Render the Data Server processing log page. */
 
 bool Browser::page_dataServer_processingLog(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
   {
-    std::ostringstream output;
-
+    auto cs = mGridEngine->getDataServer_sptr();
     Log *log = nullptr;
     std::string filename;
-
-    auto cs = mGridEngine->getDataServer_sptr();
     if (cs)
     {
       log = cs->getProcessingLog();
       if (log)
         filename = log->getFileName();
     }
-
-    uint mode = 0;
-    auto modeStr = theRequest.getParameter("mode");
-    if (modeStr)
-      mode = atoi(modeStr->c_str());
-
-    output << "<HTML>\n";
-    output << "<SCRIPT>\n";
-    output << "function getPage(obj,frm,url)\n";
-    output << "{\n";
-    output << "  frm.location.href=url;\n";
-    output << "}\n";
-    output << "</SCRIPT>\n";
-    output << "<BODY style=\"font-size:12;\">\n";
-
-    output << "<HR>\n";
-    output << "<A href=\"grid-admin?target=grid-admin&page=start\">SmartMet Server</A> / ";
-    output << "<A href=\"grid-admin?target=grid-admin&page=engines\">Engines</A> / ";
-    output << "<A href=\"grid-admin?target=grid-engine&page=start\">Grid Engine</A> / ";
-    output << "<A href=\"grid-admin?target=grid-engine&page=dataServer\">Data Server</A> / ";
-    output << "<HR>\n";
-    output << "<H2>Data Server: Processing log</H2>\n";
-
-    if ((mFlags & Flags::logModificationEnabled)  && log && (session.mUserInfo.getUserId() == 0 || session.mUserInfo.isUserGroupMember("grid-admin")))
-    {
-      switch (mode)
-      {
-        case MODE_LOG_DISABLE:
-          log->disable();
-          break;
-
-        case MODE_LOG_ENABLE:
-          log->enable();
-          break;
-
-        case MODE_LOG_CLEAR:
-          log->clear();
-          break;
-      }
-
-      std::string bg = "#C0C0C0";
-      std::string p1 = "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:" + bg + ";\" onmouseout=\"this.style='background:" + bg + ";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?mode=";
-
-      output << "<HR>\n";
-      output << "<TABLE style=\"font-size:12;\">\n";
-      output << "<TR>\n";
-      if (log->isEnabled())
-      {
-        output << p1 << MODE_NONE << "');\" >Refresh</TD>\n";
-        output << p1 << MODE_LOG_DISABLE << "');\" >Disable</TD>\n";
-      }
-      else
-        output << p1 << MODE_LOG_ENABLE << "');\" >Enable</TD>\n";
-
-      output << p1 << MODE_LOG_CLEAR << "');\" >Clear</TD>\n";
-      output << "</TR>\n";
-      output << "</TABLE>\n";
-    }
-
-
-    output << "<HR>\n";
-    output << "<H3>File (" << filename << ")</H3>\n";
-
-    output << "<PRE style=\"background-color: #F0F0F0;\">\n";
-
-    output << "\n";
-
-    if (filename > " ")
-    {
-      std::vector<std::string> lines;
-      try
-      {
-        readEofLines(filename.c_str(),100,lines);
-      }
-      catch (...)
-      {
-      }
-      for (auto it=lines.begin(); it!=lines.end();++it)
-        output << *it << "\n";
-
-      //includeFile(output,filename.c_str());
-    }
-
-    output << "\n";
-
-    output << "</PRE>\n";
-    output << "<HR>\n";
-
-    output << "</BODY>\n";
-    output << "</HTML>\n";
-
-    theResponse.setContent(output.str());
-    theResponse.setHeader("Content-Type", "text/html; charset=UTF-8");
-
-    return true;
+    return page_serverLog(session,theRequest,theResponse,log,filename,
+                          "Data Server","Processing log","dataServer",100);
   }
   catch (...)
   {
@@ -3408,119 +3120,23 @@ bool Browser::page_dataServer_processingLog(SessionManagement::SessionInfo& sess
 
 
 
-/*! \brief Engine: Page data server debug log. */
+/*! \brief Engine: Render the Data Server debug log page. */
 
 bool Browser::page_dataServer_debugLog(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
   {
-    std::ostringstream output;
-
+    auto cs = mGridEngine->getDataServer_sptr();
     Log *log = nullptr;
     std::string filename;
-
-    auto cs = mGridEngine->getDataServer_sptr();
     if (cs)
     {
       log = cs->getDebugLog();
       if (log)
         filename = log->getFileName();
     }
-
-    uint mode = 0;
-    auto modeStr = theRequest.getParameter("mode");
-    if (modeStr)
-      mode = atoi(modeStr->c_str());
-
-    output << "<HTML>\n";
-    output << "<SCRIPT>\n";
-    output << "function getPage(obj,frm,url)\n";
-    output << "{\n";
-    output << "  frm.location.href=url;\n";
-    output << "}\n";
-    output << "</SCRIPT>\n";
-    output << "<BODY style=\"font-size:12;\">\n";
-
-    output << "<HR>\n";
-    output << "<A href=\"grid-admin?target=grid-admin&page=start\">SmartMet Server</A> / ";
-    output << "<A href=\"grid-admin?target=grid-admin&page=engines\">Engines</A> / ";
-    output << "<A href=\"grid-admin?target=grid-engine&page=start\">Grid Engine</A> / ";
-    output << "<A href=\"grid-admin?target=grid-engine&page=dataServer\">Data Server</A> / ";
-    output << "<HR>\n";
-    output << "<H2>Data Server: Debug log</H2>\n";
-
-    if ((mFlags & Flags::logModificationEnabled)  && log && (session.mUserInfo.getUserId() == 0 || session.mUserInfo.isUserGroupMember("grid-admin")))
-    {
-      switch (mode)
-      {
-        case MODE_LOG_DISABLE:
-          log->disable();
-          break;
-
-        case MODE_LOG_ENABLE:
-          log->enable();
-          break;
-
-        case MODE_LOG_CLEAR:
-          log->clear();
-          break;
-      }
-
-      std::string bg = "#C0C0C0";
-      std::string p1 = "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:" + bg + ";\" onmouseout=\"this.style='background:" + bg + ";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?mode=";
-
-      output << "<HR>\n";
-      output << "<TABLE style=\"font-size:12;\">\n";
-      output << "<TR>\n";
-      if (log->isEnabled())
-      {
-        output << p1 << MODE_NONE << "');\" >Refresh</TD>\n";
-        output << p1 << MODE_LOG_DISABLE << "');\" >Disable</TD>\n";
-      }
-      else
-        output << p1 << MODE_LOG_ENABLE << "');\" >Enable</TD>\n";
-
-      output << p1 << MODE_LOG_CLEAR << "');\" >Clear</TD>\n";
-      output << "</TR>\n";
-      output << "</TABLE>\n";
-    }
-
-
-    output << "<HR>\n";
-    output << "<H3>File (" << filename << ")</H3>\n";
-
-    output << "<PRE style=\"background-color: #F0F0F0;\">\n";
-
-    output << "\n";
-
-    if (filename > " ")
-    {
-      std::vector<std::string> lines;
-      try
-      {
-        readEofLines(filename.c_str(),10000,lines);
-      }
-      catch (...)
-      {
-      }
-      for (auto it=lines.rbegin(); it!=lines.rend();++it)
-        output << *it << "\n";
-
-      //includeFile(output,filename.c_str());
-    }
-
-    output << "\n";
-
-    output << "</PRE>\n";
-    output << "<HR>\n";
-
-    output << "</BODY>\n";
-    output << "</HTML>\n";
-
-    theResponse.setContent(output.str());
-    theResponse.setHeader("Content-Type", "text/html; charset=UTF-8");
-
-    return true;
+    return page_serverLog(session,theRequest,theResponse,log,filename,
+                          "Data Server","Debug log","dataServer",10000);
   }
   catch (...)
   {
@@ -3532,119 +3148,23 @@ bool Browser::page_dataServer_debugLog(SessionManagement::SessionInfo& session,c
 
 
 
-/*! \brief Engine: Page query server processing log. */
+/*! \brief Engine: Render the Query Server processing log page. */
 
 bool Browser::page_queryServer_processingLog(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
   {
-    std::ostringstream output;
-
+    auto cs = mGridEngine->getQueryServer_sptr();
     Log *log = nullptr;
     std::string filename;
-
-    auto cs = mGridEngine->getQueryServer_sptr();
     if (cs)
     {
       log = cs->getProcessingLog();
       if (log)
         filename = log->getFileName();
     }
-
-    uint mode = 0;
-    auto modeStr = theRequest.getParameter("mode");
-    if (modeStr)
-      mode = atoi(modeStr->c_str());
-
-    output << "<HTML>\n";
-    output << "<SCRIPT>\n";
-    output << "function getPage(obj,frm,url)\n";
-    output << "{\n";
-    output << "  frm.location.href=url;\n";
-    output << "}\n";
-    output << "</SCRIPT>\n";
-    output << "<BODY style=\"font-size:12;\">\n";
-
-    output << "<HR>\n";
-    output << "<A href=\"grid-admin?target=grid-admin&page=start\">SmartMet Server</A> / ";
-    output << "<A href=\"grid-admin?target=grid-admin&page=engines\">Engines</A> / ";
-    output << "<A href=\"grid-admin?target=grid-engine&page=start\">Grid Engine</A> / ";
-    output << "<A href=\"grid-admin?target=grid-engine&page=queryServer\">Query Server</A> / ";
-    output << "<HR>\n";
-    output << "<H2>Query Server: Processing log</H2>\n";
-
-    if ((mFlags & Flags::logModificationEnabled)  && log && (session.mUserInfo.getUserId() == 0 || session.mUserInfo.isUserGroupMember("grid-admin")))
-    {
-      switch (mode)
-      {
-        case MODE_LOG_DISABLE:
-          log->disable();
-          break;
-
-        case MODE_LOG_ENABLE:
-          log->enable();
-          break;
-
-        case MODE_LOG_CLEAR:
-          log->clear();
-          break;
-      }
-
-      std::string bg = "#C0C0C0";
-      std::string p1 = "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:" + bg + ";\" onmouseout=\"this.style='background:" + bg + ";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?mode=";
-
-      output << "<HR>\n";
-      output << "<TABLE style=\"font-size:12;\">\n";
-      output << "<TR>\n";
-      if (log->isEnabled())
-      {
-        output << p1 << MODE_NONE << "');\" >Refresh</TD>\n";
-        output << p1 << MODE_LOG_DISABLE << "');\" >Disable</TD>\n";
-      }
-      else
-        output << p1 << MODE_LOG_ENABLE << "');\" >Enable</TD>\n";
-
-      output << p1 << MODE_LOG_CLEAR << "');\" >Clear</TD>\n";
-      output << "</TR>\n";
-      output << "</TABLE>\n";
-    }
-
-
-    output << "<HR>\n";
-    output << "<H3>File (" << filename << ")</H3>\n";
-
-    output << "<PRE style=\"background-color: #F0F0F0;\">\n";
-
-    output << "\n";
-
-    if (filename > " ")
-    {
-      std::vector<std::string> lines;
-      try
-      {
-        readEofLines(filename.c_str(),100,lines);
-      }
-      catch (...)
-      {
-      }
-      for (auto it=lines.begin(); it!=lines.end();++it)
-        output << *it << "\n";
-
-      //includeFile(output,filename.c_str());
-    }
-
-    output << "\n";
-
-    output << "</PRE>\n";
-    output << "<HR>\n";
-
-    output << "</BODY>\n";
-    output << "</HTML>\n";
-
-    theResponse.setContent(output.str());
-    theResponse.setHeader("Content-Type", "text/html; charset=UTF-8");
-
-    return true;
+    return page_serverLog(session,theRequest,theResponse,log,filename,
+                          "Query Server","Processing log","queryServer",100);
   }
   catch (...)
   {
@@ -3656,24 +3176,40 @@ bool Browser::page_queryServer_processingLog(SessionManagement::SessionInfo& ses
 
 
 
-/*! \brief Engine: Page query server debug log. */
+/*! \brief Engine: Render the Query Server debug log page. */
 
 bool Browser::page_queryServer_debugLog(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
   {
-    std::ostringstream output;
-
+    auto cs = mGridEngine->getQueryServer_sptr();
     Log *log = nullptr;
     std::string filename;
-
-    auto cs = mGridEngine->getQueryServer_sptr();
     if (cs)
     {
       log = cs->getDebugLog();
       if (log)
         filename = log->getFileName();
     }
+    return page_serverLog(session,theRequest,theResponse,log,filename,
+                          "Query Server","Debug log","queryServer",10000);
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+
+/*! \brief Engine: Render the shared per-server log-viewer page. */
+
+bool Browser::page_serverLog(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse,Log *log,const std::string& filename,const char *serverDisplayName,const char *logTypeDisplayName,const char *serverPageName,int maxLines)
+{
+  try
+  {
+    std::ostringstream output;
 
     uint mode = 0;
     auto modeStr = theRequest.getParameter("mode");
@@ -3693,9 +3229,9 @@ bool Browser::page_queryServer_debugLog(SessionManagement::SessionInfo& session,
     output << "<A href=\"grid-admin?target=grid-admin&page=start\">SmartMet Server</A> / ";
     output << "<A href=\"grid-admin?target=grid-admin&page=engines\">Engines</A> / ";
     output << "<A href=\"grid-admin?target=grid-engine&page=start\">Grid Engine</A> / ";
-    output << "<A href=\"grid-admin?target=grid-engine&page=queryServer\">Query Server</A> / ";
+    output << "<A href=\"grid-admin?target=grid-engine&page=" << serverPageName << "\">" << serverDisplayName << "</A> / ";
     output << "<HR>\n";
-    output << "<H2>Query Server: Debug log</H2>\n";
+    output << "<H2>" << serverDisplayName << ": " << logTypeDisplayName << "</H2>\n";
 
     if ((mFlags & Flags::logModificationEnabled)  && log && (session.mUserInfo.getUserId() == 0 || session.mUserInfo.isUserGroupMember("grid-admin")))
     {
@@ -3746,12 +3282,12 @@ bool Browser::page_queryServer_debugLog(SessionManagement::SessionInfo& session,
       std::vector<std::string> lines;
       try
       {
-        readEofLines(filename.c_str(),10000,lines);
+        readEofLines(filename.c_str(),maxLines,lines);
       }
       catch (...)
       {
       }
-      for (auto it=lines.rbegin(); it!=lines.rend();++it)
+      for (auto it=lines.begin(); it!=lines.end();++it)
         output << *it << "\n";
 
       //includeFile(output,filename.c_str());
