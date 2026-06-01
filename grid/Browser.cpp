@@ -3052,7 +3052,7 @@ bool Browser::page_contentServer_processingLog(SessionManagement::SessionInfo& s
         filename = log->getFileName();
     }
     return page_serverLog(session,theRequest,theResponse,log,filename,
-                          "Content Server","Processing log","contentServer",100);
+                          "Content Server","Processing log","contentServer",100,false);
   }
   catch (...)
   {
@@ -3080,7 +3080,7 @@ bool Browser::page_contentServer_debugLog(SessionManagement::SessionInfo& sessio
         filename = log->getFileName();
     }
     return page_serverLog(session,theRequest,theResponse,log,filename,
-                          "Content Server","Debug log","contentServer",10000);
+                          "Content Server","Debug log","contentServer",10000,true);
   }
   catch (...)
   {
@@ -3108,7 +3108,7 @@ bool Browser::page_dataServer_processingLog(SessionManagement::SessionInfo& sess
         filename = log->getFileName();
     }
     return page_serverLog(session,theRequest,theResponse,log,filename,
-                          "Data Server","Processing log","dataServer",100);
+                          "Data Server","Processing log","dataServer",100,false);
   }
   catch (...)
   {
@@ -3136,7 +3136,7 @@ bool Browser::page_dataServer_debugLog(SessionManagement::SessionInfo& session,c
         filename = log->getFileName();
     }
     return page_serverLog(session,theRequest,theResponse,log,filename,
-                          "Data Server","Debug log","dataServer",10000);
+                          "Data Server","Debug log","dataServer",10000,true);
   }
   catch (...)
   {
@@ -3164,7 +3164,7 @@ bool Browser::page_queryServer_processingLog(SessionManagement::SessionInfo& ses
         filename = log->getFileName();
     }
     return page_serverLog(session,theRequest,theResponse,log,filename,
-                          "Query Server","Processing log","queryServer",100);
+                          "Query Server","Processing log","queryServer",100,false);
   }
   catch (...)
   {
@@ -3192,7 +3192,7 @@ bool Browser::page_queryServer_debugLog(SessionManagement::SessionInfo& session,
         filename = log->getFileName();
     }
     return page_serverLog(session,theRequest,theResponse,log,filename,
-                          "Query Server","Debug log","queryServer",10000);
+                          "Query Server","Debug log","queryServer",10000,true);
   }
   catch (...)
   {
@@ -3205,7 +3205,7 @@ bool Browser::page_queryServer_debugLog(SessionManagement::SessionInfo& session,
 
 /*! \brief Engine: Render the shared per-server log-viewer page. */
 
-bool Browser::page_serverLog(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse,Log *log,const std::string& filename,const char *serverDisplayName,const char *logTypeDisplayName,const char *serverPageName,int maxLines)
+bool Browser::page_serverLog(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse,Log *log,const std::string& filename,const char *serverDisplayName,const char *logTypeDisplayName,const char *serverPageName,int maxLines,bool chronological)
 {
   try
   {
@@ -3287,8 +3287,16 @@ bool Browser::page_serverLog(SessionManagement::SessionInfo& session,const Spine
       catch (...)
       {
       }
-      for (auto it=lines.begin(); it!=lines.end();++it)
-        output << *it << "\n";
+      if (chronological)
+      {
+        for (auto it=lines.rbegin(); it!=lines.rend();++it)
+          output << *it << "\n";
+      }
+      else
+      {
+        for (auto it=lines.begin(); it!=lines.end();++it)
+          output << *it << "\n";
+      }
 
       //includeFile(output,filename.c_str());
     }
