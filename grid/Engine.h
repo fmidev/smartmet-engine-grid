@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fstream>
+#include <functional>
 #include <spine/SmartMetEngine.h>
 #include <gis/DEM.h>
 #include <gis/LandCover.h>
@@ -254,6 +255,41 @@ class Engine : public SmartMet::Spine::SmartMetEngine
   protected:
 
     void                init();
+
+    /*! \brief Write one new auto-mapping entry to the mapping file.  Looks up the FMI parameter
+     *  definition for the target key, emits the per-method interpolation columns, conversion
+     *  functions (newbase or netcdf), and default precision.  Writes a placeholder line if no
+     *  FMI definition is found. */
+    void                writeMappingLine(std::ofstream& file,
+                                         std::vector<std::string>& pl,
+                                         const std::string& level,
+                                         char searchFlag,
+                                         T::ParamKeyType sourceParameterKeyType,
+                                         T::ParamKeyType targetParameterKeyType);
+
+    /*! \brief Re-read one per-server log configuration block (enabled, file, maxSize, truncateSize),
+     *  detect changes against the cached member fields, and if anything changed, close the old log,
+     *  update the member fields, reopen the log, and apply it to the relevant server(s) via
+     *  applyLogToServers (only set if the server doesn't yet have a log assigned). */
+    void                applyLogConfiguration(ConfigurationFile& configurationFile,
+                                              const std::string& keyPrefix,
+                                              bool& enabledMember,
+                                              std::string& fileMember,
+                                              int& maxSizeMember,
+                                              int& truncateSizeMember,
+                                              Log& log,
+                                              std::function<void(Log*)> applyLogToServers);
+
+    // Phase helpers for init().  Each handles one well-defined stage:
+    void                initMemoryMapper();                                                   //!< Apply memory-mapper configuration from member fields.
+    ContentServer::ServiceInterface*  initContentSources();                                   //!< Build one ContentServer per configured mContentSources entry; returns the last one.
+    ContentServer::ServiceInterface*  initContentCache(ContentServer::ServiceInterface* cs);  //!< Wrap a single source in a CacheImplementation, or build a MergeImplementation from many; returns the active cServer.
+    DataServer::ServiceInterface*     initDataServerImpl(ContentServer::ServiceInterface* cs); //!< Build the local DataServer impl (or a CORBA client) and initialise the grid value cache.
+    QueryServer::ServiceInterface*    initQueryServerImpl(ContentServer::ServiceInterface* cs, DataServer::ServiceInterface* ds); //!< Build the local QueryServer impl (or a CORBA client).
+    void                initLogs(ContentServer::ServiceInterface* cs,
+                                 DataServer::ServiceInterface* ds,
+                                 QueryServer::ServiceInterface* qs);                          //!< Initialise the six per-server processing/debug logs (no-op for empty file paths).
+
     void                shutdown();
     void                startUpdateProcessing();
     void                clearMappings();
