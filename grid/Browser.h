@@ -77,25 +77,6 @@ class Browser
     bool                  page_queryServer_debugLog(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
     bool                  page_queryServer_processingLog(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
 
-    /*! \brief Shared rendering helper for the six per-server log-viewer pages.  Renders
-     *  the standard nav header, the per-log enable/disable/clear toolbar (gated by the
-     *  logModificationEnabled flag and the user's admin group), and the tail of the log
-     *  file.  Pure presentation; caller resolves the log pointer + filename for the
-     *  requested server and chooses how many trailing lines to show (~100 for processing
-     *  logs, ~10000 for debug logs).  readEofLines() returns lines newest-first, so
-     *  chronological=true reverses the iteration to display oldest-first (used by debug
-     *  logs); chronological=false leaves them newest-first (used by processing logs). */
-    bool                  page_serverLog(SessionManagement::SessionInfo& session,
-                                         const Spine::HTTP::Request& theRequest,
-                                         Spine::HTTP::Response& theResponse,
-                                         Log *log,
-                                         const std::string& filename,
-                                         const char *serverDisplayName,
-                                         const char *logTypeDisplayName,
-                                         const char *serverPageName,
-                                         int maxLines,
-                                         bool chronological);
-
     bool                  includeFile(std::ostringstream& output,const char *filename);
     void                  updateSessionParameters(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
 
