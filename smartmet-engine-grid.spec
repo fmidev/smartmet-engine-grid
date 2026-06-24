@@ -22,10 +22,10 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
-BuildRequires: smartmet-library-spine-devel >= 26.6.9
-BuildRequires: smartmet-library-grid-content-devel >= 26.6.15
-BuildRequires: smartmet-library-grid-files-devel >= 26.6.15
-BuildRequires: smartmet-library-macgyver-devel >= 26.6.6
+BuildRequires: smartmet-library-spine-devel >= 26.6.24
+BuildRequires: smartmet-library-grid-content-devel >= 26.6.24
+BuildRequires: smartmet-library-grid-files-devel >= 26.6.24
+BuildRequires: smartmet-library-macgyver-devel >= 26.6.15
 BuildRequires: make
 BuildRequires: omniORB-devel >= 4.3.0
 BuildRequires: %{smartmet_boost}-devel
@@ -34,10 +34,10 @@ BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 BuildRequires: postgresql15-devel
 Requires: %{smartmet_boost}-thread
-Requires: smartmet-library-grid-content >= 26.6.15
-Requires: smartmet-library-grid-files >= 26.6.15
-Requires: smartmet-library-spine >= 26.6.9
-Requires: smartmet-library-macgyver >= 26.6.6
+Requires: smartmet-library-grid-content >= 26.6.24
+Requires: smartmet-library-grid-files >= 26.6.24
+Requires: smartmet-library-spine >= 26.6.24
+Requires: smartmet-library-macgyver >= 26.6.15
 Requires: omniORB-devel
 
 %if 0%{?rhel} && 0%{rhel} == 8
@@ -71,10 +71,10 @@ SmartMet grid engine
 Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
-Requires: smartmet-library-grid-content-devel >= 26.6.15
+Requires: smartmet-library-grid-content-devel >= 26.6.24
 Requires: %{SPECNAME} = %{version}-%{release}
-Requires: smartmet-library-spine-devel >= 26.6.9
-Requires: smartmet-library-macgyver-devel >= 26.6.6
+Requires: smartmet-library-spine-devel >= 26.6.24
+Requires: smartmet-library-macgyver-devel >= 26.6.15
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
 
@@ -82,7 +82,7 @@ SmartMet %{SPECNAME} development headers.
 Summary: SmartMet %{SPECNAME} - redis server with required data for testing purpose
 Group: SmartMet/Development
 Provides: smartmet-engine-grid-test
-Requires: smartmet-library-grid-files >= 26.6.15
+Requires: smartmet-library-grid-files >= 26.6.24
 %description -n smartmet-engine-grid-test
 SmartMet %{SPECNAME} - redis server with required data for testing purpose
 
