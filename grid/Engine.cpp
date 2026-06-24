@@ -226,6 +226,8 @@ Engine::Engine(const char* theConfigFile)
       t++;
     }
 
+    configurationFile.getAttributeValue("smartmet.engine.grid.contour.threads", mContourThreads);
+
     configurationFile.getAttributeValue("smartmet.library.grid-files.configFile", mGridConfigFile);
     configurationFile.getAttributeValue("smartmet.library.grid-files.memoryMapper.enabled", mMemoryMapper_enabled);
     configurationFile.getAttributeValue("smartmet.library.grid-files.memoryMapper.accessFile", mMemoryMapper_accessFile);
@@ -1030,6 +1032,10 @@ int Engine::executeQuery(QueryServer::Query& query) const
     if (Spine::Reactor::isShuttingDown())
       return QueryServer::Result::SERVICE_DISABLED;
 
+    // Apply the configured default contouring parallelism unless the caller set its own.
+    if (mContourThreads > 1 && query.mAttributeList.getAttributeValue("contour.threads") == nullptr)
+      query.mAttributeList.addAttribute("contour.threads", Fmi::to_string(mContourThreads));
+
     return mQueryServer->executeQuery(0, query);
   }
   catch (...)
@@ -1050,6 +1056,10 @@ Query_sptr Engine::executeQuery(Query_sptr query) const
 
     if (Spine::Reactor::isShuttingDown())
       return query;
+
+    // Apply the configured default contouring parallelism unless the caller set its own.
+    if (mContourThreads > 1 && query->mAttributeList.getAttributeValue("contour.threads") == nullptr)
+      query->mAttributeList.addAttribute("contour.threads", Fmi::to_string(mContourThreads));
 
     if (!mQueryCache_enabled)
     {

@@ -247,6 +247,11 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     bool                mEnabled;
 
+    // Default number of row-bands for parallel contouring (0/1 = single-threaded). Injected as
+    // the "contour.threads" request attribute when a consumer has not set it. Capped to cores
+    // downstream in grid-files. Configured via "smartmet.engine.grid.contour.threads".
+    int                 mContourThreads = 0;
+
     std::string         mConfigurationFile_name;
     time_t              mConfigurationFile_modificationTime;
     time_t              mConfigurationFile_checkTime;
