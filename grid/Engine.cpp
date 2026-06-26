@@ -19,6 +19,7 @@
 #include <macgyver/AnsiEscapeCodes.h>
 #include <macgyver/Exception.h>
 #include <macgyver/StringConversion.h>
+#include <macgyver/ThreadName.h>
 #include <macgyver/TimeFormatter.h>
 #include <spine/Convenience.h>
 #include <spine/Reactor.h>
@@ -45,6 +46,7 @@ static void* gridEngine_updateThread(void* arg)
 {
   try
   {
+    Fmi::set_thread_name("upd-grid");
     Engine* engine = static_cast<Engine*>(arg);
     engine->updateProcessing();
     return nullptr;
