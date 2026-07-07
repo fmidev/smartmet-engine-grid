@@ -456,6 +456,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     mutable time_t                            mProducerInfoList_updateTime;              //!< Wall time when mProducerInfoList was last refreshed.
     mutable ModificationLock                  mProducerInfoList_modificationLock;        //!< Lock protecting concurrent access to mProducerInfoList.
     mutable ProducerHash_map                  mProducerHashMap;                          //!< Per-producer content hashes for detecting new file arrivals.
+    mutable ModificationLock                  mProducerHashMap_modificationLock;         //!< Lock protecting concurrent access to mProducerHashMap.
     mutable T::GenerationInfoList             mGenerationInfoList;                       //!< Cached list of known generations.
     mutable T::GeometryInfoList               mGeometryInfoList;                         //!< Cached list of known geometries.
 

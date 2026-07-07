@@ -1516,30 +1516,31 @@ UInt64 Engine::getProducerHash(T::ProducerId producerId) const
     time_t currentTime = time(nullptr);
     UInt64 hash = 0;
 
-    auto rec = mProducerHashMap.find(producerId);
-    if (rec != mProducerHashMap.end())
     {
-      if ((currentTime - rec->second.checkTime) > 120)
-      {
-        rec->second.checkTime = currentTime;
-        int result = contentServer->getHashByProducerId(0, producerId, hash);
-        if (result == 0)
-          rec->second.hash = hash;
-        else
-          rec->second.hash = 0;
-      }
-      return rec->second.hash;
+      AutoReadLock lock(&mProducerHashMap_modificationLock);
+      auto rec = mProducerHashMap.find(producerId);
+      if (rec != mProducerHashMap.end() && (currentTime - rec->second.checkTime) <= 120)
+        return rec->second.hash;
     }
 
     int result = contentServer->getHashByProducerId(0, producerId, hash);
+
+    AutoWriteLock lock(&mProducerHashMap_modificationLock);
     if (result == 0)
     {
       HashRec hrec;
       hrec.checkTime = currentTime;
       hrec.hash = hash;
 
-      mProducerHashMap.insert(std::pair<T::ProducerId, HashRec>(producerId, hrec));
+      mProducerHashMap[producerId] = hrec;
       return hash;
+    }
+
+    auto rec = mProducerHashMap.find(producerId);
+    if (rec != mProducerHashMap.end())
+    {
+      rec->second.checkTime = currentTime;
+      rec->second.hash = 0;
     }
 
     return 0;
@@ -4117,6 +4118,11 @@ void Engine::updateProcessing()
                 mLevelInfoList.clear();
                 mProducerInfoList_updateTime = 0;
                 mLevelInfoList_lastUpdate = 0;
+              }
+
+              {
+                AutoWriteLock lock(&mProducerHashMap_modificationLock);
+                mProducerHashMap.clear();
               }
             }
           }
