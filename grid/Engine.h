@@ -294,7 +294,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                startUpdateProcessing();
     void                clearMappings();
     void                checkConfiguration();
-    void                loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings);
+    void                loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings,
+                                     QueryServer::ParamMappingFile_vec& parameterAliasMappings);
     void                loadUnitConversionFile();
     std::ofstream       openMappingFile(const std::string& mappingFile);
     void                updateMappings();

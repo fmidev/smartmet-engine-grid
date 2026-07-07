@@ -3329,7 +3329,8 @@ void Engine::loadUnitConversionFile()
 
 /*! \brief Engine: Load mappings. */
 
-void Engine::loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings)
+void Engine::loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings,
+                          QueryServer::ParamMappingFile_vec& parameterAliasMappings)
 {
   FUNCTION_TRACE
   try
@@ -3362,7 +3363,7 @@ void Engine::loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings)
 
             QueryServer::ParameterMappingFile mapping;
             mapping.setParameterMappings(aliasMappings);
-            mParameterAliasMappings.emplace_back(mapping);
+            parameterAliasMappings.emplace_back(mapping);
           }
         }
       }
@@ -3605,8 +3606,9 @@ void Engine::updateMappings()
     mParameterMappingDefinitions_updateTime = currentTime;
 
     auto parameterMappings = std::make_unique<QueryServer::ParamMappingFile_vec>();
+    QueryServer::ParamMappingFile_vec parameterAliasMappings;
 
-    loadMappings(*parameterMappings);
+    loadMappings(*parameterMappings, parameterAliasMappings);
 
     if (parameterMappings->empty())
       return;
@@ -3631,6 +3633,7 @@ void Engine::updateMappings()
 
     AutoWriteLock lock(&mParameterMappingDefinitions_modificationLock);
     mParameterMappingDefinitions.reset(parameterMappings.release());
+    mParameterAliasMappings = std::move(parameterAliasMappings);
     mParameterTable.reset(paramTable.release());
   }
   catch (...)
