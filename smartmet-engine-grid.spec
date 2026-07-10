@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 26.6.26
+Version: 26.7.10
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -115,6 +115,11 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Fri Jul 10 2026 Andris Pavēnis <andris.pavenis@fmi.fi> 26.7.10-1.fmi
+- Bugs fixed by Anthropic Fable 5
+  Fix unbounded growth of mParameterAliasMappings on mapping reload
+  Protect mProducerHashMap with a lock and clear it on content server restart
+
 * Fri Jun 26 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> 26.6.26-1.fmi
 - Thread naming: Named the engine update thread
 
