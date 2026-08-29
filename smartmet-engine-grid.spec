@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 26.7.10
+Version: 26.8.30
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -115,6 +115,10 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Sat Aug 30 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.8.30-1.fmi
+- Security: HTML-escape request/data-derived values (producer, generation and file
+  names, forecast times, parameter names, server names) in the grid engine Browser
+  to prevent stored/reflected XSS.
 * Fri Jul 10 2026 Andris Pavēnis <andris.pavenis@fmi.fi> 26.7.10-1.fmi
 - Bugs fixed by Anthropic Fable 5
   Fix unbounded growth of mParameterAliasMappings on mapping reload

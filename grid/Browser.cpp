@@ -2,6 +2,7 @@
 #include "Engine.h"
 #include <grid-files/grid/GridFile.h>
 #include <macgyver/Hash.h>
+#include <spine/Convenience.h>
 #include <fstream>
 
 
@@ -28,6 +29,32 @@ namespace Grid
 #define MODE_EDIT_CONFIRM      102
 #define MODE_DELETE_CONFIRM    103
 #define MODE_GENERATE_CONFIRM  104
+
+
+// ----------------------------------------------------------------------
+/*! \brief HTML-escape a request- or data-derived string.
+ *
+ * Every value that originates from the HTTP request, the session, the content
+ * database or configuration/log files must be escaped before it is written into
+ * the generated HTML in order to prevent stored/reflected cross-site scripting
+ * (XSS). Escaping the characters & < > " ' neutralizes any HTML/script markup.
+ */
+// ----------------------------------------------------------------------
+
+namespace
+{
+std::string esc(const std::string& theValue)
+{
+  return Spine::htmlescape(theValue);
+}
+
+std::string esc(const char *theValue)
+{
+  if (theValue == nullptr)
+    return {};
+  return Spine::htmlescape(theValue);
+}
+}  // anonymous namespace
 
 
 /*! \brief Engine: Constructor. */
@@ -452,7 +479,7 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
     output << "<A href=\"grid-admin?page=start\">Grid Engine</A> / ";
     output << "<A href=\"grid-admin?page=contentServer\">Content Server</A> / ";
     output << "<A href=\"grid-admin?page=contentInformation\">Content Information</A> / ";
-    output << "<A href=\"grid-admin?page=producers&producerId=" << producerId << "\">Producers (" << sourceStr << ")</A> / <A href=\"grid-admin?page=generations&producerId=" << producerId << "&producerName=" << producerName << "&generationId=" << generationId << "\">" << producerName << "</A> / <A href=\"grid-admin?page=files&&generationId=" << generationId << "&generationName=" << generationName << "&fileId=" << fileId << "\">" << generationName << "</A> / " << fileId;
+    output << "<A href=\"grid-admin?page=producers&producerId=" << producerId << "\">Producers (" << esc(sourceStr) << ")</A> / <A href=\"grid-admin?page=generations&producerId=" << producerId << "&producerName=" << esc(producerName) << "&generationId=" << generationId << "\">" << esc(producerName) << "</A> / <A href=\"grid-admin?page=files&&generationId=" << generationId << "&generationName=" << esc(generationName) << "&fileId=" << fileId << "\">" << esc(generationName) << "</A> / " << fileId;
     output << "<HR>\n";
     output << "<H2>Content</H2>\n";
     output << "<HR>\n";
@@ -593,9 +620,9 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
         output << "<TD>"<< content->mMessageIndex << "</TD>";
         output << "<TD>"<< content->mFilePosition << "</TD>";
         output << "<TD>"<< content->mMessageSize << "</TD>";
-        output << "<TD>"<< content->getForecastTime() << "</TD>";
+        output << "<TD>"<< esc(content->getForecastTime()) << "</TD>";
         output << "<TD>"<< content->mFmiParameterId << "</TD>";
-        output << "<TD>"<< content->getFmiParameterName() << "</TD>";
+        output << "<TD>"<< esc(content->getFmiParameterName()) << "</TD>";
         output << "<TD>"<< (int)content->mFmiParameterLevelId << "</TD>";
         output << "<TD>"<< content->mParameterLevel << "</TD>";
         output << "<TD>"<< content->mForecastType << "</TD>";
@@ -760,7 +787,7 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
         output << p1 << "MessageSize" << p2 << "id=\"content_messageSize\" value=\"" << cInfo.mMessageSize << p3;
         output << p1 << "ForecastTime" << p2 << "id=\"content_forecastTime\" value=\"" << ft << p3;
         output << p1 << "FmiParameterId" << p2 << "id=\"content_fmiParameterId\" value=\"" << cInfo.mFmiParameterId << p3;
-        output << p1 << "FmiParameterName" << p2 << "id=\"content_fmiParameterName\" value=\"" << cInfo.getFmiParameterName() << p3;
+        output << p1 << "FmiParameterName" << p2 << "id=\"content_fmiParameterName\" value=\"" << esc(cInfo.getFmiParameterName()) << p3;
         output << p1 << "FmiParameterLevelId" << p2 << "id=\"content_fmiParameterLevelId\" value=\"" << cInfo.mFmiParameterLevelId << p3;
         output << p1 << "ParameterLevel" << p2 << "id=\"content_parameterLevel\" value=\"" << cInfo.mParameterLevel << p3;
         output << p1 << "ForecastType" << p2 << "id=\"content_forecastType\" value=\"" << cInfo.mForecastType << p3;
@@ -1034,7 +1061,7 @@ bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HT
     output << "<A href=\"grid-admin?page=start\">Grid Engine</A> / ";
     output << "<A href=\"grid-admin?page=contentServer\">Content Server</A> / ";
     output << "<A href=\"grid-admin?page=contentInformation\">Content Information</A> / ";
-    output << "<A href=\"grid-admin?page=producers&producerId=" << producerId << "\">Producers (" << sourceStr << ")</A> / <A href=\"grid-admin?page=generations&producerId=" << producerId << "&producerName=" << producerName << "&generationId=" << generationId << "\">" << producerName << "</A> / " + generationName;
+    output << "<A href=\"grid-admin?page=producers&producerId=" << producerId << "\">Producers (" << esc(sourceStr) << ")</A> / <A href=\"grid-admin?page=generations&producerId=" << producerId << "&producerName=" << esc(producerName) << "&generationId=" << generationId << "\">" << esc(producerName) << "</A> / " + esc(generationName);
     output << "<HR>\n";
     output << "<H2>Files</H2>\n";
     output << "<HR>\n";
@@ -1110,8 +1137,8 @@ bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HT
         output << "<TD>"<< ((file->mFileId % 0xFF00000000L) >> 32) << "</TD>";
         output << "<TD>"<< (file->mFileId & 0xFFFFFFFF) << "</TD>";
       }
-      output << "<TD>"<< file->mServer << "</TD>";
-      output << "<TD>"<< file->mName << "</TD>";
+      output << "<TD>"<< esc(file->mServer) << "</TD>";
+      output << "<TD>"<< esc(file->mName) << "</TD>";
       output << "<TD>"<< C_INT(file->mProtocol) << "</TD>";
       output << "<TD>"<< C_INT(file->mServerType) << "</TD>";
       output << "<TD>"<< C_INT(file->mFileType) << "</TD>";
@@ -1182,8 +1209,8 @@ bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HT
         output << "<H2>File</H2>\n";
         output << "<TABLE border=\"1\" width=\"100%\" style=\"font-size:12;\">\n";
         output << p1 << "Id</TD><TD>"<< fInfo.mFileId << "</TD></TR>";
-        output << p1 << "Server" << p2 << "id=\"file_server\" value=\"" << fInfo.mServer << p3;
-        output << p1 << "Name<" << p2 << "id=\"file_name\" value=\"" << fInfo.mName << p3;
+        output << p1 << "Server" << p2 << "id=\"file_server\" value=\"" << esc(fInfo.mServer) << p3;
+        output << p1 << "Name<" << p2 << "id=\"file_name\" value=\"" << esc(fInfo.mName) << p3;
         output << p1 << "Protocol" << p2 << "id=\"file_protocol\" value=\"" << C_INT(fInfo.mProtocol) << p3;
         output << p1 << "ServerType" << p2 << "id=\"file_serverType\" value=\"" << C_INT(fInfo.mServerType) << p3;
         output << p1 << "FileType" << p2 << "id=\"file_type\" value=\"" << C_INT(fInfo.mFileType) << p3;
@@ -1460,7 +1487,7 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
     output << "<A href=\"grid-admin?page=start\">Grid Engine</A> / ";
     output << "<A href=\"grid-admin?page=contentServer\">Content Server</A> / ";
     output << "<A href=\"grid-admin?page=contentInformation\">Content Information</A> / ";
-    output << "<A href=\"grid-admin?page=producers&producerId=" << producerId << "\">Producers (" << sourceStr << ")</A> / " + producerName;
+    output << "<A href=\"grid-admin?page=producers&producerId=" << producerId << "\">Producers (" << esc(sourceStr) << ")</A> / " + esc(producerName);
     output << "<HR>\n";
     output << "<H2>Generations</H2>\n";
     output << "<HR>\n";
@@ -1506,11 +1533,11 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
           gInfo = *generation;
           fg = "#FFFFFF";
           bg = "#FF0000";
-          output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onClick=\"getPage(this,parent,'/grid-admin?page=files&generationId=" << generation->mGenerationId << "&generationName=" << generation->mName << "');\" >\n";
+          output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onClick=\"getPage(this,parent,'/grid-admin?page=files&generationId=" << generation->mGenerationId << "&generationName=" << esc(generation->mName) << "');\" >\n";
         }
         else
         {
-          output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg << "; color:" << fg << ";'\" onmouseover=\"this.style='background:#FFFF00; color:#000000;';\" onClick=\"getPage(this,parent,'/grid-admin?page=generations&startGenerationIndex=" << startGenerationIndex << "&generationId=" << generation->mGenerationId << "&generationName=" << generation->mName << "');\" >\n";
+          output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg << "; color:" << fg << ";'\" onmouseover=\"this.style='background:#FFFF00; color:#000000;';\" onClick=\"getPage(this,parent,'/grid-admin?page=generations&startGenerationIndex=" << startGenerationIndex << "&generationId=" << generation->mGenerationId << "&generationName=" << esc(generation->mName) << "');\" >\n";
         }
 
 
@@ -1520,9 +1547,9 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
           output << "<TD>"<< ((generation->mGenerationId % 0xFF00000000L) >> 32) << "</TD>";
           output << "<TD>"<< (generation->mGenerationId & 0xFFFFFFFF) << "</TD>";
         }
-        output << "<TD>"<< generation->mName << "</TD>";
-        output << "<TD>"<< generation->mDescription << "</TD>";
-        output << "<TD>"<< generation->mAnalysisTime << "</TD>";
+        output << "<TD>"<< esc(generation->mName) << "</TD>";
+        output << "<TD>"<< esc(generation->mDescription) << "</TD>";
+        output << "<TD>"<< esc(generation->mAnalysisTime) << "</TD>";
         output << "<TD>"<< generation->mFlags << "</TD>";
         output << "<TD>"<< generation->mSourceId << "</TD>";
         output << "<TD>"<< statusStr[(int)generation->mStatus % 3] << "</TD>";
@@ -1595,9 +1622,9 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
         output << "<H2>Generation</H2>\n";
         output << "<TABLE border=\"1\" width=\"100%\" style=\"font-size:12;\">\n";
         output << p1 << "Id</TD><TD>"<< gInfo.mGenerationId << "</TD></TR>";
-        output << p1 << "Name" << p2 << "id=\"generation_name\" value=\"" << gInfo.mName << p3;
-        output << p1 << "Description" << p2 << "id=\"generation_description\" value=\"" << gInfo.mDescription << p3;
-        output << p1 << "AnalysisTime" << p2 << "id=\"generation_analysisTime\" value=\"" << gInfo.mAnalysisTime << p3;
+        output << p1 << "Name" << p2 << "id=\"generation_name\" value=\"" << esc(gInfo.mName) << p3;
+        output << p1 << "Description" << p2 << "id=\"generation_description\" value=\"" << esc(gInfo.mDescription) << p3;
+        output << p1 << "AnalysisTime" << p2 << "id=\"generation_analysisTime\" value=\"" << esc(gInfo.mAnalysisTime) << p3;
         output << p1 << "Flags" << p2 << "id=\"generation_flags\" value=\"" << gInfo.mFlags << p3;
         output << p1 << "SourceId" << p2 << "id=\"generation_sourceId\" value=\"" << gInfo.mSourceId << p3;
         output << p1 << "Status" << p2 << "id=\"generation_status\" value=\"" << (int)gInfo.mStatus << p3;
@@ -1788,7 +1815,7 @@ bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine
     output << "<A href=\"grid-admin?target=grid-engine&page=contentServer\">Content Server</A> / ";
     output << "<A href=\"grid-admin?target=grid-engine&page=contentInformation\">Content Information</A> / ";
     output << "<HR>\n";
-    output << "<H2>Producers (" << sourceStr << ")</H2>\n";
+    output << "<H2>Producers (" << esc(sourceStr) << ")</H2>\n";
     output << "<HR>\n";
 
     output << "<TABLE border=\"1\" width=\"100%\" style=\"font-size:12;\">\n";
@@ -1823,13 +1850,13 @@ bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine
           fg = "#FFFFFF";
           bg = "#FF0000";
           pInfo = *producer;
-          output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onClick=\"getPage(this,parent,'/grid-admin?page=generations&producerId=" << producer->mProducerId << "&producerName=" << producer->mName << "');\" >\n";
+          output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onClick=\"getPage(this,parent,'/grid-admin?page=generations&producerId=" << producer->mProducerId << "&producerName=" << esc(producer->mName) << "');\" >\n";
         }
         else
         {
           fg = "#000000";
           bg = "#FFFFFF";
-          output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << ";'\" onmouseover=\"this.style='background:#FFFF00; color:#000000;';\" onClick=\"getPage(this,parent,'/grid-admin?startProducerIndex=" << startProducerIndex << "&producerId=" << producer->mProducerId << "&producerName=" << producer->mName << "');\" >\n";
+          output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << ";'\" onmouseover=\"this.style='background:#FFFF00; color:#000000;';\" onClick=\"getPage(this,parent,'/grid-admin?startProducerIndex=" << startProducerIndex << "&producerId=" << producer->mProducerId << "&producerName=" << esc(producer->mName) << "');\" >\n";
         }
 
         output << "<TD>"<< producer->mProducerId << "</TD>";
@@ -1838,9 +1865,9 @@ bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine
           output << "<TD>"<< ((producer->mProducerId % 0xFF000000) >> 24) << "</TD>";
           output << "<TD>"<< (producer->mProducerId & 0x00FFFFFF) << "</TD>";
         }
-        output << "<TD>"<< producer->mName << "</TD>";
-        output << "<TD>"<< producer->mTitle << "</TD>";
-        output << "<TD>"<< producer->mDescription << "</TD>";
+        output << "<TD>"<< esc(producer->mName) << "</TD>";
+        output << "<TD>"<< esc(producer->mTitle) << "</TD>";
+        output << "<TD>"<< esc(producer->mDescription) << "</TD>";
         output << "<TD>"<< producer->mFlags << "</TD>";
         output << "<TD>"<< producer->mSourceId << "</TD>";
         output << "</TR>";
@@ -1891,9 +1918,9 @@ bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine
         output << "<H2>Producer</H2>\n";
         output << "<TABLE border=\"1\" width=\"100%\" style=\"font-size:12;\">\n";
         output << p1 << "Id</TD><TD>"<< pInfo.mProducerId << "</TD></TR>";
-        output << p1 << "Name" << p2 << "id=\"producer_name\" value=\"" << pInfo.mName << p3;
-        output << p1 << "Title" << p2 << "id=\"producer_title\" value=\"" << pInfo.mTitle << p3;
-        output << p1 << "Description" << p2 << "id=\"producer_description\" value=\"" << pInfo.mDescription << p3;
+        output << p1 << "Name" << p2 << "id=\"producer_name\" value=\"" << esc(pInfo.mName) << p3;
+        output << p1 << "Title" << p2 << "id=\"producer_title\" value=\"" << esc(pInfo.mTitle) << p3;
+        output << p1 << "Description" << p2 << "id=\"producer_description\" value=\"" << esc(pInfo.mDescription) << p3;
         output << p1 << "Flags" << p2 << "id=\"producer_flags\" value=\"" << pInfo.mFlags << p3;
         output << p1 << "SourceId" << p2 << "id=\"producer_sourceId\" value=\"" << pInfo.mSourceId << p3;
         output << "</TABLE>\n";
@@ -1988,7 +2015,7 @@ bool Browser::page_contentInformation(SessionManagement::SessionInfo& session,co
         sourceStr = "Redis:" + it->mRedisAddress + ":" + std::to_string(it->mRedisPort) + ":" + it->mRedisTablePrefix;
 
       output << "    <LI>";
-      output << "      <A href=\"/grid-admin?&target=grid-engine&page=producers&startProducerIndex=0&source=" << sourceStr << "&sourceIdx=" << idx << "\">" << sourceStr << "</A>\n";
+      output << "      <A href=\"/grid-admin?&target=grid-engine&page=producers&startProducerIndex=0&source=" << esc(sourceStr) << "&sourceIdx=" << idx << "\">" << esc(sourceStr) << "</A>\n";
       output << "    </LI>";
       idx++;
     }
@@ -2052,7 +2079,7 @@ bool Browser::page_contentServer(SessionManagement::SessionInfo& session,const S
         sourceStr = "Redis:" + it->mRedisAddress + ":" + std::to_string(it->mRedisPort) + ":" + it->mRedisTablePrefix;
 
       output << "                      <LI>";
-      output << "                        <A href=\"/grid-admin?&target=grid-engine&page=producers&startProducerIndex=0&source=" << sourceStr << "&sourceIdx=" << idx << "\">" << sourceStr << "</A>\n";
+      output << "                        <A href=\"/grid-admin?&target=grid-engine&page=producers&startProducerIndex=0&source=" << esc(sourceStr) << "&sourceIdx=" << idx << "\">" << esc(sourceStr) << "</A>\n";
       output << "                      </LI>";
       idx++;
     }
@@ -2218,7 +2245,7 @@ bool Browser::page_luaFile(SessionManagement::SessionInfo& session,const Spine::
     output << "<A href=\"grid-admin?target=grid-engine&page=configuration\">Configuration</A> / ";
     output << "<A href=\"grid-admin?target=grid-engine&page=luaFiles\">LUA files</A> / ";
     output << "<HR>\n";
-    output << "<H2>" << fname->second << "</H2>\n";
+    output << "<H2>" << esc(fname->second) << "</H2>\n";
     output << "<HR>\n";
 
     output << "<PRE style=\"background-color: #F0F0F0;\">\n";
@@ -2325,7 +2352,7 @@ bool Browser::page_luaFiles(SessionManagement::SessionInfo& session,const Spine:
       fg = "#000000";
       bg = "#FFFFFF";
       output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << ";'\" onmouseover=\"this.style='background:#FFFF00; color:#000000;';\" onClick=\"getPage(this,parent,'/grid-admin?&target=grid-engine&page=luaFile&filename=" << hash << "');\" >\n";
-      output << "<TD>"<< *it << "</TD>";
+      output << "<TD>"<< esc(*it) << "</TD>";
       output << "</TR>";
 
     }
@@ -2379,7 +2406,7 @@ bool Browser::page_parameterAliasFile(SessionManagement::SessionInfo& session,co
     output << "<A href=\"grid-admin?target=grid-engine&page=configuration\">Configuration</A> / ";
     output << "<A href=\"grid-admin?target=grid-engine&page=parameterAliasFiles\">Parameter alias files</A> / ";
     output << "<HR>\n";
-    output << "<H2>" << fname->second << "</H2>\n";
+    output << "<H2>" << esc(fname->second) << "</H2>\n";
     output << "<HR>\n";
 
     output << "<PRE style=\"background-color: #F0F0F0;\">\n";
@@ -2471,7 +2498,7 @@ bool Browser::page_parameterAliasFiles(SessionManagement::SessionInfo& session,c
       fg = "#000000";
       bg = "#FFFFFF";
       output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << ";'\" onmouseover=\"this.style='background:#FFFF00; color:#000000;';\" onClick=\"getPage(this,parent,'/grid-admin?&target=grid-engine&page=parameterAliasFile&filename=" << hash << "');\" >\n";
-      output << "<TD>"<< *it << "</TD>";
+      output << "<TD>"<< esc(*it) << "</TD>";
       output << "</TR>";
 
     }
@@ -2523,7 +2550,7 @@ bool Browser::page_producerMappingFile(SessionManagement::SessionInfo& session,c
     output << "<A href=\"grid-admin?target=grid-engine&page=configuration\">Configuration</A> / ";
     output << "<A href=\"grid-admin?target=grid-engine&page=producerMappingFiles\">Producer mapping files</A> / ";
     output << "<HR>\n";
-    output << "<H2>" << fname->second << "</H2>\n";
+    output << "<H2>" << esc(fname->second) << "</H2>\n";
     output << "<HR>\n";
 
     output << "<PRE style=\"background-color: #F0F0F0;\">\n";
@@ -2633,7 +2660,7 @@ bool Browser::page_producerMappingFiles(SessionManagement::SessionInfo& session,
       fg = "#000000";
       bg = "#FFFFFF";
       output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << ";'\" onmouseover=\"this.style='background:#FFFF00; color:#000000;';\" onClick=\"getPage(this,parent,'/grid-admin?&target=grid-engine&page=producerMappingFile&filename=" << hash << "');\" >\n";
-      output << "<TD>"<< *it << "</TD>";
+      output << "<TD>"<< esc(*it) << "</TD>";
       output << "</TR>";
 
     }
@@ -2692,7 +2719,7 @@ bool Browser::page_parameterMappingFile(SessionManagement::SessionInfo& session,
     output << "<A href=\"grid-admin?target=grid-engine&page=configuration\">Configuration</A> / ";
     output << "<A href=\"grid-admin?target=grid-engine&page=parameterMappingFiles\">Parameter mapping files</A> / ";
     output << "<HR>\n";
-    output << "<H2>"<< fname->second << "</H2>\n";
+    output << "<H2>"<< esc(fname->second) << "</H2>\n";
     output << "<HR>\n";
 
     output << "<TABLE border=\"1\" width=\"100%\" style=\"font-size:12;\">\n";
@@ -2734,39 +2761,39 @@ bool Browser::page_parameterMappingFile(SessionManagement::SessionInfo& session,
             if (i < 6)
               output << "<TD>" << paramIdType[i] << "</TD>";
             else
-              output << "<TD>" << *field << "</TD>";
+              output << "<TD>" << esc(*field) << "</TD>";
             break;
 
           case 6:
             if (i < 4)
               output << "<TD>" << levelIdType[i] << "</TD>";
             else
-              output << "<TD>" << *field << "</TD>";
+              output << "<TD>" << esc(*field) << "</TD>";
             break;
 
           case 9:
             if (i < 5)
               output << "<TD>" << interpolationMethod[i] << "</TD>";
             else
-              output << "<TD>" << *field << "</TD>";
+              output << "<TD>" << esc(*field) << "</TD>";
             break;
 
           case 10:
             if (i < 5)
               output << "<TD>" << interpolationMethod[i] << "</TD>";
             else
-              output << "<TD>" << *field << "</TD>";
+              output << "<TD>" << esc(*field) << "</TD>";
             break;
 
           case 11:
             if (i < 6)
               output << "<TD>" << interpolationMethod[i] << "</TD>";
             else
-              output << "<TD>" << *field << "</TD>";
+              output << "<TD>" << esc(*field) << "</TD>";
             break;
 
           default:
-            output << "<TD>" << *field << "</TD>";
+            output << "<TD>" << esc(*field) << "</TD>";
             break;
         }
       }
@@ -2902,7 +2929,7 @@ bool Browser::page_parameterMappingFiles(SessionManagement::SessionInfo& session
       fg = "#000000";
       bg = "#FFFFFF";
       output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << ";'\" onmouseover=\"this.style='background:#FFFF00; color:#000000;';\" onClick=\"getPage(this,parent,'/grid-admin?&target=grid-engine&page=parameterMappingFile&filename=" << hash << "');\" >\n";
-      output << "<TD>"<< *it << "</TD>";
+      output << "<TD>"<< esc(*it) << "</TD>";
       output << "</TR>";
 
     }
@@ -2960,7 +2987,7 @@ bool Browser::page_producerFile(SessionManagement::SessionInfo& session,const Sp
     output << "  </LI>\n";
     output << "</OL>\n";
     output << "<HR>\n";
-    output << "<H3>File (" << mGridEngine->getProducerFileName() << ")</H3>\n";
+    output << "<H3>File (" << esc(mGridEngine->getProducerFileName()) << ")</H3>\n";
 
     output << "<PRE style=\"background-color: #F0F0F0;\">\n";
 
@@ -3006,7 +3033,7 @@ bool Browser::page_configurationFile(SessionManagement::SessionInfo& session,con
     output << "<A href=\"grid-admin?target=grid-engine&page=start\">Grid Engine</A> / ";
     output << "<A href=\"grid-admin?target=grid-engine&page=configuration\">Configuration</A> / ";
     output << "<HR>\n";
-    output << "<H2>Configuration file (" << mGridEngine->getConfigurationFileName() << ")</H2>\n";
+    output << "<H2>Configuration file (" << esc(mGridEngine->getConfigurationFileName()) << ")</H2>\n";
     output << "<HR>\n";
 
     output << "<PRE style=\"background-color: #F0F0F0;\">\n";
@@ -3115,7 +3142,7 @@ bool Browser::page_contentServer_processingLog(SessionManagement::SessionInfo& s
 
 
     output << "<HR>\n";
-    output << "<H3>File (" << filename << ")</H3>\n";
+    output << "<H3>File (" << esc(filename) << ")</H3>\n";
 
     output << "<PRE style=\"background-color: #F0F0F0;\">\n";
 
@@ -3132,7 +3159,7 @@ bool Browser::page_contentServer_processingLog(SessionManagement::SessionInfo& s
       {
       }
       for (auto it=lines.begin(); it!=lines.end();++it)
-        output << *it << "\n";
+        output << esc(*it) << "\n";
 
       //includeFile(output,filename.c_str());
     }
@@ -3239,7 +3266,7 @@ bool Browser::page_contentServer_debugLog(SessionManagement::SessionInfo& sessio
 
 
     output << "<HR>\n";
-    output << "<H3>File (" << filename << ")</H3>\n";
+    output << "<H3>File (" << esc(filename) << ")</H3>\n";
 
     output << "<PRE style=\"background-color: #F0F0F0;\">\n";
 
@@ -3256,7 +3283,7 @@ bool Browser::page_contentServer_debugLog(SessionManagement::SessionInfo& sessio
       {
       }
       for (auto it=lines.rbegin(); it!=lines.rend();++it)
-        output << *it << "\n";
+        output << esc(*it) << "\n";
 
       //includeFile(output,filename.c_str());
     }
@@ -3363,7 +3390,7 @@ bool Browser::page_dataServer_processingLog(SessionManagement::SessionInfo& sess
 
 
     output << "<HR>\n";
-    output << "<H3>File (" << filename << ")</H3>\n";
+    output << "<H3>File (" << esc(filename) << ")</H3>\n";
 
     output << "<PRE style=\"background-color: #F0F0F0;\">\n";
 
@@ -3380,7 +3407,7 @@ bool Browser::page_dataServer_processingLog(SessionManagement::SessionInfo& sess
       {
       }
       for (auto it=lines.begin(); it!=lines.end();++it)
-        output << *it << "\n";
+        output << esc(*it) << "\n";
 
       //includeFile(output,filename.c_str());
     }
@@ -3487,7 +3514,7 @@ bool Browser::page_dataServer_debugLog(SessionManagement::SessionInfo& session,c
 
 
     output << "<HR>\n";
-    output << "<H3>File (" << filename << ")</H3>\n";
+    output << "<H3>File (" << esc(filename) << ")</H3>\n";
 
     output << "<PRE style=\"background-color: #F0F0F0;\">\n";
 
@@ -3504,7 +3531,7 @@ bool Browser::page_dataServer_debugLog(SessionManagement::SessionInfo& session,c
       {
       }
       for (auto it=lines.rbegin(); it!=lines.rend();++it)
-        output << *it << "\n";
+        output << esc(*it) << "\n";
 
       //includeFile(output,filename.c_str());
     }
@@ -3611,7 +3638,7 @@ bool Browser::page_queryServer_processingLog(SessionManagement::SessionInfo& ses
 
 
     output << "<HR>\n";
-    output << "<H3>File (" << filename << ")</H3>\n";
+    output << "<H3>File (" << esc(filename) << ")</H3>\n";
 
     output << "<PRE style=\"background-color: #F0F0F0;\">\n";
 
@@ -3628,7 +3655,7 @@ bool Browser::page_queryServer_processingLog(SessionManagement::SessionInfo& ses
       {
       }
       for (auto it=lines.begin(); it!=lines.end();++it)
-        output << *it << "\n";
+        output << esc(*it) << "\n";
 
       //includeFile(output,filename.c_str());
     }
@@ -3735,7 +3762,7 @@ bool Browser::page_queryServer_debugLog(SessionManagement::SessionInfo& session,
 
 
     output << "<HR>\n";
-    output << "<H3>File (" << filename << ")</H3>\n";
+    output << "<H3>File (" << esc(filename) << ")</H3>\n";
 
     output << "<PRE style=\"background-color: #F0F0F0;\">\n";
 
@@ -3752,7 +3779,7 @@ bool Browser::page_queryServer_debugLog(SessionManagement::SessionInfo& session,
       {
       }
       for (auto it=lines.rbegin(); it!=lines.rend();++it)
-        output << *it << "\n";
+        output << esc(*it) << "\n";
 
       //includeFile(output,filename.c_str());
     }
@@ -3971,7 +3998,7 @@ void Browser::browserContent(SessionManagement::SessionInfo& session,std::ostrin
         sourceStr = "Redis:" + it->mRedisAddress + ":" + std::to_string(it->mRedisPort) + ":" + it->mRedisTablePrefix;
 
       output << "                      <LI>";
-      output << "                        <A href=\"/grid-admin?&target=grid-engine&page=producers&startProducerIndex=0&source=" << sourceStr << "&sourceIdx=" << idx << "\">" << sourceStr << "</A>\n";
+      output << "                        <A href=\"/grid-admin?&target=grid-engine&page=producers&startProducerIndex=0&source=" << esc(sourceStr) << "&sourceIdx=" << idx << "\">" << esc(sourceStr) << "</A>\n";
       output << "                      </LI>";
       idx++;
     }
@@ -4137,7 +4164,7 @@ bool Browser::requestHandler(SessionManagement::SessionInfo& session,const Spine
     output << "<HTML>\n";
     output << "<BODY style=\"font-size:12;\">\n";
 
-    output << "Unknown page : (" << page << ")\n";
+    output << "Unknown page : (" << esc(page) << ")\n";
     output << "</BODY>\n";
     output << "</HTML>\n";
 
