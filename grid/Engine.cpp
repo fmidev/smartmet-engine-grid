@@ -236,6 +236,7 @@ Engine::Engine(const char* theConfigFile)
       configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.secondaryPort", rec.mRedisSecondaryPort);
       configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.lockEnabled", rec.mRedisLockEnabled);
       configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.reloadRequired", rec.mRedisReloadRequired);
+      configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.redis.password", rec.mRedisPassword);
 
       configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.postgresql.primaryConnectionString", rec.mPrimaryConnectionString);
       configurationFile.getAttributeValue("smartmet.engine.grid.content-server.content-source.postgresql.secondaryConnectionString", rec.mSecondaryConnectionString);
@@ -265,6 +266,7 @@ Engine::Engine(const char* theConfigFile)
         configurationFile.getAttributeValue((pfx + "redis.secondaryPort").c_str(), rec.mRedisSecondaryPort);
         configurationFile.getAttributeValue((pfx + "redis.lockEnabled").c_str(), rec.mRedisLockEnabled);
         configurationFile.getAttributeValue((pfx + "redis.reloadRequired").c_str(), rec.mRedisReloadRequired);
+        configurationFile.getAttributeValue((pfx + "redis.password").c_str(), rec.mRedisPassword);
         configurationFile.getAttributeValue((pfx + "postgresql.primaryConnectionString").c_str(), rec.mPrimaryConnectionString);
         configurationFile.getAttributeValue((pfx + "postgresql.secondaryConnectionString").c_str(), rec.mSecondaryConnectionString);
         configurationFile.getAttributeValue((pfx + "http.url").c_str(), rec.mHttpUrl);
@@ -544,7 +546,7 @@ ContentServer::ServiceInterface* Engine::initContentSources()
           ContentServer::RedisImplementation* redis = new ContentServer::RedisImplementation();
           redis->init(contentSource->mRedisAddress.c_str(), contentSource->mRedisPort, contentSource->mRedisTablePrefix.c_str(),
               contentSource->mRedisSecondaryAddress.c_str(), contentSource->mRedisSecondaryPort,
-              contentSource->mRedisLockEnabled, contentSource->mRedisReloadRequired);
+              contentSource->mRedisLockEnabled, contentSource->mRedisReloadRequired, contentSource->mRedisPassword.c_str());
 
           ContentServer_sptr contentServer(redis);
           mContentServers.push_back(contentServer);

@@ -62,13 +62,14 @@ struct ContentSource
 {
   bool        mEnabled = true;                              //!< Whether this source participates in the merged content set.
   std::string mType = "redis";                              //!< Backend type: "redis", "corba", "http", "postgresql", or "memory".
-  std::string mRedisAddress= "127.0.0.1";                  //!< Redis primary host address.
+  std::string mRedisAddress = "127.0.0.1";                  //!< Redis primary host address.
   int         mRedisPort = 6379;                            //!< Redis primary port.
-  std::string mRedisTablePrefix = "a.";                    //!< Key prefix distinguishing this source's records in Redis.
-  std::string mRedisSecondaryAddress = "127.0.0.1";        //!< Redis secondary (replica) host address.
-  int         mRedisSecondaryPort = 0;                     //!< Redis secondary port (0 = disabled).
+  std::string mRedisTablePrefix = "a.";                     //!< Key prefix distinguishing this source's records in Redis.
+  std::string mRedisSecondaryAddress = "127.0.0.1";         //!< Redis secondary (replica) host address.
+  int         mRedisSecondaryPort = 0;                      //!< Redis secondary port (0 = disabled).
   bool        mRedisLockEnabled = false;                    //!< Whether to use Redis-level distributed locking.
   bool        mRedisReloadRequired = true;                  //!< Whether a full reload is required on reconnect.
+  std::string mRedisPassword = "";                          //!< Redis primary host address.
   std::string mCorbaIor;                                    //!< CORBA IOR string when type is "corba".
   std::string mHttpUrl;                                     //!< Base URL when type is "http".
   std::string mPrimaryConnectionString;                     //!< Primary PostgreSQL connection string when type is "postgresql".
