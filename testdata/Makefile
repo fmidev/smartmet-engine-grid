@@ -6,7 +6,7 @@ include $(shell echo $${PREFIX-/usr})/share/smartmet/devel/makefile.inc
 
 CFLAGS = -DUNIX -O0 -g $(FLAGS) -Wno-unknown-pragmas
 
-LIBS += -lsmartmet-grid-files -lsmartmet-macgyver
+LIBS += $(PREFIX_LDFLAGS) -lsmartmet-grid-files -lsmartmet-macgyver
 
 all: $(PROG)
 
