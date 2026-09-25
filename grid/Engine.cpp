@@ -605,6 +605,12 @@ ContentServer::ServiceInterface* Engine::initContentSources()
         }
       }
     }
+    // Return the first source: that is also the server getContentServer_sptr() hands to the
+    // plugins when the content cache is disabled, so the local data and query servers must
+    // use the same one. (Previously the last source was returned here.)
+    if (!mContentServers.empty())
+      cServer = mContentServers.front().get();
+
     return cServer;
   }
   catch (...)
@@ -622,6 +628,13 @@ ContentServer::ServiceInterface* Engine::initContentCache(ContentServer::Service
 {
   try
   {
+    if (!mContentCacheEnabled && mContentServers.size() > 1)
+    {
+      std::cout << ANSI_FG_RED << "**** Grid-engine configuration: " << mContentServers.size()
+                << " content sources but the content cache is disabled; only the first source is used"
+                << ANSI_FG_DEFAULT << std::endl;
+    }
+
     if (mContentCacheEnabled)
     {
       if (mContentSources.size() == 1)
@@ -666,7 +679,14 @@ DataServer::ServiceInterface* Engine::initDataServerImpl(ContentServer::ServiceI
   {
     DataServer::ServiceInterface* dServer = nullptr;
 
-    if (mDataServerRemote && mDataServerIor.length() > 50)
+    if (mDataServerRemote && mDataServerIor.length() <= 50)
+    {
+      Fmi::Exception exception(BCP, "Remote data server requested but the IOR is missing or invalid!");
+      exception.addParameter("Setting", "smartmet.engine.grid.data-server.ior");
+      throw exception;
+    }
+
+    if (mDataServerRemote)
     {
       DataServer::Corba::ClientImplementation* client = new DataServer::Corba::ClientImplementation();
       client->init(mDataServerIor);
@@ -717,7 +737,14 @@ QueryServer::ServiceInterface* Engine::initQueryServerImpl(ContentServer::Servic
   {
     QueryServer::ServiceInterface* qServer = nullptr;
 
-    if (mQueryServerRemote && mQueryServerIor.length() > 50)
+    if (mQueryServerRemote && mQueryServerIor.length() <= 50)
+    {
+      Fmi::Exception exception(BCP, "Remote query server requested but the IOR is missing or invalid!");
+      exception.addParameter("Setting", "smartmet.engine.grid.query-server.ior");
+      throw exception;
+    }
+
+    if (mQueryServerRemote)
     {
       QueryServer::Corba::ClientImplementation* client = new QueryServer::Corba::ClientImplementation();
       client->init(mQueryServerIor);

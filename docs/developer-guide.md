@@ -162,15 +162,18 @@ content-source[n] ─┘   several:     MergeImplementation ─┤   (or the sou
   (options `contentSwapEnabled`, `contentUpdateInterval`, `requestForwardEnabled`, and
   the file-cache wait times). With several sources, a `MergeImplementation` over all of
   them. Its event thread is started immediately. The switch is
-  `content-server.cache.enabled`.
-* **Data Server** (`initDataServerImpl()`): local unless `data-server.remote` is true
-  **and** the IOR is longer than 50 characters. The local server gets the grid directory,
+  `content-server.cache.enabled`. With the cache disabled, only the **first** source is
+  used (by the plugins and by the Data and Query Servers alike), and a warning is
+  printed if more are configured.
+* **Data Server** (`initDataServerImpl()`): local unless `data-server.remote` is true.
+  A remote server needs a valid IOR; an empty or too short one (50 characters or less)
+  is a configuration error. The local server gets the grid directory,
   clean-up settings and the local file cache, and starts its event and cache threads.
   The same function initialises grid-files' `valueCache`.
   `smartmet.library.grid-files.cache.type = "filesys"` makes it file-backed in
   `…cache.directory`; any other value keeps it in memory.
-* **Query Server** (`initQueryServerImpl()`): local unless remote with a long enough
-  IOR. It receives all the configuration file lists (mappings, aliases, producers,
+* **Query Server** (`initQueryServerImpl()`): local unless `query-server.remote` is
+  true, with the same IOR check. It receives all the configuration file lists (mappings, aliases, producers,
   producer mappings, Lua, unit and height conversions) and its two per-thread content
   caches.
 
@@ -340,8 +343,6 @@ configuration keys in the constructor (`ContentSource` struct), and documentatio
 * **Startup blocks on the content cache.** `init()` waits for `isReady()`. A slow or
   unreachable Redis, or `fileCacheMaxFirstWaitTime` with many files to cache, delays
   the whole server start.
-* **Remote servers need an IOR longer than 50 characters.** With `remote = true` and a
-  short or empty IOR, the engine silently builds a **local** Data or Query Server.
 * **The value cache type is `"filesys"`.** Any other string, including `"filesystem"`
   (as a code comment says), gives the in-memory cache.
 * **Producer hashes are cached for 120 s**, so ETags based on them (WMS) lag behind new
@@ -352,10 +353,6 @@ configuration keys in the constructor (`ContentSource` struct), and documentatio
 * **The auto mapping files are shared.** Every process that points at the same
   `mappingUpdateFile` rewrites it. If the directory is not writable, the update throws
   `Cannot open a mapping file for writing!`, which is printed every 300 s.
-* **Cache disabled + several content sources.** `initContentSources()` returns the
-  **last** source, which the Data and Query Servers then use, while
-  `getContentServer_sptr()` returns source **0** to plugins. With more than one source,
-  keep the cache enabled.
 * **Browser rights with authentication off.** With grid-admin authentication disabled,
   the session user id is 0, and the browser grants modification rights to user id 0
   whenever `browser.flags` enables them.

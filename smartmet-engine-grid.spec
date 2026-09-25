@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 26.9.24
+Version: 26.9.25
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -115,6 +115,12 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Fri Sep 25 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.9.25-1.fmi
+- With the content cache disabled, the data and query servers now use the same (first)
+  content source as the plugins; a warning is printed if several sources are configured
+- A remote data or query server with a missing or invalid IOR is now a configuration
+  error instead of silently using a local server
+
 * Thu Sep 24 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.9.24-1.fmi
 - Security: HTML-escape request/data-derived values (producer, generation and file
   names, forecast times, parameter names, server names) in the grid engine Browser
