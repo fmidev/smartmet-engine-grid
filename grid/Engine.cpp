@@ -1744,7 +1744,7 @@ void Engine::getParameterDetails(const std::string& producerName, const std::str
 
 
     //std::cout << "DETAILS [" << producerName << "] [" << parameterName << "]\n";
-    std::string prod = producerName;
+    const std::string& prod = producerName;
     std::string tmp;
 
     // Finding the mapping name for the (newbase) producer. The producer name mappings look like
