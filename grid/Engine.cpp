@@ -122,6 +122,7 @@ Engine::Engine(const char* theConfigFile)
     mMemoryMapper_maxProcessingThreads = 30;
     mMemoryMapper_maxMessages = 100000;
     mMemoryMapper_pageCacheSize = 2000000;
+    mMemoryMapper_fileHandleLimit = 10000;
     mConfigurationFile_name = theConfigFile;
     mConfigurationFile_checkTime = time(nullptr) + 120;
     mConfigurationFile_modificationTime = getFileModificationTime(mConfigurationFile_name.c_str());
