@@ -24,6 +24,7 @@ The Grid Engine can be configured also in a such way that all grid services are 
 ## Documentation
 
 - [Grid Engine documentation](https://github.com/fmidev/smartmet-engine-grid/blob/master/doc/grid-engine.md)
+- [Developer guide](docs/developer-guide.md) — engine internals and plugin API for developers
 - [Quick Setup](https://github.com/fmidev/smartmet-tools-grid/blob/master/doc/quick-setup.md)
 - [Grid Support overview](https://github.com/fmidev/smartmet-tools-grid/blob/master/doc/grid-support.md)
 

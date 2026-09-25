@@ -35,9 +35,9 @@ single ContentServer interface.
 - **Redis** — primary/secondary instances with per-source table prefix
   (`mType == "redis"`).
 - **CORBA** — remote ContentServer over CORBA (`mType == "corba"`).
-- **HTTP** — remote ContentServer over JSON-over-HTTP (`mType == "http"`).
-- **File** — scan a filesystem tree for grid files
-  (`mType == "file"`).
+- **HTTP** — remote ContentServer over HTTP, key=value request/response lines (`mType == "http"`).
+- **File** — in-memory registry loaded from CSV files in `memoryContentDir`
+  (`MemoryImplementation`, `mType == "file"`).
 - **Multi-source merging** — when more than one source is declared, the
   engine builds a `MergeImplementation` that combines them.
 
