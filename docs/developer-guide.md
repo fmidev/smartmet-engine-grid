@@ -287,8 +287,7 @@ hot-reloaded by the Query Server and by the engine's own collections.
   `browserContent()` / `browserRequest()`. Pages that modify things are gated by
   `browser.flags`: `contentModificationEnabled` (1) allows adding and deleting content,
   and `logModificationEnabled` (2) allows switching logs. The session user must be in
-  the `grid-admin` group, **or have user id 0**, which is what grid-admin passes when its
-  authentication is disabled.
+  the `grid-admin` group.
 
 ## 11. Concurrency
 
@@ -353,6 +352,3 @@ configuration keys in the constructor (`ContentSource` struct), and documentatio
 * **The auto mapping files are shared.** Every process that points at the same
   `mappingUpdateFile` rewrites it. If the directory is not writable, the update throws
   `Cannot open a mapping file for writing!`, which is printed every 300 s.
-* **Browser rights with authentication off.** With grid-admin authentication disabled,
-  the session user id is 0, and the browser grants modification rights to user id 0
-  whenever `browser.flags` enables them.
