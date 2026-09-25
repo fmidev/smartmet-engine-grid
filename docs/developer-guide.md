@@ -342,8 +342,6 @@ configuration keys in the constructor (`ContentSource` struct), and documentatio
 * **Startup blocks on the content cache.** `init()` waits for `isReady()`. A slow or
   unreachable Redis, or `fileCacheMaxFirstWaitTime` with many files to cache, delays
   the whole server start.
-* **The value cache type is `"filesys"`.** Any other string, including `"filesystem"`
-  (as a code comment says), gives the in-memory cache.
 * **Producer hashes are cached for 120 s**, so ETags based on them (WMS) lag behind new
   data by up to two minutes.
 * **The engine's and the Query Server's mappings can briefly disagree.** They are
