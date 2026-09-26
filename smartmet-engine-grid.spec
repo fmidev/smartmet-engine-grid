@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 26.9.25
+Version: 26.9.26
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -24,7 +24,7 @@ BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: smartmet-library-spine-devel >= 26.9.23
 BuildRequires: smartmet-library-grid-content-devel >= 26.9.23
-BuildRequires: smartmet-library-grid-files-devel >= 26.9.23
+BuildRequires: smartmet-library-grid-files-devel >= 26.9.26
 BuildRequires: smartmet-library-macgyver-devel >= 26.9.23
 BuildRequires: make
 BuildRequires: omniORB-devel >= 4.3.0
@@ -35,7 +35,7 @@ BuildRequires: zlib-devel
 BuildRequires: postgresql15-devel
 Requires: %{smartmet_boost}-thread
 Requires: smartmet-library-grid-content >= 26.9.23
-Requires: smartmet-library-grid-files >= 26.9.23
+Requires: smartmet-library-grid-files >= 26.9.26
 Requires: smartmet-library-spine >= 26.9.23
 Requires: smartmet-library-macgyver >= 26.9.23
 Requires: omniORB-devel
@@ -82,7 +82,7 @@ SmartMet %{SPECNAME} development headers.
 Summary: SmartMet %{SPECNAME} - redis server with required data for testing purpose
 Group: SmartMet/Development
 Provides: smartmet-engine-grid-test
-Requires: smartmet-library-grid-files >= 26.9.23
+Requires: smartmet-library-grid-files >= 26.9.26
 %description -n smartmet-engine-grid-test
 SmartMet %{SPECNAME} - redis server with required data for testing purpose
 
@@ -115,6 +115,9 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Sat Sep 26 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.9.26-1.fmi
+- Repackaged due to grid-files ABI changes
+
 * Fri Sep 25 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.9.25-1.fmi
 - With the content cache disabled, the data and query servers now use the same (first)
   content source as the plugins; a warning is printed if several sources are configured
