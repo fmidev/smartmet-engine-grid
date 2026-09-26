@@ -22,10 +22,10 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
-BuildRequires: smartmet-library-spine-devel >= 26.9.23
-BuildRequires: smartmet-library-grid-content-devel >= 26.9.23
+BuildRequires: smartmet-library-spine-devel >= 26.9.26
+BuildRequires: smartmet-library-grid-content-devel >= 26.9.26
 BuildRequires: smartmet-library-grid-files-devel >= 26.9.26
-BuildRequires: smartmet-library-macgyver-devel >= 26.9.23
+BuildRequires: smartmet-library-macgyver-devel >= 26.9.26-2
 BuildRequires: make
 BuildRequires: omniORB-devel >= 4.3.0
 BuildRequires: %{smartmet_boost}-devel
@@ -34,10 +34,10 @@ BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 BuildRequires: postgresql15-devel
 Requires: %{smartmet_boost}-thread
-Requires: smartmet-library-grid-content >= 26.9.23
+Requires: smartmet-library-grid-content >= 26.9.26
 Requires: smartmet-library-grid-files >= 26.9.26
-Requires: smartmet-library-spine >= 26.9.23
-Requires: smartmet-library-macgyver >= 26.9.23
+Requires: smartmet-library-spine >= 26.9.26
+Requires: smartmet-library-macgyver >= 26.9.26-2
 Requires: omniORB-devel
 
 %if 0%{?rhel} && 0%{rhel} == 8
@@ -71,10 +71,10 @@ SmartMet grid engine
 Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
-Requires: smartmet-library-grid-content-devel >= 26.9.23
+Requires: smartmet-library-grid-content-devel >= 26.9.26
 Requires: %{SPECNAME} = %{version}-%{release}
-Requires: smartmet-library-spine-devel >= 26.9.23
-Requires: smartmet-library-macgyver-devel >= 26.9.23
+Requires: smartmet-library-spine-devel >= 26.9.26
+Requires: smartmet-library-macgyver-devel >= 26.9.26-2
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
 
@@ -117,6 +117,7 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 * Sat Sep 26 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.9.26-1.fmi
 - Repackaged due to grid-files ABI changes
+- Require the 26.9.26 releases of the SmartMet dependencies
 
 * Fri Sep 25 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.9.25-1.fmi
 - With the content cache disabled, the data and query servers now use the same (first)
