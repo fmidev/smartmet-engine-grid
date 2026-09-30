@@ -23,6 +23,8 @@
 #include <macgyver/TimeFormatter.h>
 #include <spine/Convenience.h>
 #include <spine/Reactor.h>
+#include <chrono>
+#include <thread>
 #include <unistd.h>
 
 #include <unordered_set>
@@ -44,18 +46,30 @@ namespace Grid
 {
 static void* gridEngine_updateThread(void* arg)
 {
-  try
+  Fmi::set_thread_name("upd-grid");
+  Engine* engine = static_cast<Engine*>(arg);
+
+  // An error in the background updates used to call exit(-1), which stopped
+  // the whole server. Report it and restart the updates after a pause instead.
+  while (true)
   {
-    Fmi::set_thread_name("upd-grid");
-    Engine* engine = static_cast<Engine*>(arg);
-    engine->updateProcessing();
-    return nullptr;
-  }
-  catch (...)
-  {
-    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.printError();
-    exit(-1);
+    try
+    {
+      engine->updateProcessing();
+      return nullptr;
+    }
+    catch (...)
+    {
+      Fmi::Exception exception(BCP, "Grid engine update failed, retrying in 10 seconds", nullptr);
+      exception.printError();
+    }
+
+    for (int i = 0; i < 10; i++)
+    {
+      if (Spine::Reactor::isShuttingDown())
+        return nullptr;
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
   }
 }
 
