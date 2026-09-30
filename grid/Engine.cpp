@@ -220,6 +220,17 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.library.grid-files.memoryMapper.fileHandleLimit", mMemoryMapper_fileHandleLimit);
 
     configurationFile.getAttributeValue("smartmet.library.grid-files.cache.type", mCacheType);
+
+    // "filesystem" is accepted as an alias of "filesys". Any other value used to
+    // select the memory cache silently.
+    if (strcasecmp(mCacheType.c_str(), "filesystem") == 0)
+      mCacheType = "filesys";
+    if (strcasecmp(mCacheType.c_str(), "memory") != 0 && strcasecmp(mCacheType.c_str(), "filesys") != 0)
+    {
+      Fmi::Exception exception(BCP, "Invalid grid cache type, expecting 'memory' or 'filesys'");
+      exception.addParameter("smartmet.library.grid-files.cache.type", mCacheType);
+      throw exception;
+    }
     configurationFile.getAttributeValue("smartmet.library.grid-files.cache.directory", mCacheDir);
     configurationFile.getAttributeValue("smartmet.library.grid-files.cache.numOfGrids", mNumOfCachedGrids);
     configurationFile.getAttributeValue("smartmet.library.grid-files.cache.maxSizeInMegaBytes", mMaxSizeOfCachedGridsInMegaBytes);

@@ -392,7 +392,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     uint                mQueryServerContentSearchCache_clearInterval;         //!< Interval (seconds) between content-search cache clear passes.
 
     std::string         mHeightConversionFile;                    //!< Path to the height/pressure conversion data file.
-    std::string         mCacheType;                               //!< DataServer grid cache backend type ("memory" or "filesystem").
+    std::string         mCacheType;                               //!< DataServer grid cache backend type ("memory" or "filesys").
     std::string         mCacheDir;                                //!< Directory for filesystem-backed grid cache.
     uint                mNumOfCachedGrids;                        //!< Maximum number of decoded grids kept in the cache.
     uint                mMaxSizeOfCachedGridsInMegaBytes;         //!< Maximum total size (MiB) of the decoded grid cache.
