@@ -23,6 +23,8 @@
 #include <macgyver/TimeFormatter.h>
 #include <spine/Convenience.h>
 #include <spine/Reactor.h>
+#include <chrono>
+#include <thread>
 #include <unistd.h>
 
 #include <unordered_set>
@@ -44,18 +46,30 @@ namespace Grid
 {
 static void* gridEngine_updateThread(void* arg)
 {
-  try
+  Fmi::set_thread_name("upd-grid");
+  Engine* engine = static_cast<Engine*>(arg);
+
+  // An error in the background updates used to call exit(-1), which stopped
+  // the whole server. Report it and restart the updates after a pause instead.
+  while (true)
   {
-    Fmi::set_thread_name("upd-grid");
-    Engine* engine = static_cast<Engine*>(arg);
-    engine->updateProcessing();
-    return nullptr;
-  }
-  catch (...)
-  {
-    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.printError();
-    exit(-1);
+    try
+    {
+      engine->updateProcessing();
+      return nullptr;
+    }
+    catch (...)
+    {
+      Fmi::Exception exception(BCP, "Grid engine update failed, retrying in 10 seconds", nullptr);
+      exception.printError();
+    }
+
+    for (int i = 0; i < 10; i++)
+    {
+      if (Spine::Reactor::isShuttingDown())
+        return nullptr;
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
   }
 }
 
@@ -122,6 +136,7 @@ Engine::Engine(const char* theConfigFile)
     mMemoryMapper_maxProcessingThreads = 30;
     mMemoryMapper_maxMessages = 100000;
     mMemoryMapper_pageCacheSize = 2000000;
+    mMemoryMapper_fileHandleLimit = 10000;
     mConfigurationFile_name = theConfigFile;
     mConfigurationFile_checkTime = time(nullptr) + 120;
     mConfigurationFile_modificationTime = getFileModificationTime(mConfigurationFile_name.c_str());
@@ -220,6 +235,17 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.library.grid-files.memoryMapper.fileHandleLimit", mMemoryMapper_fileHandleLimit);
 
     configurationFile.getAttributeValue("smartmet.library.grid-files.cache.type", mCacheType);
+
+    // "filesystem" is accepted as an alias of "filesys". Any other value used to
+    // select the memory cache silently.
+    if (strcasecmp(mCacheType.c_str(), "filesystem") == 0)
+      mCacheType = "filesys";
+    if (strcasecmp(mCacheType.c_str(), "memory") != 0 && strcasecmp(mCacheType.c_str(), "filesys") != 0)
+    {
+      Fmi::Exception exception(BCP, "Invalid grid cache type, expecting 'memory' or 'filesys'");
+      exception.addParameter("smartmet.library.grid-files.cache.type", mCacheType);
+      throw exception;
+    }
     configurationFile.getAttributeValue("smartmet.library.grid-files.cache.directory", mCacheDir);
     configurationFile.getAttributeValue("smartmet.library.grid-files.cache.numOfGrids", mNumOfCachedGrids);
     configurationFile.getAttributeValue("smartmet.library.grid-files.cache.maxSizeInMegaBytes", mMaxSizeOfCachedGridsInMegaBytes);
@@ -1732,7 +1758,7 @@ void Engine::getParameterDetails(const std::string& producerName, const std::str
 
 
     //std::cout << "DETAILS [" << producerName << "] [" << parameterName << "]\n";
-    std::string prod = producerName;
+    const std::string& prod = producerName;
     std::string tmp;
 
     // Finding the mapping name for the (newbase) producer. The producer name mappings look like

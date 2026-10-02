@@ -287,7 +287,7 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
     if (producerId == 0 || generationId == 0  ||  fileId == 0  ||  messageIndex == 0xFFFFFFFF)
       mode = 0;
 
-    if ((mFlags & Flags::contentModificationEnabled)  && mainSource  &&  mode >= 100 && (session.mUserInfo.getUserId() == 0 || session.mUserInfo.isUserGroupMember("grid-admin")))
+    if ((mFlags & Flags::contentModificationEnabled)  && mainSource  &&  mode >= 100 && session.mUserInfo.isUserGroupMember("grid-admin"))
     {
       cInfo.mProducerId = producerId;
       cInfo.mGenerationId = generationId;
@@ -761,7 +761,7 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
       output << "</TR></TABLE>\n";
     }
 
-    if ((mFlags & Flags::contentModificationEnabled) && mainSource && (session.mUserInfo.getUserId() == 0 || session.mUserInfo.isUserGroupMember("grid-admin")))
+    if ((mFlags & Flags::contentModificationEnabled) && mainSource && session.mUserInfo.isUserGroupMember("grid-admin"))
     {
       std::string prod = "&startMessageIndex=" + toString(startMessageIndex);
 
@@ -929,7 +929,7 @@ bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HT
     if (producerId == 0 || generationId == 0)
       mode = 0;
 
-    if ((mFlags & Flags::contentModificationEnabled) && mainSource  && mode >= 100 && (session.mUserInfo.getUserId() == 0 || session.mUserInfo.isUserGroupMember("grid-admin")))
+    if ((mFlags & Flags::contentModificationEnabled) && mainSource  && mode >= 100 && session.mUserInfo.isUserGroupMember("grid-admin"))
     {
       fInfo.mProducerId = producerId;
       fInfo.mGenerationId = generationId;
@@ -1189,7 +1189,7 @@ bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HT
       output << "</TR></TABLE>\n";
     }
 
-    if ((mFlags & Flags::contentModificationEnabled) && mainSource && (session.mUserInfo.getUserId() == 0 || session.mUserInfo.isUserGroupMember("grid-admin")))
+    if ((mFlags & Flags::contentModificationEnabled) && mainSource && session.mUserInfo.isUserGroupMember("grid-admin"))
     {
       std::string prod = "&startFileId=" + toString(startFileId);
 
@@ -1367,7 +1367,7 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
     if (producerId == 0)
       mode = 0;
 
-    if ((mFlags & Flags::contentModificationEnabled) &&  mainSource && mode >= 100 && (session.mUserInfo.getUserId() == 0 || session.mUserInfo.isUserGroupMember("grid-admin")))
+    if ((mFlags & Flags::contentModificationEnabled) &&  mainSource && mode >= 100 && session.mUserInfo.isUserGroupMember("grid-admin"))
     {
       gInfo.mProducerId = producerId;
 
@@ -1603,7 +1603,7 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
       output << "</TR></TABLE>\n";
     }
 
-    if ((mFlags & Flags::contentModificationEnabled) && mainSource && (session.mUserInfo.getUserId() == 0 || session.mUserInfo.isUserGroupMember("grid-admin")))
+    if ((mFlags & Flags::contentModificationEnabled) && mainSource && session.mUserInfo.isUserGroupMember("grid-admin"))
     {
       std::string prod = "&startGenerationIndex=" + std::to_string(startGenerationIndex);
 
@@ -1727,7 +1727,7 @@ bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine
 
 
 
-    if ((mFlags & Flags::contentModificationEnabled) && mainSource  &&  mode >= 100 && (session.mUserInfo.getUserId() == 0 || session.mUserInfo.isUserGroupMember("grid-admin")))
+    if ((mFlags & Flags::contentModificationEnabled) && mainSource  &&  mode >= 100 && session.mUserInfo.isUserGroupMember("grid-admin"))
     {
       auto v = theRequest.getParameter("name");
       if (v)
@@ -1906,7 +1906,7 @@ bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine
       output << "</TR></TABLE>\n";
     }
 
-    if ((mFlags & Flags::contentModificationEnabled) && mainSource && (session.mUserInfo.getUserId() == 0 || session.mUserInfo.isUserGroupMember("grid-admin")))
+    if ((mFlags & Flags::contentModificationEnabled) && mainSource && session.mUserInfo.isUserGroupMember("grid-admin"))
     {
       if (mode > 0  && mode < 100)
       {
@@ -3104,7 +3104,7 @@ bool Browser::page_contentServer_processingLog(SessionManagement::SessionInfo& s
     output << "<HR>\n";
     output << "<H2>Content Server: Processing log</H2>\n";
 
-    if ((mFlags & Flags::logModificationEnabled)  && log && (session.mUserInfo.getUserId() == 0 || session.mUserInfo.isUserGroupMember("grid-admin")))
+    if ((mFlags & Flags::logModificationEnabled)  && log && session.mUserInfo.isUserGroupMember("grid-admin"))
     {
       switch (mode)
       {
@@ -3228,7 +3228,7 @@ bool Browser::page_contentServer_debugLog(SessionManagement::SessionInfo& sessio
     output << "<HR>\n";
     output << "<H2>Content Server: Debug log</H2>\n";
 
-    if ((mFlags & Flags::logModificationEnabled)  && log && (session.mUserInfo.getUserId() == 0 || session.mUserInfo.isUserGroupMember("grid-admin")))
+    if ((mFlags & Flags::logModificationEnabled)  && log && session.mUserInfo.isUserGroupMember("grid-admin"))
     {
       switch (mode)
       {
@@ -3352,7 +3352,7 @@ bool Browser::page_dataServer_processingLog(SessionManagement::SessionInfo& sess
     output << "<HR>\n";
     output << "<H2>Data Server: Processing log</H2>\n";
 
-    if ((mFlags & Flags::logModificationEnabled)  && log && (session.mUserInfo.getUserId() == 0 || session.mUserInfo.isUserGroupMember("grid-admin")))
+    if ((mFlags & Flags::logModificationEnabled)  && log && session.mUserInfo.isUserGroupMember("grid-admin"))
     {
       switch (mode)
       {
@@ -3476,7 +3476,7 @@ bool Browser::page_dataServer_debugLog(SessionManagement::SessionInfo& session,c
     output << "<HR>\n";
     output << "<H2>Data Server: Debug log</H2>\n";
 
-    if ((mFlags & Flags::logModificationEnabled)  && log && (session.mUserInfo.getUserId() == 0 || session.mUserInfo.isUserGroupMember("grid-admin")))
+    if ((mFlags & Flags::logModificationEnabled)  && log && session.mUserInfo.isUserGroupMember("grid-admin"))
     {
       switch (mode)
       {
@@ -3600,7 +3600,7 @@ bool Browser::page_queryServer_processingLog(SessionManagement::SessionInfo& ses
     output << "<HR>\n";
     output << "<H2>Query Server: Processing log</H2>\n";
 
-    if ((mFlags & Flags::logModificationEnabled)  && log && (session.mUserInfo.getUserId() == 0 || session.mUserInfo.isUserGroupMember("grid-admin")))
+    if ((mFlags & Flags::logModificationEnabled)  && log && session.mUserInfo.isUserGroupMember("grid-admin"))
     {
       switch (mode)
       {
@@ -3724,7 +3724,7 @@ bool Browser::page_queryServer_debugLog(SessionManagement::SessionInfo& session,
     output << "<HR>\n";
     output << "<H2>Query Server: Debug log</H2>\n";
 
-    if ((mFlags & Flags::logModificationEnabled)  && log && (session.mUserInfo.getUserId() == 0 || session.mUserInfo.isUserGroupMember("grid-admin")))
+    if ((mFlags & Flags::logModificationEnabled)  && log && session.mUserInfo.isUserGroupMember("grid-admin"))
     {
       switch (mode)
       {
