@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 26.9.26
+Version: 26.10.2
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -23,9 +23,9 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: smartmet-library-spine-devel >= 26.9.26
-BuildRequires: smartmet-library-grid-content-devel >= 26.9.26
-BuildRequires: smartmet-library-grid-files-devel >= 26.9.26
-BuildRequires: smartmet-library-macgyver-devel >= 26.9.26-2
+BuildRequires: smartmet-library-grid-content-devel >= 26.10.2
+BuildRequires: smartmet-library-grid-files-devel >= 26.10.2
+BuildRequires: smartmet-library-macgyver-devel >= 26.10.2
 BuildRequires: make
 BuildRequires: omniORB-devel >= 4.3.0
 BuildRequires: %{smartmet_boost}-devel
@@ -34,10 +34,10 @@ BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 BuildRequires: postgresql15-devel
 Requires: %{smartmet_boost}-thread
-Requires: smartmet-library-grid-content >= 26.9.26
-Requires: smartmet-library-grid-files >= 26.9.26
+Requires: smartmet-library-grid-content >= 26.10.2
+Requires: smartmet-library-grid-files >= 26.10.2
 Requires: smartmet-library-spine >= 26.9.26
-Requires: smartmet-library-macgyver >= 26.9.26-2
+Requires: smartmet-library-macgyver >= 26.10.2
 Requires: omniORB-devel
 
 %if 0%{?rhel} && 0%{rhel} == 8
@@ -71,10 +71,10 @@ SmartMet grid engine
 Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
-Requires: smartmet-library-grid-content-devel >= 26.9.26
+Requires: smartmet-library-grid-content-devel >= 26.10.2
 Requires: %{SPECNAME} = %{version}-%{release}
 Requires: smartmet-library-spine-devel >= 26.9.26
-Requires: smartmet-library-macgyver-devel >= 26.9.26-2
+Requires: smartmet-library-macgyver-devel >= 26.10.2
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
 
@@ -82,7 +82,7 @@ SmartMet %{SPECNAME} development headers.
 Summary: SmartMet %{SPECNAME} - redis server with required data for testing purpose
 Group: SmartMet/Development
 Provides: smartmet-engine-grid-test
-Requires: smartmet-library-grid-files >= 26.9.26
+Requires: smartmet-library-grid-files >= 26.10.2
 %description -n smartmet-engine-grid-test
 SmartMet %{SPECNAME} - redis server with required data for testing purpose
 
@@ -115,6 +115,10 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Fri Oct 02 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.2-1.fmi
+- Rebuilt against macgyver 26.10.2 where Fmi::Cache::Cache uses CLOCK eviction instead of LRU.
+  CLOCK is faster than LRU since a cache hit only takes a shared lock (ABI change)
+
 * Sat Sep 26 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.9.26-1.fmi
 - Repackaged due to grid-files ABI changes
 - Require the 26.9.26 releases of the SmartMet dependencies
