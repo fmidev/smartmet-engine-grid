@@ -18,7 +18,7 @@ make configtest     # Validate test config with cfgvalidate
 make doc            # Generate Doxygen HTML documentation in doc/html/
 ```
 
-There is no test suite in this repo (the `test/` Makefile target is a no-op). The `testdata/` directory builds the `smartmet-engine-grid-test` package (test configs, Redis dump, `smartmet-grid-test-config-creator`) that plugin grid tests use.
+`make test` runs the Boost.Test programs in `test/`. `EngineTest` needs no Redis: it registers a smartmet-test-data GRIB file in CSV files of a "file" content source, writes an engine configuration based on the smartmet-engine-grid-test configuration and checks the engine services against values read by grid-files. The `testdata/` directory builds the `smartmet-engine-grid-test` package (test configs, Redis dump, `smartmet-grid-test-config-creator`) that plugin grid tests use. The Redis dump predates the `library/test/` parameter definitions: its pal/ec content has FMI ids (e.g. 153 T-K) that the current configuration no longer derives from the same GRIB messages (1000000004 Temperature).
 
 Full developer documentation: `docs/developer-guide.md`.
 
@@ -71,4 +71,4 @@ Many config files are hot-reloadable at runtime without server restart. The main
 
 ## CI
 
-CircleCI builds RPMs on RHEL 8 and RHEL 10 using `ci-build deps` and `ci-build rpm` in `fmidev/smartmet-cibase-{8,10}` Docker images.
+CircleCI builds RPMs on RHEL 8 and RHEL 10 using `ci-build deps` and `ci-build rpm` in `fmidev/smartmet-cibase-{8,10}` Docker images, then runs the tests (`ci-build testprep`, `ci-build test`).

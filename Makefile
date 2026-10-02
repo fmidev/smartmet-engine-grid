@@ -113,7 +113,7 @@ install:
 
 
 test:
-	if [ -d test/Makefile ] ; then $(MAKE) -C test $@; else true; fi
+	if [ -f test/Makefile ] ; then $(MAKE) -C test $@; else true; fi
 
 objdir:
 	@mkdir -p $(objdir)

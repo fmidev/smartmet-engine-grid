@@ -39,6 +39,17 @@ Requires: smartmet-library-grid-files >= 26.10.2
 Requires: smartmet-library-spine >= 26.9.26
 Requires: smartmet-library-macgyver >= 26.10.2
 Requires: omniORB-devel
+#TestRequires: %{smartmet_boost}-devel
+#TestRequires: gcc-c++
+#TestRequires: make
+#TestRequires: gdal312-devel
+#TestRequires: omniORB-devel
+#TestRequires: smartmet-library-grid-content-devel >= 26.10.2-4
+#TestRequires: smartmet-library-grid-files-devel >= 26.10.2-2
+#TestRequires: smartmet-library-newbase-devel
+#TestRequires: smartmet-library-spine-devel >= 26.9.26
+#TestRequires: smartmet-engine-grid-test
+#TestRequires: smartmet-test-data
 
 %if 0%{?rhel} && 0%{rhel} == 8
 Requires: libpqxx >= 1:7.7.0, libpqxx < 1:7.8.0
