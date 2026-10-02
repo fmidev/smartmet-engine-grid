@@ -4,7 +4,7 @@
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
 Version: 26.10.2
-Release: 1%{?dist}.fmi
+Release: 2%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
 URL: https://github.com/fmidev/smartmet-engine-grid
@@ -23,7 +23,7 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
 BuildRequires: smartmet-library-spine-devel >= 26.9.26
-BuildRequires: smartmet-library-grid-content-devel >= 26.10.2
+BuildRequires: smartmet-library-grid-content-devel >= 26.10.2-4
 BuildRequires: smartmet-library-grid-files-devel >= 26.10.2
 BuildRequires: smartmet-library-macgyver-devel >= 26.10.2
 BuildRequires: make
@@ -34,7 +34,7 @@ BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 BuildRequires: postgresql15-devel
 Requires: %{smartmet_boost}-thread
-Requires: smartmet-library-grid-content >= 26.10.2
+Requires: smartmet-library-grid-content >= 26.10.2-4
 Requires: smartmet-library-grid-files >= 26.10.2
 Requires: smartmet-library-spine >= 26.9.26
 Requires: smartmet-library-macgyver >= 26.10.2
@@ -82,7 +82,7 @@ SmartMet grid engine
 Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
-Requires: smartmet-library-grid-content-devel >= 26.10.2
+Requires: smartmet-library-grid-content-devel >= 26.10.2-4
 Requires: %{SPECNAME} = %{version}-%{release}
 Requires: smartmet-library-spine-devel >= 26.9.26
 Requires: smartmet-library-macgyver-devel >= 26.10.2
@@ -126,6 +126,10 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
 
 %changelog
+* Fri Oct 02 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.2-2.fmi
+- Repackaged due to grid-content ABI changes (CacheImplementation and MergeImplementation size)
+- Added tests that need no Redis, CI runs them
+
 * Fri Oct 02 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.2-1.fmi
 - Rebuilt against macgyver 26.10.2 where Fmi::Cache::Cache uses CLOCK eviction instead of LRU.
   CLOCK is faster than LRU since a cache hit only takes a shared lock (ABI change)
