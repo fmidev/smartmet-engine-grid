@@ -197,7 +197,7 @@ World &theWorld()
 {
   if (world == nullptr)
     world = new World();
-  BOOST_TEST_REQUIRE(world->engine != nullptr, "the engine was not initialized");
+  BOOST_TEST_REQUIRE(world->engine.get() != nullptr, "the engine was not initialized");
   return *world;
 }
 
