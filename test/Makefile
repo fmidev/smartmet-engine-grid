@@ -39,7 +39,7 @@ LIBS += ../grid.so \
 	-lpthread \
 	$(PREFIX_LDFLAGS)
 
-# Tests needing installed fixtures (smartmet-test-data, smartmet-engine-grid-test) fail when
+# Tests needing installed fixtures (smartmet-test-data, smartmet-library-grid-files-test) fail when
 # they are missing. Set GRID_TEST_ALLOW_SKIP=1 to skip them instead.
 
 all: $(PROG)

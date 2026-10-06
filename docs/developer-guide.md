@@ -63,7 +63,7 @@ check `isEnabled()` and fall back to querydata when grid support is off.
 ```bash
 make               # builds grid.so
 make install       # grid.so -> $(datadir)/smartmet/engines/, headers -> $(includedir)/smartmet/engines/grid/
-make rpm           # smartmet-engine-grid, -devel, and smartmet-engine-grid-test
+make rpm           # smartmet-engine-grid and -devel
 make configtest    # validates the configuration files with cfgvalidate
 ```
 
@@ -71,24 +71,16 @@ make configtest    # validates the configuration files with cfgvalidate
   point at the **installed** grid-content headers
   (`/usr/include/smartmet/grid-content/*/corba/stubs`), so a CORBA build needs
   `smartmet-library-grid-content-devel` installed, not just a sibling checkout.
-* **There are no unit tests in this repository.** The `test` target does nothing. The
-  engine is tested through the plugin test suites that run with grid support (timeseries,
-  wms, edr, download, cross_section).
-* **`testdata/` builds the `smartmet-engine-grid-test` package**, which is the grid
-  fixture every plugin test uses:
-  * `grid/engine/`: a test `grid-engine.conf`, mapping files, Lua files, aliases and a
-    producer file;
-  * `grid/library/`: a test `grid-files.conf` with its CSVs (installed as
-    `/usr/share/smartmet/test/grid/library/`, which the grid-files tests read too);
-  * `grid/redis/`: a Redis dump (`redis-server.rdb`) with the content registry of the
-    GRIB files in `smartmet-test-data`, and a config template;
-  * `smartmet-grid-test-config-creator`: fills a template with values from a
-    configuration file and `-D name value` overrides. Plugin test Makefiles use it to
-    write a `redis.conf` with a free port and a private directory, then start their own
-    `redis-server`.
-
-  The dump is the content registry the tests see. Grid files added to the test data
-  are invisible to the tests until they are registered in it.
+* **`make test`** runs the Boost.Test programs in `test/`. `EngineTest` needs no Redis: it
+  registers a smartmet-test-data GRIB file in the CSV files of a "file" content source and
+  checks the engine services against values read by grid-files. The engine is further tested
+  through the plugin test suites that run with grid support (timeseries, wms, edr, download,
+  wfs, cross_section).
+* **The test fixtures come from `smartmet-library-grid-files-test`**, built from the
+  `testdata/` directory of grid-files (it used to be `smartmet-engine-grid-test` built here,
+  but the grid-content tests need it too, and the libraries must not depend on the engine).
+  It installs `/usr/share/smartmet/test/grid/{engine,library,redis}` and
+  `smartmet-grid-test-config-creator`; see the grid-files developer guide for details.
 
 ## 3. Source files
 
@@ -316,7 +308,7 @@ during a reload.
    every existing configuration file that lacks it.
 3. If it should change at runtime, also read and apply it in `checkConfiguration()`.
 4. Document it in `doc/grid-engine.md`, add it to `cfg/grid-engine.conf` and to
-   `testdata/grid/engine/grid-engine.conf`, and add a line to `FEATURES.md`.
+   `testdata/grid/engine/grid-engine.conf` in grid-files, and add a line to `FEATURES.md`.
 
 ### 12.2 Adding a plugin-facing method
 

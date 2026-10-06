@@ -1,6 +1,6 @@
 // Common helpers for the grid engine Boost.Test programs.
 //
-// Tests needing installed fixtures (smartmet-test-data, smartmet-engine-grid-test) use the
+// Tests needing installed fixtures (smartmet-test-data, smartmet-library-grid-files-test) use the
 // fixtures() precondition. A missing fixture is a test FAILURE unless the environment variable
 // GRID_TEST_ALLOW_SKIP is set, in which case the test is reported as skipped. This keeps CI
 // honest (the fixtures are TestRequires) while still allowing quick local runs without them.
@@ -19,8 +19,8 @@
 
 namespace GridTest
 {
-// Grid engine test configuration (smartmet-engine-grid-test): grid-files definitions, parameter
-// mappings, producers, aliases and Lua functions
+// Grid test configuration (smartmet-library-grid-files-test): grid-files definitions,
+// parameter mappings, producers, aliases and Lua functions
 inline const char *const GRID_TEST_DIR = "/usr/share/smartmet/test/grid";
 inline const char *const CONFIG = "/usr/share/smartmet/test/grid/library/grid-files.conf";
 
@@ -71,7 +71,8 @@ inline void requireFixture(const std::string &path)
   BOOST_TEST_REQUIRE(exists(path),
                      "test fixture " << path
                                      << " is missing: install smartmet-test-data and "
-                                        "smartmet-engine-grid-test, or set GRID_TEST_ALLOW_SKIP");
+                                        "smartmet-library-grid-files-test, or set "
+                                        "GRID_TEST_ALLOW_SKIP");
 }
 
 // A temporary file removed when the object goes out of scope

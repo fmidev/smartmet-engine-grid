@@ -18,7 +18,7 @@ make configtest     # Validate test config with cfgvalidate
 make doc            # Generate Doxygen HTML documentation in doc/html/
 ```
 
-`make test` runs the Boost.Test programs in `test/`. `EngineTest` needs no Redis: it registers a smartmet-test-data GRIB file in CSV files of a "file" content source, writes an engine configuration based on the smartmet-engine-grid-test configuration and checks the engine services against values read by grid-files. The `testdata/` directory builds the `smartmet-engine-grid-test` package (test configs, Redis dump, `smartmet-grid-test-config-creator`) that plugin grid tests use. The Redis dump predates the `library/test/` parameter definitions: its pal/ec content has FMI ids (e.g. 153 T-K) that the current configuration no longer derives from the same GRIB messages (1000000004 Temperature).
+`make test` runs the Boost.Test programs in `test/`. `EngineTest` needs no Redis: it registers a smartmet-test-data GRIB file in CSV files of a "file" content source, writes an engine configuration based on the smartmet-library-grid-files-test configuration and checks the engine services against values read by grid-files. The test fixtures (test configs, Redis dump, `smartmet-grid-test-config-creator`) that this and the plugin grid tests use come from the `smartmet-library-grid-files-test` package, built from `testdata/` in grid-files. The Redis dump predates the `library/test/` parameter definitions: its pal/ec content has FMI ids (e.g. 153 T-K) that the current configuration no longer derives from the same GRIB messages (1000000004 Temperature).
 
 Full developer documentation: `docs/developer-guide.md`.
 

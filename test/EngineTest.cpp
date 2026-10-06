@@ -3,7 +3,7 @@
 // The engine supports a "file" content source: an in-memory content server loaded from CSV files.
 // The test registers smartmet-test-data GRIB files in such CSV files (one content record per
 // message, as filesys2smartmet does), writes an engine configuration based on the
-// smartmet-engine-grid-test configuration, initializes the engine and checks its services
+// smartmet-library-grid-files-test configuration, initializes the engine and checks its services
 // against values read from the GRIB files directly.
 
 #define BOOST_TEST_MODULE EngineTest

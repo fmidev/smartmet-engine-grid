@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 26.10.3
+Version: 26.10.6
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -48,7 +48,7 @@ Requires: omniORB-devel
 #TestRequires: smartmet-library-grid-files-devel >= 26.10.3
 #TestRequires: smartmet-library-newbase-devel
 #TestRequires: smartmet-library-spine-devel >= 26.9.26
-#TestRequires: smartmet-engine-grid-test
+#TestRequires: smartmet-library-grid-files-test >= 26.10.6
 #TestRequires: smartmet-test-data
 
 %if 0%{?rhel} && 0%{rhel} == 8
@@ -89,14 +89,6 @@ Requires: smartmet-library-macgyver-devel >= 26.10.2
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
 
-%package -n smartmet-engine-grid-test
-Summary: SmartMet %{SPECNAME} - redis server with required data for testing purpose
-Group: SmartMet/Development
-Provides: smartmet-engine-grid-test
-Requires: smartmet-library-grid-files >= 26.10.3
-%description -n smartmet-engine-grid-test
-SmartMet %{SPECNAME} - redis server with required data for testing purpose
-
 %prep
 rm -rf $RPM_BUILD_ROOT
 
@@ -120,12 +112,11 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(0664,root,root,0775)
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
-%files -n smartmet-engine-grid-test
-%defattr(0664,root,root,0775)
-%{_datadir}/smartmet/test/grid
-%attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
-
 %changelog
+* Tue Oct  6 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.6-1.fmi
+- The smartmet-engine-grid-test package moved to grid-files as smartmet-library-grid-files-test,
+  since the grid-content library tests need it too
+
 * Sat Oct 03 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.3-1.fmi
 - Repackaged due to grid-content ABI changes (CacheImplementation and MergeImplementation size)
 - Added tests that need no Redis, CI runs them
