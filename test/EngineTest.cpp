@@ -308,3 +308,25 @@ BOOST_AUTO_TEST_CASE(content_tables)
 }
 
 BOOST_AUTO_TEST_SUITE_END()
+
+// The minimal configuration documented in the README for disabling the engine
+BOOST_AUTO_TEST_CASE(disabled_engine_minimal_config)
+{
+  withFmiErrors(
+      []
+      {
+        char tmpl[] = "/tmp/grid-engine-disabled-XXXXXX";
+        const std::string dir = mkdtemp(tmpl);
+        const std::string path = dir + "/grid-engine.conf";
+        writeFile(path,
+                  "smartmet :\n{\n  engine :\n  {\n    grid :\n    {\n      enabled = false\n"
+                  "    }\n  }\n}\n");
+        {
+          TestEngine engine(path.c_str());
+          engine.init();
+          BOOST_TEST(!engine.isEnabled());
+          engine.shutdown();
+        }
+        std::filesystem::remove_all(dir);
+      });
+}

@@ -21,6 +21,34 @@ When the actual implementations of the grid services are embedded into the Grid 
 
 The Grid Engine can be configured also in a such way that all grid services are used remotely. In this case the Content Server API, the Data Server API and the Query Server API are client implementations that communicate with the remote services.
 
+### Disabling the engine
+
+The engine can be loaded in a disabled state when a plugin looks it up at startup but grid
+data is not needed. Unlike most engines, the grid engine always needs a configuration file;
+an empty `configfile` setting is not supported. The file can be minimal, because nothing
+else is read when the engine is disabled:
+
+```
+smartmet :
+{
+  engine :
+  {
+    grid :
+    {
+      enabled = false
+    }
+  }
+}
+```
+
+In this state `isEnabled()` returns false, and the services return `SERVICE_DISABLED`.
+Plugins check `isEnabled()` and fall back to querydata. A running engine can be disabled by
+editing the configuration, but a disabled engine cannot be enabled without a restart.
+
+Setting `disabled = true` in the server's `engines.grid` section is different: the server
+then does not load `grid.so` at all, and plugins that require the engine fail at startup.
+Some plugins, such as wms, have their own setting for not using the grid engine at all.
+
 ## Documentation
 
 - [Grid Engine documentation](https://github.com/fmidev/smartmet-engine-grid/blob/master/doc/grid-engine.md)

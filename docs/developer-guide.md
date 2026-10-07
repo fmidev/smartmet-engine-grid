@@ -101,8 +101,9 @@ in the deployment repositories.
 The server loads `grid.so` and calls `engine_class_creator(configfile)`, which runs the
 **constructor**:
 
-1. It reads `grid-engine.conf`. The attributes listed in `configAttribute[]` at the top
-   of the constructor must exist. Construction fails with `Missing configuration
+1. It reads `grid-engine.conf`. If `smartmet.engine.grid.enabled` is false, it stops
+   here: nothing else is read and steps 2 and 3 are skipped. The attributes listed in
+   `configAttribute[]` at the top of the constructor must exist. Construction fails with `Missing configuration
    attribute!` naming the first one that is absent. Then it reads the optional attributes, with the defaults set just above them.
 2. It calls `Identification::gridDef.init(grid-files config)` and
    `Map::topography.init(...)`. These happen **in the constructor**, so every plugin

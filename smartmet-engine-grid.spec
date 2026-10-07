@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 26.10.6
+Version: 26.10.7
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -113,6 +113,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Wed Oct  7 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.7-1.fmi
+- Print the "Engine usage disabled" notice when the engine is disabled (it was unreachable)
+
 * Tue Oct  6 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.6-1.fmi
 - The smartmet-engine-grid-test package moved to grid-files as smartmet-library-grid-files-test,
   since the grid-content library tests need it too

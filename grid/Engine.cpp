@@ -206,7 +206,10 @@ Engine::Engine(const char* theConfigFile)
 
     configurationFile.getAttributeValue("smartmet.engine.grid.enabled", mEnabled);
     if (!mEnabled)
+    {
+      std::cout << ANSI_FG_RED << "**** Grid-engine configuration: Engine usage disabled!" << ANSI_FG_DEFAULT << std::endl;
       return;
+    }
 
     uint slen = configurationFile.getArraySize("smartmet.engine.grid.content-server.content-source");
 
@@ -395,9 +398,6 @@ Engine::Engine(const char* theConfigFile)
 
     SmartMet::Identification::gridDef.init(mGridConfigFile.c_str());
     Map::topography.init(mGridConfigFile.c_str(),true,true,true);
-
-    if (!mEnabled)
-      std::cout << ANSI_FG_RED << "**** Grid-engine configuration: Engine usage disabled!" << ANSI_FG_DEFAULT << std::endl;
   }
   catch (...)
   {
