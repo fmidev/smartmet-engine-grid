@@ -11,7 +11,7 @@ namespace Engine
 namespace Grid
 {
 
-typedef std::map<std::string,std::set<std::string>> Times;  //!< Maps an analysis time string to the set of content identifiers valid at that time.
+using Times = std::map<std::string,std::set<std::string>>;  //!< Maps an analysis time string to the set of content identifiers valid at that time.
 
 // ====================================================================================
 /*! \brief Extends a QueryServer parameter mapping with the set of forecast times for
@@ -37,7 +37,7 @@ class MappingDetails
 
 
 
-typedef std::vector<MappingDetails> MappingDetails_vec;  //!< Ordered list of resolved parameter mappings with time windows.
+using MappingDetails_vec = std::vector<MappingDetails>;  //!< Ordered list of resolved parameter mappings with time windows.
 
 
 }  // namespace Grid

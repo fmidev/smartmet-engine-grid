@@ -45,7 +45,7 @@ class ParameterDetails
 
 
 
-typedef std::vector<ParameterDetails> ParameterDetails_vec;  //!< List of resolved parameter details, one entry per matched producer/parameter pair.
+using ParameterDetails_vec = std::vector<ParameterDetails>;  //!< List of resolved parameter details, one entry per matched producer/parameter pair.
 
 
 }  // namespace Grid

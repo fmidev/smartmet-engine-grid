@@ -34,14 +34,14 @@ namespace Engine
 namespace Grid
 {
 
-typedef std::unique_ptr<Spine::Table> ContentTable;                           //!< Owning pointer to a formatted table returned as HTTP response content.
-typedef std::shared_ptr<ContentServer::ServiceInterface> ContentServer_sptr;  //!< Shared pointer to a ContentServer service interface.
-typedef std::vector<ContentServer_sptr> ContentServer_sptr_vec;               //!< Ordered list of ContentServer shared pointers (one per configured source).
-typedef std::shared_ptr<DataServer::ServiceInterface> DataServer_sptr;        //!< Shared pointer to a DataServer service interface.
-typedef std::shared_ptr<QueryServer::ServiceInterface> QueryServer_sptr;      //!< Shared pointer to a QueryServer service interface.
-typedef std::shared_ptr<QueryServer::Query> Query_sptr;                       //!< Shared pointer to a QueryServer query object.
+using ContentTable = std::unique_ptr<Spine::Table>;                           //!< Owning pointer to a formatted table returned as HTTP response content.
+using ContentServer_sptr = std::shared_ptr<ContentServer::ServiceInterface>;  //!< Shared pointer to a ContentServer service interface.
+using ContentServer_sptr_vec = std::vector<ContentServer_sptr>;               //!< Ordered list of ContentServer shared pointers (one per configured source).
+using DataServer_sptr = std::shared_ptr<DataServer::ServiceInterface>;        //!< Shared pointer to a DataServer service interface.
+using QueryServer_sptr = std::shared_ptr<QueryServer::ServiceInterface>;      //!< Shared pointer to a QueryServer service interface.
+using Query_sptr = std::shared_ptr<QueryServer::Query>;                       //!< Shared pointer to a QueryServer query object.
 
-typedef std::shared_ptr<QueryServer::ParamMappingFile_vec> ParamMappingFile_vec_sptr;  //!< Shared pointer to the live parameter mapping file vector.
+using ParamMappingFile_vec_sptr = std::shared_ptr<QueryServer::ParamMappingFile_vec>;  //!< Shared pointer to the live parameter mapping file vector.
 
 /*! \brief Timestamp and content hash for detecting producer content changes. */
 struct HashRec
@@ -50,7 +50,7 @@ struct HashRec
   UInt64 hash;       //!< Content hash; changes indicate new grid files have been indexed.
 };
 
-typedef std::unordered_map<T::ProducerId,HashRec> ProducerHash_map;  //!< Maps each producer ID to its last-known content hash.
+using ProducerHash_map = std::unordered_map<T::ProducerId,HashRec>;  //!< Maps each producer ID to its last-known content hash.
 
 
 /*! \brief Configuration for one external content server source.
@@ -78,7 +78,7 @@ struct ContentSource
   uint        mEventListMaxSize = 0;                        //!< Maximum number of events to buffer (0 = unlimited).
 };
 
-typedef std::vector<ContentSource> ContentSource_vec;  //!< Ordered list of content source configurations.
+using ContentSource_vec = std::vector<ContentSource>;  //!< Ordered list of content source configurations.
 
 
 

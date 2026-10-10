@@ -18,9 +18,9 @@ namespace Engine
 namespace Grid
 {
 
-typedef std::map<std::string,std::string> Filenames;                          //!< Map of resource name to file path for statically served browser assets.
-typedef std::vector<std::pair<std::string,std::string>> UrlPath;              //!< Ordered (URL path, label) pairs used for breadcrumb navigation.
-typedef std::shared_ptr<ContentServer::ServiceInterface> ContentServer_sptr;  //!< Shared pointer to a ContentServer service interface.
+using Filenames = std::map<std::string,std::string>;                          //!< Map of resource name to file path for statically served browser assets.
+using UrlPath = std::vector<std::pair<std::string,std::string>>;              //!< Ordered (URL path, label) pairs used for breadcrumb navigation.
+using ContentServer_sptr = std::shared_ptr<ContentServer::ServiceInterface>;  //!< Shared pointer to a ContentServer service interface.
 
 class Engine;
 
