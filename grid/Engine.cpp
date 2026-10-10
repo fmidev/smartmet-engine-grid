@@ -47,7 +47,7 @@ namespace Grid
 static void* gridEngine_updateThread(void* arg)
 {
   Fmi::set_thread_name("upd-grid");
-  Engine* engine = static_cast<Engine*>(arg);
+  auto* engine = static_cast<Engine*>(arg);
 
   // An error in the background updates used to call exit(-1), which stopped
   // the whole server. Report it and restart the updates after a pause instead.
@@ -569,7 +569,7 @@ ContentServer::ServiceInterface* Engine::initContentSources()
       {
         if (contentSource->mType == "redis")
         {
-          ContentServer::RedisImplementation* redis = new ContentServer::RedisImplementation();
+          auto* redis = new ContentServer::RedisImplementation();
           redis->init(contentSource->mRedisAddress.c_str(), contentSource->mRedisPort, contentSource->mRedisTablePrefix.c_str(),
               contentSource->mRedisSecondaryAddress.c_str(), contentSource->mRedisSecondaryPort,
               contentSource->mRedisLockEnabled, contentSource->mRedisReloadRequired, contentSource->mRedisPassword.c_str());
@@ -581,7 +581,7 @@ ContentServer::ServiceInterface* Engine::initContentSources()
         }
         else if (contentSource->mType == "postgresql")
         {
-          ContentServer::PostgresqlImplementation* postgres = new ContentServer::PostgresqlImplementation();
+          auto* postgres = new ContentServer::PostgresqlImplementation();
           postgres->init(contentSource->mPrimaryConnectionString.c_str(),contentSource->mSecondaryConnectionString.c_str(),false);
 
           ContentServer_sptr contentServer(postgres);
@@ -590,7 +590,7 @@ ContentServer::ServiceInterface* Engine::initContentSources()
         }
         else if (contentSource->mType == "corba")
         {
-          ContentServer::Corba::ClientImplementation* client = new ContentServer::Corba::ClientImplementation();
+          auto* client = new ContentServer::Corba::ClientImplementation();
           client->init(contentSource->mCorbaIor.c_str());
 
           ContentServer_sptr contentServer(client);
@@ -599,7 +599,7 @@ ContentServer::ServiceInterface* Engine::initContentSources()
         }
         else if (contentSource->mType == "http")
         {
-          ContentServer::HTTP::ClientImplementation* client = new ContentServer::HTTP::ClientImplementation();
+          auto* client = new ContentServer::HTTP::ClientImplementation();
           client->init(contentSource->mHttpUrl.c_str());
 
           ContentServer_sptr contentServer(client);
@@ -615,7 +615,7 @@ ContentServer::ServiceInterface* Engine::initContentSources()
             mContentCacheEnabled = false;
           }
 
-          ContentServer::MemoryImplementation* memoryImplementation = new ContentServer::MemoryImplementation();
+          auto* memoryImplementation = new ContentServer::MemoryImplementation();
           memoryImplementation->init(true, false, true, eventstEnabled, contentSource->mMemoryContentDir, 0);
           memoryImplementation->setEventListMaxLength(contentSource->mEventListMaxSize);
 
@@ -714,7 +714,7 @@ DataServer::ServiceInterface* Engine::initDataServerImpl(ContentServer::ServiceI
 
     if (mDataServerRemote)
     {
-      DataServer::Corba::ClientImplementation* client = new DataServer::Corba::ClientImplementation();
+      auto* client = new DataServer::Corba::ClientImplementation();
       client->init(mDataServerIor);
 
       mDataServer.reset(client);
@@ -772,14 +772,14 @@ QueryServer::ServiceInterface* Engine::initQueryServerImpl(ContentServer::Servic
 
     if (mQueryServerRemote)
     {
-      QueryServer::Corba::ClientImplementation* client = new QueryServer::Corba::ClientImplementation();
+      auto* client = new QueryServer::Corba::ClientImplementation();
       client->init(mQueryServerIor);
       mQueryServer.reset(client);
       qServer = client;
     }
     else
     {
-      QueryServer::ServiceImplementation* server = new QueryServer::ServiceImplementation();
+      auto* server = new QueryServer::ServiceImplementation();
       server->init(cServer, dServer, mGridConfigFile, mHeightConversionFile,
           mParameterMappingDefinitions_filenames,mUnitConversionFile,mParameterMappingAliasDefinitions_filenames,
           mParameterAliasDefinitions_filenames, mProducerSearchList_filename,
@@ -2328,7 +2328,7 @@ ContentTable Engine::getGenerationInfo(std::optional<std::string> producer,std::
                 {
                   for (auto gi = geometryIdList.begin(); gi != geometryIdList.end(); ++gi)
                   {
-                    T::GeometryInfo *geom = new T::GeometryInfo();
+                    auto *geom = new T::GeometryInfo();
                     geom->mProducerId = info->mProducerId;
                     geom->mGenerationId = gInfo->mGenerationId;
                     geom->mGeometryId = *gi;
@@ -2551,7 +2551,7 @@ ContentTable Engine::getExtGenerationInfo(std::optional<std::string> producer,st
                   {
                     for (auto gi = geometryIdList.begin(); gi != geometryIdList.end(); ++gi)
                     {
-                      T::GeometryInfo *geom = new T::GeometryInfo();
+                      auto *geom = new T::GeometryInfo();
                       geom->mProducerId = gInfo->mProducerId;
                       geom->mGenerationId = gInfo->mGenerationId;
                       geom->mGeometryId = *gi;
@@ -2875,7 +2875,7 @@ std::list<MetaData> Engine::getEngineMetadata(const char *producerName) const
                 {
                   for (auto gi = geometryIdList.begin(); gi != geometryIdList.end(); ++gi)
                   {
-                    T::GeometryInfo *geom = new T::GeometryInfo();
+                    auto *geom = new T::GeometryInfo();
                     geom->mProducerId = gInfo->mProducerId;
                     geom->mGenerationId = gInfo->mGenerationId;
                     geom->mGeometryId = *gi;
