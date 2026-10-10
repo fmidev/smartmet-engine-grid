@@ -2574,11 +2574,11 @@ ContentTable Engine::getExtGenerationInfo(std::optional<std::string> producer,st
                     std::string key = gInfo->mAnalysisTime + ":" + std::to_string(geom->mGeometryId);
                     auto p = counterList.find(key);
                     if (p != counterList.end())
-                      p->second.push_back(std::pair<T::GenerationId,int>(geom->mGenerationId,geom->mGeometryId));
+                      p->second.emplace_back(std::pair<T::GenerationId,int>(geom->mGenerationId,geom->mGeometryId));
                     else
                     {
                       std::vector<std::pair<uint,int>> cntList;
-                      cntList.push_back(std::pair<T::GenerationId,int>(geom->mGenerationId,geom->mGeometryId));
+                      cntList.emplace_back(std::pair<T::GenerationId,int>(geom->mGenerationId,geom->mGeometryId));
                       counterList.insert(std::pair<std::string,std::vector<std::pair<uint,int>>>(key,cntList));
                     }
                   }
@@ -4405,7 +4405,7 @@ void Engine::getVerticalGrid(
         for (uint t = 0; t < sz; t++)
         {
           auto dist = points.second[t];
-          coordinates.emplace_back(T::Coordinate(dist, heightVec[t]));
+          coordinates.emplace_back(dist, heightVec[t]);
 
           gridData.emplace_back(valueVec[t]);
         }
