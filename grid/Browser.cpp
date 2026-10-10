@@ -613,7 +613,7 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
         }
         else
         {
-          output << "<TR style=\"background:" << bg <<"; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << ";'\" onmouseover=\"this.style='background:#FFFF00; color:#000000;';\" onClick=\"getPage(this,parent,'/grid-admin?messageIndex=" << content->mMessageIndex << "&startMessageIndex=" << startMessageIndex <<"');\" >\n";
+          output << "<TR style=\"background:" << bg <<"; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << R"(;'" onmouseover="this.style='background:#FFFF00; color:#000000;';" onClick="getPage(this,parent,'/grid-admin?messageIndex=)" << content->mMessageIndex << "&startMessageIndex=" << startMessageIndex <<"');\" >\n";
         }
 
         output << "<TD>"<< content->mMessageIndex << "</TD>";
@@ -658,8 +658,8 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
     if (maxRecords < len)
     {
       std::string bg = "#C0C0C0";
-      std::string p1 = "<TD width=\"70\" align=\"center\" style=\"background:" + bg + ";\" onmouseout=\"this.style='background:" + bg + ";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF;';\" onClick=\"getPage(this,parent,'/grid-admin?startMessageIndex=";
-      std::string p2 = "<TD width=\"70\" style=\"background:" + bg + ";\" >&nbsp;</TD>\n";
+      std::string p1 = R"(<TD width="70" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF;';" onClick="getPage(this,parent,'/grid-admin?startMessageIndex=)";
+      std::string p2 = R"(<TD width="70" style="background:)" + bg + ";\" >&nbsp;</TD>\n";
 
       output << "<HR>\n";
       output << "<TABLE style=\"font-size:12;\"><TR>\n";
@@ -773,8 +773,8 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
           dt = utcTimeFromTimeT(cInfo.mDeletionTime);
 
         std::string mt = utcTimeFromTimeT(cInfo.mModificationTime);
-        std::string p1 = "<TR><TD width=\"240\" bgColor=\"#D0D0D0\">";
-        std::string p2 = "</TD><TD><INPUT style=\"width:100%;\" type=\"text\" ";
+        std::string p1 = R"(<TR><TD width="240" bgColor="#D0D0D0">)";
+        std::string p2 = R"(</TD><TD><INPUT style="width:100%;" type="text" )";
         std::string p3 = "\"></TD></TR>";
 
         output << "<HR>\n";
@@ -782,30 +782,30 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
         output << "<TABLE border=\"1\" width=\"100%\" style=\"font-size:12;\">\n";
         output << p1 << "FileId</TD><TD>"<< cInfo.mFileId << "</TD></TR>";
         output << p1 << "MessageIndex</TD><TD>"<< cInfo.mMessageIndex << "</TD></TR>";
-        output << p1 << "FilePosition" << p2 << "id=\"content_filePosition\" value=\"" << cInfo.mFilePosition << p3;
-        output << p1 << "MessageSize" << p2 << "id=\"content_messageSize\" value=\"" << cInfo.mMessageSize << p3;
-        output << p1 << "ForecastTime" << p2 << "id=\"content_forecastTime\" value=\"" << ft << p3;
-        output << p1 << "FmiParameterId" << p2 << "id=\"content_fmiParameterId\" value=\"" << cInfo.mFmiParameterId << p3;
-        output << p1 << "FmiParameterName" << p2 << "id=\"content_fmiParameterName\" value=\"" << esc(cInfo.getFmiParameterName()) << p3;
-        output << p1 << "FmiParameterLevelId" << p2 << "id=\"content_fmiParameterLevelId\" value=\"" << cInfo.mFmiParameterLevelId << p3;
-        output << p1 << "ParameterLevel" << p2 << "id=\"content_parameterLevel\" value=\"" << cInfo.mParameterLevel << p3;
-        output << p1 << "ForecastType" << p2 << "id=\"content_forecastType\" value=\"" << cInfo.mForecastType << p3;
-        output << p1 << "ForecastNumber" << p2 << "id=\"content_forecastNumber\" value=\"" << cInfo.mForecastNumber << p3;
-        output << p1 << "GeometryId" << p2 << "id=\"content_geometryId\" value=\"" << cInfo.mGeometryId << p3;
-        output << p1 << "AggregationId" << p2 << "id=\"content_aggregationId\" value=\"" << cInfo.mAggregationId << p3;
-        output << p1 << "AggregationPeriod" << p2 << "id=\"content_aggregationPeriod\" value=\"" << cInfo.mAggregationPeriod << p3;
-        output << p1 << "ProcessingTypeId" << p2 << "id=\"content_processingTypeId\" value=\"" << cInfo.mProcessingTypeId << p3;
-        output << p1 << "ProcessingTypeValue1" << p2 << "id=\"content_processingTypeValue1\" value=\"" << cInfo.mProcessingTypeValue1 << p3;
-        output << p1 << "ProcessingTypeValue2" << p2 << "id=\"content_processingTypeValue2\" value=\"" << cInfo.mProcessingTypeValue2 << p3;
-        output << p1 << "Flags" << p2 << "id=\"content_flags\" value=\"" << cInfo.mFlags << p3;
-        output << p1 << "SourceId" << p2 << "id=\"content_sourceId\" value=\"" << cInfo.mSourceId << p3;
-        output << p1 << "ModificationTime" << p2 << "id=\"content_modificationTime\" value=\"" << mt << p3;
-        output << p1 << "DeletionTime" << p2 << "id=\"content_deletionTime\" value=\"" << dt << p3;
+        output << p1 << "FilePosition" << p2 << R"(id="content_filePosition" value=")" << cInfo.mFilePosition << p3;
+        output << p1 << "MessageSize" << p2 << R"(id="content_messageSize" value=")" << cInfo.mMessageSize << p3;
+        output << p1 << "ForecastTime" << p2 << R"(id="content_forecastTime" value=")" << ft << p3;
+        output << p1 << "FmiParameterId" << p2 << R"(id="content_fmiParameterId" value=")" << cInfo.mFmiParameterId << p3;
+        output << p1 << "FmiParameterName" << p2 << R"(id="content_fmiParameterName" value=")" << esc(cInfo.getFmiParameterName()) << p3;
+        output << p1 << "FmiParameterLevelId" << p2 << R"(id="content_fmiParameterLevelId" value=")" << cInfo.mFmiParameterLevelId << p3;
+        output << p1 << "ParameterLevel" << p2 << R"(id="content_parameterLevel" value=")" << cInfo.mParameterLevel << p3;
+        output << p1 << "ForecastType" << p2 << R"(id="content_forecastType" value=")" << cInfo.mForecastType << p3;
+        output << p1 << "ForecastNumber" << p2 << R"(id="content_forecastNumber" value=")" << cInfo.mForecastNumber << p3;
+        output << p1 << "GeometryId" << p2 << R"(id="content_geometryId" value=")" << cInfo.mGeometryId << p3;
+        output << p1 << "AggregationId" << p2 << R"(id="content_aggregationId" value=")" << cInfo.mAggregationId << p3;
+        output << p1 << "AggregationPeriod" << p2 << R"(id="content_aggregationPeriod" value=")" << cInfo.mAggregationPeriod << p3;
+        output << p1 << "ProcessingTypeId" << p2 << R"(id="content_processingTypeId" value=")" << cInfo.mProcessingTypeId << p3;
+        output << p1 << "ProcessingTypeValue1" << p2 << R"(id="content_processingTypeValue1" value=")" << cInfo.mProcessingTypeValue1 << p3;
+        output << p1 << "ProcessingTypeValue2" << p2 << R"(id="content_processingTypeValue2" value=")" << cInfo.mProcessingTypeValue2 << p3;
+        output << p1 << "Flags" << p2 << R"(id="content_flags" value=")" << cInfo.mFlags << p3;
+        output << p1 << "SourceId" << p2 << R"(id="content_sourceId" value=")" << cInfo.mSourceId << p3;
+        output << p1 << "ModificationTime" << p2 << R"(id="content_modificationTime" value=")" << mt << p3;
+        output << p1 << "DeletionTime" << p2 << R"(id="content_deletionTime" value=")" << dt << p3;
         output << "</TABLE>\n";
       }
 
       std::string bg = "#C0C0C0";
-      std::string p1 = "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:" + bg + ";\" onmouseout=\"this.style='background:" + bg + ";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?mode=";
+      std::string p1 = R"(<TD width="150" height="25" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF';" onClick="getPage(this,parent,'/grid-admin?mode=)";
 
       output << "<HR>\n";
       output << "<TABLE style=\"font-size:12;\">\n";
@@ -1127,7 +1127,7 @@ bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HT
       }
       else
       {
-        output << "<TR style=\"background:" << bg <<"; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << ";'\" onmouseover=\"this.style='background:#FFFF00; color:#000000;';\" onClick=\"getPage(this,parent,'/grid-admin?fileId=" << file->mFileId << "&startFileId=" << startFileId << "');\" >\n";
+        output << "<TR style=\"background:" << bg <<"; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << R"(;'" onmouseover="this.style='background:#FFFF00; color:#000000;';" onClick="getPage(this,parent,'/grid-admin?fileId=)" << file->mFileId << "&startFileId=" << startFileId << "');\" >\n";
       }
 
       output << "<TD>"<< file->mFileId << "</TD>";
@@ -1169,8 +1169,8 @@ bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HT
     if (startFileId > 0 || len >= maxRecords)
     {
       std::string bg = "#C0C0C0";
-      std::string p1 = "<TD width=\"70\" align=\"center\" style=\"background:" + bg + ";\" onmouseout=\"this.style='background:" + bg + ";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF;';\" onClick=\"getPage(this,parent,'/grid-admin?";
-      std::string p2 = "<TD width=\"70\" style=\"background:" + bg + ";\" >&nbsp;</TD>\n";
+      std::string p1 = R"(<TD width="70" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF;';" onClick="getPage(this,parent,'/grid-admin?)";
+      std::string p2 = R"(<TD width="70" style="background:)" + bg + ";\" >&nbsp;</TD>\n";
 
       output << "<HR>\n";
       output << "<TABLE style=\"font-size:12;\"><TR>\n";
@@ -1200,28 +1200,28 @@ bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HT
 
         std::string mt = utcTimeFromTimeT(fInfo.mModificationTime);
 
-        std::string p1 = "<TR><TD width=\"240\" bgColor=\"#D0D0D0\">";
-        std::string p2 = "</TD><TD><INPUT style=\"width:100%;\"  type=\"text\" ";
+        std::string p1 = R"(<TR><TD width="240" bgColor="#D0D0D0">)";
+        std::string p2 = R"(</TD><TD><INPUT style="width:100%;"  type="text" )";
         std::string p3 = "\"></TD></TR>";
 
         output << "<HR>\n";
         output << "<H2>File</H2>\n";
         output << "<TABLE border=\"1\" width=\"100%\" style=\"font-size:12;\">\n";
         output << p1 << "Id</TD><TD>"<< fInfo.mFileId << "</TD></TR>";
-        output << p1 << "Server" << p2 << "id=\"file_server\" value=\"" << esc(fInfo.mServer) << p3;
-        output << p1 << "Name<" << p2 << "id=\"file_name\" value=\"" << esc(fInfo.mName) << p3;
-        output << p1 << "Protocol" << p2 << "id=\"file_protocol\" value=\"" << C_INT(fInfo.mProtocol) << p3;
-        output << p1 << "ServerType" << p2 << "id=\"file_serverType\" value=\"" << C_INT(fInfo.mServerType) << p3;
-        output << p1 << "FileType" << p2 << "id=\"file_type\" value=\"" << C_INT(fInfo.mFileType) << p3;
-        output << p1 << "Flags" << p2 << "id=\"file_flags\" value=\"" << fInfo.mFlags << p3;
-        output << p1 << "SourceId" << p2 << "id=\"file_sourceId\" value=\"" << fInfo.mSourceId << p3;
-        output << p1 << "ModificationTime" << p2 << "id=\"file_modificationTime\" value=\"" << mt << p3;
-        output << p1 << "DeletionTime" << p2 << "id=\"file_deletionTime\" value=\"" << dt << p3;
+        output << p1 << "Server" << p2 << R"(id="file_server" value=")" << esc(fInfo.mServer) << p3;
+        output << p1 << "Name<" << p2 << R"(id="file_name" value=")" << esc(fInfo.mName) << p3;
+        output << p1 << "Protocol" << p2 << R"(id="file_protocol" value=")" << C_INT(fInfo.mProtocol) << p3;
+        output << p1 << "ServerType" << p2 << R"(id="file_serverType" value=")" << C_INT(fInfo.mServerType) << p3;
+        output << p1 << "FileType" << p2 << R"(id="file_type" value=")" << C_INT(fInfo.mFileType) << p3;
+        output << p1 << "Flags" << p2 << R"(id="file_flags" value=")" << fInfo.mFlags << p3;
+        output << p1 << "SourceId" << p2 << R"(id="file_sourceId" value=")" << fInfo.mSourceId << p3;
+        output << p1 << "ModificationTime" << p2 << R"(id="file_modificationTime" value=")" << mt << p3;
+        output << p1 << "DeletionTime" << p2 << R"(id="file_deletionTime" value=")" << dt << p3;
         output << "</TABLE>\n";
       }
 
       std::string bg = "#C0C0C0";
-      std::string p1 = "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:" + bg + ";\" onmouseout=\"this.style='background:" + bg + ";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?mode=";
+      std::string p1 = R"(<TD width="150" height="25" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF';" onClick="getPage(this,parent,'/grid-admin?mode=)";
 
       output << "<HR>\n";
       output << "<TABLE style=\"font-size:12;\">\n";
@@ -1536,7 +1536,7 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
         }
         else
         {
-          output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg << "; color:" << fg << ";'\" onmouseover=\"this.style='background:#FFFF00; color:#000000;';\" onClick=\"getPage(this,parent,'/grid-admin?page=generations&startGenerationIndex=" << startGenerationIndex << "&generationId=" << generation->mGenerationId << "&generationName=" << esc(generation->mName) << "');\" >\n";
+          output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg << "; color:" << fg << R"(;'" onmouseover="this.style='background:#FFFF00; color:#000000;';" onClick="getPage(this,parent,'/grid-admin?page=generations&startGenerationIndex=)" << startGenerationIndex << "&generationId=" << generation->mGenerationId << "&generationName=" << esc(generation->mName) << "');\" >\n";
         }
 
 
@@ -1578,8 +1578,8 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
     if (startGenerationIndex > 0 || len >= maxRecords)
     {
       std::string bg = "#C0C0C0";
-      std::string p1 = "<TD width=\"70\" align=\"center\" style=\"background:" + bg + ";\" onmouseout=\"this.style='background:" + bg + ";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF;';\" onClick=\"getPage(this,parent,'/grid-admin?";
-      std::string p2 = "<TD width=\"70\" style=\"background:" + bg + ";\" >&nbsp;</TD>\n";
+      std::string p1 = R"(<TD width="70" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF;';" onClick="getPage(this,parent,'/grid-admin?)";
+      std::string p2 = R"(<TD width="70" style="background:)" + bg + ";\" >&nbsp;</TD>\n";
 
       output << "<HR>\n";
       output << "<TABLE style=\"font-size:12;\"><TR>\n";
@@ -1613,27 +1613,27 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
           dt = utcTimeFromTimeT(gInfo.mDeletionTime);
 
         std::string mt = utcTimeFromTimeT(gInfo.mModificationTime);
-        std::string p1 = "<TR><TD width=\"240\" bgColor=\"#D0D0D0\">";
-        std::string p2 = "</TD><TD><INPUT style=\"width:100%;\" type=\"text\" ";
+        std::string p1 = R"(<TR><TD width="240" bgColor="#D0D0D0">)";
+        std::string p2 = R"(</TD><TD><INPUT style="width:100%;" type="text" )";
         std::string p3 = "\"></TD></TR>";
 
         output << "<HR>\n";
         output << "<H2>Generation</H2>\n";
         output << "<TABLE border=\"1\" width=\"100%\" style=\"font-size:12;\">\n";
         output << p1 << "Id</TD><TD>"<< gInfo.mGenerationId << "</TD></TR>";
-        output << p1 << "Name" << p2 << "id=\"generation_name\" value=\"" << esc(gInfo.mName) << p3;
-        output << p1 << "Description" << p2 << "id=\"generation_description\" value=\"" << esc(gInfo.mDescription) << p3;
-        output << p1 << "AnalysisTime" << p2 << "id=\"generation_analysisTime\" value=\"" << esc(gInfo.mAnalysisTime) << p3;
-        output << p1 << "Flags" << p2 << "id=\"generation_flags\" value=\"" << gInfo.mFlags << p3;
-        output << p1 << "SourceId" << p2 << "id=\"generation_sourceId\" value=\"" << gInfo.mSourceId << p3;
-        output << p1 << "Status" << p2 << "id=\"generation_status\" value=\"" << (int)gInfo.mStatus << p3;
-        output << p1 << "ModificationTime" << p2 << "id=\"generation_modificationTime\" value=\"" << mt << p3;
-        output << p1 << "DeletionTime" << p2 << "id=\"generation_deletionTime\" value=\"" << dt << p3;
+        output << p1 << "Name" << p2 << R"(id="generation_name" value=")" << esc(gInfo.mName) << p3;
+        output << p1 << "Description" << p2 << R"(id="generation_description" value=")" << esc(gInfo.mDescription) << p3;
+        output << p1 << "AnalysisTime" << p2 << R"(id="generation_analysisTime" value=")" << esc(gInfo.mAnalysisTime) << p3;
+        output << p1 << "Flags" << p2 << R"(id="generation_flags" value=")" << gInfo.mFlags << p3;
+        output << p1 << "SourceId" << p2 << R"(id="generation_sourceId" value=")" << gInfo.mSourceId << p3;
+        output << p1 << "Status" << p2 << R"(id="generation_status" value=")" << (int)gInfo.mStatus << p3;
+        output << p1 << "ModificationTime" << p2 << R"(id="generation_modificationTime" value=")" << mt << p3;
+        output << p1 << "DeletionTime" << p2 << R"(id="generation_deletionTime" value=")" << dt << p3;
         output << "</TABLE>\n";
       }
 
       std::string bg = "#C0C0C0";
-      std::string p1 = "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:" + bg + ";\" onmouseout=\"this.style='background:" + bg + ";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?mode=";
+      std::string p1 = R"(<TD width="150" height="25" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF';" onClick="getPage(this,parent,'/grid-admin?mode=)";
 
       output << "<HR>\n";
       output << "<TABLE style=\"font-size:12;\">\n";
@@ -1855,7 +1855,7 @@ bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine
         {
           fg = "#000000";
           bg = "#FFFFFF";
-          output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << ";'\" onmouseover=\"this.style='background:#FFFF00; color:#000000;';\" onClick=\"getPage(this,parent,'/grid-admin?startProducerIndex=" << startProducerIndex << "&producerId=" << producer->mProducerId << "&producerName=" << esc(producer->mName) << "');\" >\n";
+          output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << R"(;'" onmouseover="this.style='background:#FFFF00; color:#000000;';" onClick="getPage(this,parent,'/grid-admin?startProducerIndex=)" << startProducerIndex << "&producerId=" << producer->mProducerId << "&producerName=" << esc(producer->mName) << "');\" >\n";
         }
 
         output << "<TD>"<< producer->mProducerId << "</TD>";
@@ -1881,8 +1881,8 @@ bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine
     if (startProducerIndex > 0 || len >= maxRecords)
     {
       std::string bg = "#C0C0C0";
-      std::string p1 = "<TD width=\"70\" align=\"center\" style=\"background:" + bg + ";\" onmouseout=\"this.style='background:" + bg + ";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF;';\" onClick=\"getPage(this,parent,'/grid-admin?";
-      std::string p2 = "<TD width=\"70\" style=\"background:" + bg + ";\" >&nbsp;</TD>\n";
+      std::string p1 = R"(<TD width="70" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF;';" onClick="getPage(this,parent,'/grid-admin?)";
+      std::string p2 = R"(<TD width="70" style="background:)" + bg + ";\" >&nbsp;</TD>\n";
 
       output << "<HR>\n";
       output << "<TABLE style=\"font-size:12;\"><TR>\n";
@@ -1909,24 +1909,24 @@ bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine
     {
       if (mode > 0  && mode < 100)
       {
-        std::string p1 = "<TR><TD width=\"240\" bgColor=\"#D0D0D0\">";
-        std::string p2 = "</TD><TD><INPUT style=\"width:100%;\" type=\"text\" ";
+        std::string p1 = R"(<TR><TD width="240" bgColor="#D0D0D0">)";
+        std::string p2 = R"(</TD><TD><INPUT style="width:100%;" type="text" )";
         std::string p3 = "\"></TD></TR>";
 
         output << "<HR>\n";
         output << "<H2>Producer</H2>\n";
         output << "<TABLE border=\"1\" width=\"100%\" style=\"font-size:12;\">\n";
         output << p1 << "Id</TD><TD>"<< pInfo.mProducerId << "</TD></TR>";
-        output << p1 << "Name" << p2 << "id=\"producer_name\" value=\"" << esc(pInfo.mName) << p3;
-        output << p1 << "Title" << p2 << "id=\"producer_title\" value=\"" << esc(pInfo.mTitle) << p3;
-        output << p1 << "Description" << p2 << "id=\"producer_description\" value=\"" << esc(pInfo.mDescription) << p3;
-        output << p1 << "Flags" << p2 << "id=\"producer_flags\" value=\"" << pInfo.mFlags << p3;
-        output << p1 << "SourceId" << p2 << "id=\"producer_sourceId\" value=\"" << pInfo.mSourceId << p3;
+        output << p1 << "Name" << p2 << R"(id="producer_name" value=")" << esc(pInfo.mName) << p3;
+        output << p1 << "Title" << p2 << R"(id="producer_title" value=")" << esc(pInfo.mTitle) << p3;
+        output << p1 << "Description" << p2 << R"(id="producer_description" value=")" << esc(pInfo.mDescription) << p3;
+        output << p1 << "Flags" << p2 << R"(id="producer_flags" value=")" << pInfo.mFlags << p3;
+        output << p1 << "SourceId" << p2 << R"(id="producer_sourceId" value=")" << pInfo.mSourceId << p3;
         output << "</TABLE>\n";
       }
 
       bg = "#C0C0C0";
-      std::string p1 = "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:" + bg + ";\" onmouseout=\"this.style='background:" + bg + ";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?mode=";
+      std::string p1 = R"(<TD width="150" height="25" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF';" onClick="getPage(this,parent,'/grid-admin?mode=)";
 
       output << "<HR>\n";
       output << "<TABLE style=\"font-size:12;\">\n";
@@ -2350,7 +2350,7 @@ bool Browser::page_luaFiles(SessionManagement::SessionInfo& session,const Spine:
 
       fg = "#000000";
       bg = "#FFFFFF";
-      output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << ";'\" onmouseover=\"this.style='background:#FFFF00; color:#000000;';\" onClick=\"getPage(this,parent,'/grid-admin?&target=grid-engine&page=luaFile&filename=" << hash << "');\" >\n";
+      output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << R"(;'" onmouseover="this.style='background:#FFFF00; color:#000000;';" onClick="getPage(this,parent,'/grid-admin?&target=grid-engine&page=luaFile&filename=)" << hash << "');\" >\n";
       output << "<TD>"<< esc(*it) << "</TD>";
       output << "</TR>";
 
@@ -2496,7 +2496,7 @@ bool Browser::page_parameterAliasFiles(SessionManagement::SessionInfo& session,c
 
       fg = "#000000";
       bg = "#FFFFFF";
-      output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << ";'\" onmouseover=\"this.style='background:#FFFF00; color:#000000;';\" onClick=\"getPage(this,parent,'/grid-admin?&target=grid-engine&page=parameterAliasFile&filename=" << hash << "');\" >\n";
+      output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << R"(;'" onmouseover="this.style='background:#FFFF00; color:#000000;';" onClick="getPage(this,parent,'/grid-admin?&target=grid-engine&page=parameterAliasFile&filename=)" << hash << "');\" >\n";
       output << "<TD>"<< esc(*it) << "</TD>";
       output << "</TR>";
 
@@ -2658,7 +2658,7 @@ bool Browser::page_producerMappingFiles(SessionManagement::SessionInfo& session,
 
       fg = "#000000";
       bg = "#FFFFFF";
-      output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << ";'\" onmouseover=\"this.style='background:#FFFF00; color:#000000;';\" onClick=\"getPage(this,parent,'/grid-admin?&target=grid-engine&page=producerMappingFile&filename=" << hash << "');\" >\n";
+      output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << R"(;'" onmouseover="this.style='background:#FFFF00; color:#000000;';" onClick="getPage(this,parent,'/grid-admin?&target=grid-engine&page=producerMappingFile&filename=)" << hash << "');\" >\n";
       output << "<TD>"<< esc(*it) << "</TD>";
       output << "</TR>";
 
@@ -2927,7 +2927,7 @@ bool Browser::page_parameterMappingFiles(SessionManagement::SessionInfo& session
 
       fg = "#000000";
       bg = "#FFFFFF";
-      output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << ";'\" onmouseover=\"this.style='background:#FFFF00; color:#000000;';\" onClick=\"getPage(this,parent,'/grid-admin?&target=grid-engine&page=parameterMappingFile&filename=" << hash << "');\" >\n";
+      output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << R"(;'" onmouseover="this.style='background:#FFFF00; color:#000000;';" onClick="getPage(this,parent,'/grid-admin?&target=grid-engine&page=parameterMappingFile&filename=)" << hash << "');\" >\n";
       output << "<TD>"<< esc(*it) << "</TD>";
       output << "</TR>";
 
@@ -3121,7 +3121,7 @@ bool Browser::page_contentServer_processingLog(SessionManagement::SessionInfo& s
       }
 
       std::string bg = "#C0C0C0";
-      std::string p1 = "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:" + bg + ";\" onmouseout=\"this.style='background:" + bg + ";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?mode=";
+      std::string p1 = R"(<TD width="150" height="25" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF';" onClick="getPage(this,parent,'/grid-admin?mode=)";
 
       output << "<HR>\n";
       output << "<TABLE style=\"font-size:12;\">\n";
@@ -3245,7 +3245,7 @@ bool Browser::page_contentServer_debugLog(SessionManagement::SessionInfo& sessio
       }
 
       std::string bg = "#C0C0C0";
-      std::string p1 = "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:" + bg + ";\" onmouseout=\"this.style='background:" + bg + ";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?mode=";
+      std::string p1 = R"(<TD width="150" height="25" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF';" onClick="getPage(this,parent,'/grid-admin?mode=)";
 
       output << "<HR>\n";
       output << "<TABLE style=\"font-size:12;\">\n";
@@ -3369,7 +3369,7 @@ bool Browser::page_dataServer_processingLog(SessionManagement::SessionInfo& sess
       }
 
       std::string bg = "#C0C0C0";
-      std::string p1 = "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:" + bg + ";\" onmouseout=\"this.style='background:" + bg + ";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?mode=";
+      std::string p1 = R"(<TD width="150" height="25" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF';" onClick="getPage(this,parent,'/grid-admin?mode=)";
 
       output << "<HR>\n";
       output << "<TABLE style=\"font-size:12;\">\n";
@@ -3493,7 +3493,7 @@ bool Browser::page_dataServer_debugLog(SessionManagement::SessionInfo& session,c
       }
 
       std::string bg = "#C0C0C0";
-      std::string p1 = "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:" + bg + ";\" onmouseout=\"this.style='background:" + bg + ";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?mode=";
+      std::string p1 = R"(<TD width="150" height="25" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF';" onClick="getPage(this,parent,'/grid-admin?mode=)";
 
       output << "<HR>\n";
       output << "<TABLE style=\"font-size:12;\">\n";
@@ -3617,7 +3617,7 @@ bool Browser::page_queryServer_processingLog(SessionManagement::SessionInfo& ses
       }
 
       std::string bg = "#C0C0C0";
-      std::string p1 = "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:" + bg + ";\" onmouseout=\"this.style='background:" + bg + ";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?mode=";
+      std::string p1 = R"(<TD width="150" height="25" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF';" onClick="getPage(this,parent,'/grid-admin?mode=)";
 
       output << "<HR>\n";
       output << "<TABLE style=\"font-size:12;\">\n";
@@ -3741,7 +3741,7 @@ bool Browser::page_queryServer_debugLog(SessionManagement::SessionInfo& session,
       }
 
       std::string bg = "#C0C0C0";
-      std::string p1 = "<TD width=\"150\" height=\"25\" align=\"center\" style=\"background:" + bg + ";\" onmouseout=\"this.style='background:" + bg + ";'\" onmouseover=\"this.style='background:#0000FF; color:#FFFFFF';\" onClick=\"getPage(this,parent,'/grid-admin?mode=";
+      std::string p1 = R"(<TD width="150" height="25" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF';" onClick="getPage(this,parent,'/grid-admin?mode=)";
 
       output << "<HR>\n";
       output << "<TABLE style=\"font-size:12;\">\n";

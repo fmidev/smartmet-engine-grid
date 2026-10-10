@@ -24,6 +24,7 @@
 #include <spine/Convenience.h>
 #include <spine/Reactor.h>
 #include <chrono>
+#include <memory>
 #include <thread>
 #include <unistd.h>
 
@@ -199,7 +200,7 @@ Engine::Engine(const char* theConfigFile)
     mDataServerImplementation = nullptr;
     mThread = 0;
 
-    mParameterTable.reset(new Spine::Table);
+    mParameterTable = std::make_shared<Spine::Table>();
 
     ConfigurationFile configurationFile;
     configurationFile.readFile(mConfigurationFile_name.c_str());
@@ -447,10 +448,10 @@ void Engine::init()
       contentServer->setEnabled(false);
       mContentServers.push_back(contentServer);
 
-      mDataServer.reset(new DataServer::ServiceInterface());
+      mDataServer = std::make_shared<DataServer::ServiceInterface>();
       mDataServer->setEnabled(false);
 
-      mQueryServer.reset(new QueryServer::ServiceInterface());
+      mQueryServer = std::make_shared<QueryServer::ServiceInterface>();
       mQueryServer->setEnabled(false);
 
       return;
