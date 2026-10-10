@@ -2008,7 +2008,7 @@ bool Browser::page_contentInformation(SessionManagement::SessionInfo& session,co
     output << "    Content storages";
     output << "    <OL>\n";
     uint idx = 0;
-    for (auto & contentSource : contentSources)
+    for (auto& contentSource : contentSources)
     {
       std::string sourceStr = contentSource.mType + " " + std::to_string(idx);
       if (contentSource.mType == "redis")
@@ -2072,7 +2072,7 @@ bool Browser::page_contentServer(SessionManagement::SessionInfo& session,const S
     output << "                    <OL>\n";
 
     uint idx = 0;
-    for (auto & contentSource : contentSources)
+    for (auto& contentSource : contentSources)
     {
       std::string sourceStr = contentSource.mType + " " + std::to_string(idx);
       if (contentSource.mType == "redis")
@@ -2342,7 +2342,7 @@ bool Browser::page_luaFiles(SessionManagement::SessionInfo& session,const Spine:
     std::string fg = "#000000";
     std::string bg = "#FFFFFF";
 
-    for (auto & luaFile : luaFiles)
+    for (auto& luaFile : luaFiles)
     {
       const std::size_t hash = Fmi::hash(luaFile);
       std::string hashStr = std::to_string(hash);
@@ -2488,7 +2488,7 @@ bool Browser::page_parameterAliasFiles(SessionManagement::SessionInfo& session,c
     std::string fg = "#000000";
     std::string bg = "#FFFFFF";
 
-    for (auto & parameterAliasFile : parameterAliasFiles)
+    for (auto& parameterAliasFile : parameterAliasFiles)
     {
       const std::size_t hash = Fmi::hash(parameterAliasFile);
       std::string hashStr = std::to_string(hash);
@@ -2650,7 +2650,7 @@ bool Browser::page_producerMappingFiles(SessionManagement::SessionInfo& session,
     std::string fg = "#000000";
     std::string bg = "#FFFFFF";
 
-    for (auto & producerMappingFile : producerMappingFiles)
+    for (auto& producerMappingFile : producerMappingFiles)
     {
       const std::size_t hash = Fmi::hash(producerMappingFile);
       std::string hashStr = std::to_string(hash);
@@ -2744,7 +2744,7 @@ bool Browser::page_parameterMappingFile(SessionManagement::SessionInfo& session,
     output << "</TR>";
 
     uint c = 0;
-    for (auto & record : records)
+    for (auto& record : records)
     {
       c++;
       output << "<TR>";
@@ -2919,7 +2919,7 @@ bool Browser::page_parameterMappingFiles(SessionManagement::SessionInfo& session
     std::string fg = "#000000";
     std::string bg = "#FFFFFF";
 
-    for (auto & parameterMappingFile : parameterMappingFiles)
+    for (auto& parameterMappingFile : parameterMappingFiles)
     {
       const std::size_t hash = Fmi::hash(parameterMappingFile);
       std::string hashStr = std::to_string(hash);
@@ -3158,7 +3158,7 @@ bool Browser::page_contentServer_processingLog(SessionManagement::SessionInfo& s
       catch (...)
       {
       }
-      for (auto & line : lines)
+      for (auto& line : lines)
         output << esc(line) << "\n";
 
       //includeFile(output,filename.c_str());
@@ -3282,7 +3282,7 @@ bool Browser::page_contentServer_debugLog(SessionManagement::SessionInfo& sessio
       catch (...)
       {
       }
-      for (auto & line : std::ranges::reverse_view(lines))
+      for (auto& line : std::ranges::reverse_view(lines))
         output << esc(line) << "\n";
 
       //includeFile(output,filename.c_str());
@@ -3406,7 +3406,7 @@ bool Browser::page_dataServer_processingLog(SessionManagement::SessionInfo& sess
       catch (...)
       {
       }
-      for (auto & line : lines)
+      for (auto& line : lines)
         output << esc(line) << "\n";
 
       //includeFile(output,filename.c_str());
@@ -3530,7 +3530,7 @@ bool Browser::page_dataServer_debugLog(SessionManagement::SessionInfo& session,c
       catch (...)
       {
       }
-      for (auto & line : std::ranges::reverse_view(lines))
+      for (auto& line : std::ranges::reverse_view(lines))
         output << esc(line) << "\n";
 
       //includeFile(output,filename.c_str());
@@ -3654,7 +3654,7 @@ bool Browser::page_queryServer_processingLog(SessionManagement::SessionInfo& ses
       catch (...)
       {
       }
-      for (auto & line : lines)
+      for (auto& line : lines)
         output << esc(line) << "\n";
 
       //includeFile(output,filename.c_str());
@@ -3778,7 +3778,7 @@ bool Browser::page_queryServer_debugLog(SessionManagement::SessionInfo& session,
       catch (...)
       {
       }
-      for (auto & line : std::ranges::reverse_view(lines))
+      for (auto& line : std::ranges::reverse_view(lines))
         output << esc(line) << "\n";
 
       //includeFile(output,filename.c_str());
@@ -3991,7 +3991,7 @@ void Browser::browserContent(SessionManagement::SessionInfo& session,std::ostrin
     output << "                    <OL>\n";
 
     uint idx = 0;
-    for (auto & contentSource : contentSources)
+    for (auto& contentSource : contentSources)
     {
       std::string sourceStr = contentSource.mType + " " + std::to_string(idx);
       if (contentSource.mType == "redis")

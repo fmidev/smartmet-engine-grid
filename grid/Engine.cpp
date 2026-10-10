@@ -377,7 +377,7 @@ Engine::Engine(const char* theConfigFile)
 
     std::vector<std::string> vec;
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingLevelSimplification", vec);
-    for (auto & it : vec)
+    for (auto& it : vec)
       mParameterMapping_simplifiedLevelIdSet.insert(atoi(it.c_str()));
 
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingUpdateFile.fmi", mParameterMappingDefinitions_autoFile_fmi);
@@ -418,7 +418,7 @@ Engine::~Engine()
   FUNCTION_TRACE
   try
   {
-    for (auto & mDataServer_client : mDataServer_clients)
+    for (auto& mDataServer_client : mDataServer_clients)
       delete mDataServer_client;
 
     if (mEnabled && !mShutdownFinished) {
@@ -565,7 +565,7 @@ ContentServer::ServiceInterface* Engine::initContentSources()
   {
     ContentServer::ServiceInterface* cServer = nullptr;
 
-    for (auto & mContentSource : mContentSources)
+    for (auto& mContentSource : mContentSources)
     {
       if (mContentSource.mEnabled)
       {
@@ -892,7 +892,7 @@ void Engine::checkConfiguration()
       // if it is started in the disabled state.
 
       mEnabled = false;
-      for (auto & mContentServer : mContentServers)
+      for (auto& mContentServer : mContentServers)
         mContentServer->setEnabled(false);
 
       mDataServer->setEnabled(false);
@@ -909,7 +909,7 @@ void Engine::checkConfiguration()
       mContentServerProcessingLogMaxSize, mContentServerProcessingLogTruncateSize,
       mContentServerProcessingLog,
       [this](Log* l) {
-        for (auto & mContentServer : mContentServers)
+        for (auto& mContentServer : mContentServers)
           if (mContentServer->getProcessingLog() == nullptr)
             mContentServer->setProcessingLog(l);
       });
@@ -921,7 +921,7 @@ void Engine::checkConfiguration()
       mContentServerDebugLogMaxSize, mContentServerDebugLogTruncateSize,
       mContentServerDebugLog,
       [this](Log* l) {
-        for (auto & mContentServer : mContentServers)
+        for (auto& mContentServer : mContentServers)
           if (mContentServer->getDebugLog() == nullptr)
             mContentServer->setDebugLog(l);
       });
@@ -1129,7 +1129,7 @@ void Engine::shutdown()
     if (mContentServerMergeImplementation)
       mContentServerMergeImplementation->shutdown();
 
-    for (auto & mContentServer : mContentServers)
+    for (auto& mContentServer : mContentServers)
       mContentServer->shutdown();
 
     //if (mContentServer)
@@ -1397,13 +1397,13 @@ bool Engine::isGridProducer(const std::string& producer) const
     // Checking that the search of the current (Radon) producers is allower (defined in the
     // producers search file).
 
-    for (auto & it : nameList)
+    for (auto& it : nameList)
     {
       if (it.empty())
         return true;  // The (newbase) producer is mapped to an empty (Radon) producer (=> default
                       // producer)
 
-      for (auto & itm : mProducerSearchList)
+      for (auto& itm : mProducerSearchList)
       {
         if (strcasecmp(it.c_str(), itm.c_str()) == 0)
           return true;
@@ -1536,7 +1536,7 @@ void Engine::getProducerNameList(const std::string& mappingName, std::vector<std
     //   pal_skandinavia:SMARTMET;1096;;;
     //   pal_skandinavia:SMARTMETMTA;1096;;;
 
-    for (auto & it : mappingList)
+    for (auto& it : mappingList)
     {
       std::vector < std::string > partList;
       splitString(it, ';', partList);
@@ -1623,7 +1623,7 @@ UInt64 Engine::getProducerHash(std::string producerName) const
     getProducerNameList(producerName,nameList);
     if (nameList.size() > 0)
     {
-      for (auto & it : nameList)
+      for (auto& it : nameList)
       {
         T::ProducerInfo producerInfo;
         getProducerInfoByName(it,producerInfo);
@@ -1670,7 +1670,7 @@ void Engine::getParameterDetails(const std::string& aliasName, ParameterDetails_
     std::vector <std::string> aliasStrings;
     mProducerMappingDefinitions.getAliasList(aliasName, aliasStrings);
 
-    for (auto & aliasString : aliasStrings)
+    for (auto& aliasString : aliasStrings)
     {
       std::vector < std::string > partList;
       splitString(aliasString, ';', partList);
@@ -1814,7 +1814,7 @@ void Engine::getParameterDetails(const std::string& producerName, const std::str
     std::vector < std::string > mappingList;
     mProducerMappingDefinitions.getAliasList(key, mappingList);
 
-    for (auto & it : mappingList)
+    for (auto& it : mappingList)
     {
       std::vector <std::string> partList;
       splitString(it, ';', partList);
@@ -1894,7 +1894,7 @@ void Engine::getParameterDetails(const std::string& producerName, const std::str
       return;
 
     getParameterDetails(producerName, parameterName, parameterDetails);
-    for (auto & parameterDetail : parameterDetails)
+    for (auto& parameterDetail : parameterDetails)
       parameterDetail.mLevel = level;
   }
   catch (...)
@@ -1924,12 +1924,12 @@ void Engine::getParameterMappings(
 
     AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
 
-    for (auto & m : *mParameterMappingDefinitions)
+    for (auto& m : *mParameterMappingDefinitions)
     {
       m.getMappings(producerName, parameterName, geometryId, onlySearchEnabled, mappings);
     }
 
-    for (auto & mParameterAliasMapping : mParameterAliasMappings)
+    for (auto& mParameterAliasMapping : mParameterAliasMappings)
     {
       mParameterAliasMapping.getMappings(producerName, parameterName, geometryId, onlySearchEnabled, mappings);
     }
@@ -1954,12 +1954,12 @@ void Engine::getParameterMappings(const std::string& producerName, const std::st
 
     AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
 
-    for (auto & m : *mParameterMappingDefinitions)
+    for (auto& m : *mParameterMappingDefinitions)
     {
       m.getMappings(producerName, parameterName, onlySearchEnabled, mappings);
     }
 
-    for (auto & mParameterAliasMapping : mParameterAliasMappings)
+    for (auto& mParameterAliasMapping : mParameterAliasMappings)
     {
       mParameterAliasMapping.getMappings(producerName, parameterName, onlySearchEnabled, mappings);
     }
@@ -1991,12 +1991,12 @@ void Engine::getParameterMappings(
 
     AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
 
-    for (auto & m : *mParameterMappingDefinitions)
+    for (auto& m : *mParameterMappingDefinitions)
     {
       m.getMappings(producerName, parameterName, geometryId, levelId, level, onlySearchEnabled, mappings);
     }
 
-    for (auto & mParameterAliasMapping : mParameterAliasMappings)
+    for (auto& mParameterAliasMapping : mParameterAliasMappings)
     {
       mParameterAliasMapping.getMappings(producerName, parameterName, geometryId, levelId, level, onlySearchEnabled, mappings);
     }
@@ -2027,12 +2027,12 @@ void Engine::getParameterMappings(
 
     AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
 
-    for (auto & m : *mParameterMappingDefinitions)
+    for (auto& m : *mParameterMappingDefinitions)
     {
       m.getMappings(producerName, parameterName, levelId, level, onlySearchEnabled, mappings);
     }
 
-    for (auto & mParameterAliasMapping : mParameterAliasMappings)
+    for (auto& mParameterAliasMapping : mParameterAliasMappings)
     {
       mParameterAliasMapping.getMappings(producerName, parameterName, levelId, level, onlySearchEnabled, mappings);
     }
@@ -2054,7 +2054,7 @@ void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails) const
 
     ContentServer_sptr contentServer = getContentServer_sptr();
 
-    for (auto & parameterDetail : parameterDetails)
+    for (auto& parameterDetail : parameterDetails)
     {
       QueryServer::ParameterMapping_vec mappings;
       if (parameterDetail.mLevelId > " " || parameterDetail.mLevel > " ")
@@ -2072,7 +2072,7 @@ void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails) const
         getParameterMappings(parameterDetail.mProducerName, parameterDetail.mOriginalParameter, atoi(parameterDetail.mGeometryId.c_str()), true, mappings);
       }
 
-      for (auto & mapping : mappings)
+      for (auto& mapping : mappings)
       {
         MappingDetails details;
         details.mMapping = mapping;
@@ -2365,14 +2365,14 @@ ContentTable Engine::getGenerationInfo(std::optional<std::string> producer,std::
                     for (auto pk = paramKeyList.begin(); pk != paramKeyList.end(); ++pk)
                     {
                       QueryServer::ParameterMapping_vec mappings;
-                      for (auto & mf : *mParameterMappingDefinitions)
+                      for (auto& mf : *mParameterMappingDefinitions)
                       {
                         mf.getMappingsByParamKey(info->mName,T::ParamKeyTypeValue::FMI_NAME,*pk,-1,-1,-1,mappings);
                       }
 
                       if (mappings.size() > 0)
                       {
-                        for (auto & mapping : mappings)
+                        for (auto& mapping : mappings)
                         {
                           if (strcasecmp(pk->c_str(),mapping.mParameterName.c_str()) != 0)
                             paramList.insert(mapping.mParameterName);
@@ -2502,7 +2502,7 @@ ContentTable Engine::getExtGenerationInfo(std::optional<std::string> producer,st
     uint row = 0;
 
     //printf("RECORDS %ld\n",records.size());
-    for (auto & record : records)
+    for (auto& record : records)
     {
       uint sz = record.size();
       if (sz > 1 && (!producer ||  producer->empty() || strcasecmp(producer->c_str(),record[0].c_str()) == 0))
@@ -2598,7 +2598,7 @@ ContentTable Engine::getExtGenerationInfo(std::optional<std::string> producer,st
         tmpGeometryInfoList.sort(T::GeometryInfo::ComparisonMethod::generationId);
 
 
-        for (auto & it : counterList)
+        for (auto& it : counterList)
         {
           time_t modTime = 0;
           if (it.second.size() == (sz-1))
@@ -2639,17 +2639,17 @@ ContentTable Engine::getExtGenerationInfo(std::optional<std::string> producer,st
                     std::set<std::string> paramKeyList;
                     contentServer->getContentParamKeyListByGenerationAndGeometryId(0,geom->mGenerationId,geom->mGeometryId,T::ParamKeyTypeValue::FMI_NAME,paramKeyList);
 
-                    for (const auto & pk : paramKeyList)
+                    for (const auto& pk : paramKeyList)
                     {
                       QueryServer::ParameterMapping_vec mappings;
-                      for (auto & mf : *mParameterMappingDefinitions)
+                      for (auto& mf : *mParameterMappingDefinitions)
                       {
                         mf.getMappingsByParamKey(pInfo->mName,T::ParamKeyTypeValue::FMI_NAME,pk,-1,-1,-1,mappings);
                       }
 
                       if (mappings.size() > 0)
                       {
-                        for (auto & mapping : mappings)
+                        for (auto& mapping : mappings)
                         {
                           if (strcasecmp(pk.c_str(),mapping.mParameterName.c_str()) != 0)
                           {
@@ -2940,7 +2940,7 @@ std::list<MetaData> Engine::getEngineMetadata(const char *producerName) const
                       //std::cout << metaData.producerName << ":" << metaData.analysisTime << ":" << metaData.geometryId << ":" << metaData.levelId << " Levels : " << metaData.levels.size() <<  " Times : " << metaData.times.size() << " Params : " << paramKeyList.size() << "\n";
 
                       metaData.parameters.reserve(paramKeyList.size());
-                      for (const auto & pk : paramKeyList)
+                      for (const auto& pk : paramKeyList)
                       {
                         Identification::FmiParameterDef paramDef;
                         if (Identification::gridDef.getFmiParameterDefByName(pk.c_str(), paramDef))
@@ -3210,7 +3210,7 @@ void Engine::getProducerParameterLevelList(const std::string& producerName, T::P
     std::vector < std::string > nameList;
     getProducerNameList(producerName, nameList);
 
-    for (auto & pname : nameList)
+    for (auto& pname : nameList)
     {
       T::ProducerInfo *producerInfo = mProducerInfoList.getProducerInfoByName(pname);
       if (producerInfo != nullptr)
@@ -3256,7 +3256,7 @@ void Engine::getProducerParameterLevelIdList(const std::string& producerName, st
     std::vector < std::string > nameList;
     getProducerNameList(producerName, nameList);
 
-    for (auto & pname : nameList)
+    for (auto& pname : nameList)
     {
       T::ProducerInfo *producerInfo = mProducerInfoList.getProducerInfoByName(pname);
       if (producerInfo != nullptr)
@@ -3399,20 +3399,20 @@ void Engine::loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings,
     if (!mUnitConversionFile.empty())
       loadUnitConversionFile();
 
-    for (auto & mParameterMappingDefinitions_filename : mParameterMappingDefinitions_filenames)
+    for (auto& mParameterMappingDefinitions_filename : mParameterMappingDefinitions_filenames)
     {
       QueryServer::ParameterMappingFile mapping(mParameterMappingDefinitions_filename);
       parameterMappings.emplace_back(mapping);
     }
 
-    for (auto & parameterMapping : parameterMappings)
+    for (auto& parameterMapping : parameterMappings)
     {
       // Loading parameter mappings if the mapping file exists and it is not empty.
       if (getFileSize(parameterMapping.getFilename().c_str()) > 0)
       {
         parameterMapping.init();
 
-        for (auto & mParameterMappingAliasDefinitions_filename : mParameterMappingAliasDefinitions_filenames)
+        for (auto& mParameterMappingAliasDefinitions_filename : mParameterMappingAliasDefinitions_filenames)
         {
           if (mParameterMappingAliasDefinitions_filename == parameterMapping.getFilename())
           {
@@ -3530,7 +3530,7 @@ void Engine::getExtAnalysisTimes(std::vector<std::vector<std::string>>& table) c
     time_t currentTime = time(nullptr);
 
     //printf("RECORDS %ld\n",records.size());
-    for (auto & record : records)
+    for (auto& record : records)
     {
       uint sz = record.size();
       bool available = true;
@@ -3576,7 +3576,7 @@ void Engine::getExtAnalysisTimes(std::vector<std::vector<std::string>>& table) c
         }
       }
 
-      for (auto & it : counterList)
+      for (auto& it : counterList)
       {
         if (it.second == (sz-1))
         {
@@ -4004,7 +4004,7 @@ void Engine::updateMappings(
       int result = contentServer->getProducerParameterListByProducerId(sessionId, producerInfo->mProducerId, sourceParameterKeyType, targetParameterKeyType, infoList);
       if (result == 0)
       {
-        for (const auto & it : infoList)
+        for (const auto& it : infoList)
         {
           if (Spine::Reactor::isShuttingDown())
             return;

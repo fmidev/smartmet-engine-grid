@@ -90,11 +90,11 @@ struct MetaData
     stream << "\n";
 
     stream << space(level) << "- times               = \n";
-    for (const auto & time : times)
+    for (const auto& time : times)
       stream << space(level+2) << "* " << time << "\n";
 
     stream << space(level) << "- parameters          = \n";
-    for (auto & parameter : parameters)
+    for (auto& parameter : parameters)
       parameter.print(stream,level+2,optionFlags);
   }
 
