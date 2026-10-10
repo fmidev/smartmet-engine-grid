@@ -100,7 +100,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
   public:
 
                         Engine(const char *theConfigFile);
-    virtual             ~Engine();
+    ~Engine() override;
 
     bool                browserRequest(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
     void                browserContent(SessionManagement::SessionInfo& session,std::ostringstream& output);
@@ -121,7 +121,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                getCacheStats(Fmi::Cache::CacheStatistics& statistics) const;
     void                getStateAttributes(std::shared_ptr<T::AttributeNode> parent);
 
-    Fmi::Cache::CacheStatistics getCacheStats() const;
+    Fmi::Cache::CacheStatistics getCacheStats() const override;
 
     ContentSource_vec&  getContentSources() {return mContentSources;}
 
@@ -255,7 +255,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
   protected:
 
-    void                init();
+    void                init() override;
 
     /*! \brief Write one new auto-mapping entry to the mapping file.  Looks up the FMI parameter
      *  definition for the target key, emits the per-method interpolation columns, conversion
@@ -291,7 +291,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                                  DataServer::ServiceInterface* ds,
                                  QueryServer::ServiceInterface* qs);                          //!< Initialise the six per-server processing/debug logs (no-op for empty file paths).
 
-    void                shutdown();
+    void                shutdown() override;
     void                startUpdateProcessing();
     void                clearMappings();
     void                checkConfiguration();

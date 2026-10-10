@@ -115,6 +115,7 @@ rm -rf $RPM_BUILD_ROOT
 %changelog
 * Sat Oct 10 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.10-1.fmi
 - Use auto and return {} where clang-tidy suggests it, no functional changes
+- Mark overriding methods override and use nullptr, no functional changes
 
 * Wed Oct  7 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.7-1.fmi
 - Print the "Engine usage disabled" notice when the engine is disabled (it was unreachable)
