@@ -4,6 +4,7 @@
 #include <macgyver/Hash.h>
 #include <spine/Convenience.h>
 #include <fstream>
+#include <ranges>
 
 
 namespace SmartMet
@@ -2007,11 +2008,11 @@ bool Browser::page_contentInformation(SessionManagement::SessionInfo& session,co
     output << "    Content storages";
     output << "    <OL>\n";
     uint idx = 0;
-    for (auto it = contentSources.begin(); it != contentSources.end(); ++it)
+    for (auto & contentSource : contentSources)
     {
-      std::string sourceStr = it->mType + " " + std::to_string(idx);
-      if (it->mType == "redis")
-        sourceStr = "Redis:" + it->mRedisAddress + ":" + std::to_string(it->mRedisPort) + ":" + it->mRedisTablePrefix;
+      std::string sourceStr = contentSource.mType + " " + std::to_string(idx);
+      if (contentSource.mType == "redis")
+        sourceStr = "Redis:" + contentSource.mRedisAddress + ":" + std::to_string(contentSource.mRedisPort) + ":" + contentSource.mRedisTablePrefix;
 
       output << "    <LI>";
       output << "      <A href=\"/grid-admin?&target=grid-engine&page=producers&startProducerIndex=0&source=" << esc(sourceStr) << "&sourceIdx=" << idx << "\">" << esc(sourceStr) << "</A>\n";
@@ -2071,11 +2072,11 @@ bool Browser::page_contentServer(SessionManagement::SessionInfo& session,const S
     output << "                    <OL>\n";
 
     uint idx = 0;
-    for (auto it = contentSources.begin(); it != contentSources.end(); ++it)
+    for (auto & contentSource : contentSources)
     {
-      std::string sourceStr = it->mType + " " + std::to_string(idx);
-      if (it->mType == "redis")
-        sourceStr = "Redis:" + it->mRedisAddress + ":" + std::to_string(it->mRedisPort) + ":" + it->mRedisTablePrefix;
+      std::string sourceStr = contentSource.mType + " " + std::to_string(idx);
+      if (contentSource.mType == "redis")
+        sourceStr = "Redis:" + contentSource.mRedisAddress + ":" + std::to_string(contentSource.mRedisPort) + ":" + contentSource.mRedisTablePrefix;
 
       output << "                      <LI>";
       output << "                        <A href=\"/grid-admin?&target=grid-engine&page=producers&startProducerIndex=0&source=" << esc(sourceStr) << "&sourceIdx=" << idx << "\">" << esc(sourceStr) << "</A>\n";
@@ -2341,17 +2342,17 @@ bool Browser::page_luaFiles(SessionManagement::SessionInfo& session,const Spine:
     std::string fg = "#000000";
     std::string bg = "#FFFFFF";
 
-    for (auto it = luaFiles.begin(); it != luaFiles.end(); ++it)
+    for (auto & luaFile : luaFiles)
     {
-      const std::size_t hash = Fmi::hash(*it);
+      const std::size_t hash = Fmi::hash(luaFile);
       std::string hashStr = std::to_string(hash);
       if (mFilenames.find(hashStr) == mFilenames.end())
-        mFilenames.insert(std::pair<std::string,std::string>(hashStr,*it));
+        mFilenames.insert(std::pair<std::string,std::string>(hashStr,luaFile));
 
       fg = "#000000";
       bg = "#FFFFFF";
       output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << R"(;'" onmouseover="this.style='background:#FFFF00; color:#000000;';" onClick="getPage(this,parent,'/grid-admin?&target=grid-engine&page=luaFile&filename=)" << hash << "');\" >\n";
-      output << "<TD>"<< esc(*it) << "</TD>";
+      output << "<TD>"<< esc(luaFile) << "</TD>";
       output << "</TR>";
 
     }
@@ -2487,17 +2488,17 @@ bool Browser::page_parameterAliasFiles(SessionManagement::SessionInfo& session,c
     std::string fg = "#000000";
     std::string bg = "#FFFFFF";
 
-    for (auto it = parameterAliasFiles.begin(); it != parameterAliasFiles.end(); ++it)
+    for (auto & parameterAliasFile : parameterAliasFiles)
     {
-      const std::size_t hash = Fmi::hash(*it);
+      const std::size_t hash = Fmi::hash(parameterAliasFile);
       std::string hashStr = std::to_string(hash);
       if (mFilenames.find(hashStr) == mFilenames.end())
-        mFilenames.insert(std::pair<std::string,std::string>(hashStr,*it));
+        mFilenames.insert(std::pair<std::string,std::string>(hashStr,parameterAliasFile));
 
       fg = "#000000";
       bg = "#FFFFFF";
       output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << R"(;'" onmouseover="this.style='background:#FFFF00; color:#000000;';" onClick="getPage(this,parent,'/grid-admin?&target=grid-engine&page=parameterAliasFile&filename=)" << hash << "');\" >\n";
-      output << "<TD>"<< esc(*it) << "</TD>";
+      output << "<TD>"<< esc(parameterAliasFile) << "</TD>";
       output << "</TR>";
 
     }
@@ -2649,17 +2650,17 @@ bool Browser::page_producerMappingFiles(SessionManagement::SessionInfo& session,
     std::string fg = "#000000";
     std::string bg = "#FFFFFF";
 
-    for (auto it = producerMappingFiles.begin(); it != producerMappingFiles.end(); ++it)
+    for (auto & producerMappingFile : producerMappingFiles)
     {
-      const std::size_t hash = Fmi::hash(*it);
+      const std::size_t hash = Fmi::hash(producerMappingFile);
       std::string hashStr = std::to_string(hash);
       if (mFilenames.find(hashStr) == mFilenames.end())
-        mFilenames.insert(std::pair<std::string,std::string>(hashStr,*it));
+        mFilenames.insert(std::pair<std::string,std::string>(hashStr,producerMappingFile));
 
       fg = "#000000";
       bg = "#FFFFFF";
       output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << R"(;'" onmouseover="this.style='background:#FFFF00; color:#000000;';" onClick="getPage(this,parent,'/grid-admin?&target=grid-engine&page=producerMappingFile&filename=)" << hash << "');\" >\n";
-      output << "<TD>"<< esc(*it) << "</TD>";
+      output << "<TD>"<< esc(producerMappingFile) << "</TD>";
       output << "</TR>";
 
     }
@@ -2743,14 +2744,14 @@ bool Browser::page_parameterMappingFile(SessionManagement::SessionInfo& session,
     output << "</TR>";
 
     uint c = 0;
-    for (auto rec = records.begin(); rec != records.end(); ++rec)
+    for (auto & record : records)
     {
       c++;
       output << "<TR>";
       output << "<TD>" << c << "</TD>";
 
       uint f = 0;
-      for (auto field = rec->begin(); field != rec->end(); ++field)
+      for (auto field = record.begin(); field != record.end(); ++field)
       {
         f++;
         uint i = atoi(field->c_str());
@@ -2918,17 +2919,17 @@ bool Browser::page_parameterMappingFiles(SessionManagement::SessionInfo& session
     std::string fg = "#000000";
     std::string bg = "#FFFFFF";
 
-    for (auto it = parameterMappingFiles.begin(); it != parameterMappingFiles.end(); ++it)
+    for (auto & parameterMappingFile : parameterMappingFiles)
     {
-      const std::size_t hash = Fmi::hash(*it);
+      const std::size_t hash = Fmi::hash(parameterMappingFile);
       std::string hashStr = std::to_string(hash);
       if (mFilenames.find(hashStr) == mFilenames.end())
-        mFilenames.insert(std::pair<std::string,std::string>(hashStr,*it));
+        mFilenames.insert(std::pair<std::string,std::string>(hashStr,parameterMappingFile));
 
       fg = "#000000";
       bg = "#FFFFFF";
       output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << R"(;'" onmouseover="this.style='background:#FFFF00; color:#000000;';" onClick="getPage(this,parent,'/grid-admin?&target=grid-engine&page=parameterMappingFile&filename=)" << hash << "');\" >\n";
-      output << "<TD>"<< esc(*it) << "</TD>";
+      output << "<TD>"<< esc(parameterMappingFile) << "</TD>";
       output << "</TR>";
 
     }
@@ -3157,8 +3158,8 @@ bool Browser::page_contentServer_processingLog(SessionManagement::SessionInfo& s
       catch (...)
       {
       }
-      for (auto it=lines.begin(); it!=lines.end();++it)
-        output << esc(*it) << "\n";
+      for (auto & line : lines)
+        output << esc(line) << "\n";
 
       //includeFile(output,filename.c_str());
     }
@@ -3281,8 +3282,8 @@ bool Browser::page_contentServer_debugLog(SessionManagement::SessionInfo& sessio
       catch (...)
       {
       }
-      for (auto it=lines.rbegin(); it!=lines.rend();++it)
-        output << esc(*it) << "\n";
+      for (auto & line : std::ranges::reverse_view(lines))
+        output << esc(line) << "\n";
 
       //includeFile(output,filename.c_str());
     }
@@ -3405,8 +3406,8 @@ bool Browser::page_dataServer_processingLog(SessionManagement::SessionInfo& sess
       catch (...)
       {
       }
-      for (auto it=lines.begin(); it!=lines.end();++it)
-        output << esc(*it) << "\n";
+      for (auto & line : lines)
+        output << esc(line) << "\n";
 
       //includeFile(output,filename.c_str());
     }
@@ -3529,8 +3530,8 @@ bool Browser::page_dataServer_debugLog(SessionManagement::SessionInfo& session,c
       catch (...)
       {
       }
-      for (auto it=lines.rbegin(); it!=lines.rend();++it)
-        output << esc(*it) << "\n";
+      for (auto & line : std::ranges::reverse_view(lines))
+        output << esc(line) << "\n";
 
       //includeFile(output,filename.c_str());
     }
@@ -3653,8 +3654,8 @@ bool Browser::page_queryServer_processingLog(SessionManagement::SessionInfo& ses
       catch (...)
       {
       }
-      for (auto it=lines.begin(); it!=lines.end();++it)
-        output << esc(*it) << "\n";
+      for (auto & line : lines)
+        output << esc(line) << "\n";
 
       //includeFile(output,filename.c_str());
     }
@@ -3777,8 +3778,8 @@ bool Browser::page_queryServer_debugLog(SessionManagement::SessionInfo& session,
       catch (...)
       {
       }
-      for (auto it=lines.rbegin(); it!=lines.rend();++it)
-        output << esc(*it) << "\n";
+      for (auto & line : std::ranges::reverse_view(lines))
+        output << esc(line) << "\n";
 
       //includeFile(output,filename.c_str());
     }
@@ -3990,11 +3991,11 @@ void Browser::browserContent(SessionManagement::SessionInfo& session,std::ostrin
     output << "                    <OL>\n";
 
     uint idx = 0;
-    for (auto it = contentSources.begin(); it != contentSources.end(); ++it)
+    for (auto & contentSource : contentSources)
     {
-      std::string sourceStr = it->mType + " " + std::to_string(idx);
-      if (it->mType == "redis")
-        sourceStr = "Redis:" + it->mRedisAddress + ":" + std::to_string(it->mRedisPort) + ":" + it->mRedisTablePrefix;
+      std::string sourceStr = contentSource.mType + " " + std::to_string(idx);
+      if (contentSource.mType == "redis")
+        sourceStr = "Redis:" + contentSource.mRedisAddress + ":" + std::to_string(contentSource.mRedisPort) + ":" + contentSource.mRedisTablePrefix;
 
       output << "                      <LI>";
       output << "                        <A href=\"/grid-admin?&target=grid-engine&page=producers&startProducerIndex=0&source=" << esc(sourceStr) << "&sourceIdx=" << idx << "\">" << esc(sourceStr) << "</A>\n";

@@ -84,18 +84,18 @@ struct MetaData
     stream << space(level) << "- levelDescription    = " << levelDescription << "\n";
     stream << space(level) << "- levels              = " ;
 
-    for (auto a = levels.begin(); a != levels.end(); ++a)
-      stream << *a << " ";
+    for (int level : levels)
+      stream << level << " ";
 
     stream << "\n";
 
     stream << space(level) << "- times               = \n";
-    for (auto t = times.begin(); t != times.end(); ++t)
-      stream << space(level+2) << "* " << *t << "\n";
+    for (const auto & time : times)
+      stream << space(level+2) << "* " << time << "\n";
 
     stream << space(level) << "- parameters          = \n";
-    for (auto p = parameters.begin(); p != parameters.end(); ++p)
-      p->print(stream,level+2,optionFlags);
+    for (auto & parameter : parameters)
+      parameter.print(stream,level+2,optionFlags);
   }
 
 

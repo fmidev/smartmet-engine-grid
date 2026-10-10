@@ -119,6 +119,7 @@ rm -rf $RPM_BUILD_ROOT
 - Use = default and using declarations where clang-tidy suggests it, no functional changes
 - Use emplace and C++ standard library headers where clang-tidy suggests it, no functional changes
 - Use raw string literals and std::make_shared where clang-tidy suggests it, no functional changes
+- Use range-based for loops where clang-tidy suggests it, no functional changes
 
 * Wed Oct  7 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.7-1.fmi
 - Print the "Engine usage disabled" notice when the engine is disabled (it was unreachable)

@@ -89,9 +89,9 @@ void ParameterDetails::print(std::ostream& stream,uint level,uint optionFlags)
     stream << space(level) << "- mForecastType      = " << mForecastType << "\n";
     stream << space(level) << "- mForecastNumber    = " << mForecastNumber << "\n";
     stream << space(level) << "- mMappings          = \n";
-    for (auto m = mMappings.begin(); m != mMappings.end(); ++m)
+    for (auto & mMapping : mMappings)
     {
-      m->print(stream,level+2,optionFlags);
+      mMapping.print(stream,level+2,optionFlags);
     }
   }
   catch (...)
