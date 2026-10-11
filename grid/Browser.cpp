@@ -78,8 +78,7 @@ Browser::Browser()
 
 /*! \brief Engine: Destructor. */
 
-Browser::~Browser()
-= default;
+Browser::~Browser() = default;
 
 
 
