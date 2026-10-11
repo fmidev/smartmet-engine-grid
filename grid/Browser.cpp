@@ -4,7 +4,6 @@
 #include <macgyver/Hash.h>
 #include <spine/Convenience.h>
 #include <fstream>
-#include <ranges>
 
 
 namespace SmartMet
@@ -3282,8 +3281,8 @@ bool Browser::page_contentServer_debugLog(SessionManagement::SessionInfo& sessio
       catch (...)
       {
       }
-      for (auto& line : std::ranges::reverse_view(lines))
-        output << esc(line) << "\n";
+      for (auto it=lines.rbegin(); it!=lines.rend();++it)
+        output << esc(*it) << "\n";
 
       //includeFile(output,filename.c_str());
     }
@@ -3530,8 +3529,8 @@ bool Browser::page_dataServer_debugLog(SessionManagement::SessionInfo& session,c
       catch (...)
       {
       }
-      for (auto& line : std::ranges::reverse_view(lines))
-        output << esc(line) << "\n";
+      for (auto it=lines.rbegin(); it!=lines.rend();++it)
+        output << esc(*it) << "\n";
 
       //includeFile(output,filename.c_str());
     }
@@ -3778,8 +3777,8 @@ bool Browser::page_queryServer_debugLog(SessionManagement::SessionInfo& session,
       catch (...)
       {
       }
-      for (auto& line : std::ranges::reverse_view(lines))
-        output << esc(line) << "\n";
+      for (auto it=lines.rbegin(); it!=lines.rend();++it)
+        output << esc(*it) << "\n";
 
       //includeFile(output,filename.c_str());
     }

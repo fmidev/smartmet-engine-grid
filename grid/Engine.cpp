@@ -25,7 +25,6 @@
 #include <spine/Reactor.h>
 #include <chrono>
 #include <memory>
-#include <ranges>
 #include <thread>
 #include <unistd.h>
 
@@ -4382,9 +4381,9 @@ void Engine::getVerticalGrid(
 
     auto points = getIsocirclePoints(lon1, lat1, lon2, lat2, steps);
 
-    for (double level : std::ranges::reverse_view(levels1))
+    for (auto level = levels1.rbegin(); level != levels1.rend(); ++level)
     {
-      int lev = C_INT(level);
+      int lev = C_INT(*level);
       std::string levelSuffix = (geometryId > 0)
           ? (":" + std::to_string(geometryId) + ":3:" + std::to_string(lev))
           : ("::3:" + std::to_string(lev));
