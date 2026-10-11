@@ -377,7 +377,7 @@ Engine::Engine(const char* theConfigFile)
     std::vector<std::string> vec;
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingLevelSimplification", vec);
     for (auto& it : vec)
-      mParameterMapping_simplifiedLevelIdSet.insert(atoi(it.c_str()));
+      mParameterMapping_simplifiedLevelIdSet.insert(toInt32(it.c_str()));
 
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingUpdateFile.fmi", mParameterMappingDefinitions_autoFile_fmi);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingUpdateFile.newbase", mParameterMappingDefinitions_autoFile_newbase);
@@ -2058,17 +2058,17 @@ void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails) const
       QueryServer::ParameterMapping_vec mappings;
       if (parameterDetail.mLevelId > " " || parameterDetail.mLevel > " ")
       {
-        getParameterMappings(parameterDetail.mProducerName, parameterDetail.mOriginalParameter, atoi(parameterDetail.mGeometryId.c_str()), atoi(parameterDetail.mLevelId.c_str()),
-            atoi(parameterDetail.mLevel.c_str()), false, mappings);
+        getParameterMappings(parameterDetail.mProducerName, parameterDetail.mOriginalParameter, toInt32(parameterDetail.mGeometryId.c_str()), toInt32(parameterDetail.mLevelId.c_str()),
+            toInt32(parameterDetail.mLevel.c_str()), false, mappings);
         if (mappings.size() == 0 && parameterDetail.mLevel < " ")
         {
-          getParameterMappings(parameterDetail.mProducerName, parameterDetail.mOriginalParameter, atoi(parameterDetail.mGeometryId.c_str()), atoi(parameterDetail.mLevelId.c_str()), -1, false,
+          getParameterMappings(parameterDetail.mProducerName, parameterDetail.mOriginalParameter, toInt32(parameterDetail.mGeometryId.c_str()), toInt32(parameterDetail.mLevelId.c_str()), -1, false,
               mappings);
         }
       }
       else
       {
-        getParameterMappings(parameterDetail.mProducerName, parameterDetail.mOriginalParameter, atoi(parameterDetail.mGeometryId.c_str()), true, mappings);
+        getParameterMappings(parameterDetail.mProducerName, parameterDetail.mOriginalParameter, toInt32(parameterDetail.mGeometryId.c_str()), true, mappings);
       }
 
       for (auto& mapping : mappings)

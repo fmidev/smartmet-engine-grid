@@ -295,11 +295,11 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
 
       auto v = theRequest.getParameter("filePosition");
       if (v)
-        cInfo.mFilePosition = atoll(v->c_str());
+        cInfo.mFilePosition = toInt64(v->c_str());
 
       v = theRequest.getParameter("messageSize");
       if (v)
-        cInfo.mMessageSize = atoi(v->c_str());
+        cInfo.mMessageSize = toInt32(v->c_str());
 
       v = theRequest.getParameter("fmiParameterName");
       if (v)
@@ -307,56 +307,56 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
 
       v = theRequest.getParameter("fmiParameterId");
       if (v)
-        cInfo.mFmiParameterId = atoi(v->c_str());
+        cInfo.mFmiParameterId = toInt32(v->c_str());
 
       v = theRequest.getParameter("fmiParameterLevelId");
       if (v)
-        cInfo.mFmiParameterLevelId = atoi(v->c_str());
+        cInfo.mFmiParameterLevelId = toInt32(v->c_str());
 
       v = theRequest.getParameter("parameterLevel");
       if (v)
-        cInfo.mParameterLevel = atoi(v->c_str());
+        cInfo.mParameterLevel = toInt32(v->c_str());
 
       v = theRequest.getParameter("forecastType");
       if (v)
-        cInfo.mForecastType = atoi(v->c_str());
+        cInfo.mForecastType = toInt32(v->c_str());
 
       v = theRequest.getParameter("forecastNumber");
       if (v)
-        cInfo.mForecastNumber = atoi(v->c_str());
+        cInfo.mForecastNumber = toInt32(v->c_str());
 
       v = theRequest.getParameter("geometryId");
       if (v)
-        cInfo.mGeometryId = atoi(v->c_str());
+        cInfo.mGeometryId = toInt32(v->c_str());
 
 
       v = theRequest.getParameter("aggregationId");
       if (v)
-        cInfo.mAggregationId = atoi(v->c_str());
+        cInfo.mAggregationId = toInt32(v->c_str());
 
       v = theRequest.getParameter("aggregationPeriod");
       if (v)
-        cInfo.mAggregationPeriod = atoi(v->c_str());
+        cInfo.mAggregationPeriod = toInt32(v->c_str());
 
       v = theRequest.getParameter("processingTypeId");
       if (v)
-        cInfo.mProcessingTypeId = atoi(v->c_str());
+        cInfo.mProcessingTypeId = toInt32(v->c_str());
 
       v = theRequest.getParameter("processingTypeValue1");
       if (v)
-        cInfo.mProcessingTypeValue1 = atof(v->c_str());
+        cInfo.mProcessingTypeValue1 = toDouble(v->c_str());
 
       v = theRequest.getParameter("processingTypeValue2");
       if (v)
-        cInfo.mProcessingTypeValue2 = atof(v->c_str());
+        cInfo.mProcessingTypeValue2 = toDouble(v->c_str());
 
       v = theRequest.getParameter("flags");
       if (v)
-        cInfo.mFlags = atoi(v->c_str());
+        cInfo.mFlags = toInt32(v->c_str());
 
       v = theRequest.getParameter("sourceId");
       if (v)
-        cInfo.mSourceId = atoi(v->c_str());
+        cInfo.mSourceId = toInt32(v->c_str());
 
       v = theRequest.getParameter("forecastTime");
       if (v)
@@ -943,23 +943,23 @@ bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HT
 
       v = theRequest.getParameter("protocol");
       if (v)
-        fInfo.mProtocol = atoi(v->c_str());
+        fInfo.mProtocol = toInt32(v->c_str());
 
       v = theRequest.getParameter("serverType");
       if (v)
-        fInfo.mServerType = atoi(v->c_str());
+        fInfo.mServerType = toInt32(v->c_str());
 
       v = theRequest.getParameter("type");
       if (v)
-        fInfo.mFileType = atoi(v->c_str());
+        fInfo.mFileType = toInt32(v->c_str());
 
       v = theRequest.getParameter("flags");
       if (v)
-        fInfo.mFlags = atoi(v->c_str());
+        fInfo.mFlags = toInt32(v->c_str());
 
       v = theRequest.getParameter("sourceId");
       if (v)
-        fInfo.mSourceId = atoi(v->c_str());
+        fInfo.mSourceId = toInt32(v->c_str());
 
       v = theRequest.getParameter("deletionTime");
       if (v)
@@ -1384,15 +1384,15 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
 
       v = theRequest.getParameter("flags");
       if (v)
-        gInfo.mFlags = atoi(v->c_str());
+        gInfo.mFlags = toInt32(v->c_str());
 
       v = theRequest.getParameter("sourceId");
       if (v)
-        gInfo.mSourceId = atoi(v->c_str());
+        gInfo.mSourceId = toInt32(v->c_str());
 
       v = theRequest.getParameter("status");
       if (v)
-        gInfo.mStatus = atoi(v->c_str());
+        gInfo.mStatus = toInt32(v->c_str());
 
       v = theRequest.getParameter("deletionTime");
       if (v)
@@ -1722,7 +1722,7 @@ bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine
     uint mode = 0;
     auto modeStr = theRequest.getParameter("mode");
     if (modeStr)
-      mode = atoi(modeStr->c_str());
+      mode = toInt32(modeStr->c_str());
 
 
 
@@ -1742,11 +1742,11 @@ bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine
 
       v = theRequest.getParameter("flags");
       if (v)
-        pInfo.mFlags = atoi(v->c_str());
+        pInfo.mFlags = toInt32(v->c_str());
 
       v = theRequest.getParameter("sourceId");
       if (v)
-        pInfo.mSourceId = atoi(v->c_str());
+        pInfo.mSourceId = toInt32(v->c_str());
 
       switch (mode)
       {
@@ -2753,7 +2753,7 @@ bool Browser::page_parameterMappingFile(SessionManagement::SessionInfo& session,
       for (auto field = record.begin(); field != record.end(); ++field)
       {
         f++;
-        uint i = atoi(field->c_str());
+        uint i = toUInt32(field->c_str());
         switch (f)
         {
           case 3:
@@ -3084,7 +3084,7 @@ bool Browser::page_contentServer_processingLog(SessionManagement::SessionInfo& s
     uint mode = 0;
     auto modeStr = theRequest.getParameter("mode");
     if (modeStr)
-      mode = atoi(modeStr->c_str());
+      mode = toInt32(modeStr->c_str());
 
     output << "<HTML>\n";
     output << "<SCRIPT>\n";
@@ -3208,7 +3208,7 @@ bool Browser::page_contentServer_debugLog(SessionManagement::SessionInfo& sessio
     uint mode = 0;
     auto modeStr = theRequest.getParameter("mode");
     if (modeStr)
-      mode = atoi(modeStr->c_str());
+      mode = toInt32(modeStr->c_str());
 
     output << "<HTML>\n";
     output << "<SCRIPT>\n";
@@ -3332,7 +3332,7 @@ bool Browser::page_dataServer_processingLog(SessionManagement::SessionInfo& sess
     uint mode = 0;
     auto modeStr = theRequest.getParameter("mode");
     if (modeStr)
-      mode = atoi(modeStr->c_str());
+      mode = toInt32(modeStr->c_str());
 
     output << "<HTML>\n";
     output << "<SCRIPT>\n";
@@ -3456,7 +3456,7 @@ bool Browser::page_dataServer_debugLog(SessionManagement::SessionInfo& session,c
     uint mode = 0;
     auto modeStr = theRequest.getParameter("mode");
     if (modeStr)
-      mode = atoi(modeStr->c_str());
+      mode = toInt32(modeStr->c_str());
 
     output << "<HTML>\n";
     output << "<SCRIPT>\n";
@@ -3580,7 +3580,7 @@ bool Browser::page_queryServer_processingLog(SessionManagement::SessionInfo& ses
     uint mode = 0;
     auto modeStr = theRequest.getParameter("mode");
     if (modeStr)
-      mode = atoi(modeStr->c_str());
+      mode = toInt32(modeStr->c_str());
 
     output << "<HTML>\n";
     output << "<SCRIPT>\n";
@@ -3704,7 +3704,7 @@ bool Browser::page_queryServer_debugLog(SessionManagement::SessionInfo& session,
     uint mode = 0;
     auto modeStr = theRequest.getParameter("mode");
     if (modeStr)
-      mode = atoi(modeStr->c_str());
+      mode = toInt32(modeStr->c_str());
 
     output << "<HTML>\n";
     output << "<SCRIPT>\n";
