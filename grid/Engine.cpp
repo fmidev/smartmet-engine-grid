@@ -4130,9 +4130,16 @@ void Engine::updateMappings(
       file.close();
 
     if (!filesEqual(tmpMappingFile.c_str(), mappingFile.c_str()))
-      rename(tmpMappingFile.c_str(), mappingFile.c_str());
+    {
+      if (rename(tmpMappingFile.c_str(), mappingFile.c_str()) != 0)
+      {
+        Fmi::Exception exception(BCP, "Failed to replace the mapping file");
+        exception.addParameter("Mapping file", mappingFile);
+        throw exception;
+      }
+    }
     else
-      remove(tmpMappingFile.c_str());
+      (void)remove(tmpMappingFile.c_str());
   }
   catch (...)
   {
