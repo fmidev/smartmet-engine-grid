@@ -103,7 +103,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     ~Engine() override;
 
     bool                browserRequest(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
-    void                browserContent(SessionManagement::SessionInfo& session,std::ostringstream& output);
+    void                browserContent(const SessionManagement::SessionInfo& session,std::ostringstream& output);
 
     int                 executeQuery(QueryServer::Query& query) const;
     Query_sptr          executeQuery(std::shared_ptr<QueryServer::Query> query) const;
@@ -170,7 +170,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                getParameterDetails(
                           const std::string& producerName,
                           const std::string& parameterName,
-                          std::string& level,
+                          const std::string& level,
                           ParameterDetails_vec& parameterDetails) const;
 
     void                mapParameterDetails(ParameterDetails_vec& parameterDetails) const;
@@ -312,10 +312,10 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
   private:
 
-    ContentTable        requestGridGenerationInfo(const Spine::HTTP::Request &theRequest);
-    ContentTable        requestGridQdGenerationInfo(const Spine::HTTP::Request &theRequest);
-    ContentTable        requestGridParameterInfo(const Spine::HTTP::Request &theRequest);
-    ContentTable        requestGridProducerInfo(const Spine::HTTP::Request &theRequest);
+    ContentTable        requestGridGenerationInfo(const Spine::HTTP::Request &theRequest) const;
+    ContentTable        requestGridQdGenerationInfo(const Spine::HTTP::Request &theRequest) const;
+    ContentTable        requestGridParameterInfo(const Spine::HTTP::Request &theRequest) const;
+    ContentTable        requestGridProducerInfo(const Spine::HTTP::Request &theRequest) const;
 
   private:
 

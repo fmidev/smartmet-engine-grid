@@ -1183,7 +1183,7 @@ bool Engine::browserRequest(SessionManagement::SessionInfo& session,const Spine:
 
 /*! \brief Engine: Browser content. */
 
-void Engine::browserContent(SessionManagement::SessionInfo& session,std::ostringstream& output)
+void Engine::browserContent(const SessionManagement::SessionInfo& session,std::ostringstream& output)
 {
   FUNCTION_TRACE
   try
@@ -1901,7 +1901,7 @@ void Engine::getParameterDetails(const std::string& producerName, const std::str
 
 /*! \brief Engine: Get parameter details. */
 
-void Engine::getParameterDetails(const std::string& producerName, const std::string& parameterName, std::string& level, ParameterDetails_vec& parameterDetails) const
+void Engine::getParameterDetails(const std::string& producerName, const std::string& parameterName, const std::string& level, ParameterDetails_vec& parameterDetails) const
 {
   FUNCTION_TRACE
   try
@@ -4531,20 +4531,6 @@ void Engine::setDem(std::shared_ptr<Fmi::DEM> dem)
 }
 
 
-inline bool setBit(uchar *_bits,uint _pos)
-{
-  uint bt = _pos / 8;
-  uint bit = _pos % 8;
-
-  uchar v = 1 << bit;
-
-  if (_bits[bt] & v)
-    return true;
-
-  return false;
-}
-
-
 /*! \brief Engine: Set land cover. */
 
 void Engine::setLandCover(std::shared_ptr<Fmi::LandCover> landCover)
@@ -4587,7 +4573,7 @@ void Engine::startUpdateProcessing()
 
 /*! \brief Engine: Request grid generation info. */
 
-ContentTable  Engine::requestGridGenerationInfo(const Spine::HTTP::Request &theRequest)
+ContentTable  Engine::requestGridGenerationInfo(const Spine::HTTP::Request &theRequest) const
 try
 {
   auto producer = theRequest.getParameter("producer");
@@ -4603,7 +4589,7 @@ catch (...)
 
 /*! \brief Engine: Request grid qd generation info. */
 
-ContentTable  Engine::requestGridQdGenerationInfo(const Spine::HTTP::Request &theRequest)
+ContentTable  Engine::requestGridQdGenerationInfo(const Spine::HTTP::Request &theRequest) const
 try
 {
   auto producer = theRequest.getParameter("producer");
@@ -4619,7 +4605,7 @@ catch (...)
 
 /*! \brief Engine: Request grid parameter info. */
 
-ContentTable  Engine::requestGridParameterInfo(const Spine::HTTP::Request &theRequest)
+ContentTable  Engine::requestGridParameterInfo(const Spine::HTTP::Request &theRequest) const
 try
 {
   auto producer = theRequest.getParameter("producer");
@@ -4634,7 +4620,7 @@ catch (...)
 
 /*! \brief Engine: Request grid producer info. */
 
-ContentTable  Engine::requestGridProducerInfo(const Spine::HTTP::Request &theRequest)
+ContentTable  Engine::requestGridProducerInfo(const Spine::HTTP::Request &theRequest) const
 try
 {
   auto producer = theRequest.getParameter("producer");

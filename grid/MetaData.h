@@ -24,7 +24,7 @@ struct Parameter
     Parameter(const Parameter &param) = default;
     Parameter &operator=(const Parameter &param) = default;
 
-    void print(std::ostream& stream,uint level,uint optionFlags)
+    void print(std::ostream& stream,uint level,uint optionFlags) const
     {
       stream << space(level) << "Parameter\n";
       stream << space(level) << "- parameterId          = " << parameterId << "\n";

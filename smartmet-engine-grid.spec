@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 26.10.11
+Version: 26.10.13
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -22,9 +22,9 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
-BuildRequires: smartmet-library-spine-devel >= 26.10.11
-BuildRequires: smartmet-library-grid-content-devel >= 26.10.11
-BuildRequires: smartmet-library-grid-files-devel >= 26.10.11
+BuildRequires: smartmet-library-spine-devel >= 26.10.13
+BuildRequires: smartmet-library-grid-content-devel >= 26.10.13
+BuildRequires: smartmet-library-grid-files-devel >= 26.10.13
 BuildRequires: smartmet-library-macgyver-devel >= 26.10.11
 BuildRequires: make
 BuildRequires: omniORB-devel >= 4.3.0
@@ -34,9 +34,9 @@ BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 BuildRequires: postgresql15-devel
 Requires: %{smartmet_boost}-thread
-Requires: smartmet-library-grid-content >= 26.10.11
-Requires: smartmet-library-grid-files >= 26.10.11
-Requires: smartmet-library-spine >= 26.10.11
+Requires: smartmet-library-grid-content >= 26.10.13
+Requires: smartmet-library-grid-files >= 26.10.13
+Requires: smartmet-library-spine >= 26.10.13
 Requires: smartmet-library-macgyver >= 26.10.11
 Requires: omniORB-devel
 #TestRequires: %{smartmet_boost}-devel
@@ -44,10 +44,10 @@ Requires: omniORB-devel
 #TestRequires: make
 #TestRequires: gdal312-devel
 #TestRequires: omniORB-devel
-#TestRequires: smartmet-library-grid-content-devel >= 26.10.11
-#TestRequires: smartmet-library-grid-files-devel >= 26.10.11
+#TestRequires: smartmet-library-grid-content-devel >= 26.10.13
+#TestRequires: smartmet-library-grid-files-devel >= 26.10.13
 #TestRequires: smartmet-library-newbase-devel
-#TestRequires: smartmet-library-spine-devel >= 26.10.11
+#TestRequires: smartmet-library-spine-devel >= 26.10.13
 #TestRequires: smartmet-library-grid-files-test >= 26.10.11
 #TestRequires: smartmet-test-data
 
@@ -82,9 +82,9 @@ SmartMet grid engine
 Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
-Requires: smartmet-library-grid-content-devel >= 26.10.11
+Requires: smartmet-library-grid-content-devel >= 26.10.13
 Requires: %{SPECNAME} = %{version}-%{release}
-Requires: smartmet-library-spine-devel >= 26.10.11
+Requires: smartmet-library-spine-devel >= 26.10.13
 Requires: smartmet-library-macgyver-devel >= 26.10.11
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
@@ -113,6 +113,11 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Tue Oct 13 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.13-1.fmi
+- Declare member functions and parameters const where nothing is modified (const correctness), no functional changes
+- Removed the unused setBit helper function
+- Requires 26.10.13 versions of spine, grid-files, grid-content due to their ABI changes
+
 * Sun Oct 11 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.11-1.fmi
 - Failed file writes, closes and seeks are now reported instead of being ignored
 - Use auto and return {} where clang-tidy suggests it, no functional changes
