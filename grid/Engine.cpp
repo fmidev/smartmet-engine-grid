@@ -1318,7 +1318,6 @@ ContentServer_sptr Engine::getContentServer_sptr() const
   {
     if (mEnabled && mContentCacheEnabled)
       return mContentServerCache;
-    else
     if (!mContentServers.empty())
       return mContentServers[0];
 
