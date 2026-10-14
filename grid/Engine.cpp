@@ -24,6 +24,7 @@
 #include <spine/Convenience.h>
 #include <spine/Reactor.h>
 #include <chrono>
+#include <functional>
 #include <thread>
 #include <unistd.h>
 
@@ -466,10 +467,10 @@ void Engine::init()
     initLogs(cServer, dServer, qServer);
 
     // Waiting until content server is ready (i.e. all requested files are cached)
-    while (!mShutdownRequested  &&  !cServer->isReady())
+    while (!mShutdownRequested  &&  !Spine::Reactor::isShuttingDown()  &&  !cServer->isReady())
       boost::this_thread::sleep(boost::posix_time::seconds(1));
 
-    if (mShutdownRequested)
+    if (mShutdownRequested  ||  Spine::Reactor::isShuttingDown())
       return;
 
     updateProducerAndGenerationList();
@@ -1109,26 +1110,42 @@ void Engine::shutdown()
 
     std::cout << "  -- Shutdown requested (grid engine)\n";
 
+    // Each step is guarded separately: a failing step must not prevent the remaining ones, and
+    // mShutdownFinished must be set in any case, otherwise the destructor aborts.
+    const auto step = [](const char* name, const std::function<void()>& func)
+    {
+      try
+      {
+        func();
+      }
+      catch (...)
+      {
+        Fmi::Exception exception(BCP, "Grid engine shutdown step failed!", nullptr);
+        exception.addParameter("Step", name);
+        exception.printError();
+      }
+    };
+
     if (mQueryServer)
     {
-      mQueryServer->shutdown();
+      step("query server", [this]() { mQueryServer->shutdown(); });
       boost::this_thread::sleep(boost::posix_time::seconds(1));
     }
 
     if (mDataServer)
     {
-      mDataServer->shutdown();
+      step("data server", [this]() { mDataServer->shutdown(); });
       boost::this_thread::sleep(boost::posix_time::seconds(1));
     }
 
     if (mContentServerCache)
-      mContentServerCache->shutdown();
+      step("content server cache", [this]() { mContentServerCache->shutdown(); });
 
     if (mContentServerMergeImplementation)
-      mContentServerMergeImplementation->shutdown();
+      step("content server merge", [this]() { mContentServerMergeImplementation->shutdown(); });
 
     for (auto it = mContentServers.begin(); it != mContentServers.end(); ++it)
-      (*it)->shutdown();
+      step("content server", [it]() { (*it)->shutdown(); });
 
     //if (mContentServer)
     //  mContentServer->shutdown();
