@@ -69,7 +69,7 @@ struct ContentSource
   int         mRedisSecondaryPort = 0;                      //!< Redis secondary port (0 = disabled).
   bool        mRedisLockEnabled = false;                    //!< Whether to use Redis-level distributed locking.
   bool        mRedisReloadRequired = true;                  //!< Whether a full reload is required on reconnect.
-  std::string mRedisPassword = "";                          //!< Redis primary host address.
+  std::string mRedisPassword;                          //!< Redis primary host address.
   std::string mCorbaIor;                                    //!< CORBA IOR string when type is "corba".
   std::string mHttpUrl;                                     //!< Base URL when type is "http".
   std::string mPrimaryConnectionString;                     //!< Primary PostgreSQL connection string when type is "postgresql".
@@ -317,7 +317,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     ContentTable        requestGridParameterInfo(const Spine::HTTP::Request &theRequest) const;
     ContentTable        requestGridProducerInfo(const Spine::HTTP::Request &theRequest) const;
 
-  private:
+  
 
     bool                mEnabled;                             //!< Whether the engine is operational (false disables all service calls).
 

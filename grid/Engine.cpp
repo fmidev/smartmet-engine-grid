@@ -46,7 +46,9 @@ namespace Engine
 {
 namespace Grid
 {
-static void* gridEngine_updateThread(void* arg)
+namespace
+{
+void* gridEngine_updateThread(void* arg)
 {
   Fmi::set_thread_name("upd-grid");
   auto* engine = static_cast<Engine*>(arg);
@@ -74,6 +76,7 @@ static void* gridEngine_updateThread(void* arg)
     }
   }
 }
+}  // namespace
 
 /*! \brief Engine: Constructor. */
 
@@ -811,37 +814,37 @@ void Engine::initLogs(ContentServer::ServiceInterface* cServer, DataServer::Serv
 {
   try
   {
-    if (mContentServerProcessingLogFile.length() > 0)
+    if (!mContentServerProcessingLogFile.empty())
     {
       mContentServerProcessingLog.init(mContentServerProcessingLogEnabled, mContentServerProcessingLogFile.c_str(), mContentServerProcessingLogMaxSize, mContentServerProcessingLogTruncateSize);
       cServer->setProcessingLog(&mContentServerProcessingLog);
     }
 
-    if (mContentServerDebugLogFile.length() > 0)
+    if (!mContentServerDebugLogFile.empty())
     {
       mContentServerDebugLog.init(mContentServerDebugLogEnabled, mContentServerDebugLogFile.c_str(), mContentServerDebugLogMaxSize, mContentServerDebugLogTruncateSize);
       cServer->setDebugLog(&mContentServerDebugLog);
     }
 
-    if (mDataServerProcessingLogFile.length() > 0)
+    if (!mDataServerProcessingLogFile.empty())
     {
       mDataServerProcessingLog.init(mDataServerProcessingLogEnabled, mDataServerProcessingLogFile.c_str(), mDataServerProcessingLogMaxSize, mDataServerProcessingLogTruncateSize);
       dServer->setProcessingLog(&mDataServerProcessingLog);
     }
 
-    if (mDataServerDebugLogFile.length() > 0)
+    if (!mDataServerDebugLogFile.empty())
     {
       mDataServerDebugLog.init(mDataServerDebugLogEnabled, mDataServerDebugLogFile.c_str(), mDataServerDebugLogMaxSize, mDataServerDebugLogTruncateSize);
       dServer->setDebugLog(&mDataServerDebugLog);
     }
 
-    if (mQueryServerProcessingLogFile.length() > 0)
+    if (!mQueryServerProcessingLogFile.empty())
     {
       mQueryServerProcessingLog.init(mQueryServerProcessingLogEnabled, mQueryServerProcessingLogFile.c_str(), mQueryServerProcessingLogMaxSize, mQueryServerProcessingLogTruncateSize);
       qServer->setProcessingLog(&mQueryServerProcessingLog);
     }
 
-    if (mQueryServerDebugLogFile.length() > 0)
+    if (!mQueryServerDebugLogFile.empty())
     {
       mQueryServerDebugLog.init(mQueryServerDebugLogEnabled, mQueryServerDebugLogFile.c_str(), mQueryServerDebugLogMaxSize, mQueryServerDebugLogTruncateSize);
       qServer->setDebugLog(&mQueryServerDebugLog);
@@ -1316,7 +1319,7 @@ ContentServer_sptr Engine::getContentServer_sptr() const
     if (mEnabled && mContentCacheEnabled)
       return mContentServerCache;
     else
-    if (mContentServers.size())
+    if (!mContentServers.empty())
       return mContentServers[0];
 
     ContentServer_sptr sptr;
@@ -1560,7 +1563,7 @@ void Engine::getProducerNameList(const std::string& mappingName, std::vector<std
       nameList.emplace_back(partList[0]);
     }
 
-    if (nameList.size() == 0)
+    if (nameList.empty())
       nameList.emplace_back(mappingName);
   }
   catch (...)
@@ -1637,7 +1640,7 @@ UInt64 Engine::getProducerHash(std::string producerName) const
     UInt64 hash = 0;
     std::vector<std::string> nameList;
     getProducerNameList(producerName,nameList);
-    if (nameList.size() > 0)
+    if (!nameList.empty())
     {
       for (auto& it : nameList)
       {
@@ -1728,7 +1731,7 @@ void Engine::getParameterDetails(const std::string& aliasName, ParameterDetails_
       parameterDetails.emplace_back(p);
     }
 
-    if (parameterDetails.size() == 0)
+    if (parameterDetails.empty())
     {
       ParameterDetails p;
       p.mOriginalProducer = aliasName;
@@ -1879,7 +1882,7 @@ void Engine::getParameterDetails(const std::string& producerName, const std::str
       parameterDetails.emplace_back(p);
     }
 
-    if (parameterDetails.size() == 0)
+    if (parameterDetails.empty())
     {
       ParameterDetails p;
       p.mOriginalProducer = producerName;
@@ -2077,7 +2080,7 @@ void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails) const
       {
         getParameterMappings(parameterDetail.mProducerName, parameterDetail.mOriginalParameter, toInt32(parameterDetail.mGeometryId.c_str()), toInt32(parameterDetail.mLevelId.c_str()),
             toInt32(parameterDetail.mLevel.c_str()), false, mappings);
-        if (mappings.size() == 0 && parameterDetail.mLevel < " ")
+        if (mappings.empty() && parameterDetail.mLevel < " ")
         {
           getParameterMappings(parameterDetail.mProducerName, parameterDetail.mOriginalParameter, toInt32(parameterDetail.mGeometryId.c_str()), toInt32(parameterDetail.mLevelId.c_str()), -1, false,
               mappings);
@@ -2342,7 +2345,7 @@ ContentTable Engine::getGenerationInfo(std::optional<std::string> producer,std::
 
                 std::set<T::GeometryId> geometryIdList;
                 contentServer->getContentGeometryIdListByGenerationId(0,gInfo->mGenerationId,geometryIdList);
-                if (geometryIdList.size() > 0)
+                if (!geometryIdList.empty())
                 {
                   for (int gi : geometryIdList)
                   {
@@ -2386,7 +2389,7 @@ ContentTable Engine::getGenerationInfo(std::optional<std::string> producer,std::
                         mf.getMappingsByParamKey(info->mName,T::ParamKeyTypeValue::FMI_NAME,*pk,-1,-1,-1,mappings);
                       }
 
-                      if (mappings.size() > 0)
+                      if (!mappings.empty())
                       {
                         for (auto& mapping : mappings)
                         {
@@ -2565,7 +2568,7 @@ ContentTable Engine::getExtGenerationInfo(std::optional<std::string> producer,st
 
                   std::set<T::GeometryId> geometryIdList;
                   contentServer->getContentGeometryIdListByGenerationId(0,gInfo->mGenerationId,geometryIdList);
-                  if (geometryIdList.size() > 0)
+                  if (!geometryIdList.empty())
                   {
                     for (int gi : geometryIdList)
                     {
@@ -2663,7 +2666,7 @@ ContentTable Engine::getExtGenerationInfo(std::optional<std::string> producer,st
                         mf.getMappingsByParamKey(pInfo->mName,T::ParamKeyTypeValue::FMI_NAME,pk,-1,-1,-1,mappings);
                       }
 
-                      if (mappings.size() > 0)
+                      if (!mappings.empty())
                       {
                         for (auto& mapping : mappings)
                         {
@@ -2869,7 +2872,7 @@ std::list<MetaData> Engine::getEngineMetadata(const char *producerName) const
         mGenerationInfoList.getGenerationInfoListByProducerId(pInfo->mProducerId, generationList);
 
         uint glen = generationList.getLength();
-        if (glen > 0  && levelIdList.size() > 0)
+        if (glen > 0  && !levelIdList.empty())
         {
           generationList.sort(T::GenerationInfo::ComparisonMethod::analysisTime);
 
@@ -2889,7 +2892,7 @@ std::list<MetaData> Engine::getEngineMetadata(const char *producerName) const
               {
                 std::set<T::GeometryId> geometryIdList;
                 contentServer->getContentGeometryIdListByGenerationId(0,gInfo->mGenerationId,geometryIdList);
-                if (geometryIdList.size() > 0)
+                if (!geometryIdList.empty())
                 {
                   for (int gi : geometryIdList)
                   {
@@ -3244,7 +3247,7 @@ void Engine::getProducerParameterLevelList(const std::string& producerName, T::P
           }
         }
 
-        if (levels.size() > 0)
+        if (!levels.empty())
           return;
       }
     }
@@ -3289,7 +3292,7 @@ void Engine::getProducerParameterLevelIdList(const std::string& producerName, st
           }
         }
 
-        if (levelIdList.size() > 0)
+        if (!levelIdList.empty())
           return;
       }
     }
@@ -3834,6 +3837,8 @@ std::ofstream Engine::openMappingFile(const std::string& mappingFile)
 
 
 
+namespace
+{
 bool filesEqual(const char *filename1,const char *filename2)
 {
   FUNCTION_TRACE
@@ -3868,6 +3873,7 @@ bool filesEqual(const char *filename1,const char *filename2)
     throw exception;
   }
 }
+}  // namespace
 
 
 
@@ -4102,7 +4108,7 @@ void Engine::updateMappings(
                     {
                       QueryServer::ParameterMapping_vec vec;
                       it->getMappings(m.mProducerName, m.mParameterName, m.mGeometryId, true, vec);
-                      if (vec.size() > 0)
+                      if (!vec.empty())
                       {
                         searchEnabled = true;
                       }
@@ -4322,8 +4328,8 @@ void Engine::getVerticalGrid(
     const std::string& heightProducerName,
     const std::string& heightParameter,
     int geometryId,
-    int forecastType,
-    int forecastNumber,
+    int /*forecastType*/,
+    int /*forecastNumber*/,
     short areaInterpolationMethod,
     short timeInterpolationMethod,
     std::vector<T::Coordinate>& coordinates,
@@ -4381,7 +4387,7 @@ void Engine::getVerticalGrid(
     }
 
     getProducerParameterLevelList(valueProducerName, 3, 1, levels1);
-    if (levels1.size() == 0)
+    if (levels1.empty())
     {
       Fmi::Exception exception(BCP, "Cannot find valid levels for the value parameter!");
       exception.addParameter("ValueProducer", valueProducerName);
@@ -4389,7 +4395,7 @@ void Engine::getVerticalGrid(
     }
 
     getProducerParameterLevelList(heightProducerName, 3, 1, levels2);
-    if (levels2.size() == 0)
+    if (levels2.empty())
     {
       Fmi::Exception exception(BCP, "Cannot find valid levels for the height parameter!");
       exception.addParameter("HeightProducer", heightProducerName);

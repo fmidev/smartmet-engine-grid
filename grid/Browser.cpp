@@ -164,7 +164,7 @@ bool Browser::includeFile(std::ostringstream& output,const char *filename)
 
 /*! \brief Engine: Update session parameters. */
 
-void Browser::updateSessionParameters(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
+void Browser::updateSessionParameters(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& /*theResponse*/)
 {
   try
   {
@@ -1983,7 +1983,7 @@ bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine
 
 /*! \brief Engine: Page content information. */
 
-bool Browser::page_contentInformation(const SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
+bool Browser::page_contentInformation(const SessionManagement::SessionInfo& /*session*/,const Spine::HTTP::Request& /*theRequest*/,Spine::HTTP::Response& theResponse)
 {
   try
   {
@@ -2044,7 +2044,7 @@ bool Browser::page_contentInformation(const SessionManagement::SessionInfo& sess
 
 /*! \brief Engine: Page content server. */
 
-bool Browser::page_contentServer(const SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
+bool Browser::page_contentServer(const SessionManagement::SessionInfo& /*session*/,const Spine::HTTP::Request& /*theRequest*/,Spine::HTTP::Response& theResponse)
 {
   try
   {
@@ -2120,7 +2120,7 @@ bool Browser::page_contentServer(const SessionManagement::SessionInfo& session,c
 
 /*! \brief Engine: Page data server. */
 
-bool Browser::page_dataServer(const SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
+bool Browser::page_dataServer(const SessionManagement::SessionInfo& /*session*/,const Spine::HTTP::Request& /*theRequest*/,Spine::HTTP::Response& theResponse)
 {
   try
   {
@@ -2169,7 +2169,7 @@ bool Browser::page_dataServer(const SessionManagement::SessionInfo& session,cons
 
 /*! \brief Engine: Page query server. */
 
-bool Browser::page_queryServer(const SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
+bool Browser::page_queryServer(const SessionManagement::SessionInfo& /*session*/,const Spine::HTTP::Request& /*theRequest*/,Spine::HTTP::Response& theResponse)
 {
   try
   {
@@ -2218,7 +2218,7 @@ bool Browser::page_queryServer(const SessionManagement::SessionInfo& session,con
 
 /*! \brief Engine: Page lua file. */
 
-bool Browser::page_luaFile(const SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
+bool Browser::page_luaFile(const SessionManagement::SessionInfo& /*session*/,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
   {
@@ -2275,7 +2275,7 @@ bool Browser::page_luaFile(const SessionManagement::SessionInfo& session,const S
 
 /*! \brief Engine: Page lua files. */
 
-bool Browser::page_luaFiles(const SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
+bool Browser::page_luaFiles(const SessionManagement::SessionInfo& /*session*/,const Spine::HTTP::Request& /*theRequest*/,Spine::HTTP::Response& theResponse)
 {
   try
   {
@@ -2379,7 +2379,7 @@ bool Browser::page_luaFiles(const SessionManagement::SessionInfo& session,const 
 
 /*! \brief Engine: Page parameter alias file. */
 
-bool Browser::page_parameterAliasFile(const SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
+bool Browser::page_parameterAliasFile(const SessionManagement::SessionInfo& /*session*/,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
   {
@@ -2435,7 +2435,7 @@ bool Browser::page_parameterAliasFile(const SessionManagement::SessionInfo& sess
 
 /*! \brief Engine: Page parameter alias files. */
 
-bool Browser::page_parameterAliasFiles(const SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
+bool Browser::page_parameterAliasFiles(const SessionManagement::SessionInfo& /*session*/,const Spine::HTTP::Request& /*theRequest*/,Spine::HTTP::Response& theResponse)
 {
   try
   {
@@ -2523,7 +2523,7 @@ bool Browser::page_parameterAliasFiles(const SessionManagement::SessionInfo& ses
 
 /*! \brief Engine: Page producer mapping file. */
 
-bool Browser::page_producerMappingFile(const SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
+bool Browser::page_producerMappingFile(const SessionManagement::SessionInfo& /*session*/,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
   {
@@ -2579,7 +2579,7 @@ bool Browser::page_producerMappingFile(const SessionManagement::SessionInfo& ses
 
 /*! \brief Engine: Page producer mapping files. */
 
-bool Browser::page_producerMappingFiles(const SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
+bool Browser::page_producerMappingFiles(const SessionManagement::SessionInfo& /*session*/,const Spine::HTTP::Request& /*theRequest*/,Spine::HTTP::Response& theResponse)
 {
   try
   {
@@ -2685,7 +2685,7 @@ bool Browser::page_producerMappingFiles(const SessionManagement::SessionInfo& se
 
 /*! \brief Engine: Page parameter mapping file. */
 
-bool Browser::page_parameterMappingFile(const SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
+bool Browser::page_parameterMappingFile(const SessionManagement::SessionInfo& /*session*/,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
 {
   try
   {
@@ -2820,7 +2820,7 @@ bool Browser::page_parameterMappingFile(const SessionManagement::SessionInfo& se
 
 /*! \brief Engine: Page parameter mapping files. */
 
-bool Browser::page_parameterMappingFiles(const SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
+bool Browser::page_parameterMappingFiles(const SessionManagement::SessionInfo& /*session*/,const Spine::HTTP::Request& /*theRequest*/,Spine::HTTP::Response& theResponse)
 {
   try
   {
@@ -2954,7 +2954,7 @@ bool Browser::page_parameterMappingFiles(const SessionManagement::SessionInfo& s
 
 /*! \brief Engine: Page producer file. */
 
-bool Browser::page_producerFile(const SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
+bool Browser::page_producerFile(const SessionManagement::SessionInfo& /*session*/,const Spine::HTTP::Request& /*theRequest*/,Spine::HTTP::Response& theResponse)
 {
   try
   {
@@ -3016,7 +3016,7 @@ bool Browser::page_producerFile(const SessionManagement::SessionInfo& session,co
 
 /*! \brief Engine: Page configuration file. */
 
-bool Browser::page_configurationFile(const SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
+bool Browser::page_configurationFile(const SessionManagement::SessionInfo& /*session*/,const Spine::HTTP::Request& /*theRequest*/,Spine::HTTP::Response& theResponse)
 {
   try
   {
@@ -3807,7 +3807,7 @@ bool Browser::page_queryServer_debugLog(SessionManagement::SessionInfo& session,
 
 /*! \brief Engine: Page configuration. */
 
-bool Browser::page_configuration(const SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
+bool Browser::page_configuration(const SessionManagement::SessionInfo& /*session*/,const Spine::HTTP::Request& /*theRequest*/,Spine::HTTP::Response& theResponse)
 {
   try
   {
@@ -3863,7 +3863,7 @@ bool Browser::page_configuration(const SessionManagement::SessionInfo& session,c
 
 /*! \brief Engine: Page state information. */
 
-bool Browser::page_stateInformation(const SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
+bool Browser::page_stateInformation(const SessionManagement::SessionInfo& /*session*/,const Spine::HTTP::Request& /*theRequest*/,Spine::HTTP::Response& theResponse)
 {
   try
   {
@@ -3908,7 +3908,7 @@ bool Browser::page_stateInformation(const SessionManagement::SessionInfo& sessio
 
 /*! \brief Engine: Page start. */
 
-bool Browser::page_start(const SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
+bool Browser::page_start(const SessionManagement::SessionInfo& session,const Spine::HTTP::Request& /*theRequest*/,Spine::HTTP::Response& theResponse)
 {
   try
   {
@@ -3945,7 +3945,7 @@ bool Browser::page_start(const SessionManagement::SessionInfo& session,const Spi
 
 /*! \brief Engine: Browser content. */
 
-void Browser::browserContent(const SessionManagement::SessionInfo& session,std::ostringstream& output)
+void Browser::browserContent(const SessionManagement::SessionInfo& /*session*/,std::ostringstream& output)
 {
   try
   {
