@@ -101,6 +101,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
                         Engine(const char *theConfigFile);
     ~Engine() override;
+    Engine(const Engine&) = delete;
+    Engine& operator=(const Engine&) = delete;
 
     bool                browserRequest(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
     void                browserContent(const SessionManagement::SessionInfo& session,std::ostringstream& output);

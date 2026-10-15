@@ -1262,6 +1262,8 @@ Query_sptr Engine::executeQuery(Query_sptr query) const
           exception.addDetail("or there are no producer list available in the grid engine's configuration "
               "file.");
           break;
+        default:
+          break;
       }
       throw exception;
     }
@@ -1603,7 +1605,7 @@ UInt64 Engine::getProducerHash(T::ProducerId producerId) const
     AutoWriteLock lock(&mProducerHashMap_modificationLock);
     if (result == 0)
     {
-      HashRec hrec;
+      HashRec hrec{};
       hrec.checkTime = currentTime;
       hrec.hash = hash;
 
@@ -1723,6 +1725,8 @@ void Engine::getParameterDetails(const std::string& aliasName, ParameterDetails_
 
           case 5:
             p.mForecastNumber = partList[t];
+            break;
+          default:
             break;
         }
       }
@@ -1873,6 +1877,8 @@ void Engine::getParameterDetails(const std::string& producerName, const std::str
 
           case 5:
             p.mForecastNumber = val;
+            break;
+          default:
             break;
         }
       }

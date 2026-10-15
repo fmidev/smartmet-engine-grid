@@ -456,6 +456,8 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
           }
         }
         break;
+        default:
+          break;
       }
       mode = MODE_NONE;
     }
@@ -665,8 +667,7 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
 
       if (startMessageIndex >= maxRecords)
         output << p1 << (startMessageIndex-maxRecords) << "');\" >&lt;&lt;</TD>\n";
-      else
-      if (startMessageIndex > 0)
+      else if (startMessageIndex > 0)
         output << p1 << "0" << "');\" >&lt;&lt;</TD>\n";
       else
         output << p2;
@@ -834,6 +835,8 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
         case MODE_DELETE_REQUEST:
           output << p1 << MODE_DELETE_CONFIRM << prod << "&messageIndex=" << messageIndex << "');\" >Delete content</TD>\n";
           output << p1 << MODE_NONE << "&messageIndex=" << messageIndex << prod << "');\" >Cancel</TD>\n";
+          break;
+        default:
           break;
       }
 
@@ -1037,6 +1040,8 @@ bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HT
           mode = 0;
         }
         break;
+        default:
+          break;
       }
 
       mode = 0;
@@ -1256,6 +1261,8 @@ bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HT
           output << p1 << MODE_GENERATE_CONFIRM << prod << "&fileId=" << fileId << "');\" >Generate content</TD>\n";
           output << p1 << MODE_NONE << prod << "&fileId=" << fileId << "');\" >Cancel</TD>\n";
           break;
+        default:
+          break;
       }
 
       output << "</TR>\n";
@@ -1463,6 +1470,8 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
           }
         }
         break;
+        default:
+          break;
       }
 
       mode = 0;
@@ -1662,6 +1671,8 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
           output << p1 << MODE_DELETE_CONFIRM << prod << "&generationId=" << generationId << "');\" >Delete generation</TD>\n";
           output << p1 << MODE_NONE << prod << "&generationId=" << generationId << "');\" >Cancel</TD>\n";
           break;
+        default:
+          break;
       }
 
       output << "</TR>\n";
@@ -1791,6 +1802,8 @@ bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine
           }
         }
         break;
+        default:
+          break;
       }
       mode = 0;
     }
@@ -1954,6 +1967,8 @@ bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine
         case MODE_DELETE_REQUEST:
           output << p1 << MODE_DELETE_CONFIRM << "&producerId=" << producerId << "');\" >Delete producer</TD>\n";
           output << p1 << MODE_NONE << "&producerId=" << producerId << "');\" >Cancel</TD>\n";
+          break;
+        default:
           break;
       }
 
@@ -3117,6 +3132,8 @@ bool Browser::page_contentServer_processingLog(SessionManagement::SessionInfo& s
         case MODE_LOG_CLEAR:
           log->clear();
           break;
+        default:
+          break;
       }
 
       std::string bg = "#C0C0C0";
@@ -3240,6 +3257,8 @@ bool Browser::page_contentServer_debugLog(SessionManagement::SessionInfo& sessio
 
         case MODE_LOG_CLEAR:
           log->clear();
+          break;
+        default:
           break;
       }
 
@@ -3365,6 +3384,8 @@ bool Browser::page_dataServer_processingLog(SessionManagement::SessionInfo& sess
         case MODE_LOG_CLEAR:
           log->clear();
           break;
+        default:
+          break;
       }
 
       std::string bg = "#C0C0C0";
@@ -3488,6 +3509,8 @@ bool Browser::page_dataServer_debugLog(SessionManagement::SessionInfo& session,c
 
         case MODE_LOG_CLEAR:
           log->clear();
+          break;
+        default:
           break;
       }
 
@@ -3613,6 +3636,8 @@ bool Browser::page_queryServer_processingLog(SessionManagement::SessionInfo& ses
         case MODE_LOG_CLEAR:
           log->clear();
           break;
+        default:
+          break;
       }
 
       std::string bg = "#C0C0C0";
@@ -3736,6 +3761,8 @@ bool Browser::page_queryServer_debugLog(SessionManagement::SessionInfo& session,
 
         case MODE_LOG_CLEAR:
           log->clear();
+          break;
+        default:
           break;
       }
 

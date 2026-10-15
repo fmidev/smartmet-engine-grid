@@ -27,6 +27,7 @@ class ParameterDetails
                                 ParameterDetails();
                                 ParameterDetails(const ParameterDetails& parameterDetails);
     virtual                     ~ParameterDetails();
+    ParameterDetails& operator=(const ParameterDetails&) = default;
 
     void                        print(std::ostream& stream,uint level,uint optionFlags);
 

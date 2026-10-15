@@ -28,6 +28,7 @@ class MappingDetails
                                   MappingDetails();
                                   MappingDetails(const MappingDetails& mappingDetails);
     virtual                       ~MappingDetails();
+    MappingDetails& operator=(const MappingDetails&) = default;
 
     void                          print(std::ostream& stream,uint level,uint optionFlags);
 

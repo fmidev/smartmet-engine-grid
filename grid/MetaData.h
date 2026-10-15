@@ -23,6 +23,7 @@ struct Parameter
 
     Parameter(const Parameter &param) = default;
     Parameter &operator=(const Parameter &param) = default;
+    ~Parameter() = default;
 
     void print(std::ostream& stream,uint level,uint /*optionFlags*/) const
     {
@@ -59,6 +60,7 @@ struct MetaData
 
   MetaData(const MetaData &md) = default;
   MetaData &operator=(const MetaData &md) = default;
+  ~MetaData() = default;
 
   void print(std::ostream& stream,uint level,uint optionFlags)
   {
@@ -99,10 +101,10 @@ struct MetaData
   }
 
 
-  T::ProducerId           producerId;           //!< FMI producer identifier.
+  T::ProducerId           producerId = 0;           //!< FMI producer identifier.
   std::string             producerName;         //!< Producer short name.
   std::string             producerDescription;  //!< Producer human-readable description.
-  T::GenerationId         generationId;         //!< Generation (model run) identifier.
+  T::GenerationId         generationId = 0;         //!< Generation (model run) identifier.
   std::string             analysisTime;         //!< Analysis time in UTC (format "YYYYMMDDTHHMISS").
 
   T::GeometryId           geometryId;           //!< FMI grid geometry identifier.
