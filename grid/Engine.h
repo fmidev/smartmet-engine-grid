@@ -121,7 +121,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                getExtAnalysisTimes(std::vector<std::vector<std::string>>& table) const;
 
     void                getCacheStats(Fmi::Cache::CacheStatistics& statistics) const;
-    void                getStateAttributes(std::shared_ptr<T::AttributeNode> parent);
+    void                getStateAttributes(const std::shared_ptr<T::AttributeNode>& parent);
 
     Fmi::Cache::CacheStatistics getCacheStats() const override;
 
@@ -142,9 +142,9 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                           int levelId) const;
 
     UInt64              getProducerHash(T::ProducerId producerId) const;
-    UInt64              getProducerHash(std::string producerName) const;
+    UInt64              getProducerHash(const std::string& producerName) const;
 
-    ContentTable        getProducerInfo(std::optional<std::string> producer,std::string timeFormat) const;
+    ContentTable        getProducerInfo(std::optional<std::string> producer,const std::string& timeFormat) const;
     ContentTable        getGenerationInfo(std::optional<std::string> producer,std::string timeFormat) const;
     ContentTable        getExtGenerationInfo(std::optional<std::string> producer,std::string timeFormat) const;
 
@@ -251,8 +251,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     bool                isEnabled() const;
     bool                isGridProducer(const std::string& producer) const;
-    void                setDem(std::shared_ptr<Fmi::DEM> dem);
-    void                setLandCover(std::shared_ptr<Fmi::LandCover> landCover);
+    void                setDem(const std::shared_ptr<Fmi::DEM>& dem);
+    void                setLandCover(const std::shared_ptr<Fmi::LandCover>& landCover);
     void                updateProcessing();
 
   protected:
@@ -281,7 +281,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                                               int& maxSizeMember,
                                               int& truncateSizeMember,
                                               Log& log,
-                                              std::function<void(Log*)> applyLogToServers);
+                                              const std::function<void(Log*)>& applyLogToServers);
 
     // Phase helpers for init().  Each handles one well-defined stage:
     void                initMemoryMapper();                                                   //!< Apply memory-mapper configuration from member fields.

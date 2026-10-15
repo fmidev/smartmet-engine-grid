@@ -16,9 +16,9 @@ namespace Grid
 struct Parameter
 {
   public:
-    Parameter()
+    Parameter() : parameterId(0)
     {
-      parameterId = 0;
+
     }
 
     Parameter(const Parameter &param) = default;
@@ -49,9 +49,9 @@ struct Parameter
  *  parameters that exist in this slice. */
 struct MetaData
 {
-  MetaData()
+  MetaData() : geometryId(0)
   {
-    geometryId = 0;
+
     levelId = 0;
     xNumber = 0;
     yNumber = 0;

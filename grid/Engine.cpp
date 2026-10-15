@@ -1039,7 +1039,7 @@ void Engine::applyLogConfiguration(ConfigurationFile& configurationFile,
                                    int& maxSizeMember,
                                    int& truncateSizeMember,
                                    Log& log,
-                                   std::function<void(Log*)> applyLogToServers)
+                                   const std::function<void(Log*)>& applyLogToServers)
 {
   try
   {
@@ -1634,7 +1634,7 @@ UInt64 Engine::getProducerHash(T::ProducerId producerId) const
 
 /*! \brief Engine: Get producer hash. */
 
-UInt64 Engine::getProducerHash(std::string producerName) const
+UInt64 Engine::getProducerHash(const std::string& producerName) const
 {
   try
   {
@@ -2185,7 +2185,7 @@ std::string Engine::getProducerAlias(const std::string& producerName, int levelI
 
 /*! \brief Engine: Get producer info. */
 
-ContentTable Engine::getProducerInfo(std::optional<std::string> producer,std::string timeFormat) const
+ContentTable Engine::getProducerInfo(std::optional<std::string> producer,const std::string& timeFormat) const
 {
   try
   {
@@ -3063,7 +3063,7 @@ Fmi::Cache::CacheStatistics Engine::getCacheStats() const
 
 /*! \brief Engine: Get state attributes. */
 
-void Engine::getStateAttributes(std::shared_ptr<T::AttributeNode> parent)
+void Engine::getStateAttributes(const std::shared_ptr<T::AttributeNode>& parent)
 {
   try
   {
@@ -4522,7 +4522,7 @@ void Engine::getVerticalGrid(
 
 /*! \brief Engine: Set dem. */
 
-void Engine::setDem(std::shared_ptr<Fmi::DEM> dem)
+void Engine::setDem(const std::shared_ptr<Fmi::DEM>& dem)
 {
   try
   {
@@ -4544,7 +4544,7 @@ void Engine::setDem(std::shared_ptr<Fmi::DEM> dem)
 
 /*! \brief Engine: Set land cover. */
 
-void Engine::setLandCover(std::shared_ptr<Fmi::LandCover> landCover)
+void Engine::setLandCover(const std::shared_ptr<Fmi::LandCover>& landCover)
 {
   try
   {
