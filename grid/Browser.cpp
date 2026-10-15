@@ -937,11 +937,11 @@ bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HT
 
       auto v = theRequest.getParameter("server");
       if (v)
-        fInfo.mServer = v->c_str();
+        fInfo.mServer = *v;
 
       v = theRequest.getParameter("name");
       if (v)
-        fInfo.mName = v->c_str();
+        fInfo.mName = *v;
 
       v = theRequest.getParameter("protocol");
       if (v)
@@ -1378,15 +1378,15 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
 
       auto v = theRequest.getParameter("name");
       if (v)
-        gInfo.mName = v->c_str();
+        gInfo.mName = *v;
 
       v = theRequest.getParameter("analysisTime");
       if (v)
-        gInfo.mAnalysisTime = v->c_str();
+        gInfo.mAnalysisTime = *v;
 
       v = theRequest.getParameter("description");
       if (v)
-        gInfo.mDescription = v->c_str();
+        gInfo.mDescription = *v;
 
       v = theRequest.getParameter("flags");
       if (v)
@@ -1740,15 +1740,15 @@ bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine
     {
       auto v = theRequest.getParameter("name");
       if (v)
-        pInfo.mName = v->c_str();
+        pInfo.mName = *v;
 
       v = theRequest.getParameter("title");
       if (v)
-        pInfo.mTitle = v->c_str();
+        pInfo.mTitle = *v;
 
       v = theRequest.getParameter("description");
       if (v)
-        pInfo.mDescription = v->c_str();
+        pInfo.mDescription = *v;
 
       v = theRequest.getParameter("flags");
       if (v)
@@ -2295,7 +2295,7 @@ bool Browser::page_luaFiles(const SessionManagement::SessionInfo& /*session*/,co
   try
   {
     ConfigurationFile configurationFile;
-    configurationFile.readFile(mGridEngine->getConfigurationFileName().c_str());
+    configurationFile.readFile(mGridEngine->getConfigurationFileName());
 
     string_vec luaFiles;
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.luaFiles",luaFiles);
@@ -2455,7 +2455,7 @@ bool Browser::page_parameterAliasFiles(const SessionManagement::SessionInfo& /*s
   try
   {
     ConfigurationFile configurationFile;
-    configurationFile.readFile(mGridEngine->getConfigurationFileName().c_str());
+    configurationFile.readFile(mGridEngine->getConfigurationFileName());
 
     string_vec parameterAliasFiles;
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.aliasFiles",parameterAliasFiles);
@@ -2599,7 +2599,7 @@ bool Browser::page_producerMappingFiles(const SessionManagement::SessionInfo& /*
   try
   {
     ConfigurationFile configurationFile;
-    configurationFile.readFile(mGridEngine->getConfigurationFileName().c_str());
+    configurationFile.readFile(mGridEngine->getConfigurationFileName());
 
     string_vec producerMappingFiles;
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.producerMappingFiles",producerMappingFiles);
@@ -2840,7 +2840,7 @@ bool Browser::page_parameterMappingFiles(const SessionManagement::SessionInfo& /
   try
   {
     ConfigurationFile configurationFile;
-    configurationFile.readFile(mGridEngine->getConfigurationFileName().c_str());
+    configurationFile.readFile(mGridEngine->getConfigurationFileName());
 
     string_vec parameterMappingFiles;
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingFiles",parameterMappingFiles);

@@ -207,7 +207,7 @@ Engine::Engine(const char* theConfigFile)
     mParameterTable = std::make_shared<Spine::Table>();
 
     ConfigurationFile configurationFile;
-    configurationFile.readFile(mConfigurationFile_name.c_str());
+    configurationFile.readFile(mConfigurationFile_name);
 
     configurationFile.getAttributeValue("smartmet.engine.grid.enabled", mEnabled);
     if (!mEnabled)
@@ -596,7 +596,7 @@ ContentServer::ServiceInterface* Engine::initContentSources()
         else if (mContentSource.mType == "corba")
         {
           auto* client = new ContentServer::Corba::ClientImplementation();
-          client->init(mContentSource.mCorbaIor.c_str());
+          client->init(mContentSource.mCorbaIor);
 
           ContentServer_sptr contentServer(client);
           mContentServers.push_back(contentServer);
@@ -605,7 +605,7 @@ ContentServer::ServiceInterface* Engine::initContentSources()
         else if (mContentSource.mType == "http")
         {
           auto* client = new ContentServer::HTTP::ClientImplementation();
-          client->init(mContentSource.mHttpUrl.c_str());
+          client->init(mContentSource.mHttpUrl);
 
           ContentServer_sptr contentServer(client);
           mContentServers.push_back(contentServer);
@@ -883,7 +883,7 @@ void Engine::checkConfiguration()
       return;
 
     ConfigurationFile configurationFile;
-    configurationFile.readFile(mConfigurationFile_name.c_str());
+    configurationFile.readFile(mConfigurationFile_name);
 
     //ContentServer_sptr contentServer = getContentServer_sptr();
 
@@ -2967,7 +2967,7 @@ std::list<MetaData> Engine::getEngineMetadata(const char *producerName) const
                       for (const auto& pk : paramKeyList)
                       {
                         Identification::FmiParameterDef paramDef;
-                        if (Identification::gridDef.getFmiParameterDefByName(pk.c_str(), paramDef))
+                        if (Identification::gridDef.getFmiParameterDefByName(pk, paramDef))
                         {
                           Parameter param;
                           param.parameterId = paramDef.mFmiParameterId;
@@ -4361,7 +4361,7 @@ void Engine::getVerticalGrid(
     int result = contentServer->getGenerationInfoListByProducerName(sessionId, valueProducerName, gInfoList1);
     if (result != 0)
     {
-      Fmi::Exception exception(BCP, ContentServer::getResultString(result).c_str(), nullptr);
+      Fmi::Exception exception(BCP, ContentServer::getResultString(result), nullptr);
       exception.addParameter("ProducerName", valueProducerName);
       throw exception;
     }
@@ -4369,7 +4369,7 @@ void Engine::getVerticalGrid(
     result = contentServer->getGenerationInfoListByProducerName(sessionId, heightProducerName, gInfoList2);
     if (result != 0)
     {
-      Fmi::Exception exception(BCP, ContentServer::getResultString(result).c_str());
+      Fmi::Exception exception(BCP, ContentServer::getResultString(result));
       exception.addParameter("ProducerName", heightProducerName);
       throw exception;
     }
