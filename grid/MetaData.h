@@ -16,7 +16,7 @@ namespace Grid
 struct Parameter
 {
   public:
-    Parameter() : parameterId(0)
+    Parameter()
     {
 
     }
@@ -34,7 +34,7 @@ struct Parameter
       stream << space(level) << "- parameterDescription = " << parameterDescription << "\n";
     }
 
-    uint          parameterId;         //!< FMI parameter identifier.
+    uint          parameterId{0};         //!< FMI parameter identifier.
     std::string   parameterName;       //!< Short parameter name.
     std::string   parameterUnits;      //!< Unit string (e.g. "K", "m/s").
     std::string   parameterDescription;//!< Human-readable description.
@@ -49,7 +49,7 @@ struct Parameter
  *  parameters that exist in this slice. */
 struct MetaData
 {
-  MetaData() : geometryId(0)
+  MetaData()
   {
 
     levelId = 0;
@@ -107,7 +107,7 @@ struct MetaData
   T::GenerationId         generationId = 0;         //!< Generation (model run) identifier.
   std::string             analysisTime;         //!< Analysis time in UTC (format "YYYYMMDDTHHMISS").
 
-  T::GeometryId           geometryId;           //!< FMI grid geometry identifier.
+  T::GeometryId           geometryId{0};           //!< FMI grid geometry identifier.
   int                     projectionId;         //!< Projection type code.
   std::string             projectionName;       //!< Projection short name.
   std::string             wkt;                  //!< Well-known text projection string.
