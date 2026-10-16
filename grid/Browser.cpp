@@ -4103,86 +4103,49 @@ bool Browser::requestHandler(SessionManagement::SessionInfo& session,const Spine
     session.getAttribute("grid-admin","page",page);
 
 
-    if (page == "start")
-      return page_start(session,theRequest,theResponse);
+    using ConstPageHandler = bool (Browser::*)(const SessionManagement::SessionInfo&,const Spine::HTTP::Request&,Spine::HTTP::Response&);
+    using PageHandler = bool (Browser::*)(SessionManagement::SessionInfo&,const Spine::HTTP::Request&,Spine::HTTP::Response&);
 
-    if (page == "configuration")
-      return page_configuration(session,theRequest,theResponse);
+    static const std::map<std::string,ConstPageHandler> constPageHandlers = {
+      {"start",&Browser::page_start},
+      {"configuration",&Browser::page_configuration},
+      {"configurationFile",&Browser::page_configurationFile},
+      {"producerFile",&Browser::page_producerFile},
+      {"parameterMappingFiles",&Browser::page_parameterMappingFiles},
+      {"parameterMappingFile",&Browser::page_parameterMappingFile},
+      {"parameterAliasFiles",&Browser::page_parameterAliasFiles},
+      {"parameterAliasFile",&Browser::page_parameterAliasFile},
+      {"producerMappingFiles",&Browser::page_producerMappingFiles},
+      {"producerMappingFile",&Browser::page_producerMappingFile},
+      {"luaFiles",&Browser::page_luaFiles},
+      {"luaFile",&Browser::page_luaFile},
+      {"contentServer",&Browser::page_contentServer},
+      {"contentInformation",&Browser::page_contentInformation},
+      {"stateInformation",&Browser::page_stateInformation},
+      {"dataServer",&Browser::page_dataServer},
+      {"queryServer",&Browser::page_queryServer}
+    };
 
-    if (page == "configurationFile")
-      return page_configurationFile(session,theRequest,theResponse);
+    static const std::map<std::string,PageHandler> pageHandlers = {
+      {"producers",&Browser::page_producers},
+      {"generations",&Browser::page_generations},
+      {"files",&Browser::page_files},
+      {"contentList",&Browser::page_contentList},
+      {"contentServer_processingLog",&Browser::page_contentServer_processingLog},
+      {"contentServer_debugLog",&Browser::page_contentServer_debugLog},
+      {"dataServer_processingLog",&Browser::page_dataServer_processingLog},
+      {"dataServer_debugLog",&Browser::page_dataServer_debugLog},
+      {"queryServer_processingLog",&Browser::page_queryServer_processingLog},
+      {"queryServer_debugLog",&Browser::page_queryServer_debugLog}
+    };
 
-    if (page == "producerFile")
-      return page_producerFile(session,theRequest,theResponse);
+    auto constHandler = constPageHandlers.find(page);
+    if (constHandler != constPageHandlers.end())
+      return (this->*(constHandler->second))(session,theRequest,theResponse);
 
-    if (page == "parameterMappingFiles")
-      return page_parameterMappingFiles(session,theRequest,theResponse);
-
-    if (page == "parameterMappingFile")
-      return page_parameterMappingFile(session,theRequest,theResponse);
-
-    if (page == "parameterAliasFiles")
-      return page_parameterAliasFiles(session,theRequest,theResponse);
-
-    if (page == "parameterAliasFile")
-      return page_parameterAliasFile(session,theRequest,theResponse);
-
-    if (page == "producerMappingFiles")
-      return page_producerMappingFiles(session,theRequest,theResponse);
-
-    if (page == "producerMappingFile")
-      return page_producerMappingFile(session,theRequest,theResponse);
-
-    if (page == "luaFiles")
-      return page_luaFiles(session,theRequest,theResponse);
-
-    if (page == "luaFile")
-      return page_luaFile(session,theRequest,theResponse);
-
-    if (page == "contentServer")
-      return page_contentServer(session,theRequest,theResponse);
-
-    if (page == "contentInformation")
-      return page_contentInformation(session,theRequest,theResponse);
-
-    if (page == "producers")
-      return page_producers(session,theRequest,theResponse);
-
-    if (page == "generations")
-      return page_generations(session,theRequest,theResponse);
-
-    if (page == "files")
-      return page_files(session,theRequest,theResponse);
-
-    if (page == "stateInformation")
-      return page_stateInformation(session,theRequest,theResponse);
-
-    if (page == "contentList")
-      return page_contentList(session,theRequest,theResponse);
-
-    if (page == "contentServer_processingLog")
-      return page_contentServer_processingLog(session,theRequest,theResponse);
-
-    if (page == "contentServer_debugLog")
-      return page_contentServer_debugLog(session,theRequest,theResponse);
-
-    if (page == "dataServer")
-      return page_dataServer(session,theRequest,theResponse);
-
-    if (page == "dataServer_processingLog")
-      return page_dataServer_processingLog(session,theRequest,theResponse);
-
-    if (page == "dataServer_debugLog")
-      return page_dataServer_debugLog(session,theRequest,theResponse);
-
-    if (page == "queryServer")
-      return page_queryServer(session,theRequest,theResponse);
-
-    if (page == "queryServer_processingLog")
-      return page_queryServer_processingLog(session,theRequest,theResponse);
-
-    if (page == "queryServer_debugLog")
-      return page_queryServer_debugLog(session,theRequest,theResponse);
+    auto handler = pageHandlers.find(page);
+    if (handler != pageHandlers.end())
+      return (this->*(handler->second))(session,theRequest,theResponse);
 
     std::ostringstream output;
 
