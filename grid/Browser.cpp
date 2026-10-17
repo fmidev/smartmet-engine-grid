@@ -132,6 +132,35 @@ void writeIndexPageLinks(std::ostringstream& output,const char *indexName,uint s
 
   output << "</TR></TABLE>\n";
 }
+
+/*! \brief Writes the table cells of a generation. */
+
+void writeGenerationCells(std::ostringstream& output,const T::GenerationInfo& generation,bool mainSource)
+{
+  const char *statusStr[] = {"Unknown","Ready","Not Ready"};
+
+  output << "<TD>"<< generation.mGenerationId << "</TD>";
+  if (!mainSource)
+  {
+    output << "<TD>"<< ((generation.mGenerationId % 0xFF00000000L) >> 32) << "</TD>";
+    output << "<TD>"<< (generation.mGenerationId & 0xFFFFFFFF) << "</TD>";
+  }
+  output << "<TD>"<< esc(generation.mName) << "</TD>";
+  output << "<TD>"<< esc(generation.mDescription) << "</TD>";
+  output << "<TD>"<< esc(generation.mAnalysisTime) << "</TD>";
+  output << "<TD>"<< generation.mFlags << "</TD>";
+  output << "<TD>"<< generation.mSourceId << "</TD>";
+  output << "<TD>"<< statusStr[(int)generation.mStatus % 3] << "</TD>";
+  if (generation.mModificationTime > 0)
+    output << "<TD>"<< utcTimeFromTimeT(generation.mModificationTime) << "</TD>";
+  else
+    output << "<TD></TD>";
+
+  if (generation.mDeletionTime > 0)
+    output << "<TD>"<< utcTimeFromTimeT(generation.mDeletionTime) << "</TD>";
+  else
+    output << "<TD></TD>";
+}
 }  // anonymous namespace
 
 
@@ -1388,6 +1417,265 @@ bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HT
 
 
 
+/*! \brief Engine: Reads the generation information from the request parameters. The mode is cleared for invalid times. */
+
+void Browser::readGenerationParameters(const Spine::HTTP::Request& theRequest,T::GenerationInfo& gInfo,uint& mode)
+{
+  try
+  {
+    auto v = theRequest.getParameter("name");
+    if (v)
+      gInfo.mName = *v;
+
+    v = theRequest.getParameter("analysisTime");
+    if (v)
+      gInfo.mAnalysisTime = *v;
+
+    v = theRequest.getParameter("description");
+    if (v)
+      gInfo.mDescription = *v;
+
+    v = theRequest.getParameter("flags");
+    if (v)
+      gInfo.mFlags = toInt32(v->c_str());
+
+    v = theRequest.getParameter("sourceId");
+    if (v)
+      gInfo.mSourceId = toInt32(v->c_str());
+
+    v = theRequest.getParameter("status");
+    if (v)
+      gInfo.mStatus = toInt32(v->c_str());
+
+    v = theRequest.getParameter("deletionTime");
+    if (v)
+    {
+      try
+      {
+        gInfo.mDeletionTime = utcTimeToTimeT(*v);
+      }
+      catch (...)
+      {
+        mode = 0;
+      }
+    }
+
+    v = theRequest.getParameter("modificationTime");
+    if (v)
+    {
+      try
+      {
+        gInfo.mModificationTime = utcTimeToTimeT(*v);
+      }
+      catch (...)
+      {
+        mode = 0;
+      }
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Adds, updates or deletes a generation according to the mode. */
+
+void Browser::modifyGeneration(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,ContentServer::ServiceInterface& contentServer,uint mode,T::GenerationInfo& gInfo,T::GenerationId& generationId)
+{
+  try
+  {
+    readGenerationParameters(theRequest,gInfo,mode);
+
+    switch (mode)
+    {
+      case MODE_ADD_CONFIRM:
+      {
+        int res = contentServer.addGenerationInfo(0,gInfo);
+        if (res != 0)
+        {
+          // Generation addition failed
+        }
+        else
+        {
+          generationId = gInfo.mGenerationId;
+        }
+      }
+      break;
+
+      case MODE_EDIT_CONFIRM:
+      {
+        gInfo.mGenerationId = generationId;
+        int res = contentServer.setGenerationInfo(0,gInfo);
+        if (res != 0)
+        {
+          // Generation update failed
+        }
+      }
+      break;
+
+      case MODE_DELETE_CONFIRM:
+      {
+        if (generationId != 0)
+        {
+          int res = contentServer.deleteGenerationInfoById(0,generationId);
+          if (res != 0)
+          {
+            // Generation deletion failed
+          }
+          else
+          {
+            generationId = 0;
+            session.setAttribute("grid-engine","generationId",0);
+          }
+        }
+      }
+      break;
+      default:
+        break;
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Writes the generation table rows. The selected generation is copied to gInfo. */
+
+void Browser::writeGenerationRows(std::ostringstream& output,T::GenerationInfoList& generationInfoList,uint maxRecords,uint startGenerationIndex,T::GenerationId generationId,bool mainSource,T::GenerationInfo& gInfo)
+{
+  try
+  {
+    for (uint t=0; t<maxRecords; t++)
+    {
+      T::GenerationInfo *generation = generationInfoList.getGenerationInfoByIndex(startGenerationIndex+t);
+      if (generation != nullptr)
+      {
+        std::string fg = "#000000";
+        std::string bg = "#FFFFFF";
+
+        if (generation->mDeletionTime > 0 && generation->mDeletionTime < (time(nullptr) + 120))
+          fg = "#808080";
+
+        if (generation->mGenerationId == generationId)
+        {
+          gInfo = *generation;
+          fg = "#FFFFFF";
+          bg = "#FF0000";
+          output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onClick=\"getPage(this,parent,'/grid-admin?page=files&generationId=" << generation->mGenerationId << "&generationName=" << esc(generation->mName) << "');\" >\n";
+        }
+        else
+        {
+          output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg << "; color:" << fg << R"(;'" onmouseover="this.style='background:#FFFF00; color:#000000;';" onClick="getPage(this,parent,'/grid-admin?page=generations&startGenerationIndex=)" << startGenerationIndex << "&generationId=" << generation->mGenerationId << "&generationName=" << esc(generation->mName) << "');\" >\n";
+        }
+
+
+        writeGenerationCells(output,*generation,mainSource);
+
+        output << "</TR>";
+      }
+      else
+      {
+        output << "<TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD>";
+        if (!mainSource)
+          output << "<TD>&nbsp;</TD><TD>&nbsp;</TD>";
+        output << "</TR>\n";
+      }
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Writes the generation editor and the generation modification buttons. */
+
+void Browser::writeGenerationEditor(std::ostringstream& output,uint mode,const T::GenerationInfo& gInfo,T::GenerationId generationId,uint startGenerationIndex)
+{
+  try
+  {
+    std::string prod = "&startGenerationIndex=" + std::to_string(startGenerationIndex);
+
+    if (mode > 0  && mode < 100)
+    {
+      std::string dt = "21000101T000000";
+      if (gInfo.mDeletionTime > 0)
+        dt = utcTimeFromTimeT(gInfo.mDeletionTime);
+
+      std::string mt = utcTimeFromTimeT(gInfo.mModificationTime);
+      std::string p1 = R"(<TR><TD width="240" bgColor="#D0D0D0">)";
+      std::string p2 = R"(</TD><TD><INPUT style="width:100%;" type="text" )";
+      std::string p3 = "\"></TD></TR>";
+
+      output << "<HR>\n";
+      output << "<H2>Generation</H2>\n";
+      output << "<TABLE border=\"1\" width=\"100%\" style=\"font-size:12;\">\n";
+      output << p1 << "Id</TD><TD>"<< gInfo.mGenerationId << "</TD></TR>";
+      output << p1 << "Name" << p2 << R"(id="generation_name" value=")" << esc(gInfo.mName) << p3;
+      output << p1 << "Description" << p2 << R"(id="generation_description" value=")" << esc(gInfo.mDescription) << p3;
+      output << p1 << "AnalysisTime" << p2 << R"(id="generation_analysisTime" value=")" << esc(gInfo.mAnalysisTime) << p3;
+      output << p1 << "Flags" << p2 << R"(id="generation_flags" value=")" << gInfo.mFlags << p3;
+      output << p1 << "SourceId" << p2 << R"(id="generation_sourceId" value=")" << gInfo.mSourceId << p3;
+      output << p1 << "Status" << p2 << R"(id="generation_status" value=")" << (int)gInfo.mStatus << p3;
+      output << p1 << "ModificationTime" << p2 << R"(id="generation_modificationTime" value=")" << mt << p3;
+      output << p1 << "DeletionTime" << p2 << R"(id="generation_deletionTime" value=")" << dt << p3;
+      output << "</TABLE>\n";
+    }
+
+    std::string bg = "#C0C0C0";
+    std::string p1 = R"(<TD width="150" height="25" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF';" onClick="getPage(this,parent,'/grid-admin?mode=)";
+
+    output << "<HR>\n";
+    output << "<TABLE style=\"font-size:12;\">\n";
+    output << "<TR>\n";
+    switch (mode)
+    {
+      case MODE_NONE:
+        output << p1 << MODE_ADD_REQUEST << prod << "');\" >New generation</TD>\n";
+        if (generationId != 0)
+        {
+          output << p1 << MODE_EDIT_REQUEST << prod << "&generationId=" << generationId << "');\" >Edit generation</TD>\n";
+          output << p1 << MODE_DELETE_REQUEST << prod << "&generationId=" << generationId << "');\" >Delete generation</TD>\n";
+        }
+        break;
+
+      case MODE_ADD_REQUEST:
+        output << p1 << MODE_ADD_CONFIRM << prod << "&name='+generation_name.value+'&analysisTime='+generation_analysisTime.value+'&description='+generation_description.value+'&flags='+generation_flags.value+'&sourceId='+generation_sourceId.value+'&status='+generation_status.value+'&deletionTime='+generation_deletionTime.value+'&modificationTime='+generation_modificationTime.value);\" >Add generation</TD>\n";
+        output << p1 << MODE_NONE << prod << "&generationId=" << generationId << "');\" >Cancel</TD>\n";
+        break;
+
+      case MODE_EDIT_REQUEST:
+        output << p1 << MODE_EDIT_CONFIRM << prod << "&generationId=" << generationId << "&name='+generation_name.value+'&analysisTime='+generation_analysisTime.value+'&description='+generation_description.value+'&flags='+generation_flags.value+'&sourceId='+generation_sourceId.value+'&status='+generation_status.value+'&deletionTime='+generation_deletionTime.value+'&modificationTime='+generation_modificationTime.value);\" >Update generation</TD>\n";
+        output << p1 << MODE_NONE << prod << "&generationId=" << generationId << "');\" >Cancel</TD>\n";
+        break;
+
+      case MODE_DELETE_REQUEST:
+        output << p1 << MODE_DELETE_CONFIRM << prod << "&generationId=" << generationId << "');\" >Delete generation</TD>\n";
+        output << p1 << MODE_NONE << prod << "&generationId=" << generationId << "');\" >Cancel</TD>\n";
+        break;
+      default:
+        break;
+    }
+
+    output << "</TR>\n";
+    output << "</TABLE>\n";
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
 /*! \brief Engine: Page generations. */
 
 bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
@@ -1400,8 +1688,6 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
 
     std::string sourceStr = "main";
     bool mainSource = true;
-    const char *statusStr[] = {"Unknown","Ready","Not Ready"};
-
 
     session.getAttribute("grid-engine","source",sourceStr);
 
@@ -1453,105 +1739,7 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
     if ((mFlags & Flags::contentModificationEnabled) &&  mainSource && mode >= 100 && session.mUserInfo.isUserGroupMember("grid-admin"))
     {
       gInfo.mProducerId = producerId;
-
-      auto v = theRequest.getParameter("name");
-      if (v)
-        gInfo.mName = *v;
-
-      v = theRequest.getParameter("analysisTime");
-      if (v)
-        gInfo.mAnalysisTime = *v;
-
-      v = theRequest.getParameter("description");
-      if (v)
-        gInfo.mDescription = *v;
-
-      v = theRequest.getParameter("flags");
-      if (v)
-        gInfo.mFlags = toInt32(v->c_str());
-
-      v = theRequest.getParameter("sourceId");
-      if (v)
-        gInfo.mSourceId = toInt32(v->c_str());
-
-      v = theRequest.getParameter("status");
-      if (v)
-        gInfo.mStatus = toInt32(v->c_str());
-
-      v = theRequest.getParameter("deletionTime");
-      if (v)
-      {
-        try
-        {
-          gInfo.mDeletionTime = utcTimeToTimeT(*v);
-        }
-        catch (...)
-        {
-          mode = 0;
-        }
-      }
-
-      v = theRequest.getParameter("modificationTime");
-      if (v)
-      {
-        try
-        {
-          gInfo.mModificationTime = utcTimeToTimeT(*v);
-        }
-        catch (...)
-        {
-          mode = 0;
-        }
-      }
-
-      switch (mode)
-      {
-        case MODE_ADD_CONFIRM:
-        {
-          int res = contentServer->addGenerationInfo(0,gInfo);
-          if (res != 0)
-          {
-            // Generation addition failed
-          }
-          else
-          {
-            generationId = gInfo.mGenerationId;
-          }
-        }
-        break;
-
-        case MODE_EDIT_CONFIRM:
-        {
-          gInfo.mGenerationId = generationId;
-          int res = contentServer->setGenerationInfo(0,gInfo);
-          if (res != 0)
-          {
-            // Generation update failed
-          }
-        }
-        break;
-
-        case MODE_DELETE_CONFIRM:
-        {
-          if (generationId != 0)
-          {
-            int res = contentServer->deleteGenerationInfoById(0,generationId);
-            if (res != 0)
-            {
-              // Generation deletion failed
-            }
-            else
-            {
-              generationId = 0;
-              session.setAttribute("grid-engine","generationId",0);
-            }
-          }
-        }
-        break;
-        default:
-          break;
-      }
-
+      modifyGeneration(session,theRequest,*contentServer,mode,gInfo,generationId);
       mode = 0;
     }
 
@@ -1602,160 +1790,15 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
     contentServer->getGenerationInfoListByProducerId(0,producerId,generationInfoList);
 
     uint len = generationInfoList.getLength();
-    for (uint t=0; t<maxRecords; t++)
-    {
-      T::GenerationInfo *generation = generationInfoList.getGenerationInfoByIndex(startGenerationIndex+t);
-      if (generation != nullptr)
-      {
-        std::string fg = "#000000";
-        std::string bg = "#FFFFFF";
-
-        if (generation->mDeletionTime > 0 && generation->mDeletionTime < (time(nullptr) + 120))
-          fg = "#808080";
-
-        if (generation->mGenerationId == generationId)
-        {
-          gInfo = *generation;
-          fg = "#FFFFFF";
-          bg = "#FF0000";
-          output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onClick=\"getPage(this,parent,'/grid-admin?page=files&generationId=" << generation->mGenerationId << "&generationName=" << esc(generation->mName) << "');\" >\n";
-        }
-        else
-        {
-          output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg << "; color:" << fg << R"(;'" onmouseover="this.style='background:#FFFF00; color:#000000;';" onClick="getPage(this,parent,'/grid-admin?page=generations&startGenerationIndex=)" << startGenerationIndex << "&generationId=" << generation->mGenerationId << "&generationName=" << esc(generation->mName) << "');\" >\n";
-        }
-
-
-        output << "<TD>"<< generation->mGenerationId << "</TD>";
-        if (!mainSource)
-        {
-          output << "<TD>"<< ((generation->mGenerationId % 0xFF00000000L) >> 32) << "</TD>";
-          output << "<TD>"<< (generation->mGenerationId & 0xFFFFFFFF) << "</TD>";
-        }
-        output << "<TD>"<< esc(generation->mName) << "</TD>";
-        output << "<TD>"<< esc(generation->mDescription) << "</TD>";
-        output << "<TD>"<< esc(generation->mAnalysisTime) << "</TD>";
-        output << "<TD>"<< generation->mFlags << "</TD>";
-        output << "<TD>"<< generation->mSourceId << "</TD>";
-        output << "<TD>"<< statusStr[(int)generation->mStatus % 3] << "</TD>";
-        if (generation->mModificationTime > 0)
-          output << "<TD>"<< utcTimeFromTimeT(generation->mModificationTime) << "</TD>";
-        else
-          output << "<TD></TD>";
-
-        if (generation->mDeletionTime > 0)
-          output << "<TD>"<< utcTimeFromTimeT(generation->mDeletionTime) << "</TD>";
-        else
-          output << "<TD></TD>";
-
-        output << "</TR>";
-      }
-      else
-      {
-        output << "<TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD>";
-        if (!mainSource)
-          output << "<TD>&nbsp;</TD><TD>&nbsp;</TD>";
-        output << "</TR>\n";
-      }
-    }
+    writeGenerationRows(output,generationInfoList,maxRecords,startGenerationIndex,generationId,mainSource,gInfo);
 
     output << "</TABLE>\n";
 
     if (startGenerationIndex > 0 || len >= maxRecords)
-    {
-      std::string bg = "#C0C0C0";
-      std::string p1 = R"(<TD width="70" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF;';" onClick="getPage(this,parent,'/grid-admin?)";
-      std::string p2 = R"(<TD width="70" style="background:)" + bg + ";\" >&nbsp;</TD>\n";
-
-      output << "<HR>\n";
-      output << "<TABLE style=\"font-size:12;\"><TR>\n";
-
-      if (startGenerationIndex > 0)
-      {
-        if (startGenerationIndex > maxRecords)
-          output << p1 << "startGenerationIndex=" << (startGenerationIndex-maxRecords) << "');\" >&lt;&lt;</TD>\n";
-        else
-          output << p1 << "startGenerationIndex=0');\" >&lt;&lt;</TD>\n";
-      }
-      else
-        output << p2;
-
-      if (len > (startGenerationIndex+maxRecords))
-        output << p1 << "startGenerationIndex=" << (startGenerationIndex+maxRecords) << "');\" >&gt;&gt;</TD>\n";
-      else
-        output << p2;
-
-      output << "</TR></TABLE>\n";
-    }
+      writeIndexPageLinks(output,"startGenerationIndex",startGenerationIndex,maxRecords,len);
 
     if ((mFlags & Flags::contentModificationEnabled) && mainSource && session.mUserInfo.isUserGroupMember("grid-admin"))
-    {
-      std::string prod = "&startGenerationIndex=" + std::to_string(startGenerationIndex);
-
-      if (mode > 0  && mode < 100)
-      {
-        std::string dt = "21000101T000000";
-        if (gInfo.mDeletionTime > 0)
-          dt = utcTimeFromTimeT(gInfo.mDeletionTime);
-
-        std::string mt = utcTimeFromTimeT(gInfo.mModificationTime);
-        std::string p1 = R"(<TR><TD width="240" bgColor="#D0D0D0">)";
-        std::string p2 = R"(</TD><TD><INPUT style="width:100%;" type="text" )";
-        std::string p3 = "\"></TD></TR>";
-
-        output << "<HR>\n";
-        output << "<H2>Generation</H2>\n";
-        output << "<TABLE border=\"1\" width=\"100%\" style=\"font-size:12;\">\n";
-        output << p1 << "Id</TD><TD>"<< gInfo.mGenerationId << "</TD></TR>";
-        output << p1 << "Name" << p2 << R"(id="generation_name" value=")" << esc(gInfo.mName) << p3;
-        output << p1 << "Description" << p2 << R"(id="generation_description" value=")" << esc(gInfo.mDescription) << p3;
-        output << p1 << "AnalysisTime" << p2 << R"(id="generation_analysisTime" value=")" << esc(gInfo.mAnalysisTime) << p3;
-        output << p1 << "Flags" << p2 << R"(id="generation_flags" value=")" << gInfo.mFlags << p3;
-        output << p1 << "SourceId" << p2 << R"(id="generation_sourceId" value=")" << gInfo.mSourceId << p3;
-        output << p1 << "Status" << p2 << R"(id="generation_status" value=")" << (int)gInfo.mStatus << p3;
-        output << p1 << "ModificationTime" << p2 << R"(id="generation_modificationTime" value=")" << mt << p3;
-        output << p1 << "DeletionTime" << p2 << R"(id="generation_deletionTime" value=")" << dt << p3;
-        output << "</TABLE>\n";
-      }
-
-      std::string bg = "#C0C0C0";
-      std::string p1 = R"(<TD width="150" height="25" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF';" onClick="getPage(this,parent,'/grid-admin?mode=)";
-
-      output << "<HR>\n";
-      output << "<TABLE style=\"font-size:12;\">\n";
-      output << "<TR>\n";
-      switch (mode)
-      {
-        case MODE_NONE:
-          output << p1 << MODE_ADD_REQUEST << prod << "');\" >New generation</TD>\n";
-          if (generationId != 0)
-          {
-            output << p1 << MODE_EDIT_REQUEST << prod << "&generationId=" << generationId << "');\" >Edit generation</TD>\n";
-            output << p1 << MODE_DELETE_REQUEST << prod << "&generationId=" << generationId << "');\" >Delete generation</TD>\n";
-          }
-          break;
-
-        case MODE_ADD_REQUEST:
-          output << p1 << MODE_ADD_CONFIRM << prod << "&name='+generation_name.value+'&analysisTime='+generation_analysisTime.value+'&description='+generation_description.value+'&flags='+generation_flags.value+'&sourceId='+generation_sourceId.value+'&status='+generation_status.value+'&deletionTime='+generation_deletionTime.value+'&modificationTime='+generation_modificationTime.value);\" >Add generation</TD>\n";
-          output << p1 << MODE_NONE << prod << "&generationId=" << generationId << "');\" >Cancel</TD>\n";
-          break;
-
-        case MODE_EDIT_REQUEST:
-          output << p1 << MODE_EDIT_CONFIRM << prod << "&generationId=" << generationId << "&name='+generation_name.value+'&analysisTime='+generation_analysisTime.value+'&description='+generation_description.value+'&flags='+generation_flags.value+'&sourceId='+generation_sourceId.value+'&status='+generation_status.value+'&deletionTime='+generation_deletionTime.value+'&modificationTime='+generation_modificationTime.value);\" >Update generation</TD>\n";
-          output << p1 << MODE_NONE << prod << "&generationId=" << generationId << "');\" >Cancel</TD>\n";
-          break;
-
-        case MODE_DELETE_REQUEST:
-          output << p1 << MODE_DELETE_CONFIRM << prod << "&generationId=" << generationId << "');\" >Delete generation</TD>\n";
-          output << p1 << MODE_NONE << prod << "&generationId=" << generationId << "');\" >Cancel</TD>\n";
-          break;
-        default:
-          break;
-      }
-
-      output << "</TR>\n";
-      output << "</TABLE>\n";
-    }
+      writeGenerationEditor(output,mode,gInfo,generationId,startGenerationIndex);
 
     output << "<HR>\n";
     output << "</BODY>\n";
@@ -1865,46 +1908,46 @@ void Browser::writeProducerRows(std::ostringstream& output,T::ProducerInfoList& 
 {
   try
   {
-  std::string fg = "#000000";
-  std::string bg = "#FFFFFF";
+    std::string fg = "#000000";
+    std::string bg = "#FFFFFF";
 
-  for (uint t=0; t<maxRecords; t++)
-  {
-    T::ProducerInfo *producer = producerInfoList.getProducerInfoByIndex(t+startProducerIndex);
-    if (producer != nullptr)
+    for (uint t=0; t<maxRecords; t++)
     {
-      if (producer->mProducerId == producerId)
+      T::ProducerInfo *producer = producerInfoList.getProducerInfoByIndex(t+startProducerIndex);
+      if (producer != nullptr)
       {
-        fg = "#FFFFFF";
-        bg = "#FF0000";
-        pInfo = *producer;
-        output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onClick=\"getPage(this,parent,'/grid-admin?page=generations&producerId=" << producer->mProducerId << "&producerName=" << esc(producer->mName) << "');\" >\n";
+        if (producer->mProducerId == producerId)
+        {
+          fg = "#FFFFFF";
+          bg = "#FF0000";
+          pInfo = *producer;
+          output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onClick=\"getPage(this,parent,'/grid-admin?page=generations&producerId=" << producer->mProducerId << "&producerName=" << esc(producer->mName) << "');\" >\n";
+        }
+        else
+        {
+          fg = "#000000";
+          bg = "#FFFFFF";
+          output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << R"(;'" onmouseover="this.style='background:#FFFF00; color:#000000;';" onClick="getPage(this,parent,'/grid-admin?startProducerIndex=)" << startProducerIndex << "&producerId=" << producer->mProducerId << "&producerName=" << esc(producer->mName) << "');\" >\n";
+        }
+
+        output << "<TD>"<< producer->mProducerId << "</TD>";
+        if (!mainSource)
+        {
+          output << "<TD>"<< ((producer->mProducerId % 0xFF000000) >> 24) << "</TD>";
+          output << "<TD>"<< (producer->mProducerId & 0x00FFFFFF) << "</TD>";
+        }
+        output << "<TD>"<< esc(producer->mName) << "</TD>";
+        output << "<TD>"<< esc(producer->mTitle) << "</TD>";
+        output << "<TD>"<< esc(producer->mDescription) << "</TD>";
+        output << "<TD>"<< producer->mFlags << "</TD>";
+        output << "<TD>"<< producer->mSourceId << "</TD>";
+        output << "</TR>";
       }
       else
       {
-        fg = "#000000";
-        bg = "#FFFFFF";
-        output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << R"(;'" onmouseover="this.style='background:#FFFF00; color:#000000;';" onClick="getPage(this,parent,'/grid-admin?startProducerIndex=)" << startProducerIndex << "&producerId=" << producer->mProducerId << "&producerName=" << esc(producer->mName) << "');\" >\n";
+        output << "<TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD></TR>\n";
       }
-
-      output << "<TD>"<< producer->mProducerId << "</TD>";
-      if (!mainSource)
-      {
-        output << "<TD>"<< ((producer->mProducerId % 0xFF000000) >> 24) << "</TD>";
-        output << "<TD>"<< (producer->mProducerId & 0x00FFFFFF) << "</TD>";
-      }
-      output << "<TD>"<< esc(producer->mName) << "</TD>";
-      output << "<TD>"<< esc(producer->mTitle) << "</TD>";
-      output << "<TD>"<< esc(producer->mDescription) << "</TD>";
-      output << "<TD>"<< producer->mFlags << "</TD>";
-      output << "<TD>"<< producer->mSourceId << "</TD>";
-      output << "</TR>";
     }
-    else
-    {
-      output << "<TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD></TR>\n";
-    }
-  }
   }
   catch (...)
   {

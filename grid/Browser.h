@@ -71,6 +71,10 @@ class Browser
     static void           writeProducerRows(std::ostringstream& output,T::ProducerInfoList& producerInfoList,uint maxRecords,uint startProducerIndex,T::ProducerId producerId,bool mainSource,T::ProducerInfo& pInfo);
     static void           writeProducerEditor(std::ostringstream& output,uint mode,const T::ProducerInfo& pInfo,T::ProducerId producerId);
     bool                  page_generations(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
+    static void           readGenerationParameters(const Spine::HTTP::Request& theRequest,T::GenerationInfo& gInfo,uint& mode);
+    void                  modifyGeneration(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,ContentServer::ServiceInterface& contentServer,uint mode,T::GenerationInfo& gInfo,T::GenerationId& generationId);
+    static void           writeGenerationRows(std::ostringstream& output,T::GenerationInfoList& generationInfoList,uint maxRecords,uint startGenerationIndex,T::GenerationId generationId,bool mainSource,T::GenerationInfo& gInfo);
+    static void           writeGenerationEditor(std::ostringstream& output,uint mode,const T::GenerationInfo& gInfo,T::GenerationId generationId,uint startGenerationIndex);
     bool                  page_files(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
     bool                  page_contentList(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
     bool                  page_contentServer_debugLog(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
