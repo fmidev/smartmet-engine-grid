@@ -54,6 +54,54 @@ std::string esc(const char *theValue)
     return {};
   return Spine::htmlescape(theValue);
 }
+
+
+
+/*! \brief Writes the table cell of field number f (1..) of a parameter mapping file record. */
+
+void writeMappingField(std::ostringstream& output,uint f,const std::string& field)
+{
+  const char* paramIdType[] = {"UNKNOWN","FMI-ID","FMI-NAME","GRIB-ID","NEWBASE-ID","NEWBASE-NAME"};
+  const char* levelIdType[] = {"UNKNOWN","FMI","GRIB1","GRIB2"};
+  const char* interpolationMethod[] = {"None","Linear","Nearest","Min","Max","Logarithmic"};
+
+  uint i = toUInt32(field.c_str());
+  switch (f)
+  {
+    case 3:
+      if (i < 6)
+        output << "<TD>" << paramIdType[i] << "</TD>";
+      else
+        output << "<TD>" << esc(field) << "</TD>";
+      break;
+
+    case 6:
+      if (i < 4)
+        output << "<TD>" << levelIdType[i] << "</TD>";
+      else
+        output << "<TD>" << esc(field) << "</TD>";
+      break;
+
+    case 9:
+    case 10:
+      if (i < 5)
+        output << "<TD>" << interpolationMethod[i] << "</TD>";
+      else
+        output << "<TD>" << esc(field) << "</TD>";
+      break;
+
+    case 11:
+      if (i < 6)
+        output << "<TD>" << interpolationMethod[i] << "</TD>";
+      else
+        output << "<TD>" << esc(field) << "</TD>";
+      break;
+
+    default:
+      output << "<TD>" << esc(field) << "</TD>";
+      break;
+  }
+}
 }  // anonymous namespace
 
 
@@ -2715,10 +2763,6 @@ bool Browser::page_parameterMappingFile(const SessionManagement::SessionInfo& /*
       return false;
 
 
-    const char* paramIdType[] = {"UNKNOWN","FMI-ID","FMI-NAME","GRIB-ID","NEWBASE-ID","NEWBASE-NAME"};
-    const char* levelIdType[] = {"UNKNOWN","FMI","GRIB1","GRIB2"};
-    const char* interpolationMethod[] = {"None","Linear","Nearest","Min","Max","Logarithmic"};
-
     std::vector<std::vector<std::string>> records;
     readCsvFile(fname->second.c_str(),records);
 
@@ -2767,48 +2811,7 @@ bool Browser::page_parameterMappingFile(const SessionManagement::SessionInfo& /*
       for (auto field = record.begin(); field != record.end(); ++field)
       {
         f++;
-        uint i = toUInt32(field->c_str());
-        switch (f)
-        {
-          case 3:
-            if (i < 6)
-              output << "<TD>" << paramIdType[i] << "</TD>";
-            else
-              output << "<TD>" << esc(*field) << "</TD>";
-            break;
-
-          case 6:
-            if (i < 4)
-              output << "<TD>" << levelIdType[i] << "</TD>";
-            else
-              output << "<TD>" << esc(*field) << "</TD>";
-            break;
-
-          case 9:
-            if (i < 5)
-              output << "<TD>" << interpolationMethod[i] << "</TD>";
-            else
-              output << "<TD>" << esc(*field) << "</TD>";
-            break;
-
-          case 10:
-            if (i < 5)
-              output << "<TD>" << interpolationMethod[i] << "</TD>";
-            else
-              output << "<TD>" << esc(*field) << "</TD>";
-            break;
-
-          case 11:
-            if (i < 6)
-              output << "<TD>" << interpolationMethod[i] << "</TD>";
-            else
-              output << "<TD>" << esc(*field) << "</TD>";
-            break;
-
-          default:
-            output << "<TD>" << esc(*field) << "</TD>";
-            break;
-        }
+        writeMappingField(output,f,*field);
       }
       output << "</TR>\n";
     }
