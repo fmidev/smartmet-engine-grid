@@ -82,6 +82,13 @@ class Browser
     static void           writeFileRows(std::ostringstream& output,T::FileInfoList& fileInfoList,uint maxRecords,T::FileId fileId,T::FileId startFileId,bool mainSource,T::FileInfo& fInfo,T::FileId& nextFileId);
     static void           writeFileEditor(std::ostringstream& output,uint mode,const T::FileInfo& fInfo,T::FileId fileId,T::FileId startFileId);
     bool                  page_contentList(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
+    static void           readContentParameters(const Spine::HTTP::Request& theRequest,T::ContentInfo& cInfo,uint& mode);
+    static void           readContentTimes(const Spine::HTTP::Request& theRequest,T::ContentInfo& cInfo,uint& mode);
+    void                  invalidateCachedFile(T::FileId fileId);
+    void                  modifyContent(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,ContentServer::ServiceInterface& contentServer,uint mode,T::ContentInfo& cInfo,T::FileId fileId,T::MessageIndex& messageIndex);
+    T::ContentInfoList*   getContentList(ContentServer::ServiceInterface& contentServer,T::FileId fileId,T::ContentInfoList& contentInfoList);
+    static void           writeContentRows(std::ostringstream& output,T::ContentInfoList& cList,uint maxRecords,T::MessageIndex startMessageIndex,T::MessageIndex messageIndex,T::ContentInfo& cInfo,uint& nextMessageIndex);
+    static void           writeContentEditor(std::ostringstream& output,uint mode,const T::ContentInfo& cInfo,T::FileId fileId,T::MessageIndex messageIndex,T::MessageIndex startMessageIndex);
     bool                  page_contentServer_debugLog(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
     bool                  page_contentServer_processingLog(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
     bool                  page_dataServer_debugLog(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);

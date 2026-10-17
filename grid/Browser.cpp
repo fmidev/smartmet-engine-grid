@@ -185,6 +185,160 @@ void writeFilePageLinks(std::ostringstream& output,T::FileId startFileId,T::File
 
   output << "</TR></TABLE>\n";
 }
+
+/*! \brief Writes the table cells of a content. */
+
+void writeContentCells(std::ostringstream& output,const T::ContentInfo& content)
+{
+  output << "<TD>"<< content.mMessageIndex << "</TD>";
+  output << "<TD>"<< content.mFilePosition << "</TD>";
+  output << "<TD>"<< content.mMessageSize << "</TD>";
+  output << "<TD>"<< esc(content.getForecastTime()) << "</TD>";
+  output << "<TD>"<< content.mFmiParameterId << "</TD>";
+  output << "<TD>"<< esc(content.getFmiParameterName()) << "</TD>";
+  output << "<TD>"<< (int)content.mFmiParameterLevelId << "</TD>";
+  output << "<TD>"<< content.mParameterLevel << "</TD>";
+  output << "<TD>"<< content.mForecastType << "</TD>";
+  output << "<TD>"<< content.mForecastNumber << "</TD>";
+  output << "<TD>"<< content.mGeometryId << "</TD>";
+  output << "<TD>"<< content.mAggregationId << "</TD>";
+  output << "<TD>"<< content.mAggregationPeriod << "</TD>";
+  output << "<TD>"<< content.mProcessingTypeId << "</TD>";
+  output << "<TD>"<< content.mProcessingTypeValue1 << "</TD>";
+  output << "<TD>"<< content.mProcessingTypeValue2 << "</TD>";
+  output << "<TD>"<< content.mFlags << "</TD>";
+  output << "<TD>"<< content.mSourceId << "</TD>";
+  if (content.mModificationTime > 0)
+    output << "<TD>"<< utcTimeFromTimeT(content.mModificationTime) << "</TD>";
+  else
+    output << "<TD></TD>";
+
+  if (content.mDeletionTime > 0)
+    output << "<TD>"<< utcTimeFromTimeT(content.mDeletionTime) << "</TD>";
+  else
+    output << "<TD></TD>";
+
+}
+
+
+
+/*! \brief Writes the content editor form. */
+
+void writeContentForm(std::ostringstream& output,const T::ContentInfo& cInfo)
+{
+  std::string ft = utcTimeFromTimeT(cInfo.mForecastTimeUTC);
+
+  std::string dt = "21000101T000000";
+  if (cInfo.mDeletionTime > 0)
+    dt = utcTimeFromTimeT(cInfo.mDeletionTime);
+
+  std::string mt = utcTimeFromTimeT(cInfo.mModificationTime);
+  std::string p1 = R"(<TR><TD width="240" bgColor="#D0D0D0">)";
+  std::string p2 = R"(</TD><TD><INPUT style="width:100%;" type="text" )";
+  std::string p3 = "\"></TD></TR>";
+
+  output << "<HR>\n";
+  output << "<H2>Content</H2>\n";
+  output << "<TABLE border=\"1\" width=\"100%\" style=\"font-size:12;\">\n";
+  output << p1 << "FileId</TD><TD>"<< cInfo.mFileId << "</TD></TR>";
+  output << p1 << "MessageIndex</TD><TD>"<< cInfo.mMessageIndex << "</TD></TR>";
+  output << p1 << "FilePosition" << p2 << R"(id="content_filePosition" value=")" << cInfo.mFilePosition << p3;
+  output << p1 << "MessageSize" << p2 << R"(id="content_messageSize" value=")" << cInfo.mMessageSize << p3;
+  output << p1 << "ForecastTime" << p2 << R"(id="content_forecastTime" value=")" << ft << p3;
+  output << p1 << "FmiParameterId" << p2 << R"(id="content_fmiParameterId" value=")" << cInfo.mFmiParameterId << p3;
+  output << p1 << "FmiParameterName" << p2 << R"(id="content_fmiParameterName" value=")" << esc(cInfo.getFmiParameterName()) << p3;
+  output << p1 << "FmiParameterLevelId" << p2 << R"(id="content_fmiParameterLevelId" value=")" << cInfo.mFmiParameterLevelId << p3;
+  output << p1 << "ParameterLevel" << p2 << R"(id="content_parameterLevel" value=")" << cInfo.mParameterLevel << p3;
+  output << p1 << "ForecastType" << p2 << R"(id="content_forecastType" value=")" << cInfo.mForecastType << p3;
+  output << p1 << "ForecastNumber" << p2 << R"(id="content_forecastNumber" value=")" << cInfo.mForecastNumber << p3;
+  output << p1 << "GeometryId" << p2 << R"(id="content_geometryId" value=")" << cInfo.mGeometryId << p3;
+  output << p1 << "AggregationId" << p2 << R"(id="content_aggregationId" value=")" << cInfo.mAggregationId << p3;
+  output << p1 << "AggregationPeriod" << p2 << R"(id="content_aggregationPeriod" value=")" << cInfo.mAggregationPeriod << p3;
+  output << p1 << "ProcessingTypeId" << p2 << R"(id="content_processingTypeId" value=")" << cInfo.mProcessingTypeId << p3;
+  output << p1 << "ProcessingTypeValue1" << p2 << R"(id="content_processingTypeValue1" value=")" << cInfo.mProcessingTypeValue1 << p3;
+  output << p1 << "ProcessingTypeValue2" << p2 << R"(id="content_processingTypeValue2" value=")" << cInfo.mProcessingTypeValue2 << p3;
+  output << p1 << "Flags" << p2 << R"(id="content_flags" value=")" << cInfo.mFlags << p3;
+  output << p1 << "SourceId" << p2 << R"(id="content_sourceId" value=")" << cInfo.mSourceId << p3;
+  output << p1 << "ModificationTime" << p2 << R"(id="content_modificationTime" value=")" << mt << p3;
+  output << p1 << "DeletionTime" << p2 << R"(id="content_deletionTime" value=")" << dt << p3;
+  output << "</TABLE>\n";
+}
+
+
+
+/*! \brief Writes the links which jump the given number of messages backward or forward. */
+
+void writeMessageJumpLinks(std::ostringstream& output,const std::string& p1,const std::string& p2,uint startMessageIndex,uint len,uint maxRecords,uint step,const char *backward,const char *forward)
+{
+  output << "<TD width=\"50\"> </TD>\n";
+
+  if (startMessageIndex > 0)
+  {
+    if (startMessageIndex >= step)
+      output << p1 << (startMessageIndex-step) << "');\" >" << backward << "</TD>\n";
+    else
+      output << p1 << "0');\" >" << backward << "</TD>\n";
+  }
+  else
+    output << p2;
+
+  if ((startMessageIndex+maxRecords) < len)
+  {
+    if ((startMessageIndex+step) < len)
+      output << p1 << (startMessageIndex+step) << "');\" >" << forward << "</TD>\n";
+    else
+      output << p1 << (len-maxRecords) << "');\" >" << forward << "</TD>\n";
+  }
+  else
+    output << p2;
+}
+
+
+
+/*! \brief Writes the page links of the content table. */
+
+void writeMessagePageLinks(std::ostringstream& output,uint startMessageIndex,uint nextMessageIndex,uint len,uint maxRecords)
+{
+  std::string bg = "#C0C0C0";
+  std::string p1 = R"(<TD width="70" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF;';" onClick="getPage(this,parent,'/grid-admin?startMessageIndex=)";
+  std::string p2 = R"(<TD width="70" style="background:)" + bg + ";\" >&nbsp;</TD>\n";
+
+  output << "<HR>\n";
+  output << "<TABLE style=\"font-size:12;\"><TR>\n";
+
+  if (startMessageIndex >= maxRecords)
+    output << p1 << (startMessageIndex-maxRecords) << "');\" >&lt;&lt;</TD>\n";
+  else if (startMessageIndex > 0)
+    output << p1 << "0" << "');\" >&lt;&lt;</TD>\n";
+  else
+    output << p2;
+
+  if ((startMessageIndex+maxRecords) < len)
+    output << p1 << nextMessageIndex << "');\" >&gt;&gt;</TD>\n";
+  else
+    output << p2;
+
+  if (len > 100)
+  {
+    writeMessageJumpLinks(output,p1,p2,startMessageIndex,len,maxRecords,100,"&lt;&lt;&lt;","&gt;&gt;&gt;");
+  }
+
+  if (len > 1000)
+  {
+    writeMessageJumpLinks(output,p1,p2,startMessageIndex,len,maxRecords,1000,"&lt;&lt;&lt;&lt;","&gt;&gt;&gt;&gt;");
+  }
+
+  if (len > 10000)
+  {
+    writeMessageJumpLinks(output,p1,p2,startMessageIndex,len,maxRecords,10000,"&lt;&lt;&lt;&lt;&lt;","&gt;&gt;&gt;&gt;&gt;");
+  }
+
+  for (uint t=len; t<maxRecords; t++)
+  {
+    output << "<TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD></TR>\n";
+  }
+  output << "</TR></TABLE>\n";
+}
 }  // anonymous namespace
 
 
@@ -362,285 +516,231 @@ void Browser::updateSessionParameters(SessionManagement::SessionInfo& session,co
 
 
 
-/*! \brief Engine: Page content list. */
+/*! \brief Engine: Reads the content information from the request parameters. */
 
-bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
+void Browser::readContentParameters(const Spine::HTTP::Request& theRequest,T::ContentInfo& cInfo,uint& mode)
 {
   try
   {
-    uint sourceIdx = 0;
-    session.getAttribute("grid-engine","sourceIdx",sourceIdx);
-    ContentServer_sptr contentServer = mGridEngine->getContentSourceServer_sptr(sourceIdx);
-
-    std::string sourceStr = "main";
-    bool mainSource = true;
-
-    session.getAttribute("grid-engine","source",sourceStr);
-
-    if (sourceStr == "cache")
-    {
-      contentServer = mCacheContentServer;
-      mainSource = false;
-    }
-
-    T::ContentInfo cInfo;
-    uint nextMessageIndex = 0;
-    uint maxRecords = 30;
-
-    T::ProducerId producerId = 0;
-    session.getAttribute("grid-engine","producerId",producerId);
-
-    std::string producerName;
-    session.getAttribute("grid-engine","producerName",producerName);
-
-    T::GenerationId generationId = 0;
-    session.getAttribute("grid-engine","generationId",generationId);
-
-    std::string generationName;
-    session.getAttribute("grid-engine","generationName",generationName);
-
-    T::FileId fileId = 0;
-    session.getAttribute("grid-engine","fileId",fileId);
-
-    T::MessageIndex startMessageIndex = 0;
-    session.getAttribute("grid-engine","startMessageIndex",startMessageIndex);
-
-    T::MessageIndex messageIndex = 0;
-    session.getAttribute("grid-engine","messageIndex",messageIndex);
-
-    uint mode = 0;
-    auto v = theRequest.getParameter("mode");
+    auto v = theRequest.getParameter("filePosition");
     if (v)
-      mode = toUInt32(*v);
+      cInfo.mFilePosition = toInt64(v->c_str());
 
-    if (producerId == 0 || generationId == 0  ||  fileId == 0  ||  messageIndex == 0xFFFFFFFF)
-      mode = 0;
+    v = theRequest.getParameter("messageSize");
+    if (v)
+      cInfo.mMessageSize = toInt32(v->c_str());
 
-    if ((mFlags & Flags::contentModificationEnabled)  && mainSource  &&  mode >= 100 && session.mUserInfo.isUserGroupMember("grid-admin"))
+    v = theRequest.getParameter("fmiParameterName");
+    if (v)
+      cInfo.setFmiParameterName(v->c_str());
+
+    v = theRequest.getParameter("fmiParameterId");
+    if (v)
+      cInfo.mFmiParameterId = toInt32(v->c_str());
+
+    v = theRequest.getParameter("fmiParameterLevelId");
+    if (v)
+      cInfo.mFmiParameterLevelId = toInt32(v->c_str());
+
+    v = theRequest.getParameter("parameterLevel");
+    if (v)
+      cInfo.mParameterLevel = toInt32(v->c_str());
+
+    v = theRequest.getParameter("forecastType");
+    if (v)
+      cInfo.mForecastType = toInt32(v->c_str());
+
+    v = theRequest.getParameter("forecastNumber");
+    if (v)
+      cInfo.mForecastNumber = toInt32(v->c_str());
+
+    v = theRequest.getParameter("geometryId");
+    if (v)
+      cInfo.mGeometryId = toInt32(v->c_str());
+
+
+    v = theRequest.getParameter("aggregationId");
+    if (v)
+      cInfo.mAggregationId = toInt32(v->c_str());
+
+    v = theRequest.getParameter("aggregationPeriod");
+    if (v)
+      cInfo.mAggregationPeriod = toInt32(v->c_str());
+
+    v = theRequest.getParameter("processingTypeId");
+    if (v)
+      cInfo.mProcessingTypeId = toInt32(v->c_str());
+
+    v = theRequest.getParameter("processingTypeValue1");
+    if (v)
+      cInfo.mProcessingTypeValue1 = toDouble(v->c_str());
+
+    v = theRequest.getParameter("processingTypeValue2");
+    if (v)
+      cInfo.mProcessingTypeValue2 = toDouble(v->c_str());
+
+    v = theRequest.getParameter("flags");
+    if (v)
+      cInfo.mFlags = toInt32(v->c_str());
+
+    v = theRequest.getParameter("sourceId");
+    if (v)
+      cInfo.mSourceId = toInt32(v->c_str());
+
+    readContentTimes(theRequest,cInfo,mode);
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Reads the content times from the request parameters. The mode is cleared for invalid times. */
+
+void Browser::readContentTimes(const Spine::HTTP::Request& theRequest,T::ContentInfo& cInfo,uint& mode)
+{
+  try
+  {
+    auto v = theRequest.getParameter("forecastTime");
+    if (v)
     {
-      cInfo.mProducerId = producerId;
-      cInfo.mGenerationId = generationId;
-      cInfo.mFileId = fileId;
-      cInfo.mMessageIndex = messageIndex;
-
-      auto v = theRequest.getParameter("filePosition");
-      if (v)
-        cInfo.mFilePosition = toInt64(v->c_str());
-
-      v = theRequest.getParameter("messageSize");
-      if (v)
-        cInfo.mMessageSize = toInt32(v->c_str());
-
-      v = theRequest.getParameter("fmiParameterName");
-      if (v)
-        cInfo.setFmiParameterName(v->c_str());
-
-      v = theRequest.getParameter("fmiParameterId");
-      if (v)
-        cInfo.mFmiParameterId = toInt32(v->c_str());
-
-      v = theRequest.getParameter("fmiParameterLevelId");
-      if (v)
-        cInfo.mFmiParameterLevelId = toInt32(v->c_str());
-
-      v = theRequest.getParameter("parameterLevel");
-      if (v)
-        cInfo.mParameterLevel = toInt32(v->c_str());
-
-      v = theRequest.getParameter("forecastType");
-      if (v)
-        cInfo.mForecastType = toInt32(v->c_str());
-
-      v = theRequest.getParameter("forecastNumber");
-      if (v)
-        cInfo.mForecastNumber = toInt32(v->c_str());
-
-      v = theRequest.getParameter("geometryId");
-      if (v)
-        cInfo.mGeometryId = toInt32(v->c_str());
-
-
-      v = theRequest.getParameter("aggregationId");
-      if (v)
-        cInfo.mAggregationId = toInt32(v->c_str());
-
-      v = theRequest.getParameter("aggregationPeriod");
-      if (v)
-        cInfo.mAggregationPeriod = toInt32(v->c_str());
-
-      v = theRequest.getParameter("processingTypeId");
-      if (v)
-        cInfo.mProcessingTypeId = toInt32(v->c_str());
-
-      v = theRequest.getParameter("processingTypeValue1");
-      if (v)
-        cInfo.mProcessingTypeValue1 = toDouble(v->c_str());
-
-      v = theRequest.getParameter("processingTypeValue2");
-      if (v)
-        cInfo.mProcessingTypeValue2 = toDouble(v->c_str());
-
-      v = theRequest.getParameter("flags");
-      if (v)
-        cInfo.mFlags = toInt32(v->c_str());
-
-      v = theRequest.getParameter("sourceId");
-      if (v)
-        cInfo.mSourceId = toInt32(v->c_str());
-
-      v = theRequest.getParameter("forecastTime");
-      if (v)
+      try
       {
-        try
-        {
-          cInfo.setForecastTime(*v);
-        }
-        catch (...)
-        {
-          mode = 0;
-        }
+        cInfo.setForecastTime(*v);
       }
-
-      v = theRequest.getParameter("deletionTime");
-      if (v)
+      catch (...)
       {
-        try
-        {
-          cInfo.mDeletionTime = utcTimeToTimeT(*v);
-        }
-        catch (...)
-        {
-          mode = 0;
-        }
+        mode = 0;
       }
-
-      v = theRequest.getParameter("modificationTime");
-      if (v)
-      {
-        try
-        {
-          cInfo.mModificationTime = utcTimeToTimeT(*v);
-        }
-        catch (...)
-        {
-          mode = 0;
-        }
-      }
-
-      switch (mode)
-      {
-        case MODE_ADD_CONFIRM:
-        {
-          int res = contentServer->addContentInfo(0,cInfo);
-          if (res != 0)
-          {
-            // Content addition failed
-          }
-          else
-          {
-            for (std::size_t t=0; t<CONTENT_CACHE_SIZE; t++)
-            {
-              if (mCachedFileId[t] == fileId)
-                mCachedFileId[t] = 0;
-            }
-          }
-        }
-        break;
-
-        case MODE_EDIT_CONFIRM:
-        {
-          int res = contentServer->setContentInfo(0,cInfo);
-          if (res != 0)
-          {
-            // Content modification failed
-          }
-          else
-          {
-            for (std::size_t t=0; t<CONTENT_CACHE_SIZE; t++)
-            {
-              if (mCachedFileId[t] == fileId)
-                mCachedFileId[t] = 0;
-            }
-          }
-        }
-        break;
-
-        case MODE_DELETE_CONFIRM:
-        {
-          int res = contentServer->deleteContentInfo(0,fileId,messageIndex);
-          if (res != 0)
-          {
-            // Content deletion failed
-          }
-          else
-          {
-            for (std::size_t t=0; t<CONTENT_CACHE_SIZE; t++)
-            {
-              if (mCachedFileId[t] == fileId)
-              {
-                mCachedContentInfoList[t].deleteContentInfoByFileIdAndMessageIndex(fileId,messageIndex);
-                break;
-              }
-            }
-            messageIndex = 0xFFFFFFFF;
-            session.setAttribute("grid-engine","messageIndex",messageIndex);
-          }
-        }
-        break;
-        default:
-          break;
-      }
-      mode = MODE_NONE;
     }
 
-    std::ostringstream output;
+    v = theRequest.getParameter("deletionTime");
+    if (v)
+    {
+      try
+      {
+        cInfo.mDeletionTime = utcTimeToTimeT(*v);
+      }
+      catch (...)
+      {
+        mode = 0;
+      }
+    }
 
-    output << "<HTML>\n";
-    output << "<SCRIPT>\n";
-    output << "function getPage(obj,frm,url)\n";
-    output << "{\n";
-    output << "  frm.location.href=url;\n";
-    output << "}\n";
-    output << "</SCRIPT>\n";
-    output << "<BODY style=\"font-size:12;\">\n";
-
-    output << "<HR>\n";
-    output << "<A href=\"grid-admin?target=grid-admin&page=start\">SmartMet Server</A> / ";
-    output << "<A href=\"grid-admin?target=grid-admin&page=engines\">Engines</A> / ";
-    output << "<A href=\"grid-admin?page=start\">Grid Engine</A> / ";
-    output << "<A href=\"grid-admin?page=contentServer\">Content Server</A> / ";
-    output << "<A href=\"grid-admin?page=contentInformation\">Content Information</A> / ";
-    output << "<A href=\"grid-admin?page=producers&producerId=" << producerId << "\">Producers (" << esc(sourceStr) << ")</A> / <A href=\"grid-admin?page=generations&producerId=" << producerId << "&producerName=" << esc(producerName) << "&generationId=" << generationId << "\">" << esc(producerName) << "</A> / <A href=\"grid-admin?page=files&&generationId=" << generationId << "&generationName=" << esc(generationName) << "&fileId=" << fileId << "\">" << esc(generationName) << "</A> / " << fileId;
-    output << "<HR>\n";
-    output << "<H2>Content</H2>\n";
-    output << "<HR>\n";
-
-    output << "<TABLE border=\"1\" width=\"100%\" style=\"font-size:12;\">\n";
-    output << "<TR bgColor=\"#D0D0D0\">";
-    output << "<TD>MessageIndex</TD>";
-    output << "<TD>FilePosition</TD>";
-    output << "<TD>MessageSize</TD>";
-    output << "<TD>ForecastTime</TD>";
-    output << "<TD>FmiParameterId</TD>";
-    output << "<TD>FmiParameterName</TD>";
-    output << "<TD>FmiParameterLevelId</TD>";
-    output << "<TD>ParameterLevel</TD>";
-    output << "<TD>ForecastType</TD>";
-    output << "<TD>ForecastNumber</TD>";
-    output << "<TD>GeometryId</TD>";
-    output << "<TD>AggregationId</TD>";
-    output << "<TD>AggregationPeriod</TD>";
-    output << "<TD>ProcessingTypeId</TD>";
-    output << "<TD>ProcessingTypeValue1</TD>";
-    output << "<TD>ProcessingTypeValue2</TD>";
-    output << "<TD>Flags</TD>";
-    output << "<TD>SourceId</TD>";
-    output << "<TD>ModificationTime</TD>";
-    output << "<TD>DeletionTime</TD>";
-    output << "</TR>";
+    v = theRequest.getParameter("modificationTime");
+    if (v)
+    {
+      try
+      {
+        cInfo.mModificationTime = utcTimeToTimeT(*v);
+      }
+      catch (...)
+      {
+        mode = 0;
+      }
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
 
 
-    T::ContentInfoList contentInfoList;
+
+/*! \brief Engine: Removes the file from the content list cache. */
+
+void Browser::invalidateCachedFile(T::FileId fileId)
+{
+  for (std::size_t t=0; t<CONTENT_CACHE_SIZE; t++)
+  {
+    if (mCachedFileId[t] == fileId)
+      mCachedFileId[t] = 0;
+  }
+}
+
+
+
+/*! \brief Engine: Adds, updates or deletes a content according to the mode. */
+
+void Browser::modifyContent(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,ContentServer::ServiceInterface& contentServer,uint mode,T::ContentInfo& cInfo,T::FileId fileId,T::MessageIndex& messageIndex)
+{
+  try
+  {
+    readContentParameters(theRequest,cInfo,mode);
+
+    switch (mode)
+    {
+      case MODE_ADD_CONFIRM:
+      {
+        int res = contentServer.addContentInfo(0,cInfo);
+        if (res != 0)
+        {
+          // Content addition failed
+        }
+        else
+        {
+          invalidateCachedFile(fileId);
+        }
+      }
+      break;
+
+      case MODE_EDIT_CONFIRM:
+      {
+        int res = contentServer.setContentInfo(0,cInfo);
+        if (res != 0)
+        {
+          // Content modification failed
+        }
+        else
+        {
+          invalidateCachedFile(fileId);
+        }
+      }
+      break;
+
+      case MODE_DELETE_CONFIRM:
+      {
+        int res = contentServer.deleteContentInfo(0,fileId,messageIndex);
+        if (res != 0)
+        {
+          // Content deletion failed
+        }
+        else
+        {
+          for (std::size_t t=0; t<CONTENT_CACHE_SIZE; t++)
+          {
+            if (mCachedFileId[t] == fileId)
+            {
+              mCachedContentInfoList[t].deleteContentInfoByFileIdAndMessageIndex(fileId,messageIndex);
+              break;
+            }
+          }
+          messageIndex = 0xFFFFFFFF;
+          session.setAttribute("grid-engine","messageIndex",messageIndex);
+        }
+      }
+      break;
+      default:
+        break;
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Gets the content list of the file (from the cache, when available). */
+
+T::ContentInfoList* Browser::getContentList(ContentServer::ServiceInterface& contentServer,T::FileId fileId,T::ContentInfoList& contentInfoList)
+{
+  try
+  {
     T::ContentInfoList *cList = &contentInfoList;
 
     for (std::size_t t=0; t<CONTENT_CACHE_SIZE; t++)
@@ -654,7 +754,7 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
 
     if (cList == &contentInfoList || cList->getLength() == 0)
     {
-      contentServer->getContentListByFileId(0,fileId,contentInfoList);
+      contentServer.getContentListByFileId(0,fileId,contentInfoList);
       if (contentInfoList.getLength() > 1000)
       {
         uint idx = mCachedContentCount % CONTENT_CACHE_SIZE;
@@ -665,11 +765,26 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
       }
     }
 
-    uint len = cList->getLength();
+    return cList;
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Writes the content table rows. The selected content is copied to cInfo. */
+
+void Browser::writeContentRows(std::ostringstream& output,T::ContentInfoList& cList,uint maxRecords,T::MessageIndex startMessageIndex,T::MessageIndex messageIndex,T::ContentInfo& cInfo,uint& nextMessageIndex)
+{
+  try
+  {
     uint cnt = 0;
     for (uint t=0; t<maxRecords; t++)
     {
-      T::ContentInfo *content = cList->getContentInfoByIndex(startMessageIndex+t);
+      T::ContentInfo *content = cList.getContentInfoByIndex(startMessageIndex+t);
 
       if (content != nullptr)
       {
@@ -748,33 +863,7 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
           output << "<TR style=\"background:" << bg <<"; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << R"(;'" onmouseover="this.style='background:#FFFF00; color:#000000;';" onClick="getPage(this,parent,'/grid-admin?messageIndex=)" << content->mMessageIndex << "&startMessageIndex=" << startMessageIndex <<"');\" >\n";
         }
 
-        output << "<TD>"<< content->mMessageIndex << "</TD>";
-        output << "<TD>"<< content->mFilePosition << "</TD>";
-        output << "<TD>"<< content->mMessageSize << "</TD>";
-        output << "<TD>"<< esc(content->getForecastTime()) << "</TD>";
-        output << "<TD>"<< content->mFmiParameterId << "</TD>";
-        output << "<TD>"<< esc(content->getFmiParameterName()) << "</TD>";
-        output << "<TD>"<< (int)content->mFmiParameterLevelId << "</TD>";
-        output << "<TD>"<< content->mParameterLevel << "</TD>";
-        output << "<TD>"<< content->mForecastType << "</TD>";
-        output << "<TD>"<< content->mForecastNumber << "</TD>";
-        output << "<TD>"<< content->mGeometryId << "</TD>";
-        output << "<TD>"<< content->mAggregationId << "</TD>";
-        output << "<TD>"<< content->mAggregationPeriod << "</TD>";
-        output << "<TD>"<< content->mProcessingTypeId << "</TD>";
-        output << "<TD>"<< content->mProcessingTypeValue1 << "</TD>";
-        output << "<TD>"<< content->mProcessingTypeValue2 << "</TD>";
-        output << "<TD>"<< content->mFlags << "</TD>";
-        output << "<TD>"<< content->mSourceId << "</TD>";
-        if (content->mModificationTime > 0)
-          output << "<TD>"<< utcTimeFromTimeT(content->mModificationTime) << "</TD>";
-        else
-          output << "<TD></TD>";
-
-        if (content->mDeletionTime > 0)
-          output << "<TD>"<< utcTimeFromTimeT(content->mDeletionTime) << "</TD>";
-        else
-          output << "<TD></TD>";
+        writeContentCells(output,*content);
 
         output << "</TR>";
       }
@@ -784,196 +873,198 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
     {
       output << "<TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD></TD><TD>&nbsp;</TD></TD><TD>&nbsp;</TD></TD><TD>&nbsp;</TD></TD><TD>&nbsp;</TD></TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD></TR>\n";
     }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Writes the content editor and the content modification buttons. */
+
+void Browser::writeContentEditor(std::ostringstream& output,uint mode,const T::ContentInfo& cInfo,T::FileId fileId,T::MessageIndex messageIndex,T::MessageIndex startMessageIndex)
+{
+  try
+  {
+    std::string prod = "&startMessageIndex=" + toString(startMessageIndex);
+
+    if (mode > 0  && mode < 100)
+      writeContentForm(output,cInfo);
+
+    std::string bg = "#C0C0C0";
+    std::string p1 = R"(<TD width="150" height="25" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF';" onClick="getPage(this,parent,'/grid-admin?mode=)";
+
+    output << "<HR>\n";
+    output << "<TABLE style=\"font-size:12;\">\n";
+    output << "<TR>\n";
+
+    switch (mode)
+    {
+      case MODE_NONE:
+        output << p1 << MODE_ADD_REQUEST << prod << "&messageIndex=" << messageIndex << "');\" >New content</TD>\n";
+        if (fileId !=0  &&  messageIndex != 0xFFFFFFFF)
+        {
+          output << p1 << MODE_EDIT_REQUEST << prod << "&messageIndex=" << messageIndex << "');\" >Edit content</TD>\n";
+          output << p1 << MODE_DELETE_REQUEST << prod << "&messageIndex=" << messageIndex << "');\" >Delete content</TD>\n";
+        }
+        break;
+
+      case MODE_ADD_REQUEST:
+        output << p1 << MODE_ADD_CONFIRM << prod << "&messageIndex=" << messageIndex << "&fmiParameterName='+content_fmiParameterName.value+'&fmiParameterId='+content_fmiParameterId.value+'&fmiParameterLevelId='+content_fmiParameterLevelId.value+'&parameterLevel='+content_parameterLevel.value+'&flags='+content_flags.value+'&sourceId='+content_sourceId.value+'&forecastType='+content_forecastType.value+'&forecastNumber='+content_forecastNumber.value+'&geometryId='+content_geometryId.value+'&aggregationId='+content_aggregationId.value+'&aggregationPeriod='+content_aggregationPeriod.value+'&processingTypeId='+content_processingTypeId.value+'&processingTypeValue1='+content_processingTypeValue1.value+'&processingTypeValue2='+content_processingTypeValue2.value+'&modificationTime='+content_modificationTime.value+'&deletionTime='+content_deletionTime.value+'&forecastTime='+content_forecastTime.value+'&filePosition='+content_filePosition.value+'&messageSize='+content_messageSize.value);\" >Add content</TD>\n";
+        output << p1 << MODE_NONE << "&messageIndex=" << messageIndex << prod << "');\" >Cancel</TD>\n";
+        break;
+
+      case MODE_EDIT_REQUEST:
+        output << p1 << MODE_EDIT_CONFIRM << prod << "&messageIndex=" << messageIndex << "&fmiParameterName='+content_fmiParameterName.value+'&fmiParameterId='+content_fmiParameterId.value+'&fmiParameterLevelId='+content_fmiParameterLevelId.value+'&parameterLevel='+content_parameterLevel.value+'&flags='+content_flags.value+'&sourceId='+content_sourceId.value+'&forecastType='+content_forecastType.value+'&forecastNumber='+content_forecastNumber.value+'&geometryId='+content_geometryId.value+'&aggregationId='+content_aggregationId.value+'&aggregationPeriod='+content_aggregationPeriod.value+'&processingTypeId='+content_processingTypeId.value+'&processingTypeValue1='+content_processingTypeValue1.value+'&processingTypeValue2='+content_processingTypeValue2.value+'&modificationTime='+content_modificationTime.value+'&deletionTime='+content_deletionTime.value+'&forecastTime='+content_forecastTime.value+'&filePosition='+content_filePosition.value+'&messageSize='+content_messageSize.value);\" >Update content</TD>\n";
+        output << p1 << MODE_NONE << "&messageIndex=" << messageIndex << prod << "');\" >Cancel</TD>\n";
+        break;
+
+      case MODE_DELETE_REQUEST:
+        output << p1 << MODE_DELETE_CONFIRM << prod << "&messageIndex=" << messageIndex << "');\" >Delete content</TD>\n";
+        output << p1 << MODE_NONE << "&messageIndex=" << messageIndex << prod << "');\" >Cancel</TD>\n";
+        break;
+      default:
+        break;
+    }
+
+    output << "</TR>\n";
+    output << "</TABLE>\n";
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Page content list. */
+
+bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
+{
+  try
+  {
+    uint sourceIdx = 0;
+    session.getAttribute("grid-engine","sourceIdx",sourceIdx);
+    ContentServer_sptr contentServer = mGridEngine->getContentSourceServer_sptr(sourceIdx);
+
+    std::string sourceStr = "main";
+    bool mainSource = true;
+
+    session.getAttribute("grid-engine","source",sourceStr);
+
+    if (sourceStr == "cache")
+    {
+      contentServer = mCacheContentServer;
+      mainSource = false;
+    }
+
+    T::ContentInfo cInfo;
+    uint nextMessageIndex = 0;
+    uint maxRecords = 30;
+
+    T::ProducerId producerId = 0;
+    session.getAttribute("grid-engine","producerId",producerId);
+
+    std::string producerName;
+    session.getAttribute("grid-engine","producerName",producerName);
+
+    T::GenerationId generationId = 0;
+    session.getAttribute("grid-engine","generationId",generationId);
+
+    std::string generationName;
+    session.getAttribute("grid-engine","generationName",generationName);
+
+    T::FileId fileId = 0;
+    session.getAttribute("grid-engine","fileId",fileId);
+
+    T::MessageIndex startMessageIndex = 0;
+    session.getAttribute("grid-engine","startMessageIndex",startMessageIndex);
+
+    T::MessageIndex messageIndex = 0;
+    session.getAttribute("grid-engine","messageIndex",messageIndex);
+
+    uint mode = 0;
+    auto v = theRequest.getParameter("mode");
+    if (v)
+      mode = toUInt32(*v);
+
+    if (producerId == 0 || generationId == 0  ||  fileId == 0  ||  messageIndex == 0xFFFFFFFF)
+      mode = 0;
+
+    if ((mFlags & Flags::contentModificationEnabled)  && mainSource  &&  mode >= 100 && session.mUserInfo.isUserGroupMember("grid-admin"))
+    {
+      cInfo.mProducerId = producerId;
+      cInfo.mGenerationId = generationId;
+      cInfo.mFileId = fileId;
+      cInfo.mMessageIndex = messageIndex;
+
+      modifyContent(session,theRequest,*contentServer,mode,cInfo,fileId,messageIndex);
+      mode = MODE_NONE;
+    }
+
+    std::ostringstream output;
+
+    output << "<HTML>\n";
+    output << "<SCRIPT>\n";
+    output << "function getPage(obj,frm,url)\n";
+    output << "{\n";
+    output << "  frm.location.href=url;\n";
+    output << "}\n";
+    output << "</SCRIPT>\n";
+    output << "<BODY style=\"font-size:12;\">\n";
+
+    output << "<HR>\n";
+    output << "<A href=\"grid-admin?target=grid-admin&page=start\">SmartMet Server</A> / ";
+    output << "<A href=\"grid-admin?target=grid-admin&page=engines\">Engines</A> / ";
+    output << "<A href=\"grid-admin?page=start\">Grid Engine</A> / ";
+    output << "<A href=\"grid-admin?page=contentServer\">Content Server</A> / ";
+    output << "<A href=\"grid-admin?page=contentInformation\">Content Information</A> / ";
+    output << "<A href=\"grid-admin?page=producers&producerId=" << producerId << "\">Producers (" << esc(sourceStr) << ")</A> / <A href=\"grid-admin?page=generations&producerId=" << producerId << "&producerName=" << esc(producerName) << "&generationId=" << generationId << "\">" << esc(producerName) << "</A> / <A href=\"grid-admin?page=files&&generationId=" << generationId << "&generationName=" << esc(generationName) << "&fileId=" << fileId << "\">" << esc(generationName) << "</A> / " << fileId;
+    output << "<HR>\n";
+    output << "<H2>Content</H2>\n";
+    output << "<HR>\n";
+
+    output << "<TABLE border=\"1\" width=\"100%\" style=\"font-size:12;\">\n";
+    output << "<TR bgColor=\"#D0D0D0\">";
+    output << "<TD>MessageIndex</TD>";
+    output << "<TD>FilePosition</TD>";
+    output << "<TD>MessageSize</TD>";
+    output << "<TD>ForecastTime</TD>";
+    output << "<TD>FmiParameterId</TD>";
+    output << "<TD>FmiParameterName</TD>";
+    output << "<TD>FmiParameterLevelId</TD>";
+    output << "<TD>ParameterLevel</TD>";
+    output << "<TD>ForecastType</TD>";
+    output << "<TD>ForecastNumber</TD>";
+    output << "<TD>GeometryId</TD>";
+    output << "<TD>AggregationId</TD>";
+    output << "<TD>AggregationPeriod</TD>";
+    output << "<TD>ProcessingTypeId</TD>";
+    output << "<TD>ProcessingTypeValue1</TD>";
+    output << "<TD>ProcessingTypeValue2</TD>";
+    output << "<TD>Flags</TD>";
+    output << "<TD>SourceId</TD>";
+    output << "<TD>ModificationTime</TD>";
+    output << "<TD>DeletionTime</TD>";
+    output << "</TR>";
+
+
+    T::ContentInfoList contentInfoList;
+    T::ContentInfoList *cList = getContentList(*contentServer,fileId,contentInfoList);
+
+    uint len = cList->getLength();
+    writeContentRows(output,*cList,maxRecords,startMessageIndex,messageIndex,cInfo,nextMessageIndex);
 
     output << "</TABLE>\n";
 
     if (maxRecords < len)
-    {
-      std::string bg = "#C0C0C0";
-      std::string p1 = R"(<TD width="70" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF;';" onClick="getPage(this,parent,'/grid-admin?startMessageIndex=)";
-      std::string p2 = R"(<TD width="70" style="background:)" + bg + ";\" >&nbsp;</TD>\n";
-
-      output << "<HR>\n";
-      output << "<TABLE style=\"font-size:12;\"><TR>\n";
-
-      if (startMessageIndex >= maxRecords)
-        output << p1 << (startMessageIndex-maxRecords) << "');\" >&lt;&lt;</TD>\n";
-      else if (startMessageIndex > 0)
-        output << p1 << "0" << "');\" >&lt;&lt;</TD>\n";
-      else
-        output << p2;
-
-      if ((startMessageIndex+maxRecords) < len)
-        output << p1 << nextMessageIndex << "');\" >&gt;&gt;</TD>\n";
-      else
-        output << p2;
-
-      if (len > 100)
-      {
-        output << "<TD width=\"50\"> </TD>\n";
-
-        if (startMessageIndex > 0)
-        {
-          if (startMessageIndex >= 100)
-            output << p1 << (startMessageIndex-100) << "');\" >&lt;&lt;&lt;</TD>\n";
-          else
-            output << p1 << "0');\" >&lt;&lt;&lt;</TD>\n";
-        }
-        else
-          output << p2;
-
-        if ((startMessageIndex+maxRecords) < len)
-        {
-          if ((startMessageIndex+100) < len)
-            output << p1 << (startMessageIndex+100) << "');\" >&gt;&gt;&gt;</TD>\n";
-          else
-            output << p1 << (len-maxRecords) << "');\" >&gt;&gt;&gt;</TD>\n";
-        }
-        else
-          output << p2;
-
-      }
-
-      if (len > 1000)
-      {
-        output << "<TD width=\"50\"> </TD>\n";
-
-        if (startMessageIndex > 0)
-        {
-          if (startMessageIndex >= 1000)
-            output << p1 << (startMessageIndex-1000) << "');\" >&lt;&lt;&lt;&lt;</TD>\n";
-          else
-            output << p1 << "0');\" >&lt;&lt;&lt;&lt;</TD>\n";
-        }
-        else
-          output << p2;
-
-        if ((startMessageIndex+maxRecords) < len)
-        {
-          if ((startMessageIndex+1000) < len)
-            output << p1 << (startMessageIndex+1000) << "');\" >&gt;&gt;&gt;&gt;</TD>\n";
-          else
-            output << p1 << (len-maxRecords) << "');\" >&gt;&gt;&gt;&gt;</TD>\n";
-        }
-        else
-          output << p2;
-      }
-
-      if (len > 10000)
-      {
-        output << "<TD width=\"50\"> </TD>\n";
-
-        if (startMessageIndex > 0)
-        {
-          if (startMessageIndex >= 10000)
-            output << p1 << (startMessageIndex-10000) << "');\" >&lt;&lt;&lt;&lt;&lt;</TD>\n";
-          else
-            output << p1 << "0');\" >&lt;&lt;&lt;&lt;&lt;</TD>\n";
-        }
-        else
-          output << p2;
-
-        if ((startMessageIndex+maxRecords) < len)
-        {
-          if ((startMessageIndex+10000) < len)
-            output << p1 << (startMessageIndex+10000) << "');\" >&gt;&gt;&gt;&gt;&gt;</TD>\n";
-          else
-            output << p1 << (len-maxRecords) << "');\" >&gt;&gt;&gt;&gt;&gt;</TD>\n";
-        }
-        else
-          output << p2;
-      }
-
-      for (uint t=len; t<maxRecords; t++)
-      {
-        output << "<TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD></TR>\n";
-      }
-      output << "</TR></TABLE>\n";
-    }
+      writeMessagePageLinks(output,startMessageIndex,nextMessageIndex,len,maxRecords);
 
     if ((mFlags & Flags::contentModificationEnabled) && mainSource && session.mUserInfo.isUserGroupMember("grid-admin"))
-    {
-      std::string prod = "&startMessageIndex=" + toString(startMessageIndex);
-
-      if (mode > 0  && mode < 100)
-      {
-        std::string ft = utcTimeFromTimeT(cInfo.mForecastTimeUTC);
-
-        std::string dt = "21000101T000000";
-        if (cInfo.mDeletionTime > 0)
-          dt = utcTimeFromTimeT(cInfo.mDeletionTime);
-
-        std::string mt = utcTimeFromTimeT(cInfo.mModificationTime);
-        std::string p1 = R"(<TR><TD width="240" bgColor="#D0D0D0">)";
-        std::string p2 = R"(</TD><TD><INPUT style="width:100%;" type="text" )";
-        std::string p3 = "\"></TD></TR>";
-
-        output << "<HR>\n";
-        output << "<H2>Content</H2>\n";
-        output << "<TABLE border=\"1\" width=\"100%\" style=\"font-size:12;\">\n";
-        output << p1 << "FileId</TD><TD>"<< cInfo.mFileId << "</TD></TR>";
-        output << p1 << "MessageIndex</TD><TD>"<< cInfo.mMessageIndex << "</TD></TR>";
-        output << p1 << "FilePosition" << p2 << R"(id="content_filePosition" value=")" << cInfo.mFilePosition << p3;
-        output << p1 << "MessageSize" << p2 << R"(id="content_messageSize" value=")" << cInfo.mMessageSize << p3;
-        output << p1 << "ForecastTime" << p2 << R"(id="content_forecastTime" value=")" << ft << p3;
-        output << p1 << "FmiParameterId" << p2 << R"(id="content_fmiParameterId" value=")" << cInfo.mFmiParameterId << p3;
-        output << p1 << "FmiParameterName" << p2 << R"(id="content_fmiParameterName" value=")" << esc(cInfo.getFmiParameterName()) << p3;
-        output << p1 << "FmiParameterLevelId" << p2 << R"(id="content_fmiParameterLevelId" value=")" << cInfo.mFmiParameterLevelId << p3;
-        output << p1 << "ParameterLevel" << p2 << R"(id="content_parameterLevel" value=")" << cInfo.mParameterLevel << p3;
-        output << p1 << "ForecastType" << p2 << R"(id="content_forecastType" value=")" << cInfo.mForecastType << p3;
-        output << p1 << "ForecastNumber" << p2 << R"(id="content_forecastNumber" value=")" << cInfo.mForecastNumber << p3;
-        output << p1 << "GeometryId" << p2 << R"(id="content_geometryId" value=")" << cInfo.mGeometryId << p3;
-        output << p1 << "AggregationId" << p2 << R"(id="content_aggregationId" value=")" << cInfo.mAggregationId << p3;
-        output << p1 << "AggregationPeriod" << p2 << R"(id="content_aggregationPeriod" value=")" << cInfo.mAggregationPeriod << p3;
-        output << p1 << "ProcessingTypeId" << p2 << R"(id="content_processingTypeId" value=")" << cInfo.mProcessingTypeId << p3;
-        output << p1 << "ProcessingTypeValue1" << p2 << R"(id="content_processingTypeValue1" value=")" << cInfo.mProcessingTypeValue1 << p3;
-        output << p1 << "ProcessingTypeValue2" << p2 << R"(id="content_processingTypeValue2" value=")" << cInfo.mProcessingTypeValue2 << p3;
-        output << p1 << "Flags" << p2 << R"(id="content_flags" value=")" << cInfo.mFlags << p3;
-        output << p1 << "SourceId" << p2 << R"(id="content_sourceId" value=")" << cInfo.mSourceId << p3;
-        output << p1 << "ModificationTime" << p2 << R"(id="content_modificationTime" value=")" << mt << p3;
-        output << p1 << "DeletionTime" << p2 << R"(id="content_deletionTime" value=")" << dt << p3;
-        output << "</TABLE>\n";
-      }
-
-      std::string bg = "#C0C0C0";
-      std::string p1 = R"(<TD width="150" height="25" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF';" onClick="getPage(this,parent,'/grid-admin?mode=)";
-
-      output << "<HR>\n";
-      output << "<TABLE style=\"font-size:12;\">\n";
-      output << "<TR>\n";
-
-      switch (mode)
-      {
-        case MODE_NONE:
-          output << p1 << MODE_ADD_REQUEST << prod << "&messageIndex=" << messageIndex << "');\" >New content</TD>\n";
-          if (fileId !=0  &&  messageIndex != 0xFFFFFFFF)
-          {
-            output << p1 << MODE_EDIT_REQUEST << prod << "&messageIndex=" << messageIndex << "');\" >Edit content</TD>\n";
-            output << p1 << MODE_DELETE_REQUEST << prod << "&messageIndex=" << messageIndex << "');\" >Delete content</TD>\n";
-          }
-          break;
-
-        case MODE_ADD_REQUEST:
-          output << p1 << MODE_ADD_CONFIRM << prod << "&messageIndex=" << messageIndex << "&fmiParameterName='+content_fmiParameterName.value+'&fmiParameterId='+content_fmiParameterId.value+'&fmiParameterLevelId='+content_fmiParameterLevelId.value+'&parameterLevel='+content_parameterLevel.value+'&flags='+content_flags.value+'&sourceId='+content_sourceId.value+'&forecastType='+content_forecastType.value+'&forecastNumber='+content_forecastNumber.value+'&geometryId='+content_geometryId.value+'&aggregationId='+content_aggregationId.value+'&aggregationPeriod='+content_aggregationPeriod.value+'&processingTypeId='+content_processingTypeId.value+'&processingTypeValue1='+content_processingTypeValue1.value+'&processingTypeValue2='+content_processingTypeValue2.value+'&modificationTime='+content_modificationTime.value+'&deletionTime='+content_deletionTime.value+'&forecastTime='+content_forecastTime.value+'&filePosition='+content_filePosition.value+'&messageSize='+content_messageSize.value);\" >Add content</TD>\n";
-          output << p1 << MODE_NONE << "&messageIndex=" << messageIndex << prod << "');\" >Cancel</TD>\n";
-          break;
-
-        case MODE_EDIT_REQUEST:
-          output << p1 << MODE_EDIT_CONFIRM << prod << "&messageIndex=" << messageIndex << "&fmiParameterName='+content_fmiParameterName.value+'&fmiParameterId='+content_fmiParameterId.value+'&fmiParameterLevelId='+content_fmiParameterLevelId.value+'&parameterLevel='+content_parameterLevel.value+'&flags='+content_flags.value+'&sourceId='+content_sourceId.value+'&forecastType='+content_forecastType.value+'&forecastNumber='+content_forecastNumber.value+'&geometryId='+content_geometryId.value+'&aggregationId='+content_aggregationId.value+'&aggregationPeriod='+content_aggregationPeriod.value+'&processingTypeId='+content_processingTypeId.value+'&processingTypeValue1='+content_processingTypeValue1.value+'&processingTypeValue2='+content_processingTypeValue2.value+'&modificationTime='+content_modificationTime.value+'&deletionTime='+content_deletionTime.value+'&forecastTime='+content_forecastTime.value+'&filePosition='+content_filePosition.value+'&messageSize='+content_messageSize.value);\" >Update content</TD>\n";
-          output << p1 << MODE_NONE << "&messageIndex=" << messageIndex << prod << "');\" >Cancel</TD>\n";
-          break;
-
-        case MODE_DELETE_REQUEST:
-          output << p1 << MODE_DELETE_CONFIRM << prod << "&messageIndex=" << messageIndex << "');\" >Delete content</TD>\n";
-          output << p1 << MODE_NONE << "&messageIndex=" << messageIndex << prod << "');\" >Cancel</TD>\n";
-          break;
-        default:
-          break;
-      }
-
-      output << "</TR>\n";
-      output << "</TABLE>\n";
-    }
+      writeContentEditor(output,mode,cInfo,fileId,messageIndex,startMessageIndex);
 
     output << "<HR>\n";
     output << "</BODY>\n";
