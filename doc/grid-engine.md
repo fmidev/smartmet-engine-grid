@@ -401,7 +401,7 @@ If the primary and the secondary Redis server has identical content (= they have
 From the information searching point of view the Content Storage is usually quite slow, especially when the Redis server is used. That's why the grid engine usually caches all the content information into its memory. In order to do that, this caching should be enabled in the grid engine's main configuration file.
 
 <pre>
-  smartmet.engine.grid.content-server.content-cache.enabled = true
+  smartmet.engine.grid.content-server.cache.enabled = true
 </pre>
 
 **Cache swapping** 
@@ -413,16 +413,16 @@ That's why we need to use the cache swapping in the case of heavy load. This mea
 In the grid engine's main configuration file, we can enable the cache swapping and define the cache swapping interval (in seconds).
 
 <pre>
-  smartmet.engine.grid.content-server.content-cache.contentSwapEnabled = true    
-  smartmet.engine.grid.content-server.content-cache.contentUpdateInterval = 180       
+  smartmet.engine.grid.content-server.cache.contentSwapEnabled = true    
+  smartmet.engine.grid.content-server.cache.contentUpdateInterval = 180       
 </pre>
 
 
 If the dataServer is caching grid files into the local filesystem, we should define how long time the content server can delay the content swapping when it waits that all required files are cached locally. If the wait time is zero second then the swapping does not wait that the local cache gets ready. This only means that if a file is not in the local cache when it is requested, then the data server uses the original grid file instead. On the other hand,if the content server is waiting the local cache, we should make sure that it does not wait if forever. That's because the local caching might also face some problems (for example, the local filesystem can be full). It is also quite common that if the local cache is empty when the server is started and if there are a lot of data that requires caching, then the first wait time should be longer. That's why we have two different wait times. 
 	
 <pre>
-  smartmet.engine.grid.content-server.content-cache.fileCache.maxFirstWaitTime = 600     
-  smartmet.engine.grid.content-server.content-cache.fileCache.maxWaitTime = 300
+  smartmet.engine.grid.content-server.cache.fileCache.maxFirstWaitTime = 600     
+  smartmet.engine.grid.content-server.cache.fileCache.maxWaitTime = 300
 </pre>
 
 **Non-swapping cache**
@@ -430,7 +430,7 @@ If the dataServer is caching grid files into the local filesystem, we should def
 Non-swapping cache is used when the Content Storage information does not change continuously or if the query response times are not so critical. This kind of cache consumes less memory than the swapping cache. If we want to use non-swapping cache then the cache swapping should be disabled in the grid engine's main configuration file.
 
 <pre>
-  smartmet.engine.grid.content-server.content-cache.contentSwapEnabled = false    
+  smartmet.engine.grid.content-server.cache.contentSwapEnabled = false    
 </pre>
 
 <hr/>
@@ -715,18 +715,7 @@ If the queried data contains ensemble forecasts but there is no forecast type or
 
 ### <span id="chapter-2-4-2"></span>2.4.2 Query cache
 
-The Query Server is able to cache query results into the memory. This might be useful if exactly same query is repeated continuously. Unfortunately, this does not seem to be so common in real production in spite of that we could cache thousands of query results. In other words, the benefits of caching query results are not usually any significant compared to the increased memory consumption. That' why the query cache is usually disabled.  A query result is automatically removed from the cache if it has not been accessed in the given "maxAge" time (= seconds).
-
-
-<pre>
-  queryCache :
-  {   
-    enabled = false
-    maxAge  = 3600
-  }
-</pre>
-
-The content cache and the content search cache are internal caches that are used for caching partial search information. These caches cannot be disabled.
+The Query Server does not cache query results. The content cache and the content search cache are internal per-thread caches that are used for caching partial search information. These caches cannot be disabled. A thread clears its caches when they contain more than "maxRecordsPerThread" records or when they are older than "clearInterval" seconds. They are also cleared when a restart of the Content Server is detected.
 
 <pre>
   contentCache:
@@ -770,6 +759,8 @@ The current “K2C” function is defined like this:
     return result.value,result.message;
  end
 </pre>
+
+Notice that functions are searched first from the functions that are built into the Query Server and only after that from the LUA files. "K2C" is also a built-in function, so the LUA version above is used only as an example.
 
 LUA functions can be defined in multiple files. If these files change then updates LUA files are automatically loaded into the server. There is no need to restart the server.
 

@@ -135,7 +135,7 @@ services would otherwise run on freed memory.
 ```
 content-source[0] ─┐   (redis | postgresql | corba | http | file)
 content-source[1] ─┼─> one source:  CacheImplementation ─┐
-content-source[n] ─┘   several:     MergeImplementation ─┤   (or the source itself, if contentCache.enabled = false)
+content-source[n] ─┘   several:     MergeImplementation ─┤   (or the source itself, if content-server.cache.enabled = false)
                                                          ▼
                                             mContentServerCache  ◄── getContentServer_sptr()
                                                          │

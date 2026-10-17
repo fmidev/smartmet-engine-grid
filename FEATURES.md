@@ -65,9 +65,11 @@ single ContentServer interface.
 ## 5. Query Server modes
 
 - **Local** — in-process Query Server with Lua functions, parameter
-  mappings, aliases, unit conversions, query cache.
+  mappings, aliases, unit conversions.
 - **CORBA client** — proxy a remote Query Server.
-- **Query cache** — result memoisation across requests.
+- **Per-thread content caches** — partial content search results
+  (`query-server.contentCache`, `query-server.contentSearchCache`);
+  query results themselves are not cached.
 
 ## 6. Engine plugin API
 
