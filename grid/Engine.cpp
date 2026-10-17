@@ -2117,6 +2117,74 @@ void Engine::getParameterMappings(
 
 /*! \brief Engine: Map parameter details. */
 
+/*! \brief Engine: Get the parameter mappings of a parameter detail. */
+
+void Engine::getParameterDetailMappings(const ParameterDetails& parameterDetail,QueryServer::ParameterMapping_vec& mappings) const
+{
+  try
+  {
+    if (parameterDetail.mLevelId > " " || parameterDetail.mLevel > " ")
+    {
+      getParameterMappings(parameterDetail.mProducerName, parameterDetail.mOriginalParameter, toInt32(parameterDetail.mGeometryId.c_str()), toInt32(parameterDetail.mLevelId.c_str()),
+          toInt32(parameterDetail.mLevel.c_str()), false, mappings);
+      if (mappings.empty() && parameterDetail.mLevel < " ")
+      {
+        getParameterMappings(parameterDetail.mProducerName, parameterDetail.mOriginalParameter, toInt32(parameterDetail.mGeometryId.c_str()), toInt32(parameterDetail.mLevelId.c_str()), -1, false,
+            mappings);
+      }
+    }
+    else
+    {
+      getParameterMappings(parameterDetail.mProducerName, parameterDetail.mOriginalParameter, toInt32(parameterDetail.mGeometryId.c_str()), true, mappings);
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Add the analysis and forecast times of the contents to the mapping details. */
+
+void Engine::addMappingTimes(MappingDetails& details,T::ContentInfoList& contentInfoList) const
+{
+  try
+  {
+    uint len = contentInfoList.getLength();
+    AutoReadLock lock(&mProducerInfoList_modificationLock);
+    for (uint t = 0; t < len; t++)
+    {
+      T::ContentInfo* cInfo = contentInfoList.getContentInfoByIndex(t);
+      if (cInfo != nullptr)
+      {
+        T::GenerationInfo* gInfo = mGenerationInfoList.getGenerationInfoById(cInfo->mGenerationId);
+        if (gInfo != nullptr)
+        {
+          auto tt = details.mTimes.find(gInfo->mAnalysisTime);
+          if (tt != details.mTimes.end())
+          {
+            tt->second.insert(cInfo->getForecastTime());
+          }
+          else
+          {
+            std::set < std::string > ttt;
+            ttt.insert(cInfo->getForecastTime());
+            details.mTimes.insert(std::pair<std::string, std::set<std::string>>(gInfo->mAnalysisTime, ttt));
+          }
+        }
+      }
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
 void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails) const
 {
   try
@@ -2129,20 +2197,7 @@ void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails) const
     for (auto& parameterDetail : parameterDetails)
     {
       QueryServer::ParameterMapping_vec mappings;
-      if (parameterDetail.mLevelId > " " || parameterDetail.mLevel > " ")
-      {
-        getParameterMappings(parameterDetail.mProducerName, parameterDetail.mOriginalParameter, toInt32(parameterDetail.mGeometryId.c_str()), toInt32(parameterDetail.mLevelId.c_str()),
-            toInt32(parameterDetail.mLevel.c_str()), false, mappings);
-        if (mappings.empty() && parameterDetail.mLevel < " ")
-        {
-          getParameterMappings(parameterDetail.mProducerName, parameterDetail.mOriginalParameter, toInt32(parameterDetail.mGeometryId.c_str()), toInt32(parameterDetail.mLevelId.c_str()), -1, false,
-              mappings);
-        }
-      }
-      else
-      {
-        getParameterMappings(parameterDetail.mProducerName, parameterDetail.mOriginalParameter, toInt32(parameterDetail.mGeometryId.c_str()), true, mappings);
-      }
+      getParameterDetailMappings(parameterDetail, mappings);
 
       for (auto& mapping : mappings)
       {
@@ -2154,32 +2209,7 @@ void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails) const
             mapping.mParameterLevelId, mapping.mParameterLevel, mapping.mParameterLevel, -1, -1, mapping.mGeometryId, std::string("19000101T000000"), std::string("21000101T000000"), 0,
             contentInfoList);
         if (result == 0)
-        {
-          uint len = contentInfoList.getLength();
-          AutoReadLock lock(&mProducerInfoList_modificationLock);
-          for (uint t = 0; t < len; t++)
-          {
-            T::ContentInfo* cInfo = contentInfoList.getContentInfoByIndex(t);
-            if (cInfo != nullptr)
-            {
-              T::GenerationInfo* gInfo = mGenerationInfoList.getGenerationInfoById(cInfo->mGenerationId);
-              if (gInfo != nullptr)
-              {
-                auto tt = details.mTimes.find(gInfo->mAnalysisTime);
-                if (tt != details.mTimes.end())
-                {
-                  tt->second.insert(cInfo->getForecastTime());
-                }
-                else
-                {
-                  std::set < std::string > ttt;
-                  ttt.insert(cInfo->getForecastTime());
-                  details.mTimes.insert(std::pair<std::string, std::set<std::string>>(gInfo->mAnalysisTime, ttt));
-                }
-              }
-            }
-          }
-        }
+          addMappingTimes(details, contentInfoList);
 
         parameterDetail.mMappings.emplace_back(details);
       }

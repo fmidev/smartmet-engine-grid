@@ -285,6 +285,8 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                applyLogConfigurations(ConfigurationFile& configurationFile);     //!< Re-read the processing and debug log configurations of the servers.
     void                applyBrowserConfiguration(ConfigurationFile& configurationFile);  //!< Re-read the browser configuration.
     void                applyCleanupConfiguration(ConfigurationFile& configurationFile);  //!< Re-read the grid storage clean-up configuration.
+    void                getParameterDetailMappings(const ParameterDetails& parameterDetail,QueryServer::ParameterMapping_vec& mappings) const;  //!< Get the parameter mappings of a parameter detail.
+    void                addMappingTimes(MappingDetails& details,T::ContentInfoList& contentInfoList) const;  //!< Add the analysis and forecast times of the contents to the mapping details.
 
     // Phase helpers for init().  Each handles one well-defined stage:
     void                initMemoryMapper();                                                   //!< Apply memory-mapper configuration from member fields.
