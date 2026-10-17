@@ -67,6 +67,9 @@ class Browser
     bool                  page_queryServer(const SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
     bool                  page_contentInformation(const SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
     bool                  page_producers(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
+    void                  modifyProducer(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,ContentServer::ServiceInterface& contentServer,uint mode,T::ProducerInfo& pInfo,T::ProducerId& producerId);
+    static void           writeProducerRows(std::ostringstream& output,T::ProducerInfoList& producerInfoList,uint maxRecords,uint startProducerIndex,T::ProducerId producerId,bool mainSource,T::ProducerInfo& pInfo);
+    static void           writeProducerEditor(std::ostringstream& output,uint mode,const T::ProducerInfo& pInfo,T::ProducerId producerId);
     bool                  page_generations(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
     bool                  page_files(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
     bool                  page_contentList(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);

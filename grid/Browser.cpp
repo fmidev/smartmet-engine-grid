@@ -102,6 +102,36 @@ void writeMappingField(std::ostringstream& output,uint f,const std::string& fiel
       break;
   }
 }
+
+
+/*! \brief Writes the previous and next page links of a table paged by the start index parameter indexName. */
+
+void writeIndexPageLinks(std::ostringstream& output,const char *indexName,uint startIndex,uint maxRecords,uint len)
+{
+  std::string bg = "#C0C0C0";
+  std::string p1 = R"(<TD width="70" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF;';" onClick="getPage(this,parent,'/grid-admin?)";
+  std::string p2 = R"(<TD width="70" style="background:)" + bg + ";\" >&nbsp;</TD>\n";
+
+  output << "<HR>\n";
+  output << "<TABLE style=\"font-size:12;\"><TR>\n";
+
+  if (startIndex > 0)
+  {
+    if (startIndex > maxRecords)
+      output << p1 << indexName << "=" << (startIndex-maxRecords) << "');\" >&lt;&lt;</TD>\n";
+    else
+      output << p1 << indexName << "=0');\" >&lt;&lt;</TD>\n";
+  }
+  else
+    output << p2;
+
+  if (len > (startIndex+maxRecords))
+    output << p1 << indexName << "=" << (startIndex+maxRecords) << "');\" >&gt;&gt;</TD>\n";
+  else
+    output << p2;
+
+  output << "</TR></TABLE>\n";
+}
 }  // anonymous namespace
 
 
@@ -1747,6 +1777,213 @@ bool Browser::page_generations(SessionManagement::SessionInfo& session,const Spi
 
 
 
+/*! \brief Engine: Adds, updates or deletes a producer according to the mode. */
+
+void Browser::modifyProducer(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,ContentServer::ServiceInterface& contentServer,uint mode,T::ProducerInfo& pInfo,T::ProducerId& producerId)
+{
+  try
+  {
+    auto v = theRequest.getParameter("name");
+    if (v)
+      pInfo.mName = *v;
+
+    v = theRequest.getParameter("title");
+    if (v)
+      pInfo.mTitle = *v;
+
+    v = theRequest.getParameter("description");
+    if (v)
+      pInfo.mDescription = *v;
+
+    v = theRequest.getParameter("flags");
+    if (v)
+      pInfo.mFlags = toInt32(v->c_str());
+
+    v = theRequest.getParameter("sourceId");
+    if (v)
+      pInfo.mSourceId = toInt32(v->c_str());
+
+    switch (mode)
+    {
+      case MODE_ADD_CONFIRM:
+      {
+        int res = contentServer.addProducerInfo(0,pInfo);
+        if (res != 0)
+        {
+          // Producer add failed
+        }
+        else
+        {
+          producerId = pInfo.mProducerId;
+        }
+      }
+      break;
+
+      case MODE_EDIT_CONFIRM:
+      {
+        pInfo.mProducerId = producerId;
+        int res = contentServer.setProducerInfo(0,pInfo);
+        if (res != 0)
+        {
+          // Producer update failed
+        }
+      }
+      break;
+
+      case MODE_DELETE_CONFIRM:
+      {
+        if (producerId != 0)
+        {
+          int res = contentServer.deleteProducerInfoById(0,producerId);
+          if (res != 0)
+          {
+            // Producer delete failed
+          }
+          else
+          {
+            producerId = 0;
+            session.setAttribute("grid-engine","producerId",0);
+          }
+        }
+      }
+      break;
+      default:
+        break;
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Writes the producer table rows. The selected producer is copied to pInfo. */
+
+void Browser::writeProducerRows(std::ostringstream& output,T::ProducerInfoList& producerInfoList,uint maxRecords,uint startProducerIndex,T::ProducerId producerId,bool mainSource,T::ProducerInfo& pInfo)
+{
+  try
+  {
+  std::string fg = "#000000";
+  std::string bg = "#FFFFFF";
+
+  for (uint t=0; t<maxRecords; t++)
+  {
+    T::ProducerInfo *producer = producerInfoList.getProducerInfoByIndex(t+startProducerIndex);
+    if (producer != nullptr)
+    {
+      if (producer->mProducerId == producerId)
+      {
+        fg = "#FFFFFF";
+        bg = "#FF0000";
+        pInfo = *producer;
+        output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onClick=\"getPage(this,parent,'/grid-admin?page=generations&producerId=" << producer->mProducerId << "&producerName=" << esc(producer->mName) << "');\" >\n";
+      }
+      else
+      {
+        fg = "#000000";
+        bg = "#FFFFFF";
+        output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << R"(;'" onmouseover="this.style='background:#FFFF00; color:#000000;';" onClick="getPage(this,parent,'/grid-admin?startProducerIndex=)" << startProducerIndex << "&producerId=" << producer->mProducerId << "&producerName=" << esc(producer->mName) << "');\" >\n";
+      }
+
+      output << "<TD>"<< producer->mProducerId << "</TD>";
+      if (!mainSource)
+      {
+        output << "<TD>"<< ((producer->mProducerId % 0xFF000000) >> 24) << "</TD>";
+        output << "<TD>"<< (producer->mProducerId & 0x00FFFFFF) << "</TD>";
+      }
+      output << "<TD>"<< esc(producer->mName) << "</TD>";
+      output << "<TD>"<< esc(producer->mTitle) << "</TD>";
+      output << "<TD>"<< esc(producer->mDescription) << "</TD>";
+      output << "<TD>"<< producer->mFlags << "</TD>";
+      output << "<TD>"<< producer->mSourceId << "</TD>";
+      output << "</TR>";
+    }
+    else
+    {
+      output << "<TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD></TR>\n";
+    }
+  }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Writes the producer editor and the producer modification buttons. */
+
+void Browser::writeProducerEditor(std::ostringstream& output,uint mode,const T::ProducerInfo& pInfo,T::ProducerId producerId)
+{
+  try
+  {
+    if (mode > 0  && mode < 100)
+    {
+      std::string p1 = R"(<TR><TD width="240" bgColor="#D0D0D0">)";
+      std::string p2 = R"(</TD><TD><INPUT style="width:100%;" type="text" )";
+      std::string p3 = "\"></TD></TR>";
+
+      output << "<HR>\n";
+      output << "<H2>Producer</H2>\n";
+      output << "<TABLE border=\"1\" width=\"100%\" style=\"font-size:12;\">\n";
+      output << p1 << "Id</TD><TD>"<< pInfo.mProducerId << "</TD></TR>";
+      output << p1 << "Name" << p2 << R"(id="producer_name" value=")" << esc(pInfo.mName) << p3;
+      output << p1 << "Title" << p2 << R"(id="producer_title" value=")" << esc(pInfo.mTitle) << p3;
+      output << p1 << "Description" << p2 << R"(id="producer_description" value=")" << esc(pInfo.mDescription) << p3;
+      output << p1 << "Flags" << p2 << R"(id="producer_flags" value=")" << pInfo.mFlags << p3;
+      output << p1 << "SourceId" << p2 << R"(id="producer_sourceId" value=")" << pInfo.mSourceId << p3;
+      output << "</TABLE>\n";
+    }
+
+    std::string bg = "#C0C0C0";
+    std::string p1 = R"(<TD width="150" height="25" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF';" onClick="getPage(this,parent,'/grid-admin?mode=)";
+
+    output << "<HR>\n";
+    output << "<TABLE style=\"font-size:12;\">\n";
+    output << "<TR>\n";
+    switch (mode)
+    {
+      case MODE_NONE:
+        output << p1 << MODE_ADD_REQUEST << ">');\" >New producer</TD>\n";
+        if (producerId != 0)
+        {
+          output << p1 << MODE_EDIT_REQUEST << "&producerId=" << producerId << "');\" >Edit producer</TD>\n";
+          output << p1 << MODE_DELETE_REQUEST << "&producerId=" << producerId << "');\" >Delete producer</TD>\n";
+        }
+        break;
+
+      case MODE_ADD_REQUEST:
+        output << p1 << MODE_ADD_CONFIRM << "&name='+producer_name.value+'&title='+producer_title.value+'&description='+producer_description.value+'&flags='+producer_flags.value+'&sourceId='+producer_sourceId.value);\" >Add producer</TD>\n";
+        output << p1 << MODE_NONE << "&producerId=" << producerId << "');\" >Cancel</TD>\n";
+        break;
+
+      case MODE_EDIT_REQUEST:
+        output << p1 << MODE_EDIT_CONFIRM << "&producerId=" << producerId << "&name='+producer_name.value+'&title='+producer_title.value+'&description='+producer_description.value+'&flags='+producer_flags.value+'&sourceId='+producer_sourceId.value);\" >Update producer</TD>\n";
+        output << p1 << MODE_NONE << "&producerId=" << producerId << "');\" >Cancel</TD>\n";
+        break;
+
+      case MODE_DELETE_REQUEST:
+        output << p1 << MODE_DELETE_CONFIRM << "&producerId=" << producerId << "');\" >Delete producer</TD>\n";
+        output << p1 << MODE_NONE << "&producerId=" << producerId << "');\" >Cancel</TD>\n";
+        break;
+      default:
+        break;
+    }
+
+    output << "</TR>\n";
+    output << "</TABLE>\n";
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
 /*! \brief Engine: Page producers. */
 
 bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
@@ -1786,73 +2023,7 @@ bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine
 
     if ((mFlags & Flags::contentModificationEnabled) && mainSource  &&  mode >= 100 && session.mUserInfo.isUserGroupMember("grid-admin"))
     {
-      auto v = theRequest.getParameter("name");
-      if (v)
-        pInfo.mName = *v;
-
-      v = theRequest.getParameter("title");
-      if (v)
-        pInfo.mTitle = *v;
-
-      v = theRequest.getParameter("description");
-      if (v)
-        pInfo.mDescription = *v;
-
-      v = theRequest.getParameter("flags");
-      if (v)
-        pInfo.mFlags = toInt32(v->c_str());
-
-      v = theRequest.getParameter("sourceId");
-      if (v)
-        pInfo.mSourceId = toInt32(v->c_str());
-
-      switch (mode)
-      {
-        case MODE_ADD_CONFIRM:
-        {
-          int res = contentServer->addProducerInfo(0,pInfo);
-          if (res != 0)
-          {
-            // Producer add failed
-          }
-          else
-          {
-            producerId = pInfo.mProducerId;
-          }
-        }
-        break;
-
-        case MODE_EDIT_CONFIRM:
-        {
-          pInfo.mProducerId = producerId;
-          int res = contentServer->setProducerInfo(0,pInfo);
-          if (res != 0)
-          {
-            // Producer update failed
-          }
-        }
-        break;
-
-        case MODE_DELETE_CONFIRM:
-        {
-          if (producerId != 0)
-          {
-            int res = contentServer->deleteProducerInfoById(0,producerId);
-            if (res != 0)
-            {
-              // Producer delete failed
-            }
-            else
-            {
-              producerId = 0;
-              session.setAttribute("grid-engine","producerId",0);
-            }
-          }
-        }
-        break;
-        default:
-          break;
-      }
+      modifyProducer(session,theRequest,*contentServer,mode,pInfo,producerId);
       mode = 0;
     }
 
@@ -1892,137 +2063,18 @@ bool Browser::page_producers(SessionManagement::SessionInfo& session,const Spine
     output << "<TD>SourceId</TD>";
     output << "</TR>";
 
-    std::string fg = "#000000";
-    std::string bg = "#FFFFFF";
-
     T::ProducerInfoList producerInfoList;
     contentServer->getProducerInfoList(0,producerInfoList);
 
     uint len = producerInfoList.getLength();
-    for (uint t=0; t<maxRecords; t++)
-    {
-      T::ProducerInfo *producer = producerInfoList.getProducerInfoByIndex(t+startProducerIndex);
-      if (producer != nullptr)
-      {
-        if (producer->mProducerId == producerId)
-        {
-          fg = "#FFFFFF";
-          bg = "#FF0000";
-          pInfo = *producer;
-          output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onClick=\"getPage(this,parent,'/grid-admin?page=generations&producerId=" << producer->mProducerId << "&producerName=" << esc(producer->mName) << "');\" >\n";
-        }
-        else
-        {
-          fg = "#000000";
-          bg = "#FFFFFF";
-          output << "<TR style=\"background:" << bg << "; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << R"(;'" onmouseover="this.style='background:#FFFF00; color:#000000;';" onClick="getPage(this,parent,'/grid-admin?startProducerIndex=)" << startProducerIndex << "&producerId=" << producer->mProducerId << "&producerName=" << esc(producer->mName) << "');\" >\n";
-        }
-
-        output << "<TD>"<< producer->mProducerId << "</TD>";
-        if (!mainSource)
-        {
-          output << "<TD>"<< ((producer->mProducerId % 0xFF000000) >> 24) << "</TD>";
-          output << "<TD>"<< (producer->mProducerId & 0x00FFFFFF) << "</TD>";
-        }
-        output << "<TD>"<< esc(producer->mName) << "</TD>";
-        output << "<TD>"<< esc(producer->mTitle) << "</TD>";
-        output << "<TD>"<< esc(producer->mDescription) << "</TD>";
-        output << "<TD>"<< producer->mFlags << "</TD>";
-        output << "<TD>"<< producer->mSourceId << "</TD>";
-        output << "</TR>";
-      }
-      else
-      {
-        output << "<TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD></TR>\n";
-      }
-    }
+    writeProducerRows(output,producerInfoList,maxRecords,startProducerIndex,producerId,mainSource,pInfo);
     output << "</TABLE>\n";
 
     if (startProducerIndex > 0 || len >= maxRecords)
-    {
-      std::string bg = "#C0C0C0";
-      std::string p1 = R"(<TD width="70" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF;';" onClick="getPage(this,parent,'/grid-admin?)";
-      std::string p2 = R"(<TD width="70" style="background:)" + bg + ";\" >&nbsp;</TD>\n";
-
-      output << "<HR>\n";
-      output << "<TABLE style=\"font-size:12;\"><TR>\n";
-
-      if (startProducerIndex > 0)
-      {
-        if (startProducerIndex > maxRecords)
-          output << p1 << "startProducerIndex=" << (startProducerIndex-maxRecords) << "');\" >&lt;&lt;</TD>\n";
-        else
-          output << p1 << "startProducerIndex=0');\" >&lt;&lt;</TD>\n";
-      }
-      else
-        output << p2;
-
-      if (len > (startProducerIndex+maxRecords))
-        output << p1 << "startProducerIndex=" << (startProducerIndex+maxRecords) << "');\" >&gt;&gt;</TD>\n";
-      else
-        output << p2;
-
-      output << "</TR></TABLE>\n";
-    }
+      writeIndexPageLinks(output,"startProducerIndex",startProducerIndex,maxRecords,len);
 
     if ((mFlags & Flags::contentModificationEnabled) && mainSource && session.mUserInfo.isUserGroupMember("grid-admin"))
-    {
-      if (mode > 0  && mode < 100)
-      {
-        std::string p1 = R"(<TR><TD width="240" bgColor="#D0D0D0">)";
-        std::string p2 = R"(</TD><TD><INPUT style="width:100%;" type="text" )";
-        std::string p3 = "\"></TD></TR>";
-
-        output << "<HR>\n";
-        output << "<H2>Producer</H2>\n";
-        output << "<TABLE border=\"1\" width=\"100%\" style=\"font-size:12;\">\n";
-        output << p1 << "Id</TD><TD>"<< pInfo.mProducerId << "</TD></TR>";
-        output << p1 << "Name" << p2 << R"(id="producer_name" value=")" << esc(pInfo.mName) << p3;
-        output << p1 << "Title" << p2 << R"(id="producer_title" value=")" << esc(pInfo.mTitle) << p3;
-        output << p1 << "Description" << p2 << R"(id="producer_description" value=")" << esc(pInfo.mDescription) << p3;
-        output << p1 << "Flags" << p2 << R"(id="producer_flags" value=")" << pInfo.mFlags << p3;
-        output << p1 << "SourceId" << p2 << R"(id="producer_sourceId" value=")" << pInfo.mSourceId << p3;
-        output << "</TABLE>\n";
-      }
-
-      bg = "#C0C0C0";
-      std::string p1 = R"(<TD width="150" height="25" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF';" onClick="getPage(this,parent,'/grid-admin?mode=)";
-
-      output << "<HR>\n";
-      output << "<TABLE style=\"font-size:12;\">\n";
-      output << "<TR>\n";
-      switch (mode)
-      {
-        case MODE_NONE:
-          output << p1 << MODE_ADD_REQUEST << ">');\" >New producer</TD>\n";
-          if (producerId != 0)
-          {
-            output << p1 << MODE_EDIT_REQUEST << "&producerId=" << producerId << "');\" >Edit producer</TD>\n";
-            output << p1 << MODE_DELETE_REQUEST << "&producerId=" << producerId << "');\" >Delete producer</TD>\n";
-          }
-          break;
-
-        case MODE_ADD_REQUEST:
-          output << p1 << MODE_ADD_CONFIRM << "&name='+producer_name.value+'&title='+producer_title.value+'&description='+producer_description.value+'&flags='+producer_flags.value+'&sourceId='+producer_sourceId.value);\" >Add producer</TD>\n";
-          output << p1 << MODE_NONE << "&producerId=" << producerId << "');\" >Cancel</TD>\n";
-          break;
-
-        case MODE_EDIT_REQUEST:
-          output << p1 << MODE_EDIT_CONFIRM << "&producerId=" << producerId << "&name='+producer_name.value+'&title='+producer_title.value+'&description='+producer_description.value+'&flags='+producer_flags.value+'&sourceId='+producer_sourceId.value);\" >Update producer</TD>\n";
-          output << p1 << MODE_NONE << "&producerId=" << producerId << "');\" >Cancel</TD>\n";
-          break;
-
-        case MODE_DELETE_REQUEST:
-          output << p1 << MODE_DELETE_CONFIRM << "&producerId=" << producerId << "');\" >Delete producer</TD>\n";
-          output << p1 << MODE_NONE << "&producerId=" << producerId << "');\" >Cancel</TD>\n";
-          break;
-        default:
-          break;
-      }
-
-      output << "</TR>\n";
-      output << "</TABLE>\n";
-    }
+      writeProducerEditor(output,mode,pInfo,producerId);
 
     output << "<HR>\n";
 
