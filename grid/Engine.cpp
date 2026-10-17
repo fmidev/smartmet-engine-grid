@@ -117,6 +117,63 @@ void setParameterMetaData(MetaData& metaData,const std::set<std::string>& paramK
     }
   }
 }
+
+
+/*! \brief Joins the strings with ',' separators. */
+
+std::string joinStrings(const std::set<std::string>& list)
+{
+  std::ostringstream output;
+  for (auto pp = list.begin(); pp != list.end(); ++pp)
+  {
+    if (pp != list.begin())
+      output << ",";
+
+    output << *pp;
+  }
+  return output.str();
+}
+
+
+
+/*! \brief Sets the analysis, min, max and modification time columns (3..6) of a generation info row. */
+
+void setGenerationTimes(Spine::Table& table,uint row,const std::string& analysisTime,const std::string& firstTime,const std::string& lastTime,
+    time_t modificationTime,const std::string& timeFormat,const Fmi::TimeFormatter* timeFormatter)
+{
+  if (!timeFormat.empty()  &&  strcasecmp(timeFormat.c_str(),"ISO") != 0  && timeFormatter)
+  {
+    // Analysis time
+    Fmi::DateTime aTime = toTimeStamp(analysisTime);
+    table.set(3, row, timeFormatter->format(aTime));
+
+    // Min time
+    Fmi::DateTime fTime = toTimeStamp(firstTime);
+    table.set(4, row, timeFormatter->format(fTime));
+
+    // Max time
+    Fmi::DateTime lTime = toTimeStamp(lastTime);
+    table.set(5, row, timeFormatter->format(lTime));
+
+    // Modification time
+    Fmi::DateTime mTime = toTimeStamp(utcTimeFromTimeT(modificationTime));
+    table.set(6, row, timeFormatter->format(mTime));
+  }
+  else
+  {
+    // Analysis time
+    table.set(3, row, analysisTime);
+
+    // Min time
+    table.set(4, row, firstTime);
+
+    // Max time
+    table.set(5, row, lastTime);
+
+    // Modification time
+    table.set(6, row, utcTimeFromTimeT(modificationTime));
+  }
+}
 }  // namespace
 
 /*! \brief Engine: Constructor. */
@@ -2394,6 +2451,357 @@ ContentTable Engine::getProducerInfo(std::optional<std::string> producer,const s
 
 
 
+/*! \brief Engine: Get the FMI parameter names (output1) and their alias names (output2) of the generation geometry. */
+
+void Engine::getGeometryParameterNames(const T::ProducerInfo& info,const T::GeometryInfo& geom,ContentServer::ServiceInterface& contentServer,std::ostringstream& output1,std::ostringstream& output2) const
+{
+  try
+  {
+    if (!mParameterMappingDefinitions)
+      return;
+
+    AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
+    std::set<std::string> paramKeyList;
+    contentServer.getContentParamKeyListByGenerationAndGeometryId(0,geom.mGenerationId,geom.mGeometryId,T::ParamKeyTypeValue::FMI_NAME,paramKeyList);
+
+
+    std::set<std::string> paramList;
+    for (auto pk = paramKeyList.begin(); pk != paramKeyList.end(); ++pk)
+    {
+      QueryServer::ParameterMapping_vec mappings;
+      for (auto& mf : *mParameterMappingDefinitions)
+      {
+        mf.getMappingsByParamKey(info.mName,T::ParamKeyTypeValue::FMI_NAME,*pk,-1,-1,-1,mappings);
+      }
+
+      for (auto& mapping : mappings)
+      {
+        if (strcasecmp(pk->c_str(),mapping.mParameterName.c_str()) != 0)
+          paramList.insert(mapping.mParameterName);
+      }
+
+      if (pk != paramKeyList.begin())
+       output1 << ",";
+
+      output1 << *pk;
+    }
+
+    output2 << joinStrings(paramList);
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Add the generation info rows of the ready geometries of the generation (the caller holds the producer info lock). */
+
+void Engine::addGenerationInfoRows(Spine::Table& resultTable,uint& row,const T::ProducerInfo& info,const T::GenerationInfo& gInfo,
+    ContentServer::ServiceInterface& contentServer,const std::string& timeFormat,const Fmi::TimeFormatter* timeFormatter) const
+{
+  try
+  {
+    T::GeometryInfoList geometryInfoList;
+    // If there are no geometry status information available, it is generated.
+    getGenerationGeometries(gInfo,contentServer,geometryInfoList);
+
+    uint geomLen = geometryInfoList.getLength();
+    for (uint gg = 0; gg < geomLen; gg++)
+    {
+      T::GeometryInfo *geom = geometryInfoList.getGeometryInfoByIndex(gg);
+      if (geom == nullptr ||  geom->mStatus != T::GeometryInfo::Status::Ready)
+        continue;
+
+      std::set<std::string> contentTimeList;
+      contentServer.getContentTimeListByGenerationAndGeometryId(0,geom->mGenerationId,geom->mGeometryId,contentTimeList);
+
+      std::ostringstream output1;
+      std::ostringstream output2;
+
+      getGeometryParameterNames(info,*geom,contentServer,output1,output2);
+
+      uint slen = contentTimeList.size();
+      if (slen > 0)
+      {
+        auto first = contentTimeList.begin();
+        auto last = contentTimeList.rbegin();
+
+        // Producer name
+        resultTable.set(0, row, info.mName);
+
+        // Geometry id
+        resultTable.set(1, row, std::to_string(geom->mGeometryId));
+
+        // Timesteps
+        resultTable.set(2, row, std::to_string(slen));
+
+        setGenerationTimes(resultTable,row,gInfo.mAnalysisTime,*first,*last,geom->mModificationTime,timeFormat,timeFormatter);
+
+        // FMI Parameters
+        resultTable.set(7, row, output1.str());
+
+        // Parameter alias names
+        resultTable.set(8, row, output2.str());
+
+        row++;
+      }
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Count the ready geometries of the generations of a producer status record item ("producer[:geometryId]") by analysis time and geometry. Returns false if the producer is not found. */
+
+bool Engine::countGenerationGeometries(const std::string& recordItem,time_t currentTime,ContentServer::ServiceInterface& contentServer,
+    T::GeometryInfoList& tmpGeometryInfoList,std::map<std::string,std::vector<std::pair<uint,int>>>& counterList) const
+{
+  try
+  {
+    AutoReadLock lock(&mProducerInfoList_modificationLock);
+
+    std::vector <std::string> list;
+    splitString(recordItem, ':',list);
+
+    std::string producerName = list[0];
+    int geometryId = 0;
+    if (list.size() > 1)
+      geometryId = toInt32(list[1]);
+
+    T::ProducerInfo *pInfo = mProducerInfoList.getProducerInfoByName(producerName);
+    if (!pInfo)
+    {
+      //printf("PRODUCER [%s] NOT FOUND\n",(*rec)[t].c_str());
+      return false;
+    }
+
+    //printf("PRODUCER %s\n",pInfo->mName.c_str());
+    T::GenerationInfoList generationInfoList;
+    mGenerationInfoList.getGenerationInfoListByProducerId(pInfo->mProducerId,generationInfoList);
+    //printf("GENERATIONS %u/%u\n",generationInfoList.getLength(),mGenerationInfoList.getLength());
+
+    uint len = generationInfoList.getLength();
+    for (uint g = 0; g < len; g++)
+    {
+      T::GenerationInfo *gInfo = generationInfoList.getGenerationInfoByIndex(g);
+      time_t deletionTime = gInfo->mDeletionTime;
+
+      if (deletionTime == 0 || (currentTime + 120) < deletionTime)
+      {
+        T::GeometryInfoList geometryInfoList;
+        getExtGenerationGeometries(*gInfo,contentServer,tmpGeometryInfoList,geometryInfoList);
+
+        uint geomLen = geometryInfoList.getLength();
+        for (uint gg = 0; gg < geomLen; gg++)
+        {
+          T::GeometryInfo *geom = geometryInfoList.getGeometryInfoByIndex(gg);
+          if (geom != nullptr &&  geom->mStatus == T::GeometryInfo::Status::Ready  &&  (geometryId == geom->mGeometryId  ||  geometryId == 0))
+          {
+            std::string key = gInfo->mAnalysisTime + ":" + std::to_string(geom->mGeometryId);
+            auto p = counterList.find(key);
+            if (p != counterList.end())
+              p->second.emplace_back(std::pair<T::GenerationId,int>(geom->mGenerationId,geom->mGeometryId));
+            else
+            {
+              std::vector<std::pair<uint,int>> cntList;
+              cntList.emplace_back(std::pair<T::GenerationId,int>(geom->mGenerationId,geom->mGeometryId));
+              counterList.insert(std::pair<std::string,std::vector<std::pair<uint,int>>>(key,cntList));
+            }
+          }
+        }
+      }
+    }
+    return true;
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Get the geometries of the generation. If there are no geometry status information available,
+    it is generated to tmpGeometryInfoList. */
+
+void Engine::getExtGenerationGeometries(const T::GenerationInfo& gInfo,ContentServer::ServiceInterface& contentServer,
+    T::GeometryInfoList& tmpGeometryInfoList,T::GeometryInfoList& geometryInfoList) const
+{
+  try
+  {
+    mGeometryInfoList.getGeometryInfoListByGenerationId(gInfo.mGenerationId,geometryInfoList);
+
+    uint geomLen = geometryInfoList.getLength();
+    if (geomLen != 0)
+      return;
+
+    // It seems that there are no geometry status information available. Let's generate it.
+
+    std::set<T::GeometryId> geometryIdList;
+    contentServer.getContentGeometryIdListByGenerationId(0,gInfo.mGenerationId,geometryIdList);
+    if (!geometryIdList.empty())
+    {
+      for (int gi : geometryIdList)
+      {
+        auto *geom = new T::GeometryInfo();
+        geom->mProducerId = gInfo.mProducerId;
+        geom->mGenerationId = gInfo.mGenerationId;
+        geom->mGeometryId = gi;
+        geom->mModificationTime = gInfo.mModificationTime;
+        geom->mDeletionTime = gInfo.mDeletionTime;
+        geom->mStatus = gInfo.mStatus;
+        tmpGeometryInfoList.addGeometryInfo(geom);
+      }
+    }
+
+    tmpGeometryInfoList.getGeometryInfoListByGenerationId(gInfo.mGenerationId,geometryInfoList);
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Add the FMI parameter names of the geometry (paramList1) which have aliases (paramList2). */
+
+void Engine::addAliasedParameterNames(const std::string& producerAlias,const T::ProducerInfo& pInfo,const T::GeometryInfo& geom,
+    ContentServer::ServiceInterface& contentServer,std::set<std::string>& paramList1,std::set<std::string>& paramList2) const
+{
+  try
+  {
+    AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
+    std::set<std::string> paramKeyList;
+    contentServer.getContentParamKeyListByGenerationAndGeometryId(0,geom.mGenerationId,geom.mGeometryId,T::ParamKeyTypeValue::FMI_NAME,paramKeyList);
+
+    for (const auto& pk : paramKeyList)
+    {
+      QueryServer::ParameterMapping_vec mappings;
+      for (auto& mf : *mParameterMappingDefinitions)
+      {
+        mf.getMappingsByParamKey(pInfo.mName,T::ParamKeyTypeValue::FMI_NAME,pk,-1,-1,-1,mappings);
+      }
+
+      for (auto& mapping : mappings)
+      {
+        if (strcasecmp(pk.c_str(),mapping.mParameterName.c_str()) != 0)
+        {
+          std::string name = producerAlias + ";" + mapping.mParameterName;
+          std::string alias;
+          if (mProducerMappingDefinitions.getAlias(name,alias))
+          {
+            paramList1.insert(pk);
+            paramList2.insert(mapping.mParameterName);
+          }
+        }
+      }
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Get the latest modification time and the FMI parameter names (paramList1) having aliases (paramList2) of the geometries. */
+
+void Engine::getExtParameterNames(const std::string& producerAlias,const std::vector<std::pair<uint,int>>& geometries,T::GeometryInfoList& tmpGeometryInfoList,
+    ContentServer::ServiceInterface& contentServer,time_t& modTime,std::set<std::string>& paramList1,std::set<std::string>& paramList2) const
+{
+  try
+  {
+    for (auto g = geometries.begin(); g != geometries.end(); ++g)
+    {
+      //printf(" --- %u %d\n",g->first,g->second);
+      //T::GenerationInfo *gInfo = mGenerationInfoList.getGenerationInfoById(g->first);
+      T::GeometryInfo *geom = mGeometryInfoList.getGeometryInfoById(g->first,g->second,0);
+      if (!geom)
+        geom = tmpGeometryInfoList.getGeometryInfoById(g->first,g->second,0);
+
+      if (geom && geom->mModificationTime > modTime)
+      {
+        modTime = geom->mModificationTime;
+      }
+
+      if (!geom ||  !mParameterMappingDefinitions)
+        continue;
+
+      T::ProducerInfo *pInfo = mProducerInfoList.getProducerInfoById(geom->mProducerId);
+      if (pInfo)
+        addAliasedParameterNames(producerAlias,*pInfo,*geom,contentServer,paramList1,paramList2);
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Add the ext generation info row of an analysis time and geometry ("analysisTime:geometryId") of a producer status record. */
+
+void Engine::addExtGenerationInfoRow(Spine::Table& resultTable,uint& row,const std::string& producerAlias,const std::string& key,
+    const std::vector<std::pair<uint,int>>& geometries,T::GeometryInfoList& tmpGeometryInfoList,ContentServer::ServiceInterface& contentServer,
+    const std::string& timeFormat,const Fmi::TimeFormatter* timeFormatter) const
+{
+  try
+  {
+    time_t modTime = 0;
+
+    std::set<std::string> contentTimeList;
+    //printf("CONTENT [%s] [%u][%d]\n",it->first.c_str(),it->second[0].first,it->second[0].second);
+    contentServer.getContentTimeListByGenerationAndGeometryId(0,geometries[0].first,geometries[0].second,contentTimeList);
+
+    uint slen = contentTimeList.size();
+    if (slen == 0)
+      return;
+
+    std::set<std::string> paramList1;
+    std::set<std::string> paramList2;
+    getExtParameterNames(producerAlias,geometries,tmpGeometryInfoList,contentServer,modTime,paramList1,paramList2);
+
+    auto first = contentTimeList.begin();
+    auto last = contentTimeList.rbegin();
+    std::vector<std::string> ss;
+    splitString(key,':',ss);
+
+    // Producer name
+    resultTable.set(0, row, producerAlias);
+
+    // Geometry id
+    resultTable.set(1, row, ss[1]);
+
+    // Timesteps
+    resultTable.set(2, row, std::to_string(slen));
+
+    setGenerationTimes(resultTable,row,ss[0],*first,*last,modTime,timeFormat,timeFormatter);
+
+    // FMI Parameters
+    resultTable.set(7, row, joinStrings(paramList1));
+
+    // Parameter alias names
+    resultTable.set(8, row, joinStrings(paramList2));
+
+    row++;
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
 /*! \brief Engine: Get generation info. */
 
 ContentTable Engine::getGenerationInfo(std::optional<std::string> producer,std::string timeFormat) const
@@ -2452,150 +2860,13 @@ ContentTable Engine::getGenerationInfo(std::optional<std::string> producer,std::
         {
           generationList.sort(T::GenerationInfo::ComparisonMethod::analysisTime);
 
-          uint glen = generationList.getLength();
+          glen = generationList.getLength();
           for (uint g=0; g<glen; g++)
           {
             T::GenerationInfo *gInfo = generationList.getGenerationInfoByIndex(g);
             time_t deletionTime = gInfo->mDeletionTime;
             if (deletionTime == 0 || (currentTime + 120) < deletionTime)
-            {
-              T::GeometryInfoList geometryInfoList;
-              mGeometryInfoList.getGeometryInfoListByGenerationId(gInfo->mGenerationId,geometryInfoList);
-
-              uint geomLen = geometryInfoList.getLength();
-              if (geomLen == 0)
-              {
-                // It seems that there are no geometry status information available. Let's generate it.
-
-                std::set<T::GeometryId> geometryIdList;
-                contentServer->getContentGeometryIdListByGenerationId(0,gInfo->mGenerationId,geometryIdList);
-                if (!geometryIdList.empty())
-                {
-                  for (int gi : geometryIdList)
-                  {
-                    auto *geom = new T::GeometryInfo();
-                    geom->mProducerId = info->mProducerId;
-                    geom->mGenerationId = gInfo->mGenerationId;
-                    geom->mGeometryId = gi;
-                    geom->mModificationTime = gInfo->mModificationTime;
-                    geom->mDeletionTime = gInfo->mDeletionTime;
-                    geom->mStatus = gInfo->mStatus;
-                    geometryInfoList.addGeometryInfo(geom);
-                  }
-                }
-                geomLen = geometryInfoList.getLength();
-              }
-
-              for (uint gg = 0; gg < geomLen; gg++)
-              {
-                T::GeometryInfo *geom = geometryInfoList.getGeometryInfoByIndex(gg);
-                if (geom != nullptr &&  geom->mStatus == T::GeometryInfo::Status::Ready)
-                {
-                  std::set<std::string> contentTimeList;
-                  contentServer->getContentTimeListByGenerationAndGeometryId(0,geom->mGenerationId,geom->mGeometryId,contentTimeList);
-
-                  std::ostringstream output1;
-                  std::ostringstream output2;
-
-                  if (mParameterMappingDefinitions)
-                  {
-                    AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
-                    std::set<std::string> paramKeyList;
-                    contentServer->getContentParamKeyListByGenerationAndGeometryId(0,geom->mGenerationId,geom->mGeometryId,T::ParamKeyTypeValue::FMI_NAME,paramKeyList);
-
-
-                    std::set<std::string> paramList;
-                    for (auto pk = paramKeyList.begin(); pk != paramKeyList.end(); ++pk)
-                    {
-                      QueryServer::ParameterMapping_vec mappings;
-                      for (auto& mf : *mParameterMappingDefinitions)
-                      {
-                        mf.getMappingsByParamKey(info->mName,T::ParamKeyTypeValue::FMI_NAME,*pk,-1,-1,-1,mappings);
-                      }
-
-                      if (!mappings.empty())
-                      {
-                        for (auto& mapping : mappings)
-                        {
-                          if (strcasecmp(pk->c_str(),mapping.mParameterName.c_str()) != 0)
-                            paramList.insert(mapping.mParameterName);
-                        }
-                      }
-                      if (pk != paramKeyList.begin())
-                       output1 << ",";
-
-                      output1 << *pk;
-                    }
-
-                    for (auto pp = paramList.begin(); pp != paramList.end(); ++pp)
-                    {
-                      if (pp != paramList.begin())
-                       output2 << ",";
-
-                      output2 << *pp;
-                    }
-                  }
-
-                  uint slen = contentTimeList.size();
-                  if (slen > 0)
-                  {
-                    auto first = contentTimeList.begin();
-                    auto last = contentTimeList.rbegin();
-
-                    // Producer name
-                    resultTable->set(0, row, info->mName);
-
-                    // Geometry id
-                    resultTable->set(1, row, std::to_string(geom->mGeometryId));
-
-                    // Timesteps
-                    resultTable->set(2, row, std::to_string(slen));
-
-
-                    if (!timeFormat.empty()  &&  strcasecmp(timeFormat.c_str(),"ISO") != 0  && timeFormatter)
-                    {
-                      // Analysis time
-                      Fmi::DateTime aTime = toTimeStamp(gInfo->mAnalysisTime);
-                      resultTable->set(3, row, timeFormatter->format(aTime));
-
-                      // Min time
-                      Fmi::DateTime fTime = toTimeStamp(*first);
-                      resultTable->set(4, row, timeFormatter->format(fTime));
-
-                      // Max time
-                      Fmi::DateTime lTime = toTimeStamp(*last);
-                      resultTable->set(5, row, timeFormatter->format(lTime));
-
-                      // Modification time
-                      Fmi::DateTime mTime = toTimeStamp(utcTimeFromTimeT(geom->mModificationTime));
-                      resultTable->set(6, row, timeFormatter->format(mTime));
-                    }
-                    else
-                    {
-                      // Analysis time
-                      resultTable->set(3, row, gInfo->mAnalysisTime);
-
-                      // Min time
-                      resultTable->set(4, row, *first);
-
-                      // Max time
-                      resultTable->set(5, row, *last);
-
-                      // Modification time
-                      resultTable->set(6, row, utcTimeFromTimeT(geom->mModificationTime));
-                    }
-
-                    // FMI Parameters
-                    resultTable->set(7, row, output1.str());
-
-                    // Parameter alias names
-                    resultTable->set(8, row, output2.str());
-
-                    row++;
-                  }
-                }
-              }
-            }
+              addGenerationInfoRows(*resultTable,row,*info,*gInfo,*contentServer,timeFormat,timeFormatter.get());
           }
         }
       }
@@ -2654,235 +2925,15 @@ ContentTable Engine::getExtGenerationInfo(std::optional<std::string> producer,st
         std::map<std::string,std::vector<std::pair<uint,int>>> counterList;
 
         for (uint t=1; t<sz && available; t++)
-        {
-          AutoReadLock lock(&mProducerInfoList_modificationLock);
-
-          std::vector <std::string> list;
-          splitString(record[t], ':',list);
-
-          std::string producerName = list[0];
-          int geometryId = 0;
-          if (list.size() > 1)
-            geometryId = toInt32(list[1]);
-
-          T::ProducerInfo *pInfo = mProducerInfoList.getProducerInfoByName(producerName);
-          if (pInfo)
-          {
-            //printf("PRODUCER %s\n",pInfo->mName.c_str());
-            T::GenerationInfoList generationInfoList;
-            mGenerationInfoList.getGenerationInfoListByProducerId(pInfo->mProducerId,generationInfoList);
-            //printf("GENERATIONS %u/%u\n",generationInfoList.getLength(),mGenerationInfoList.getLength());
-
-            uint len = generationInfoList.getLength();
-            for (uint g = 0; g < len; g++)
-            {
-              T::GenerationInfo *gInfo = generationInfoList.getGenerationInfoByIndex(g);
-              time_t deletionTime = gInfo->mDeletionTime;
-
-              if (deletionTime == 0 || (currentTime + 120) < deletionTime)
-              {
-                T::GeometryInfoList geometryInfoList;
-                mGeometryInfoList.getGeometryInfoListByGenerationId(gInfo->mGenerationId,geometryInfoList);
-
-                uint geomLen = geometryInfoList.getLength();
-
-                if (geomLen == 0)
-                {
-                  // It seems that there are no geometry status information available. Let's generate it.
-
-                  std::set<T::GeometryId> geometryIdList;
-                  contentServer->getContentGeometryIdListByGenerationId(0,gInfo->mGenerationId,geometryIdList);
-                  if (!geometryIdList.empty())
-                  {
-                    for (int gi : geometryIdList)
-                    {
-                      auto *geom = new T::GeometryInfo();
-                      geom->mProducerId = gInfo->mProducerId;
-                      geom->mGenerationId = gInfo->mGenerationId;
-                      geom->mGeometryId = gi;
-                      geom->mModificationTime = gInfo->mModificationTime;
-                      geom->mDeletionTime = gInfo->mDeletionTime;
-                      geom->mStatus = gInfo->mStatus;
-                      tmpGeometryInfoList.addGeometryInfo(geom);
-                    }
-                  }
-
-                  tmpGeometryInfoList.getGeometryInfoListByGenerationId(gInfo->mGenerationId,geometryInfoList);
-                  geomLen = geometryInfoList.getLength();
-                }
-
-                for (uint gg = 0; gg < geomLen; gg++)
-                {
-                  T::GeometryInfo *geom = geometryInfoList.getGeometryInfoByIndex(gg);
-                  if (geom != nullptr &&  geom->mStatus == T::GeometryInfo::Status::Ready  &&  (geometryId == geom->mGeometryId  ||  geometryId == 0))
-                  {
-                    std::string key = gInfo->mAnalysisTime + ":" + std::to_string(geom->mGeometryId);
-                    auto p = counterList.find(key);
-                    if (p != counterList.end())
-                      p->second.emplace_back(std::pair<T::GenerationId,int>(geom->mGenerationId,geom->mGeometryId));
-                    else
-                    {
-                      std::vector<std::pair<uint,int>> cntList;
-                      cntList.emplace_back(std::pair<T::GenerationId,int>(geom->mGenerationId,geom->mGeometryId));
-                      counterList.insert(std::pair<std::string,std::vector<std::pair<uint,int>>>(key,cntList));
-                    }
-                  }
-                }
-              }
-            }
-          }
-          else
-          {
-            //printf("PRODUCER [%s] NOT FOUND\n",(*rec)[t].c_str());
-            available = false;
-          }
-        }
+          available = countGenerationGeometries(record[t],currentTime,*contentServer,tmpGeometryInfoList,counterList);
 
         tmpGeometryInfoList.sort(T::GeometryInfo::ComparisonMethod::generationId);
 
 
         for (auto& it : counterList)
         {
-          time_t modTime = 0;
           if (it.second.size() == (sz-1))
-          {
-            std::ostringstream output1;
-            std::ostringstream output2;
-
-            std::set<std::string> contentTimeList;
-            //printf("CONTENT [%s] [%u][%d]\n",it->first.c_str(),it->second[0].first,it->second[0].second);
-            contentServer->getContentTimeListByGenerationAndGeometryId(0,it.second[0].first,it.second[0].second,contentTimeList);
-
-            uint slen = contentTimeList.size();
-            if (slen > 0)
-            {
-              std::set<std::string> paramList1;
-              std::set<std::string> paramList2;
-
-              for (auto g = it.second.begin(); g != it.second.end(); ++g)
-              {
-                //printf(" --- %u %d\n",g->first,g->second);
-                //T::GenerationInfo *gInfo = mGenerationInfoList.getGenerationInfoById(g->first);
-                T::GeometryInfo *geom = mGeometryInfoList.getGeometryInfoById(g->first,g->second,0);
-                if (!geom)
-                  geom = tmpGeometryInfoList.getGeometryInfoById(g->first,g->second,0);
-
-                if (geom && geom->mModificationTime > modTime)
-                {
-                  modTime = geom->mModificationTime;
-                }
-
-                if (geom &&  mParameterMappingDefinitions)
-                {
-                  T::ProducerInfo *pInfo = mProducerInfoList.getProducerInfoById(geom->mProducerId);
-
-                  if (pInfo)
-                  {
-                    AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
-                    std::set<std::string> paramKeyList;
-                    contentServer->getContentParamKeyListByGenerationAndGeometryId(0,geom->mGenerationId,geom->mGeometryId,T::ParamKeyTypeValue::FMI_NAME,paramKeyList);
-
-                    for (const auto& pk : paramKeyList)
-                    {
-                      QueryServer::ParameterMapping_vec mappings;
-                      for (auto& mf : *mParameterMappingDefinitions)
-                      {
-                        mf.getMappingsByParamKey(pInfo->mName,T::ParamKeyTypeValue::FMI_NAME,pk,-1,-1,-1,mappings);
-                      }
-
-                      if (!mappings.empty())
-                      {
-                        for (auto& mapping : mappings)
-                        {
-                          if (strcasecmp(pk.c_str(),mapping.mParameterName.c_str()) != 0)
-                          {
-                            std::string name = record[0] + ";" + mapping.mParameterName;
-                            std::string alias;
-                            if (mProducerMappingDefinitions.getAlias(name,alias))
-                            {
-                              paramList1.insert(pk);
-                              paramList2.insert(mapping.mParameterName);
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-
-              for (auto pp = paramList1.begin(); pp != paramList1.end(); ++pp)
-              {
-                if (pp != paramList1.begin())
-                  output1 << ",";
-
-                output1 << *pp;
-              }
-
-              for (auto pp = paramList2.begin(); pp != paramList2.end(); ++pp)
-              {
-                if (pp != paramList2.begin())
-                  output2 << ",";
-
-                output2 << *pp;
-              }
-
-              auto first = contentTimeList.begin();
-              auto last = contentTimeList.rbegin();
-              std::vector<std::string> ss;
-              splitString(it.first,':',ss);
-
-              // Producer name
-              resultTable->set(0, row, record[0]);
-
-              // Geometry id
-              resultTable->set(1, row, ss[1]);
-
-              // Timesteps
-              resultTable->set(2, row, std::to_string(slen));
-
-              if (!timeFormat.empty()  &&  strcasecmp(timeFormat.c_str(),"iso") != 0  && timeFormatter)
-              {
-                // Analysis time
-                Fmi::DateTime aTime = toTimeStamp(ss[0]);
-                resultTable->set(3, row, timeFormatter->format(aTime));
-
-                // Min time
-                Fmi::DateTime fTime = toTimeStamp(*first);
-                resultTable->set(4, row, timeFormatter->format(fTime));
-
-                // Max time
-                Fmi::DateTime lTime = toTimeStamp(*last);
-                resultTable->set(5, row, timeFormatter->format(lTime));
-
-                // Modification time
-                Fmi::DateTime mTime = toTimeStamp(utcTimeFromTimeT(modTime));
-                resultTable->set(6, row, timeFormatter->format(mTime));
-              }
-              else
-              {
-                // Analysis time
-                resultTable->set(3, row, ss[0]);
-
-                // Min time
-                resultTable->set(4, row, *first);
-
-                // Max time
-                resultTable->set(5, row, *last);
-
-                // Modification time
-                resultTable->set(6, row, utcTimeFromTimeT(modTime));
-              }
-
-              // FMI Parameters
-              resultTable->set(7, row, output1.str());
-
-              // Parameter alias names
-              resultTable->set(8, row, output2.str());
-
-              row++;
-            }
-          }
+            addExtGenerationInfoRow(*resultTable,row,record[0],it.first,it.second,tmpGeometryInfoList,*contentServer,timeFormat,timeFormatter.get());
         }
       }
     }

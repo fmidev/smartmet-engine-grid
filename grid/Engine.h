@@ -27,6 +27,11 @@
 #include "MetaData.h"
 
 
+namespace Fmi
+{
+class TimeFormatter;
+}
+
 namespace SmartMet
 {
 namespace Engine
@@ -289,6 +294,13 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                addMappingTimes(MappingDetails& details,T::ContentInfoList& contentInfoList) const;  //!< Add the analysis and forecast times of the contents to the mapping details.
     bool                countReadyGenerations(const std::string& producerName,time_t currentTime,std::map<std::string,uint>& counterList,std::map<std::string,T::GenerationId>& generationList) const;  //!< Count the ready generations of the producer by analysis time.
     void                addProducerMetaData(std::list<MetaData>& metaDataList,const T::ProducerInfo& pInfo,ContentServer::ServiceInterface& contentServer,time_t currentTime) const;  //!< Add the metadata of the generations of the producer.
+    void                getGeometryParameterNames(const T::ProducerInfo& info,const T::GeometryInfo& geom,ContentServer::ServiceInterface& contentServer,std::ostringstream& output1,std::ostringstream& output2) const;  //!< Get the FMI parameter names and their aliases of the generation geometry.
+    void                addGenerationInfoRows(Spine::Table& resultTable,uint& row,const T::ProducerInfo& info,const T::GenerationInfo& gInfo,ContentServer::ServiceInterface& contentServer,const std::string& timeFormat,const Fmi::TimeFormatter* timeFormatter) const;  //!< Add the generation info rows of the ready geometries of the generation.
+    bool                countGenerationGeometries(const std::string& recordItem,time_t currentTime,ContentServer::ServiceInterface& contentServer,T::GeometryInfoList& tmpGeometryInfoList,std::map<std::string,std::vector<std::pair<uint,int>>>& counterList) const;  //!< Count the ready geometries of a producer status record item.
+    void                getExtGenerationGeometries(const T::GenerationInfo& gInfo,ContentServer::ServiceInterface& contentServer,T::GeometryInfoList& tmpGeometryInfoList,T::GeometryInfoList& geometryInfoList) const;  //!< Get the geometries of the generation (generated to tmpGeometryInfoList if not known).
+    void                addAliasedParameterNames(const std::string& producerAlias,const T::ProducerInfo& pInfo,const T::GeometryInfo& geom,ContentServer::ServiceInterface& contentServer,std::set<std::string>& paramList1,std::set<std::string>& paramList2) const;  //!< Add the FMI parameter names of the geometry which have aliases.
+    void                getExtParameterNames(const std::string& producerAlias,const std::vector<std::pair<uint,int>>& geometries,T::GeometryInfoList& tmpGeometryInfoList,ContentServer::ServiceInterface& contentServer,time_t& modTime,std::set<std::string>& paramList1,std::set<std::string>& paramList2) const;  //!< Get the modification time and the aliased parameter names of the geometries.
+    void                addExtGenerationInfoRow(Spine::Table& resultTable,uint& row,const std::string& producerAlias,const std::string& key,const std::vector<std::pair<uint,int>>& geometries,T::GeometryInfoList& tmpGeometryInfoList,ContentServer::ServiceInterface& contentServer,const std::string& timeFormat,const Fmi::TimeFormatter* timeFormatter) const;  //!< Add the ext generation info row of an analysis time and geometry.
     void                getGenerationGeometries(const T::GenerationInfo& gInfo,ContentServer::ServiceInterface& contentServer,T::GeometryInfoList& geometryInfoList) const;  //!< Get the geometries of the generation (from the content if not known).
     void                addGeometryMetaData(std::list<MetaData>& metaDataList,const T::ProducerInfo& pInfo,const T::GenerationInfo& gInfo,const T::GeometryInfo& geom,const std::set<T::ParamLevelId>& levelIdList,ContentServer::ServiceInterface& contentServer) const;  //!< Add the metadata of each level type of the geometry.
     void                addAnalysisTimeRows(const std::vector<std::string>& record,const std::map<std::string,uint>& counterList,const std::map<std::string,T::GenerationId>& generationList,ContentServer::ServiceInterface& contentServer,std::vector<std::vector<std::string>>& table) const;  //!< Add the analysis time rows of a producer status record.
