@@ -3610,6 +3610,101 @@ void Engine::getAnalysisTimes(std::vector<std::vector<std::string>>& table) cons
 
 /*! \brief Engine: Get ext analysis times. */
 
+/*! \brief Engine: Count the ready generations of the producer by analysis time. Returns false if the producer is not found. */
+
+bool Engine::countReadyGenerations(const std::string& producerName,time_t currentTime,std::map<std::string,uint>& counterList,std::map<std::string,T::GenerationId>& generationList) const
+{
+  try
+  {
+    AutoReadLock lock(&mProducerInfoList_modificationLock);
+    T::ProducerInfo *pInfo = mProducerInfoList.getProducerInfoByName(producerName);
+    if (!pInfo)
+    {
+      //printf("PRODUCER [%s] NOT FOUND\n",(*rec)[t].c_str());
+      return false;
+    }
+
+    //printf("PRODUCER %s\n",pInfo->mName.c_str());
+    T::GenerationInfoList generationInfoList;
+    mGenerationInfoList.getGenerationInfoListByProducerId(pInfo->mProducerId,generationInfoList);
+    //printf("GENERATIONS %u/%u\n",generationInfoList.getLength(),mGenerationInfoList.getLength());
+
+    uint len = generationInfoList.getLength();
+    for (uint g = 0; g < len; g++)
+    {
+      T::GenerationInfo *gInfo = generationInfoList.getGenerationInfoByIndex(g);
+      time_t deletionTime = gInfo->mDeletionTime;
+
+      if (gInfo->mStatus == T::GenerationInfo::Status::Ready)
+      {
+        if (deletionTime == 0 || (currentTime + 120) < deletionTime)
+        {
+          auto p = counterList.find(gInfo->mAnalysisTime);
+          if (p != counterList.end())
+            p->second++;
+          else
+          {
+            counterList.insert(std::pair<std::string,uint>(gInfo->mAnalysisTime,1));
+            generationList.insert(std::pair<std::string,T::GenerationId>(gInfo->mAnalysisTime,gInfo->mGenerationId));
+          }
+        }
+      }
+    }
+    return true;
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Add the analysis time rows of the record whose all producers have the analysis time. */
+
+void Engine::addAnalysisTimeRows(const std::vector<std::string>& record,const std::map<std::string,uint>& counterList,const std::map<std::string,T::GenerationId>& generationList,ContentServer::ServiceInterface& contentServer,std::vector<std::vector<std::string>>& table) const
+{
+  try
+  {
+    uint sz = record.size();
+    for (const auto& it : counterList)
+    {
+      if (it.second == (sz-1))
+      {
+        auto g = generationList.find(it.first);
+        if (g != generationList.end())
+        {
+          std::set<std::string> contentTimeList;
+          contentServer.getContentTimeListByGenerationId(0,g->second,contentTimeList);
+
+          uint slen = contentTimeList.size();
+          if (slen > 0)
+          {
+            auto first = contentTimeList.begin();
+            auto last = contentTimeList.rbegin();
+            //printf("%s:%s:%s:%s:%u\n",(*rec)[0].c_str(),it->first.c_str(),first->c_str(),last->c_str(),slen);
+
+            std::vector<std::string> vec;
+            vec.push_back(record[0]);
+            vec.push_back(it.first);
+            vec.push_back(*first);
+            vec.push_back(*last);
+            vec.push_back(std::to_string(slen));
+
+            table.push_back(vec);
+          }
+        }
+      }
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
 void Engine::getExtAnalysisTimes(std::vector<std::vector<std::string>>& table) const
 {
   FUNCTION_TRACE
@@ -3639,74 +3734,9 @@ void Engine::getExtAnalysisTimes(std::vector<std::vector<std::string>>& table) c
       std::map<std::string,uint> counterList;
       std::map<std::string,T::GenerationId> generationList;
       for (uint t=1; t<sz && available; t++)
-      {
-        AutoReadLock lock(&mProducerInfoList_modificationLock);
-        T::ProducerInfo *pInfo = mProducerInfoList.getProducerInfoByName(record[t]);
-        if (pInfo)
-        {
-          //printf("PRODUCER %s\n",pInfo->mName.c_str());
-          T::GenerationInfoList generationInfoList;
-          mGenerationInfoList.getGenerationInfoListByProducerId(pInfo->mProducerId,generationInfoList);
-          //printf("GENERATIONS %u/%u\n",generationInfoList.getLength(),mGenerationInfoList.getLength());
+        available = countReadyGenerations(record[t],currentTime,counterList,generationList);
 
-          uint len = generationInfoList.getLength();
-          for (uint g = 0; g < len; g++)
-          {
-            T::GenerationInfo *gInfo = generationInfoList.getGenerationInfoByIndex(g);
-            time_t deletionTime = gInfo->mDeletionTime;
-
-            if (gInfo->mStatus == T::GenerationInfo::Status::Ready)
-            {
-              if (deletionTime == 0 || (currentTime + 120) < deletionTime)
-              {
-                auto p = counterList.find(gInfo->mAnalysisTime);
-                if (p != counterList.end())
-                  p->second++;
-                else
-                {
-                  counterList.insert(std::pair<std::string,uint>(gInfo->mAnalysisTime,1));
-                  generationList.insert(std::pair<std::string,T::GenerationId>(gInfo->mAnalysisTime,gInfo->mGenerationId));
-                }
-              }
-            }
-          }
-        }
-        else
-        {
-          //printf("PRODUCER [%s] NOT FOUND\n",(*rec)[t].c_str());
-          available = false;
-        }
-      }
-
-      for (auto& it : counterList)
-      {
-        if (it.second == (sz-1))
-        {
-          auto g = generationList.find(it.first);
-          if (g != generationList.end())
-          {
-            std::set<std::string> contentTimeList;
-            contentServer->getContentTimeListByGenerationId(0,g->second,contentTimeList);
-
-            uint slen = contentTimeList.size();
-            if (slen > 0)
-            {
-              auto first = contentTimeList.begin();
-              auto last = contentTimeList.rbegin();
-              //printf("%s:%s:%s:%s:%u\n",(*rec)[0].c_str(),it->first.c_str(),first->c_str(),last->c_str(),slen);
-
-              std::vector<std::string> vec;
-              vec.push_back(record[0]);
-              vec.push_back(it.first);
-              vec.push_back(*first);
-              vec.push_back(*last);
-              vec.push_back(std::to_string(slen));
-
-              table.push_back(vec);
-            }
-          }
-        }
-      }
+      addAnalysisTimeRows(record,counterList,generationList,*contentServer,table);
     }
   }
   catch (...)
