@@ -76,6 +76,11 @@ class Browser
     static void           writeGenerationRows(std::ostringstream& output,T::GenerationInfoList& generationInfoList,uint maxRecords,uint startGenerationIndex,T::GenerationId generationId,bool mainSource,T::GenerationInfo& gInfo);
     static void           writeGenerationEditor(std::ostringstream& output,uint mode,const T::GenerationInfo& gInfo,T::GenerationId generationId,uint startGenerationIndex);
     bool                  page_files(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
+    static void           readFileParameters(const Spine::HTTP::Request& theRequest,T::FileInfo& fInfo,uint& mode);
+    void                  modifyFile(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,ContentServer::ServiceInterface& contentServer,uint mode,T::FileInfo& fInfo,T::FileId& fileId);
+    void                  getFileInfoPage(ContentServer::ServiceInterface& contentServer,T::GenerationId generationId,T::FileId endFileId,uint maxRecords,T::FileId& startFileId,T::FileInfoList& fileInfoList);
+    static void           writeFileRows(std::ostringstream& output,T::FileInfoList& fileInfoList,uint maxRecords,T::FileId fileId,T::FileId startFileId,bool mainSource,T::FileInfo& fInfo,T::FileId& nextFileId);
+    static void           writeFileEditor(std::ostringstream& output,uint mode,const T::FileInfo& fInfo,T::FileId fileId,T::FileId startFileId);
     bool                  page_contentList(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
     bool                  page_contentServer_debugLog(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
     bool                  page_contentServer_processingLog(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);

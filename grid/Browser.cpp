@@ -161,6 +161,30 @@ void writeGenerationCells(std::ostringstream& output,const T::GenerationInfo& ge
   else
     output << "<TD></TD>";
 }
+
+/*! \brief Writes the previous and next page links of the file table. */
+
+void writeFilePageLinks(std::ostringstream& output,T::FileId startFileId,T::FileId nextFileId,uint len,uint maxRecords)
+{
+  std::string bg = "#C0C0C0";
+  std::string p1 = R"(<TD width="70" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF;';" onClick="getPage(this,parent,'/grid-admin?)";
+  std::string p2 = R"(<TD width="70" style="background:)" + bg + ";\" >&nbsp;</TD>\n";
+
+  output << "<HR>\n";
+  output << "<TABLE style=\"font-size:12;\"><TR>\n";
+
+  if (startFileId > 0)
+    output << p1 << "endFileId=" << (startFileId-1) << "');\" >&lt;&lt;</TD>\n";
+  else
+    output << p2;
+
+  if (len >= maxRecords)
+    output << p1 << "startFileId=" << nextFileId << "&endFileId=0');\" >&gt;&gt;</TD>\n";
+  else
+    output << p2;
+
+  output << "</TR></TABLE>\n";
+}
 }  // anonymous namespace
 
 
@@ -970,6 +994,359 @@ bool Browser::page_contentList(SessionManagement::SessionInfo& session,const Spi
 
 
 
+/*! \brief Engine: Reads the file information from the request parameters. The mode is cleared for invalid times. */
+
+void Browser::readFileParameters(const Spine::HTTP::Request& theRequest,T::FileInfo& fInfo,uint& mode)
+{
+  try
+  {
+    auto v = theRequest.getParameter("server");
+    if (v)
+      fInfo.mServer = *v;
+
+    v = theRequest.getParameter("name");
+    if (v)
+      fInfo.mName = *v;
+
+    v = theRequest.getParameter("protocol");
+    if (v)
+      fInfo.mProtocol = toInt32(v->c_str());
+
+    v = theRequest.getParameter("serverType");
+    if (v)
+      fInfo.mServerType = toInt32(v->c_str());
+
+    v = theRequest.getParameter("type");
+    if (v)
+      fInfo.mFileType = toInt32(v->c_str());
+
+    v = theRequest.getParameter("flags");
+    if (v)
+      fInfo.mFlags = toInt32(v->c_str());
+
+    v = theRequest.getParameter("sourceId");
+    if (v)
+      fInfo.mSourceId = toInt32(v->c_str());
+
+    v = theRequest.getParameter("deletionTime");
+    if (v)
+    {
+      try
+      {
+        fInfo.mDeletionTime = utcTimeToTimeT(*v);
+      }
+      catch (...)
+      {
+        mode = 0;
+      }
+    }
+
+    v = theRequest.getParameter("modificationTime");
+    if (v)
+    {
+      try
+      {
+        fInfo.mModificationTime = utcTimeToTimeT(*v);
+      }
+      catch (...)
+      {
+        mode = 0;
+      }
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Adds, updates or deletes a file according to the mode. */
+
+void Browser::modifyFile(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,ContentServer::ServiceInterface& contentServer,uint mode,T::FileInfo& fInfo,T::FileId& fileId)
+{
+  try
+  {
+    readFileParameters(theRequest,fInfo,mode);
+
+    switch (mode)
+    {
+      case  MODE_ADD_CONFIRM:
+      {
+        int res = contentServer.addFileInfo(0,fInfo);
+        if (res != 0)
+        {
+          // File addition failed
+        }
+        else
+        {
+          fileId = fInfo.mFileId;
+        }
+      }
+      break;
+
+      case MODE_EDIT_CONFIRM:
+      {
+        fInfo.mFileId = fileId;
+        int res = contentServer.setFileInfo(0,fInfo);
+        if (res != 0)
+        {
+          // File update failed
+        }
+      }
+      break;
+
+      case MODE_DELETE_CONFIRM:
+      {
+        if (fileId != 0)
+        {
+          int res = contentServer.deleteFileInfoById(0,fileId);
+          if (res != 0)
+          {
+            // File deletion failed
+          }
+          else
+          {
+            fileId = 0;
+            session.setAttribute("grid-engine","fileId",0);
+          }
+        }
+      }
+      break;
+
+      case MODE_GENERATE_CONFIRM:
+      {
+        // ToDo : Generate content
+        mode = 0;
+      }
+      break;
+      default:
+        break;
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Gets the files of the page starting from startFileId (or ending at endFileId, when set). */
+
+void Browser::getFileInfoPage(ContentServer::ServiceInterface& contentServer,T::GenerationId generationId,T::FileId endFileId,uint maxRecords,T::FileId& startFileId,T::FileInfoList& fileInfoList)
+{
+  try
+  {
+    if (endFileId != 0)
+    {
+      startFileId = 0;
+      mCacheContentServer->getFileInfoListByGenerationId(0,generationId,endFileId,-maxRecords,fileInfoList);
+      fileInfoList.sort(1);
+      uint flen = fileInfoList.getLength();
+      if (flen > 0)
+      {
+        if (flen < maxRecords)
+          startFileId = 0;
+        else
+        {
+          T::FileInfo *f = fileInfoList.getFileInfoByIndex(0);
+          if (f != nullptr)
+            startFileId = f->mFileId;
+        }
+      }
+    }
+
+    contentServer.getFileInfoListByGenerationId(0,generationId,startFileId,maxRecords,fileInfoList);
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Writes the file table rows. The selected file is copied to fInfo. */
+
+void Browser::writeFileRows(std::ostringstream& output,T::FileInfoList& fileInfoList,uint maxRecords,T::FileId fileId,T::FileId startFileId,bool mainSource,T::FileInfo& fInfo,T::FileId& nextFileId)
+{
+  try
+  {
+    uint len = fileInfoList.getLength();
+    for (uint t=0; t<len; t++)
+    {
+      T::FileInfo *file = fileInfoList.getFileInfoByIndex(t);
+      nextFileId = file->mFileId+1;
+
+      std::string fg = "#000000";
+      std::string bg = "#FFFFFF";
+
+      if (file->mDeletionTime > 0 && file->mDeletionTime < (time(nullptr) + 120))
+        fg = "#808080";
+
+      if (file->mFileId == fileId)
+      {
+        fInfo = *file;
+        fg = "#FFFFFF";
+        bg = "#FF0000";
+        output << "<TR style=\"background:" << bg <<"; color:" << fg << ";\" onClick=\"getPage(this,parent,'/grid-admin?page=contentList&fileId=" << file->mFileId << "&startFileId=" << startFileId << "');\" >\n";
+      }
+      else
+      {
+        output << "<TR style=\"background:" << bg <<"; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << R"(;'" onmouseover="this.style='background:#FFFF00; color:#000000;';" onClick="getPage(this,parent,'/grid-admin?fileId=)" << file->mFileId << "&startFileId=" << startFileId << "');\" >\n";
+      }
+
+      output << "<TD>"<< file->mFileId << "</TD>";
+      if (!mainSource)
+      {
+        output << "<TD>"<< ((file->mFileId % 0xFF00000000L) >> 32) << "</TD>";
+        output << "<TD>"<< (file->mFileId & 0xFFFFFFFF) << "</TD>";
+      }
+      output << "<TD>"<< esc(file->mServer) << "</TD>";
+      output << "<TD>"<< esc(file->mName) << "</TD>";
+      output << "<TD>"<< C_INT(file->mProtocol) << "</TD>";
+      output << "<TD>"<< C_INT(file->mServerType) << "</TD>";
+      output << "<TD>"<< C_INT(file->mFileType) << "</TD>";
+      output << "<TD>"<< file->mFlags << "</TD>";
+      output << "<TD>"<< file->mSourceId << "</TD>";
+      if (file->mModificationTime > 0)
+        output << "<TD>"<< utcTimeFromTimeT(file->mModificationTime) << "</TD>";
+      else
+        output << "<TD></TD>";
+
+      if (file->mDeletionTime > 0)
+        output << "<TD>"<< utcTimeFromTimeT(file->mDeletionTime) << "</TD>";
+      else
+        output << "<TD></TD>";
+      output << "</TR>\n";
+    }
+
+    for (uint t=len; t<maxRecords; t++)
+    {
+      output << "<TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD>";
+      if (!mainSource)
+        output << "<TD>&nbsp;</TD><TD>&nbsp;</TD>";
+      output << "</TR>\n";
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Writes the file editor, the file modification buttons and the file dump. */
+
+void Browser::writeFileEditor(std::ostringstream& output,uint mode,const T::FileInfo& fInfo,T::FileId fileId,T::FileId startFileId)
+{
+  try
+  {
+    std::string prod = "&startFileId=" + toString(startFileId);
+
+    if (mode > 0  && mode < 4)
+    {
+      std::string dt = "21000101T000000";
+      if (fInfo.mDeletionTime > 0)
+        dt = utcTimeFromTimeT(fInfo.mDeletionTime);
+
+      std::string mt = utcTimeFromTimeT(fInfo.mModificationTime);
+
+      std::string p1 = R"(<TR><TD width="240" bgColor="#D0D0D0">)";
+      std::string p2 = R"(</TD><TD><INPUT style="width:100%;"  type="text" )";
+      std::string p3 = "\"></TD></TR>";
+
+      output << "<HR>\n";
+      output << "<H2>File</H2>\n";
+      output << "<TABLE border=\"1\" width=\"100%\" style=\"font-size:12;\">\n";
+      output << p1 << "Id</TD><TD>"<< fInfo.mFileId << "</TD></TR>";
+      output << p1 << "Server" << p2 << R"(id="file_server" value=")" << esc(fInfo.mServer) << p3;
+      output << p1 << "Name<" << p2 << R"(id="file_name" value=")" << esc(fInfo.mName) << p3;
+      output << p1 << "Protocol" << p2 << R"(id="file_protocol" value=")" << C_INT(fInfo.mProtocol) << p3;
+      output << p1 << "ServerType" << p2 << R"(id="file_serverType" value=")" << C_INT(fInfo.mServerType) << p3;
+      output << p1 << "FileType" << p2 << R"(id="file_type" value=")" << C_INT(fInfo.mFileType) << p3;
+      output << p1 << "Flags" << p2 << R"(id="file_flags" value=")" << fInfo.mFlags << p3;
+      output << p1 << "SourceId" << p2 << R"(id="file_sourceId" value=")" << fInfo.mSourceId << p3;
+      output << p1 << "ModificationTime" << p2 << R"(id="file_modificationTime" value=")" << mt << p3;
+      output << p1 << "DeletionTime" << p2 << R"(id="file_deletionTime" value=")" << dt << p3;
+      output << "</TABLE>\n";
+    }
+
+    std::string bg = "#C0C0C0";
+    std::string p1 = R"(<TD width="150" height="25" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF';" onClick="getPage(this,parent,'/grid-admin?mode=)";
+
+    output << "<HR>\n";
+    output << "<TABLE style=\"font-size:12;\">\n";
+    output << "<TR>\n";
+    switch (mode)
+    {
+      case MODE_NONE:
+        output << p1 << MODE_ADD_REQUEST << prod << "');\" >New file</TD>\n";
+        if (fileId != 0)
+        {
+          output << p1 << MODE_EDIT_REQUEST << prod << "&fileId=" << fileId << "');\" >Edit file</TD>\n";
+          output << p1 << MODE_DELETE_REQUEST<< prod << "&fileId=" << fileId << "');\" >Delete file</TD>\n";
+          output << p1 << MODE_GENERATE_REQUEST << prod << "&fileId=" << fileId << "');\" >Show dump</TD>\n";
+        }
+        break;
+
+      case MODE_ADD_REQUEST:
+        output << p1 << MODE_ADD_CONFIRM << prod << "&server='+file_server.value+'&name='+file_name.value+'&protocol='+file_protocol.value+'&serverType='+file_serverType.value+'&type='+file_type.value+'&flags='+file_flags.value+'&sourceId='+file_sourceId.value+'&modificationTime='+file_modificationTime.value+'&deletionTime='+file_deletionTime.value);\" >Add file</TD>\n";
+        output << p1 << MODE_NONE << prod << "&fileId=" << fileId << "');\" >Cancel</TD>\n";
+        break;
+
+      case MODE_EDIT_REQUEST:
+        output << p1 << MODE_EDIT_CONFIRM << prod << "&fileId=" << fileId << "&server='+encodeURIComponent(file_server.value)+'&name='+encodeURIComponent(file_name.value)+'&protocol='+file_protocol.value+'&serverType='+file_serverType.value+'&type='+file_type.value+'&flags='+file_flags.value+'&sourceId='+file_sourceId.value+'&modificationTime='+file_modificationTime.value+'&deletionTime='+file_deletionTime.value);\" >Update file</TD>\n";
+        output << p1 << MODE_NONE << prod << "&fileId=" << fileId << "');\" >Cancel</TD>\n";
+        break;
+
+      case MODE_DELETE_REQUEST:
+        output << p1 << MODE_DELETE_CONFIRM << prod << "&fileId=" << fileId << "');\" >Delete file</TD>\n";
+        output << p1 << MODE_NONE << prod << "&fileId=" << fileId << "');\" >Cancel</TD>\n";
+        break;
+
+      case MODE_GENERATE_REQUEST:
+        output << p1 << MODE_GENERATE_CONFIRM << prod << "&fileId=" << fileId << "');\" >Generate content</TD>\n";
+        output << p1 << MODE_NONE << prod << "&fileId=" << fileId << "');\" >Cancel</TD>\n";
+        break;
+      default:
+        break;
+    }
+
+    output << "</TR>\n";
+    output << "</TABLE>\n";
+
+    if (mode == MODE_GENERATE_REQUEST)
+    {
+      output << "<HR>\n";
+      try
+      {
+        output << "<PRE style=\"background-color: #F0F0F0;\">\n";
+        output << "\n";
+        SmartMet::GRID::GridFile gridFile;
+        gridFile.read(fInfo.mName,100);
+        gridFile.print(output,0,0);
+        output << "\n";
+        output << "</PRE>\n";
+      }
+      catch (...)
+      {
+        Fmi::Exception exception(BCP, "Operation failed!", nullptr);
+        output << exception.getHtmlStackTrace();
+      }
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
 /*! \brief Engine: Page files. */
 
 bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse)
@@ -1041,116 +1418,7 @@ bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HT
     {
       fInfo.mProducerId = producerId;
       fInfo.mGenerationId = generationId;
-
-      auto v = theRequest.getParameter("server");
-      if (v)
-        fInfo.mServer = *v;
-
-      v = theRequest.getParameter("name");
-      if (v)
-        fInfo.mName = *v;
-
-      v = theRequest.getParameter("protocol");
-      if (v)
-        fInfo.mProtocol = toInt32(v->c_str());
-
-      v = theRequest.getParameter("serverType");
-      if (v)
-        fInfo.mServerType = toInt32(v->c_str());
-
-      v = theRequest.getParameter("type");
-      if (v)
-        fInfo.mFileType = toInt32(v->c_str());
-
-      v = theRequest.getParameter("flags");
-      if (v)
-        fInfo.mFlags = toInt32(v->c_str());
-
-      v = theRequest.getParameter("sourceId");
-      if (v)
-        fInfo.mSourceId = toInt32(v->c_str());
-
-      v = theRequest.getParameter("deletionTime");
-      if (v)
-      {
-        try
-        {
-          fInfo.mDeletionTime = utcTimeToTimeT(*v);
-        }
-        catch (...)
-        {
-          mode = 0;
-        }
-      }
-
-      v = theRequest.getParameter("modificationTime");
-      if (v)
-      {
-        try
-        {
-          fInfo.mModificationTime = utcTimeToTimeT(*v);
-        }
-        catch (...)
-        {
-          mode = 0;
-        }
-      }
-
-      switch (mode)
-      {
-        case  MODE_ADD_CONFIRM:
-        {
-          int res = contentServer->addFileInfo(0,fInfo);
-          if (res != 0)
-          {
-            // File addition failed
-          }
-          else
-          {
-            fileId = fInfo.mFileId;
-          }
-        }
-        break;
-
-        case MODE_EDIT_CONFIRM:
-        {
-          fInfo.mFileId = fileId;
-          int res = contentServer->setFileInfo(0,fInfo);
-          if (res != 0)
-          {
-            // File update failed
-          }
-        }
-        break;
-
-        case MODE_DELETE_CONFIRM:
-        {
-          if (fileId != 0)
-          {
-            int res = contentServer->deleteFileInfoById(0,fileId);
-            if (res != 0)
-            {
-              // File deletion failed
-            }
-            else
-            {
-              fileId = 0;
-              session.setAttribute("grid-engine","fileId",0);
-            }
-          }
-        }
-        break;
-
-        case MODE_GENERATE_CONFIRM:
-        {
-          // ToDo : Generate content
-          mode = 0;
-        }
-        break;
-        default:
-          break;
-      }
-
+      modifyFile(session,theRequest,*contentServer,mode,fInfo,fileId);
       mode = 0;
     }
 
@@ -1196,205 +1464,18 @@ bool Browser::page_files(SessionManagement::SessionInfo& session,const Spine::HT
     output << "</TR>\n";
 
     T::FileInfoList fileInfoList;
-    if (endFileId != 0)
-    {
-      startFileId = 0;
-      mCacheContentServer->getFileInfoListByGenerationId(0,generationId,endFileId,-maxRecords,fileInfoList);
-      fileInfoList.sort(1);
-      uint flen = fileInfoList.getLength();
-      if (flen > 0)
-      {
-        if (flen < maxRecords)
-          startFileId = 0;
-        else
-        {
-          T::FileInfo *f = fileInfoList.getFileInfoByIndex(0);
-          if (f != nullptr)
-            startFileId = f->mFileId;
-        }
-      }
-    }
-
-    contentServer->getFileInfoListByGenerationId(0,generationId,startFileId,maxRecords,fileInfoList);
+    getFileInfoPage(*contentServer,generationId,endFileId,maxRecords,startFileId,fileInfoList);
 
     uint len = fileInfoList.getLength();
-    for (uint t=0; t<len; t++)
-    {
-      T::FileInfo *file = fileInfoList.getFileInfoByIndex(t);
-      nextFileId = file->mFileId+1;
-
-      std::string fg = "#000000";
-      std::string bg = "#FFFFFF";
-
-      if (file->mDeletionTime > 0 && file->mDeletionTime < (time(nullptr) + 120))
-        fg = "#808080";
-
-      if (file->mFileId == fileId)
-      {
-        fInfo = *file;
-        fg = "#FFFFFF";
-        bg = "#FF0000";
-        output << "<TR style=\"background:" << bg <<"; color:" << fg << ";\" onClick=\"getPage(this,parent,'/grid-admin?page=contentList&fileId=" << file->mFileId << "&startFileId=" << startFileId << "');\" >\n";
-      }
-      else
-      {
-        output << "<TR style=\"background:" << bg <<"; color:" << fg << ";\" onmouseout=\"this.style='background:" << bg <<"; color:" << fg << R"(;'" onmouseover="this.style='background:#FFFF00; color:#000000;';" onClick="getPage(this,parent,'/grid-admin?fileId=)" << file->mFileId << "&startFileId=" << startFileId << "');\" >\n";
-      }
-
-      output << "<TD>"<< file->mFileId << "</TD>";
-      if (!mainSource)
-      {
-        output << "<TD>"<< ((file->mFileId % 0xFF00000000L) >> 32) << "</TD>";
-        output << "<TD>"<< (file->mFileId & 0xFFFFFFFF) << "</TD>";
-      }
-      output << "<TD>"<< esc(file->mServer) << "</TD>";
-      output << "<TD>"<< esc(file->mName) << "</TD>";
-      output << "<TD>"<< C_INT(file->mProtocol) << "</TD>";
-      output << "<TD>"<< C_INT(file->mServerType) << "</TD>";
-      output << "<TD>"<< C_INT(file->mFileType) << "</TD>";
-      output << "<TD>"<< file->mFlags << "</TD>";
-      output << "<TD>"<< file->mSourceId << "</TD>";
-      if (file->mModificationTime > 0)
-        output << "<TD>"<< utcTimeFromTimeT(file->mModificationTime) << "</TD>";
-      else
-        output << "<TD></TD>";
-
-      if (file->mDeletionTime > 0)
-        output << "<TD>"<< utcTimeFromTimeT(file->mDeletionTime) << "</TD>";
-      else
-        output << "<TD></TD>";
-      output << "</TR>\n";
-    }
-
-    for (uint t=len; t<maxRecords; t++)
-    {
-      output << "<TR><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD><TD>&nbsp;</TD>";
-      if (!mainSource)
-        output << "<TD>&nbsp;</TD><TD>&nbsp;</TD>";
-      output << "</TR>\n";
-    }
-
+    writeFileRows(output,fileInfoList,maxRecords,fileId,startFileId,mainSource,fInfo,nextFileId);
 
     output << "</TABLE>\n";
 
     if (startFileId > 0 || len >= maxRecords)
-    {
-      std::string bg = "#C0C0C0";
-      std::string p1 = R"(<TD width="70" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF;';" onClick="getPage(this,parent,'/grid-admin?)";
-      std::string p2 = R"(<TD width="70" style="background:)" + bg + ";\" >&nbsp;</TD>\n";
-
-      output << "<HR>\n";
-      output << "<TABLE style=\"font-size:12;\"><TR>\n";
-
-      if (startFileId > 0)
-        output << p1 << "endFileId=" << (startFileId-1) << "');\" >&lt;&lt;</TD>\n";
-      else
-        output << p2;
-
-      if (len >= maxRecords)
-        output << p1 << "startFileId=" << nextFileId << "&endFileId=0');\" >&gt;&gt;</TD>\n";
-      else
-        output << p2;
-
-      output << "</TR></TABLE>\n";
-    }
+      writeFilePageLinks(output,startFileId,nextFileId,len,maxRecords);
 
     if ((mFlags & Flags::contentModificationEnabled) && mainSource && session.mUserInfo.isUserGroupMember("grid-admin"))
-    {
-      std::string prod = "&startFileId=" + toString(startFileId);
-
-      if (mode > 0  && mode < 4)
-      {
-        std::string dt = "21000101T000000";
-        if (fInfo.mDeletionTime > 0)
-          dt = utcTimeFromTimeT(fInfo.mDeletionTime);
-
-        std::string mt = utcTimeFromTimeT(fInfo.mModificationTime);
-
-        std::string p1 = R"(<TR><TD width="240" bgColor="#D0D0D0">)";
-        std::string p2 = R"(</TD><TD><INPUT style="width:100%;"  type="text" )";
-        std::string p3 = "\"></TD></TR>";
-
-        output << "<HR>\n";
-        output << "<H2>File</H2>\n";
-        output << "<TABLE border=\"1\" width=\"100%\" style=\"font-size:12;\">\n";
-        output << p1 << "Id</TD><TD>"<< fInfo.mFileId << "</TD></TR>";
-        output << p1 << "Server" << p2 << R"(id="file_server" value=")" << esc(fInfo.mServer) << p3;
-        output << p1 << "Name<" << p2 << R"(id="file_name" value=")" << esc(fInfo.mName) << p3;
-        output << p1 << "Protocol" << p2 << R"(id="file_protocol" value=")" << C_INT(fInfo.mProtocol) << p3;
-        output << p1 << "ServerType" << p2 << R"(id="file_serverType" value=")" << C_INT(fInfo.mServerType) << p3;
-        output << p1 << "FileType" << p2 << R"(id="file_type" value=")" << C_INT(fInfo.mFileType) << p3;
-        output << p1 << "Flags" << p2 << R"(id="file_flags" value=")" << fInfo.mFlags << p3;
-        output << p1 << "SourceId" << p2 << R"(id="file_sourceId" value=")" << fInfo.mSourceId << p3;
-        output << p1 << "ModificationTime" << p2 << R"(id="file_modificationTime" value=")" << mt << p3;
-        output << p1 << "DeletionTime" << p2 << R"(id="file_deletionTime" value=")" << dt << p3;
-        output << "</TABLE>\n";
-      }
-
-      std::string bg = "#C0C0C0";
-      std::string p1 = R"(<TD width="150" height="25" align="center" style="background:)" + bg + ";\" onmouseout=\"this.style='background:" + bg + R"(;'" onmouseover="this.style='background:#0000FF; color:#FFFFFF';" onClick="getPage(this,parent,'/grid-admin?mode=)";
-
-      output << "<HR>\n";
-      output << "<TABLE style=\"font-size:12;\">\n";
-      output << "<TR>\n";
-      switch (mode)
-      {
-        case MODE_NONE:
-          output << p1 << MODE_ADD_REQUEST << prod << "');\" >New file</TD>\n";
-          if (fileId != 0)
-          {
-            output << p1 << MODE_EDIT_REQUEST << prod << "&fileId=" << fileId << "');\" >Edit file</TD>\n";
-            output << p1 << MODE_DELETE_REQUEST<< prod << "&fileId=" << fileId << "');\" >Delete file</TD>\n";
-            output << p1 << MODE_GENERATE_REQUEST << prod << "&fileId=" << fileId << "');\" >Show dump</TD>\n";
-          }
-          break;
-
-        case MODE_ADD_REQUEST:
-          output << p1 << MODE_ADD_CONFIRM << prod << "&server='+file_server.value+'&name='+file_name.value+'&protocol='+file_protocol.value+'&serverType='+file_serverType.value+'&type='+file_type.value+'&flags='+file_flags.value+'&sourceId='+file_sourceId.value+'&modificationTime='+file_modificationTime.value+'&deletionTime='+file_deletionTime.value);\" >Add file</TD>\n";
-          output << p1 << MODE_NONE << prod << "&fileId=" << fileId << "');\" >Cancel</TD>\n";
-          break;
-
-        case MODE_EDIT_REQUEST:
-          output << p1 << MODE_EDIT_CONFIRM << prod << "&fileId=" << fileId << "&server='+encodeURIComponent(file_server.value)+'&name='+encodeURIComponent(file_name.value)+'&protocol='+file_protocol.value+'&serverType='+file_serverType.value+'&type='+file_type.value+'&flags='+file_flags.value+'&sourceId='+file_sourceId.value+'&modificationTime='+file_modificationTime.value+'&deletionTime='+file_deletionTime.value);\" >Update file</TD>\n";
-          output << p1 << MODE_NONE << prod << "&fileId=" << fileId << "');\" >Cancel</TD>\n";
-          break;
-
-        case MODE_DELETE_REQUEST:
-          output << p1 << MODE_DELETE_CONFIRM << prod << "&fileId=" << fileId << "');\" >Delete file</TD>\n";
-          output << p1 << MODE_NONE << prod << "&fileId=" << fileId << "');\" >Cancel</TD>\n";
-          break;
-
-        case MODE_GENERATE_REQUEST:
-          output << p1 << MODE_GENERATE_CONFIRM << prod << "&fileId=" << fileId << "');\" >Generate content</TD>\n";
-          output << p1 << MODE_NONE << prod << "&fileId=" << fileId << "');\" >Cancel</TD>\n";
-          break;
-        default:
-          break;
-      }
-
-      output << "</TR>\n";
-      output << "</TABLE>\n";
-
-      if (mode == MODE_GENERATE_REQUEST)
-      {
-        output << "<HR>\n";
-        try
-        {
-          output << "<PRE style=\"background-color: #F0F0F0;\">\n";
-          output << "\n";
-          SmartMet::GRID::GridFile gridFile;
-          gridFile.read(fInfo.mName,100);
-          gridFile.print(output,0,0);
-          output << "\n";
-          output << "</PRE>\n";
-        }
-        catch (...)
-        {
-          Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-          output << exception.getHtmlStackTrace();
-        }
-      }
-    }
+      writeFileEditor(output,mode,fInfo,fileId,startFileId);
 
     output << "<HR>\n";
 
