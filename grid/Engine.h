@@ -288,6 +288,9 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                getParameterDetailMappings(const ParameterDetails& parameterDetail,QueryServer::ParameterMapping_vec& mappings) const;  //!< Get the parameter mappings of a parameter detail.
     void                addMappingTimes(MappingDetails& details,T::ContentInfoList& contentInfoList) const;  //!< Add the analysis and forecast times of the contents to the mapping details.
     bool                countReadyGenerations(const std::string& producerName,time_t currentTime,std::map<std::string,uint>& counterList,std::map<std::string,T::GenerationId>& generationList) const;  //!< Count the ready generations of the producer by analysis time.
+    void                addProducerMetaData(std::list<MetaData>& metaDataList,const T::ProducerInfo& pInfo,ContentServer::ServiceInterface& contentServer,time_t currentTime) const;  //!< Add the metadata of the generations of the producer.
+    void                getGenerationGeometries(const T::GenerationInfo& gInfo,ContentServer::ServiceInterface& contentServer,T::GeometryInfoList& geometryInfoList) const;  //!< Get the geometries of the generation (from the content if not known).
+    void                addGeometryMetaData(std::list<MetaData>& metaDataList,const T::ProducerInfo& pInfo,const T::GenerationInfo& gInfo,const T::GeometryInfo& geom,const std::set<T::ParamLevelId>& levelIdList,ContentServer::ServiceInterface& contentServer) const;  //!< Add the metadata of each level type of the geometry.
     void                addAnalysisTimeRows(const std::vector<std::string>& record,const std::map<std::string,uint>& counterList,const std::map<std::string,T::GenerationId>& generationList,ContentServer::ServiceInterface& contentServer,std::vector<std::vector<std::string>>& table) const;  //!< Add the analysis time rows of a producer status record.
 
     // Phase helpers for init().  Each handles one well-defined stage:

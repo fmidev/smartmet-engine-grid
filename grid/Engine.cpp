@@ -76,6 +76,47 @@ void* gridEngine_updateThread(void* arg)
     }
   }
 }
+
+/*! \brief Set the grid information of the geometry to the metadata. */
+
+void setGeometryMetaData(MetaData& metaData,T::GeometryId geometryId)
+{
+  auto g = Identification::gridDef.getGrib2DefinitionByGeometryId(geometryId);
+  if (g)
+  {
+    metaData.xNumber = g->getGridColumnCount();
+    metaData.yNumber = g->getGridRowCount();
+    g->getGridLatLonArea(metaData.latlon_topLeft,metaData.latlon_topRight,metaData.latlon_bottomLeft,metaData.latlon_bottomRight);
+    metaData.projectionId = g->getGridProjection();
+    metaData.projectionName = T::get_gridProjectionString(metaData.projectionId);
+
+    metaData.wkt = g->getWKT();
+    metaData.proj4 = g->getProj4();
+  }
+}
+
+
+
+/*! \brief Set the parameter definitions of the parameter keys to the metadata. */
+
+void setParameterMetaData(MetaData& metaData,const std::set<std::string>& paramKeyList)
+{
+  metaData.parameters.reserve(paramKeyList.size());
+  for (const auto& pk : paramKeyList)
+  {
+    Identification::FmiParameterDef paramDef;
+    if (Identification::gridDef.getFmiParameterDefByName(pk, paramDef))
+    {
+      Parameter param;
+      param.parameterId = paramDef.mFmiParameterId;
+      param.parameterName = paramDef.mParameterName;
+      param.parameterUnits = paramDef.mParameterUnits;
+      param.parameterDescription = paramDef.mParameterDescription;
+
+      metaData.parameters.push_back(param);
+    }
+  }
+}
 }  // namespace
 
 /*! \brief Engine: Constructor. */
@@ -2922,6 +2963,141 @@ ContentTable Engine::getParameterInfo(std::optional<std::string> producer) const
 
 
 
+/*! \brief Engine: Add the metadata of the generations of the producer (the caller holds the producer info lock). */
+
+void Engine::addProducerMetaData(std::list<MetaData>& metaDataList,const T::ProducerInfo& pInfo,ContentServer::ServiceInterface& contentServer,time_t currentTime) const
+{
+  try
+  {
+    std::set<T::ParamLevelId> levelIdList;
+    getProducerLevelIdList(pInfo.mProducerId,levelIdList);
+
+    T::GenerationInfoList generationList;
+    mGenerationInfoList.getGenerationInfoListByProducerId(pInfo.mProducerId, generationList);
+
+    uint glen = generationList.getLength();
+    if (glen == 0  || levelIdList.empty())
+      return;
+
+    generationList.sort(T::GenerationInfo::ComparisonMethod::analysisTime);
+
+    glen = generationList.getLength();
+    for (uint g=0; g<glen; g++)
+    {
+      T::GenerationInfo *gInfo = generationList.getGenerationInfoByIndex(g);
+      time_t deletionTime = gInfo->mDeletionTime;
+
+      if (deletionTime == 0 || (currentTime + 120) < deletionTime)
+      {
+        T::GeometryInfoList geometryInfoList;
+        getGenerationGeometries(*gInfo,contentServer,geometryInfoList);
+
+        uint geomLen = geometryInfoList.getLength();
+        for (uint gg = 0; gg < geomLen; gg++)
+        {
+          T::GeometryInfo *geom = geometryInfoList.getGeometryInfoByIndex(gg);
+          if (geom != nullptr &&  geom->mStatus == T::GeometryInfo::Status::Ready)
+            addGeometryMetaData(metaDataList,pInfo,*gInfo,*geom,levelIdList,contentServer);
+        }
+      }
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Get the geometries of the generation (from the content if not known). */
+
+void Engine::getGenerationGeometries(const T::GenerationInfo& gInfo,ContentServer::ServiceInterface& contentServer,T::GeometryInfoList& geometryInfoList) const
+{
+  try
+  {
+    mGeometryInfoList.getGeometryInfoListByGenerationId(gInfo.mGenerationId,geometryInfoList);
+
+    uint geomLen = geometryInfoList.getLength();
+    if (geomLen == 0)
+    {
+      std::set<T::GeometryId> geometryIdList;
+      contentServer.getContentGeometryIdListByGenerationId(0,gInfo.mGenerationId,geometryIdList);
+      if (!geometryIdList.empty())
+      {
+        for (int gi : geometryIdList)
+        {
+          auto *geom = new T::GeometryInfo();
+          geom->mProducerId = gInfo.mProducerId;
+          geom->mGenerationId = gInfo.mGenerationId;
+          geom->mGeometryId = gi;
+          geom->mModificationTime = gInfo.mModificationTime;
+          geom->mDeletionTime = gInfo.mDeletionTime;
+          geom->mStatus = gInfo.mStatus;
+          geometryInfoList.addGeometryInfo(geom);
+        }
+      }
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Add the metadata of each level type of the geometry. */
+
+void Engine::addGeometryMetaData(std::list<MetaData>& metaDataList,const T::ProducerInfo& pInfo,const T::GenerationInfo& gInfo,const T::GeometryInfo& geom,const std::set<T::ParamLevelId>& levelIdList,ContentServer::ServiceInterface& contentServer) const
+{
+  try
+  {
+    for (short levelId : levelIdList)
+    {
+      MetaData metaData;
+      contentServer.getContentTimeListByGenerationGeometryAndLevelId(0,geom.mGenerationId,geom.mGeometryId,levelId,metaData.times);
+      uint slen = metaData.times.size();
+      if (slen > 0)
+      {
+        std::set<std::string> paramKeyList;
+        contentServer.getContentParamKeyListByGenerationGeometryAndLevelId(0,geom.mGenerationId,geom.mGeometryId,levelId,T::ParamKeyTypeValue::FMI_NAME,paramKeyList);
+        contentServer.getContentLevelListByGenerationGeometryAndLevelId(0,geom.mGenerationId,geom.mGeometryId,levelId,metaData.levels);
+
+        metaData.producerId = pInfo.mProducerId;
+        metaData.producerName = pInfo.mName;
+        metaData.producerDescription = pInfo.mDescription;
+        metaData.generationId = gInfo.mGenerationId;
+        metaData.analysisTime = gInfo.mAnalysisTime;
+        metaData.geometryId = geom.mGeometryId;
+
+        setGeometryMetaData(metaData,geom.mGeometryId);
+
+        metaData.levelId = levelId;
+
+        Identification::LevelDef levelDef;
+        if (Identification::gridDef.getFmiLevelDef(levelId,levelDef))
+        {
+          metaData.levelName = levelDef.mName;
+          metaData.levelDescription = levelDef.mDescription;
+        }
+
+
+        //std::cout << metaData.producerName << ":" << metaData.analysisTime << ":" << metaData.geometryId << ":" << metaData.levelId << " Levels : " << metaData.levels.size() <<  " Times : " << metaData.times.size() << " Params : " << paramKeyList.size() << "\n";
+
+        setParameterMetaData(metaData,paramKeyList);
+        metaDataList.push_back(metaData);
+      }
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
 /*! \brief Engine: Get engine metadata. */
 
 std::list<MetaData> Engine::getEngineMetadata(const char *producerName) const
@@ -2947,124 +3123,7 @@ std::list<MetaData> Engine::getEngineMetadata(const char *producerName) const
       T::ProducerInfo* pInfo = mProducerInfoList.getProducerInfoByIndex(t);
 
       if (!producerName || producerName[0] == '\0' || strcasecmp(producerName, pInfo->mName.c_str()) == 0)
-      {
-        std::set<T::ParamLevelId> levelIdList;
-        getProducerLevelIdList(pInfo->mProducerId,levelIdList);
-
-        T::GenerationInfoList generationList;
-        mGenerationInfoList.getGenerationInfoListByProducerId(pInfo->mProducerId, generationList);
-
-        uint glen = generationList.getLength();
-        if (glen > 0  && !levelIdList.empty())
-        {
-          generationList.sort(T::GenerationInfo::ComparisonMethod::analysisTime);
-
-          uint glen = generationList.getLength();
-          for (uint g=0; g<glen; g++)
-          {
-            T::GenerationInfo *gInfo = generationList.getGenerationInfoByIndex(g);
-            time_t deletionTime = gInfo->mDeletionTime;
-
-            if (deletionTime == 0 || (currentTime + 120) < deletionTime)
-            {
-              T::GeometryInfoList geometryInfoList;
-              mGeometryInfoList.getGeometryInfoListByGenerationId(gInfo->mGenerationId,geometryInfoList);
-
-              uint geomLen = geometryInfoList.getLength();
-              if (geomLen == 0)
-              {
-                std::set<T::GeometryId> geometryIdList;
-                contentServer->getContentGeometryIdListByGenerationId(0,gInfo->mGenerationId,geometryIdList);
-                if (!geometryIdList.empty())
-                {
-                  for (int gi : geometryIdList)
-                  {
-                    auto *geom = new T::GeometryInfo();
-                    geom->mProducerId = gInfo->mProducerId;
-                    geom->mGenerationId = gInfo->mGenerationId;
-                    geom->mGeometryId = gi;
-                    geom->mModificationTime = gInfo->mModificationTime;
-                    geom->mDeletionTime = gInfo->mDeletionTime;
-                    geom->mStatus = gInfo->mStatus;
-                    geometryInfoList.addGeometryInfo(geom);
-                  }
-                }
-                geomLen = geometryInfoList.getLength();
-              }
-
-              for (uint gg = 0; gg < geomLen; gg++)
-              {
-                T::GeometryInfo *geom = geometryInfoList.getGeometryInfoByIndex(gg);
-                if (geom != nullptr &&  geom->mStatus == T::GeometryInfo::Status::Ready)
-                {
-                  for (short levelId : levelIdList)
-                  {
-                    MetaData metaData;
-                    contentServer->getContentTimeListByGenerationGeometryAndLevelId(0,geom->mGenerationId,geom->mGeometryId,levelId,metaData.times);
-                    uint slen = metaData.times.size();
-                    if (slen > 0)
-                    {
-                      std::set<std::string> paramKeyList;
-                      contentServer->getContentParamKeyListByGenerationGeometryAndLevelId(0,geom->mGenerationId,geom->mGeometryId,levelId,T::ParamKeyTypeValue::FMI_NAME,paramKeyList);
-                      contentServer->getContentLevelListByGenerationGeometryAndLevelId(0,geom->mGenerationId,geom->mGeometryId,levelId,metaData.levels);
-
-                      metaData.producerId = pInfo->mProducerId;
-                      metaData.producerName = pInfo->mName;
-                      metaData.producerDescription = pInfo->mDescription;
-                      metaData.generationId = gInfo->mGenerationId;
-                      metaData.analysisTime = gInfo->mAnalysisTime;
-                      metaData.geometryId = geom->mGeometryId;
-
-
-                      auto g = Identification::gridDef.getGrib2DefinitionByGeometryId(geom->mGeometryId);
-                      if (g)
-                      {
-                        metaData.xNumber = g->getGridColumnCount();
-                        metaData.yNumber = g->getGridRowCount();
-                        g->getGridLatLonArea(metaData.latlon_topLeft,metaData.latlon_topRight,metaData.latlon_bottomLeft,metaData.latlon_bottomRight);
-                        metaData.projectionId = g->getGridProjection();
-                        metaData.projectionName = T::get_gridProjectionString(metaData.projectionId);
-
-                        metaData.wkt = g->getWKT();
-                        metaData.proj4 = g->getProj4();
-                      }
-
-                      metaData.levelId = levelId;
-
-                      Identification::LevelDef levelDef;
-                      if (Identification::gridDef.getFmiLevelDef(levelId,levelDef))
-                      {
-                        metaData.levelName = levelDef.mName;
-                        metaData.levelDescription = levelDef.mDescription;
-                      }
-
-
-                      //std::cout << metaData.producerName << ":" << metaData.analysisTime << ":" << metaData.geometryId << ":" << metaData.levelId << " Levels : " << metaData.levels.size() <<  " Times : " << metaData.times.size() << " Params : " << paramKeyList.size() << "\n";
-
-                      metaData.parameters.reserve(paramKeyList.size());
-                      for (const auto& pk : paramKeyList)
-                      {
-                        Identification::FmiParameterDef paramDef;
-                        if (Identification::gridDef.getFmiParameterDefByName(pk, paramDef))
-                        {
-                          Parameter param;
-                          param.parameterId = paramDef.mFmiParameterId;
-                          param.parameterName = paramDef.mParameterName;
-                          param.parameterUnits = paramDef.mParameterUnits;
-                          param.parameterDescription = paramDef.mParameterDescription;
-
-                          metaData.parameters.push_back(param);
-                        }
-                      }
-                      metaDataList.push_back(metaData);
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+        addProducerMetaData(metaDataList,*pInfo,*contentServer,currentTime);
     }
 
 
