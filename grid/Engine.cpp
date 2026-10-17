@@ -4146,6 +4146,185 @@ void Engine::writeMappingLine(std::ofstream& file,
 
 
 
+/*! \brief Engine: The state of a parameter mapping file update. */
+
+struct Engine::MappingUpdateState
+{
+  MappingUpdateState(T::ParamKeyType theSourceParameterKeyType,T::ParamKeyType theTargetParameterKeyType,const std::string& theMappingFile,
+      const std::string& theTmpMappingFile,QueryServer::ParamMappingFile_vec& theParameterMappings,Spine::Table& theParamTable)
+  : sourceParameterKeyType(theSourceParameterKeyType),
+    targetParameterKeyType(theTargetParameterKeyType),
+    mappingFile(theMappingFile),
+    tmpMappingFile(theTmpMappingFile),
+    parameterMappings(theParameterMappings),
+    paramTable(theParamTable),
+    row(theParamTable.maxj())
+  {
+  }
+
+  T::ParamKeyType sourceParameterKeyType;
+  T::ParamKeyType targetParameterKeyType;
+  const std::string& mappingFile;
+  const std::string& tmpMappingFile;
+  QueryServer::ParamMappingFile_vec& parameterMappings;
+  Spine::Table& paramTable;
+  std::size_t row;
+  uint numOfNewMappings = 0;
+  std::unordered_set < std::string > mapList;
+  std::unordered_set < std::string > searchList;
+  std::unordered_set < std::string > pList;
+  std::ofstream file;
+};
+
+
+
+namespace
+{
+/*! \brief Adds the parameter definition row of the producer parameter (pl[0] = producer, pl[1] = parameter) to the table. */
+
+void addParamTableRow(Spine::Table& paramTable,std::size_t& row,const std::vector<std::string>& pl)
+{
+  paramTable.set(0, row, std::to_string(row + 1));
+  paramTable.set(1, row, pl[0]);
+  paramTable.set(2, row, pl[1]);
+
+  Identification::FmiParameterDef paramDef;
+  if (Identification::gridDef.getFmiParameterDefByName(pl[1], paramDef))
+  {
+    paramTable.set(3, row, std::to_string(paramDef.mFmiParameterId));
+
+    Identification::NewbaseParameterDef nbDef;
+    Identification::gridDef.getNewbaseParameterDefByFmiId(paramDef.mFmiParameterId, nbDef);
+    paramTable.set(4, row, nbDef.mParameterName);
+    paramTable.set(5, row, std::to_string(nbDef.mNewbaseParameterId));
+
+    paramTable.set(6, row, paramDef.mParameterUnits);
+    paramTable.set(7, row, paramDef.mParameterDescription);
+  }
+
+  row++;
+}
+
+
+
+/*! \brief Checks whether the mapping is defined in the other mapping files (found) or the parameter can be searched (searchEnabled). */
+
+void findOtherMapping(QueryServer::ParamMappingFile_vec& parameterMappings,const std::string& mappingFile,QueryServer::ParameterMapping& m,
+    const std::unordered_set<std::string>& searchList,const std::string& searchKey,bool& found,bool& searchEnabled)
+{
+  for (auto it = parameterMappings.begin(); it != parameterMappings.end() && !found; ++it)
+  {
+    if (it->getFilename() == mappingFile)
+      continue;
+
+    if (it->getMapping(m) != nullptr)
+    {
+      found = true;
+    }
+    else
+    {
+      if (searchList.find(searchKey) != searchList.end())
+      {
+        searchEnabled = true;
+      }
+      else
+      {
+        QueryServer::ParameterMapping_vec vec;
+        it->getMappings(m.mProducerName, m.mParameterName, m.mGeometryId, true, vec);
+        if (!vec.empty())
+        {
+          searchEnabled = true;
+        }
+      }
+    }
+  }
+}
+}  // namespace
+
+
+
+/*! \brief Engine: Adds the producer parameter (';' separated info) to the mapping file update. */
+
+void Engine::addParameterMapping(const std::string& info,MappingUpdateState& state)
+{
+  try
+  {
+    std::vector < std::string > pl;
+    splitString(info.c_str(), ';', pl);
+    if (pl.size() < 8)
+      return;
+
+    bool simplifiedLevel = false;
+
+    QueryServer::ParameterMapping m;
+    m.mProducerName = pl[0];
+    m.mParameterName = pl[1];
+    m.mParameterKeyType = toUInt8(pl[2].c_str());
+    m.mParameterKey = pl[3];
+    m.mGeometryId = toInt32(pl[4].c_str());
+    //m.mParameterLevelIdType = toUInt8(pl[5].c_str());
+    m.mParameterLevelId = toInt8(pl[6].c_str());
+    if (mParameterMapping_simplifiedLevelIdSet.find(m.mParameterLevelId) != mParameterMapping_simplifiedLevelIdSet.end())
+    {
+      m.mParameterLevel = 0;
+      simplifiedLevel = true;
+    }
+    else
+      m.mParameterLevel = toInt32(pl[7].c_str());
+
+    if (state.sourceParameterKeyType == T::ParamKeyTypeValue::FMI_NAME)
+    {
+      std::string tmp = pl[0] + ";" + pl[1];
+
+      auto res = state.pList.insert(tmp);
+      if (res.second)
+        addParamTableRow(state.paramTable,state.row,pl);
+    }
+
+    std::string level = pl[7];
+    if (simplifiedLevel)
+      level = "*";
+
+    std::string key = pl[0] + ";" + pl[1] + ";" + pl[2] + ";" + pl[3] + ";" + pl[4] + ";" + pl[5] + ";" + pl[6] + ";" + level + ";";
+    std::string searchKey = m.mProducerName + ":" + m.mParameterName + ":" + std::to_string(m.mGeometryId);
+
+    if (state.mapList.find(key) != state.mapList.end())
+      return;
+
+    state.mapList.insert(key);
+
+    bool found = false;
+    bool searchEnabled = false;
+    findOtherMapping(state.parameterMappings,state.mappingFile,m,state.searchList,searchKey,found,searchEnabled);
+
+    if (found)
+      return;
+
+    state.numOfNewMappings++;
+
+    char s = 'D';
+    if (!searchEnabled || (m.mParameterLevelId == 6 && m.mParameterLevel <= 10) || (m.mParameterLevelId == 1 && m.mParameterLevel == 0))
+    {
+      if (!simplifiedLevel)
+        s = 'E';
+    }
+
+    // if (searchList.find(searchKey) == searchList.end())
+    state.searchList.insert(searchKey);
+
+    if (!state.file.is_open())
+      state.file = openMappingFile(state.tmpMappingFile);
+
+    writeMappingLine(state.file, pl, level, s, state.sourceParameterKeyType, state.targetParameterKeyType);
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
 /*! \brief Engine: Update mappings. */
 
 void Engine::updateMappings(
@@ -4169,9 +4348,6 @@ void Engine::updateMappings(
     ContentServer_sptr contentServer = getContentServer_sptr();
 
     T::SessionId sessionId = 0;
-    uint numOfNewMappings = 0;
-    std::unordered_set < std::string > mapList;
-    std::unordered_set < std::string > searchList;
 
     T::ProducerInfoList producerInfoList;
     int result = contentServer->getProducerInfoList(sessionId, producerInfoList);
@@ -4182,9 +4358,9 @@ void Engine::updateMappings(
       return;
     }
 
-    std::ofstream file;
-    std::unordered_set < std::string > pList;
-    auto row = paramTable.maxj();
+    MappingUpdateState state(sourceParameterKeyType, targetParameterKeyType, mappingFile, tmpMappingFile, parameterMappings, paramTable);
+    std::ofstream& file = state.file;
+    uint& numOfNewMappings = state.numOfNewMappings;
 
     uint plen = producerInfoList.getLength();
     for (uint t = 0; t < plen; t++)
@@ -4203,113 +4379,7 @@ void Engine::updateMappings(
           if (Spine::Reactor::isShuttingDown())
             return;
 
-          std::vector < std::string > pl;
-          splitString(it.c_str(), ';', pl);
-          if (pl.size() >= 8)
-          {
-            QueryServer::ParameterMapping m;
-            m.mProducerName = pl[0];
-            m.mParameterName = pl[1];
-            m.mParameterKeyType = toUInt8(pl[2].c_str());
-            m.mParameterKey = pl[3];
-            m.mGeometryId = toInt32(pl[4].c_str());
-            //m.mParameterLevelIdType = toUInt8(pl[5].c_str());
-            m.mParameterLevelId = toInt8(pl[6].c_str());
-            if (mParameterMapping_simplifiedLevelIdSet.find(m.mParameterLevelId) != mParameterMapping_simplifiedLevelIdSet.end())
-              m.mParameterLevel = 0;
-            else
-              m.mParameterLevel = toInt32(pl[7].c_str());
-
-            if (sourceParameterKeyType == T::ParamKeyTypeValue::FMI_NAME)
-            {
-              std::string tmp = pl[0] + ";" + pl[1];
-
-              auto res = pList.insert(tmp);
-              if (res.second)
-              {
-                paramTable.set(0, row, std::to_string(row + 1));
-                paramTable.set(1, row, pl[0]);
-                paramTable.set(2, row, pl[1]);
-
-                Identification::FmiParameterDef paramDef;
-                if (Identification::gridDef.getFmiParameterDefByName(pl[1], paramDef))
-                {
-                  paramTable.set(3, row, std::to_string(paramDef.mFmiParameterId));
-
-                  Identification::NewbaseParameterDef nbDef;
-                  Identification::gridDef.getNewbaseParameterDefByFmiId(paramDef.mFmiParameterId, nbDef);
-                  paramTable.set(4, row, nbDef.mParameterName);
-                  paramTable.set(5, row, std::to_string(nbDef.mNewbaseParameterId));
-
-                  paramTable.set(6, row, paramDef.mParameterUnits);
-                  paramTable.set(7, row, paramDef.mParameterDescription);
-                }
-
-                row++;
-              }
-            }
-
-            std::string level = pl[7];
-            if (mParameterMapping_simplifiedLevelIdSet.find(m.mParameterLevelId) != mParameterMapping_simplifiedLevelIdSet.end())
-              level = "*";
-
-            std::string key = pl[0] + ";" + pl[1] + ";" + pl[2] + ";" + pl[3] + ";" + pl[4] + ";" + pl[5] + ";" + pl[6] + ";" + level + ";";
-            std::string searchKey = m.mProducerName + ":" + m.mParameterName + ":" + std::to_string(m.mGeometryId);
-
-            if (mapList.find(key) == mapList.end())
-            {
-              mapList.insert(key);
-
-              bool found = false;
-              bool searchEnabled = false;
-              for (auto it = parameterMappings.begin(); it != parameterMappings.end() && !found; ++it)
-              {
-                if (it->getFilename() != mappingFile)
-                {
-                  if (it->getMapping(m) != nullptr)
-                  {
-                    found = true;
-                  }
-                  else
-                  {
-                    if (searchList.find(searchKey) != searchList.end())
-                    {
-                      searchEnabled = true;
-                    }
-                    else
-                    {
-                      QueryServer::ParameterMapping_vec vec;
-                      it->getMappings(m.mProducerName, m.mParameterName, m.mGeometryId, true, vec);
-                      if (!vec.empty())
-                      {
-                        searchEnabled = true;
-                      }
-                    }
-                  }
-                }
-              }
-
-              if (!found)
-              {
-                numOfNewMappings++;
-
-                char s = 'D';
-                if (!searchEnabled || (m.mParameterLevelId == 6 && m.mParameterLevel <= 10) || (m.mParameterLevelId == 1 && m.mParameterLevel == 0))
-                {
-                  if (mParameterMapping_simplifiedLevelIdSet.find(m.mParameterLevelId) == mParameterMapping_simplifiedLevelIdSet.end())
-                    s = 'E';
-                }
-
-                // if (searchList.find(searchKey) == searchList.end())
-                searchList.insert(searchKey);
-
-                if (!file.is_open())
-                  file = openMappingFile(tmpMappingFile);
-
-                writeMappingLine(file, pl, level, s, sourceParameterKeyType, targetParameterKeyType);
-              }
-            }
-          }
+          addParameterMapping(it, state);
         }
       }
     }

@@ -311,6 +311,9 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                                      QueryServer::ParamMappingFile_vec& parameterAliasMappings);
     void                loadUnitConversionFile();
     std::ofstream       openMappingFile(const std::string& mappingFile);
+
+    struct MappingUpdateState;
+    void                addParameterMapping(const std::string& info,MappingUpdateState& state);  //!< Add a producer parameter to the mapping file update.
     void                updateMappings();
 
     void                updateMappings(
