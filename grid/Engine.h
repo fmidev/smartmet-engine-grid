@@ -282,6 +282,9 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                                               int& truncateSizeMember,
                                               Log& log,
                                               const std::function<void(Log*)>& applyLogToServers);
+    void                applyLogConfigurations(ConfigurationFile& configurationFile);     //!< Re-read the processing and debug log configurations of the servers.
+    void                applyBrowserConfiguration(ConfigurationFile& configurationFile);  //!< Re-read the browser configuration.
+    void                applyCleanupConfiguration(ConfigurationFile& configurationFile);  //!< Re-read the grid storage clean-up configuration.
 
     // Phase helpers for init().  Each handles one well-defined stage:
     void                initMemoryMapper();                                                   //!< Apply memory-mapper configuration from member fields.

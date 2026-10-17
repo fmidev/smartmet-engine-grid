@@ -905,6 +905,30 @@ void Engine::checkConfiguration()
       return;
     }
 
+    applyLogConfigurations(configurationFile);
+
+    applyBrowserConfiguration(configurationFile);
+
+    applyCleanupConfiguration(configurationFile);
+
+    mConfigurationFile_modificationTime = tt;
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Constructor failed!", nullptr);
+    exception.addParameter("Configuration file", mConfigurationFile_name);
+    throw exception;
+  }
+}
+
+
+
+/*! \brief Engine: Re-read the processing and debug log configurations of the servers. */
+
+void Engine::applyLogConfigurations(ConfigurationFile& configurationFile)
+{
+  try
+  {
     // ### Content server processing log
     applyLogConfiguration(configurationFile,
       "smartmet.engine.grid.content-server.processing-log",
@@ -972,7 +996,21 @@ void Engine::checkConfiguration()
         if (mQueryServer->getDebugLog() == nullptr)
           mQueryServer->setDebugLog(l);
       });
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
 
+
+
+/*! \brief Engine: Re-read the browser configuration. */
+
+void Engine::applyBrowserConfiguration(ConfigurationFile& configurationFile)
+{
+  try
+  {
     // ### Browser
 
     bool browserEnabled = false;
@@ -999,7 +1037,21 @@ void Engine::checkConfiguration()
       mBrowserFlags = browserFlags;
       mBrowser.setFlags(mBrowserFlags);
     }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
 
+
+
+/*! \brief Engine: Re-read the grid storage clean-up configuration. */
+
+void Engine::applyCleanupConfiguration(ConfigurationFile& configurationFile)
+{
+  try
+  {
     if (mDataServerImplementation != nullptr)
     {
       time_t cleanupAge = mDataServerCleanupAge;
@@ -1017,14 +1069,10 @@ void Engine::checkConfiguration()
 
       }
     }
-
-    mConfigurationFile_modificationTime = tt;
   }
   catch (...)
   {
-    Fmi::Exception exception(BCP, "Constructor failed!", nullptr);
-    exception.addParameter("Configuration file", mConfigurationFile_name);
-    throw exception;
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
   }
 }
 
