@@ -3330,6 +3330,42 @@ T::ParamLevelId Engine::getFmiParameterLevelId(T::ProducerId producerId, int lev
   }
 }
 
+/*! \brief Engine: Get the names the parameter mappings of the producer give to its FMI parameters, by FMI parameter name. Mappings excluded from searches are left out, as queries do not find them either. */
+
+void Engine::getParameterMappingNames(const std::string& producerName,const std::set<std::string>& fmiParameterNames,std::map<std::string,std::set<std::string>>& mappingNames) const
+{
+  FUNCTION_TRACE
+  try
+  {
+    if (!mEnabled || !mParameterMappingDefinitions)
+      return;
+
+    AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
+
+    for (const auto& fmiName : fmiParameterNames)
+    {
+      QueryServer::ParameterMapping_vec mappings;
+      for (auto& mf : *mParameterMappingDefinitions)
+        mf.getMappingsByParamKey(producerName,T::ParamKeyTypeValue::FMI_NAME,fmiName,-1,-1,-1,mappings);
+
+      for (auto& mf : mParameterAliasMappings)
+        mf.getMappingsByParamKey(producerName,T::ParamKeyTypeValue::FMI_NAME,fmiName,-1,-1,-1,mappings);
+
+      for (const auto& mapping : mappings)
+      {
+        if (mapping.mSearchEnabled && strcasecmp(fmiName.c_str(),mapping.mParameterName.c_str()) != 0)
+          mappingNames[fmiName].insert(mapping.mParameterName);
+      }
+    }
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Producer",producerName);
+    throw exception;
+  }
+}
+
 /*! \brief Engine: Get producer list. */
 
 void Engine::getProducerList(string_vec& producerList) const

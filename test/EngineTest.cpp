@@ -241,6 +241,20 @@ BOOST_AUTO_TEST_CASE(parameter_mappings)
         BOOST_TEST(mappings[0].mProducerName == PRODUCER);
         BOOST_TEST(mappings[0].mGeometryId == 5900);
 
+        // The names the mappings give to FMI parameters, as a query may use them
+        std::map<std::string, std::set<std::string>> names;
+        w.engine->getParameterMappingNames(PRODUCER, {"RH-PRCNT", "NO-SUCH-PARAMETER"}, names);
+        BOOST_TEST_REQUIRE(names.count("RH-PRCNT") == 1U);
+        BOOST_TEST(names["RH-PRCNT"].count("Humidity") == 1U);
+        BOOST_TEST(names.count("NO-SUCH-PARAMETER") == 0U);
+        // A mapping to the name itself adds nothing
+        std::map<std::string, std::set<std::string>> same;
+        w.engine->getParameterMappingNames(PRODUCER, {mappings[0].mParameterKey}, same);
+        BOOST_TEST(same[mappings[0].mParameterKey].count(mappings[0].mParameterKey) == 0U);
+        std::map<std::string, std::set<std::string>> other;
+        w.engine->getParameterMappingNames("no_such_producer", {"RH-PRCNT"}, other);
+        BOOST_TEST(other.empty());
+
         QueryServer::ParameterMapping_vec none;
         w.engine->getParameterMappings(PRODUCER, "NoSuchParameter", false, none);
         BOOST_TEST(none.empty());

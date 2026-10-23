@@ -212,6 +212,14 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                           bool onlySearchEnabled,
                           QueryServer::ParameterMapping_vec& mappings) const;
 
+    /*! \brief The names the parameter mappings of a producer give to its FMI parameters, by FMI
+        parameter name (for example Temperature for T-K). These are the names a query may use
+        instead of the FMI names. Names equal to the FMI name are left out. */
+    void                getParameterMappingNames(
+                          const std::string& producerName,
+                          const std::set<std::string>& fmiParameterNames,
+                          std::map<std::string,std::set<std::string>>& mappingNames) const;
+
     void                getProducerList(string_vec& producerList) const;
 
     bool                getProducerInfoByName(const std::string& name,T::ProducerInfo& producerInfo) const;
