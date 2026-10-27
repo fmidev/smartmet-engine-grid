@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 26.9.16
+Version: 26.10.23
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -22,10 +22,10 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
-BuildRequires: smartmet-library-spine-devel >= 26.9.16
-BuildRequires: smartmet-library-grid-content-devel >= 26.9.16
-BuildRequires: smartmet-library-grid-files-devel >= 26.9.16
-BuildRequires: smartmet-library-macgyver-devel >= 26.9.16
+BuildRequires: smartmet-library-spine-devel >= 26.10.16
+BuildRequires: smartmet-library-grid-content-devel >= 26.10.16
+BuildRequires: smartmet-library-grid-files-devel >= 26.10.16
+BuildRequires: smartmet-library-macgyver-devel >= 26.10.16
 BuildRequires: make
 BuildRequires: omniORB-devel >= 4.3.0
 BuildRequires: %{smartmet_boost}-devel
@@ -34,11 +34,22 @@ BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 BuildRequires: postgresql15-devel
 Requires: %{smartmet_boost}-thread
-Requires: smartmet-library-grid-content >= 26.9.16
-Requires: smartmet-library-grid-files >= 26.9.16
-Requires: smartmet-library-spine >= 26.9.16
-Requires: smartmet-library-macgyver >= 26.9.16
+Requires: smartmet-library-grid-content >= 26.10.17
+Requires: smartmet-library-grid-files >= 26.10.17
+Requires: smartmet-library-spine >= 26.10.17
+Requires: smartmet-library-macgyver >= 26.10.17
 Requires: omniORB-devel
+#TestRequires: %{smartmet_boost}-devel
+#TestRequires: gcc-c++
+#TestRequires: make
+#TestRequires: gdal312-devel
+#TestRequires: omniORB-devel
+#TestRequires: smartmet-library-grid-content-devel >= 26.10.16
+#TestRequires: smartmet-library-grid-files-devel >= 26.10.16
+#TestRequires: smartmet-library-newbase-devel
+#TestRequires: smartmet-library-spine-devel >= 26.10.16
+#TestRequires: smartmet-library-grid-files-test >= 26.10.16
+#TestRequires: smartmet-test-data
 
 %if 0%{?rhel} && 0%{rhel} == 8
 Requires: libpqxx >= 1:7.7.0, libpqxx < 1:7.8.0
@@ -71,20 +82,12 @@ SmartMet grid engine
 Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
-Requires: smartmet-library-grid-content-devel >= 26.9.16
+Requires: smartmet-library-grid-content-devel >= 26.10.16
 Requires: %{SPECNAME} = %{version}-%{release}
-Requires: smartmet-library-spine-devel >= 26.9.16
-Requires: smartmet-library-macgyver-devel >= 26.9.16
+Requires: smartmet-library-spine-devel >= 26.10.16
+Requires: smartmet-library-macgyver-devel >= 26.10.16
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
-
-%package -n smartmet-engine-grid-test
-Summary: SmartMet %{SPECNAME} - redis server with required data for testing purpose
-Group: SmartMet/Development
-Provides: smartmet-engine-grid-test
-Requires: smartmet-library-grid-files >= 26.9.16
-%description -n smartmet-engine-grid-test
-SmartMet %{SPECNAME} - redis server with required data for testing purpose
 
 %prep
 rm -rf $RPM_BUILD_ROOT
@@ -109,12 +112,71 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(0664,root,root,0775)
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
-%files -n smartmet-engine-grid-test
-%defattr(0664,root,root,0775)
-%{_datadir}/smartmet/test/grid
-%attr(0755,root,root) %{_bindir}/smartmet-grid-test-config-creator
-
 %changelog
+* Fri Oct 23 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.23-1.fmi
+- Added getParameterMappingNames: the names the parameter mappings of a producer give to its
+  FMI parameters, for listing the parameters a query may use
+
+* Mon Oct 19 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.17-2.fmi
+- Repackaged: simultaneous CI runs corrupted the 26.10.17-1 RPMs
+* Sat Oct 17 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.17-1.fmi
+- Split functions with a cognitive complexity above 25 into smaller helpers, no functional changes
+- ABI change: new or changed members in installed headers, dependent packages must be rebuilt
+
+* Fri Oct 16 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.16-1.fmi
+- Fixed compiler warnings and clang-tidy findings (unused code, unreachable code, empty statements, member initialization, parameter passing, noexcept), no functional changes
+- ABI change: parameters passed by const reference or by value, removed unused members and defaulted copy operations, dependent packages must be rebuilt
+
+* Thu Oct 15 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.15-1.fmi
+- Declare member functions and parameters const where nothing is modified (const correctness), no functional changes
+- Removed the unused setBit helper function
+- Requires 26.10.15 versions of spine, grid-files, grid-content due to their ABI changes
+- Fixed mechanical clang-tidy findings (internal linkage, unused parameters, initialization, redundant code), no functional changes
+- Fixed clang-tidy style findings (loops, nested conditionals, dead code)
+- Fixed clang-tidy correctness findings (member initialization, rule of five, printf formats, dead stores)
+
+* Sun Oct 11 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.11-1.fmi
+- Failed file writes, closes and seeks are now reported instead of being ignored
+- Use auto and return {} where clang-tidy suggests it, no functional changes
+- Mark overriding methods override and use nullptr, no functional changes
+- Use = default and using declarations where clang-tidy suggests it, no functional changes
+- Use emplace and C++ standard library headers where clang-tidy suggests it, no functional changes
+- Use raw string literals and std::make_shared where clang-tidy suggests it, no functional changes
+- Use range-based for loops where clang-tidy suggests it, no functional changes
+
+* Wed Oct  7 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.7-1.fmi
+- Print the "Engine usage disabled" notice when the engine is disabled (it was unreachable)
+
+* Tue Oct  6 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.6-1.fmi
+- The smartmet-engine-grid-test package moved to grid-files as smartmet-library-grid-files-test,
+  since the grid-content library tests need it too
+
+* Sat Oct 03 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.3-1.fmi
+- Repackaged due to grid-content ABI changes (CacheImplementation and MergeImplementation size)
+- Added tests that need no Redis, CI runs them
+
+* Fri Oct 02 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.2-1.fmi
+- Rebuilt against macgyver 26.10.2 where Fmi::Cache::Cache uses CLOCK eviction instead of LRU.
+  CLOCK is faster than LRU since a cache hit only takes a shared lock (ABI change)
+
+* Sat Sep 26 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.9.26-1.fmi
+- Repackaged due to grid-files ABI changes
+- Require the 26.9.26 releases of the SmartMet dependencies
+
+* Fri Sep 25 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.9.25-1.fmi
+- With the content cache disabled, the data and query servers now use the same (first)
+  content source as the plugins; a warning is printed if several sources are configured
+- A remote data or query server with a missing or invalid IOR is now a configuration
+  error instead of silently using a local server
+
+* Thu Sep 24 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.9.24-1.fmi
+- Security: HTML-escape request/data-derived values (producer, generation and file
+  names, forecast times, parameter names, server names) in the grid engine Browser
+  to prevent stored/reflected XSS.
+
+* Wed Sep 23 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.9.23-1.fmi
+- Repackaged due to base library ABI changes
+
 * Wed Sep 16 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.9.16-1.fmi
 - Repackaged due to Fmi::Cache locking changes
 

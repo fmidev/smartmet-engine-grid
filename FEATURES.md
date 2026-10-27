@@ -35,9 +35,9 @@ single ContentServer interface.
 - **Redis** — primary/secondary instances with per-source table prefix
   (`mType == "redis"`).
 - **CORBA** — remote ContentServer over CORBA (`mType == "corba"`).
-- **HTTP** — remote ContentServer over JSON-over-HTTP (`mType == "http"`).
-- **File** — scan a filesystem tree for grid files
-  (`mType == "file"`).
+- **HTTP** — remote ContentServer over HTTP, key=value request/response lines (`mType == "http"`).
+- **File** — in-memory registry loaded from CSV files in `memoryContentDir`
+  (`MemoryImplementation`, `mType == "file"`).
 - **Multi-source merging** — when more than one source is declared, the
   engine builds a `MergeImplementation` that combines them.
 
@@ -65,9 +65,11 @@ single ContentServer interface.
 ## 5. Query Server modes
 
 - **Local** — in-process Query Server with Lua functions, parameter
-  mappings, aliases, unit conversions, query cache.
+  mappings, aliases, unit conversions.
 - **CORBA client** — proxy a remote Query Server.
-- **Query cache** — result memoisation across requests.
+- **Per-thread content caches** — partial content search results
+  (`query-server.contentCache`, `query-server.contentSearchCache`);
+  query results themselves are not cached.
 
 ## 6. Engine plugin API
 

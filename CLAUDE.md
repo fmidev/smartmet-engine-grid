@@ -18,7 +18,9 @@ make configtest     # Validate test config with cfgvalidate
 make doc            # Generate Doxygen HTML documentation in doc/html/
 ```
 
-There is no test suite in this repo (the `test/` Makefile target is a no-op). The `testdata/` directory builds a helper tool `smartmet-grid-test-config-creator`.
+`make test` runs the Boost.Test programs in `test/`. `EngineTest` needs no Redis: it registers a smartmet-test-data GRIB file in CSV files of a "file" content source, writes an engine configuration based on the smartmet-library-grid-files-test configuration and checks the engine services against values read by grid-files. The test fixtures (test configs, Redis dump, `smartmet-grid-test-config-creator`) that this and the plugin grid tests use come from the `smartmet-library-grid-files-test` package, built from `testdata/` in grid-files. The Redis dump predates the `library/test/` parameter definitions: its pal/ec content has FMI ids (e.g. 153 T-K) that the current configuration no longer derives from the same GRIB messages (1000000004 Temperature).
+
+Full developer documentation: `docs/developer-guide.md`.
 
 CORBA support can be disabled: edit the Makefile and set `CORBA = disabled`.
 
@@ -30,7 +32,7 @@ The engine wraps three service layers from the `grid-content` library, all confi
 
 - **Content Server** — tracks what grid data exists (producers, generations, files, content records). Primary storage is Redis; content is cached locally in memory with periodic swap for lock-free reads (`contentSwapEnabled`). Supports multiple content sources with different Redis table prefixes.
 - **Data Server** — fetches actual grid values from files. Can be local (memory-mapped files) or remote (CORBA). Has its own uncompressed grid cache (memory or filesystem-backed).
-- **Query Server** — executes data queries using content metadata + data server. Supports Lua scripting for custom parameter functions, parameter mappings/aliases, unit conversions, and a query cache.
+- **Query Server** — executes data queries using content metadata + data server. Supports Lua scripting for custom parameter functions, parameter mappings/aliases, unit conversions, and per-thread content caches.
 
 ### Source files
 
@@ -65,8 +67,8 @@ Configuration subdirectories under `cfg/`:
 - `newbase/` — producer mapping configs for newbase compatibility
 - `alias/` — parameter name/function aliases
 
-Many config files are hot-reloadable at runtime without server restart. The main config file is read only at startup.
+Many config files are hot-reloadable at runtime without server restart. The main config file is re-checked every 30 s, but only `enabled` (disable only), the logs, the browser settings and the data-server clean-up settings are applied at runtime; everything else needs a restart.
 
 ## CI
 
-CircleCI builds RPMs on RHEL 8 and RHEL 10 using `ci-build deps` and `ci-build rpm` in `fmidev/smartmet-cibase-{8,10}` Docker images.
+CircleCI builds RPMs on RHEL 8 and RHEL 10 using `ci-build deps` and `ci-build rpm` in `fmidev/smartmet-cibase-{8,10}` Docker images, then runs the tests (`ci-build testprep`, `ci-build test`).

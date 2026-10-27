@@ -23,6 +23,10 @@
 #include <macgyver/TimeFormatter.h>
 #include <spine/Convenience.h>
 #include <spine/Reactor.h>
+#include <chrono>
+#include <functional>
+#include <memory>
+#include <thread>
 #include <unistd.h>
 
 #include <unordered_set>
@@ -42,22 +46,135 @@ namespace Engine
 {
 namespace Grid
 {
-static void* gridEngine_updateThread(void* arg)
+namespace
 {
-  try
+void* gridEngine_updateThread(void* arg)
+{
+  Fmi::set_thread_name("upd-grid");
+  auto* engine = static_cast<Engine*>(arg);
+
+  // An error in the background updates used to call exit(-1), which stopped
+  // the whole server. Report it and restart the updates after a pause instead.
+  while (true)
   {
-    Fmi::set_thread_name("upd-grid");
-    Engine* engine = static_cast<Engine*>(arg);
-    engine->updateProcessing();
-    return nullptr;
-  }
-  catch (...)
-  {
-    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
-    exception.printError();
-    exit(-1);
+    try
+    {
+      engine->updateProcessing();
+      return nullptr;
+    }
+    catch (...)
+    {
+      Fmi::Exception exception(BCP, "Grid engine update failed, retrying in 10 seconds", nullptr);
+      exception.printError();
+    }
+
+    for (int i = 0; i < 10; i++)
+    {
+      if (Spine::Reactor::isShuttingDown())
+        return nullptr;
+      std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
   }
 }
+
+/*! \brief Set the grid information of the geometry to the metadata. */
+
+void setGeometryMetaData(MetaData& metaData,T::GeometryId geometryId)
+{
+  auto g = Identification::gridDef.getGrib2DefinitionByGeometryId(geometryId);
+  if (g)
+  {
+    metaData.xNumber = g->getGridColumnCount();
+    metaData.yNumber = g->getGridRowCount();
+    g->getGridLatLonArea(metaData.latlon_topLeft,metaData.latlon_topRight,metaData.latlon_bottomLeft,metaData.latlon_bottomRight);
+    metaData.projectionId = g->getGridProjection();
+    metaData.projectionName = T::get_gridProjectionString(metaData.projectionId);
+
+    metaData.wkt = g->getWKT();
+    metaData.proj4 = g->getProj4();
+  }
+}
+
+
+
+/*! \brief Set the parameter definitions of the parameter keys to the metadata. */
+
+void setParameterMetaData(MetaData& metaData,const std::set<std::string>& paramKeyList)
+{
+  metaData.parameters.reserve(paramKeyList.size());
+  for (const auto& pk : paramKeyList)
+  {
+    Identification::FmiParameterDef paramDef;
+    if (Identification::gridDef.getFmiParameterDefByName(pk, paramDef))
+    {
+      Parameter param;
+      param.parameterId = paramDef.mFmiParameterId;
+      param.parameterName = paramDef.mParameterName;
+      param.parameterUnits = paramDef.mParameterUnits;
+      param.parameterDescription = paramDef.mParameterDescription;
+
+      metaData.parameters.push_back(param);
+    }
+  }
+}
+
+
+/*! \brief Joins the strings with ',' separators. */
+
+std::string joinStrings(const std::set<std::string>& list)
+{
+  std::ostringstream output;
+  for (auto pp = list.begin(); pp != list.end(); ++pp)
+  {
+    if (pp != list.begin())
+      output << ",";
+
+    output << *pp;
+  }
+  return output.str();
+}
+
+
+
+/*! \brief Sets the analysis, min, max and modification time columns (3..6) of a generation info row. */
+
+void setGenerationTimes(Spine::Table& table,uint row,const std::string& analysisTime,const std::string& firstTime,const std::string& lastTime,
+    time_t modificationTime,const std::string& timeFormat,const Fmi::TimeFormatter* timeFormatter)
+{
+  if (!timeFormat.empty()  &&  strcasecmp(timeFormat.c_str(),"ISO") != 0  && timeFormatter)
+  {
+    // Analysis time
+    Fmi::DateTime aTime = toTimeStamp(analysisTime);
+    table.set(3, row, timeFormatter->format(aTime));
+
+    // Min time
+    Fmi::DateTime fTime = toTimeStamp(firstTime);
+    table.set(4, row, timeFormatter->format(fTime));
+
+    // Max time
+    Fmi::DateTime lTime = toTimeStamp(lastTime);
+    table.set(5, row, timeFormatter->format(lTime));
+
+    // Modification time
+    Fmi::DateTime mTime = toTimeStamp(utcTimeFromTimeT(modificationTime));
+    table.set(6, row, timeFormatter->format(mTime));
+  }
+  else
+  {
+    // Analysis time
+    table.set(3, row, analysisTime);
+
+    // Min time
+    table.set(4, row, firstTime);
+
+    // Max time
+    table.set(5, row, lastTime);
+
+    // Modification time
+    table.set(6, row, utcTimeFromTimeT(modificationTime));
+  }
+}
+}  // namespace
 
 /*! \brief Engine: Constructor. */
 
@@ -122,6 +239,7 @@ Engine::Engine(const char* theConfigFile)
     mMemoryMapper_maxProcessingThreads = 30;
     mMemoryMapper_maxMessages = 100000;
     mMemoryMapper_pageCacheSize = 2000000;
+    mMemoryMapper_fileHandleLimit = 10000;
     mConfigurationFile_name = theConfigFile;
     mConfigurationFile_checkTime = time(nullptr) + 120;
     mConfigurationFile_modificationTime = getFileModificationTime(mConfigurationFile_name.c_str());
@@ -184,14 +302,17 @@ Engine::Engine(const char* theConfigFile)
     mDataServerImplementation = nullptr;
     mThread = 0;
 
-    mParameterTable.reset(new Spine::Table);
+    mParameterTable = std::make_shared<Spine::Table>();
 
     ConfigurationFile configurationFile;
-    configurationFile.readFile(mConfigurationFile_name.c_str());
+    configurationFile.readFile(mConfigurationFile_name);
 
     configurationFile.getAttributeValue("smartmet.engine.grid.enabled", mEnabled);
     if (!mEnabled)
+    {
+      std::cout << ANSI_FG_RED << "**** Grid-engine configuration: Engine usage disabled!" << ANSI_FG_DEFAULT << std::endl;
       return;
+    }
 
     uint slen = configurationFile.getArraySize("smartmet.engine.grid.content-server.content-source");
 
@@ -220,6 +341,17 @@ Engine::Engine(const char* theConfigFile)
     configurationFile.getAttributeValue("smartmet.library.grid-files.memoryMapper.fileHandleLimit", mMemoryMapper_fileHandleLimit);
 
     configurationFile.getAttributeValue("smartmet.library.grid-files.cache.type", mCacheType);
+
+    // "filesystem" is accepted as an alias of "filesys". Any other value used to
+    // select the memory cache silently.
+    if (strcasecmp(mCacheType.c_str(), "filesystem") == 0)
+      mCacheType = "filesys";
+    if (strcasecmp(mCacheType.c_str(), "memory") != 0 && strcasecmp(mCacheType.c_str(), "filesys") != 0)
+    {
+      Fmi::Exception exception(BCP, "Invalid grid cache type, expecting 'memory' or 'filesys'");
+      exception.addParameter("smartmet.library.grid-files.cache.type", mCacheType);
+      throw exception;
+    }
     configurationFile.getAttributeValue("smartmet.library.grid-files.cache.directory", mCacheDir);
     configurationFile.getAttributeValue("smartmet.library.grid-files.cache.numOfGrids", mNumOfCachedGrids);
     configurationFile.getAttributeValue("smartmet.library.grid-files.cache.maxSizeInMegaBytes", mMaxSizeOfCachedGridsInMegaBytes);
@@ -346,8 +478,8 @@ Engine::Engine(const char* theConfigFile)
 
     std::vector<std::string> vec;
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingLevelSimplification", vec);
-    for (auto it = vec.begin(); it != vec.end(); it++)
-      mParameterMapping_simplifiedLevelIdSet.insert(atoi(it->c_str()));
+    for (auto& it : vec)
+      mParameterMapping_simplifiedLevelIdSet.insert(toInt32(it.c_str()));
 
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingUpdateFile.fmi", mParameterMappingDefinitions_autoFile_fmi);
     configurationFile.getAttributeValue("smartmet.engine.grid.query-server.mappingUpdateFile.newbase", mParameterMappingDefinitions_autoFile_newbase);
@@ -369,9 +501,6 @@ Engine::Engine(const char* theConfigFile)
 
     SmartMet::Identification::gridDef.init(mGridConfigFile.c_str());
     Map::topography.init(mGridConfigFile.c_str(),true,true,true);
-
-    if (!mEnabled)
-      std::cout << ANSI_FG_RED << "**** Grid-engine configuration: Engine usage disabled!" << ANSI_FG_DEFAULT << std::endl;
   }
   catch (...)
   {
@@ -390,8 +519,8 @@ Engine::~Engine()
   FUNCTION_TRACE
   try
   {
-    for (auto it = mDataServer_clients.begin(); it != mDataServer_clients.end(); ++it)
-      delete *it;
+    for (auto& mDataServer_client : mDataServer_clients)
+      delete mDataServer_client;
 
     if (mEnabled && !mShutdownFinished) {
       std::cout << __PRETTY_FUNCTION__ << ": an attempt to destroy Grid engine before"
@@ -421,10 +550,10 @@ void Engine::init()
       contentServer->setEnabled(false);
       mContentServers.push_back(contentServer);
 
-      mDataServer.reset(new DataServer::ServiceInterface());
+      mDataServer = std::make_shared<DataServer::ServiceInterface>();
       mDataServer->setEnabled(false);
 
-      mQueryServer.reset(new QueryServer::ServiceInterface());
+      mQueryServer = std::make_shared<QueryServer::ServiceInterface>();
       mQueryServer->setEnabled(false);
 
       return;
@@ -440,10 +569,10 @@ void Engine::init()
     initLogs(cServer, dServer, qServer);
 
     // Waiting until content server is ready (i.e. all requested files are cached)
-    while (!mShutdownRequested  &&  !cServer->isReady())
+    while (!mShutdownRequested  &&  !Spine::Reactor::isShuttingDown()  &&  !cServer->isReady())
       boost::this_thread::sleep(boost::posix_time::seconds(1));
 
-    if (mShutdownRequested)
+    if (mShutdownRequested  ||  Spine::Reactor::isShuttingDown())
       return;
 
     updateProducerAndGenerationList();
@@ -537,61 +666,61 @@ ContentServer::ServiceInterface* Engine::initContentSources()
   {
     ContentServer::ServiceInterface* cServer = nullptr;
 
-    for (auto contentSource = mContentSources.begin(); contentSource != mContentSources.end(); ++contentSource)
+    for (auto& mContentSource : mContentSources)
     {
-      if (contentSource->mEnabled)
+      if (mContentSource.mEnabled)
       {
-        if (contentSource->mType == "redis")
+        if (mContentSource.mType == "redis")
         {
-          ContentServer::RedisImplementation* redis = new ContentServer::RedisImplementation();
-          redis->init(contentSource->mRedisAddress.c_str(), contentSource->mRedisPort, contentSource->mRedisTablePrefix.c_str(),
-              contentSource->mRedisSecondaryAddress.c_str(), contentSource->mRedisSecondaryPort,
-              contentSource->mRedisLockEnabled, contentSource->mRedisReloadRequired, contentSource->mRedisPassword.c_str());
+          auto* redis = new ContentServer::RedisImplementation();
+          redis->init(mContentSource.mRedisAddress.c_str(), mContentSource.mRedisPort, mContentSource.mRedisTablePrefix.c_str(),
+              mContentSource.mRedisSecondaryAddress.c_str(), mContentSource.mRedisSecondaryPort,
+              mContentSource.mRedisLockEnabled, mContentSource.mRedisReloadRequired, mContentSource.mRedisPassword.c_str());
 
           ContentServer_sptr contentServer(redis);
           mContentServers.push_back(contentServer);
 
           cServer = redis;
         }
-        else if (contentSource->mType == "postgresql")
+        else if (mContentSource.mType == "postgresql")
         {
-          ContentServer::PostgresqlImplementation* postgres = new ContentServer::PostgresqlImplementation();
-          postgres->init(contentSource->mPrimaryConnectionString.c_str(),contentSource->mSecondaryConnectionString.c_str(),false);
+          auto* postgres = new ContentServer::PostgresqlImplementation();
+          postgres->init(mContentSource.mPrimaryConnectionString.c_str(),mContentSource.mSecondaryConnectionString.c_str(),false);
 
           ContentServer_sptr contentServer(postgres);
           mContentServers.push_back(contentServer);
           cServer = postgres;
         }
-        else if (contentSource->mType == "corba")
+        else if (mContentSource.mType == "corba")
         {
-          ContentServer::Corba::ClientImplementation* client = new ContentServer::Corba::ClientImplementation();
-          client->init(contentSource->mCorbaIor.c_str());
+          auto* client = new ContentServer::Corba::ClientImplementation();
+          client->init(mContentSource.mCorbaIor);
 
           ContentServer_sptr contentServer(client);
           mContentServers.push_back(contentServer);
           cServer = client;
         }
-        else if (contentSource->mType == "http")
+        else if (mContentSource.mType == "http")
         {
-          ContentServer::HTTP::ClientImplementation* client = new ContentServer::HTTP::ClientImplementation();
-          client->init(contentSource->mHttpUrl.c_str());
+          auto* client = new ContentServer::HTTP::ClientImplementation();
+          client->init(mContentSource.mHttpUrl);
 
           ContentServer_sptr contentServer(client);
           mContentServers.push_back(contentServer);
           cServer = client;
         }
-        else if (contentSource->mType == "file")
+        else if (mContentSource.mType == "file")
         {
           bool eventstEnabled = true;
-          if (contentSource->mEventListMaxSize == 0)
+          if (mContentSource.mEventListMaxSize == 0)
           {
             eventstEnabled = false;
             mContentCacheEnabled = false;
           }
 
-          ContentServer::MemoryImplementation* memoryImplementation = new ContentServer::MemoryImplementation();
-          memoryImplementation->init(true, false, true, eventstEnabled, contentSource->mMemoryContentDir, 0);
-          memoryImplementation->setEventListMaxLength(contentSource->mEventListMaxSize);
+          auto* memoryImplementation = new ContentServer::MemoryImplementation();
+          memoryImplementation->init(true, false, true, eventstEnabled, mContentSource.mMemoryContentDir, 0);
+          memoryImplementation->setEventListMaxLength(mContentSource.mEventListMaxSize);
 
           ContentServer_sptr contentServer(memoryImplementation);
           mContentServers.push_back(contentServer);
@@ -600,11 +729,17 @@ ContentServer::ServiceInterface* Engine::initContentSources()
         else
         {
           Fmi::Exception exception(BCP, "Unknown content source type!");
-          exception.addParameter("Content source type", contentSource->mType);
+          exception.addParameter("Content source type", mContentSource.mType);
           throw exception;
         }
       }
     }
+    // Return the first source: that is also the server getContentServer_sptr() hands to the
+    // plugins when the content cache is disabled, so the local data and query servers must
+    // use the same one. (Previously the last source was returned here.)
+    if (!mContentServers.empty())
+      cServer = mContentServers.front().get();
+
     return cServer;
   }
   catch (...)
@@ -622,6 +757,13 @@ ContentServer::ServiceInterface* Engine::initContentCache(ContentServer::Service
 {
   try
   {
+    if (!mContentCacheEnabled && mContentServers.size() > 1)
+    {
+      std::cout << ANSI_FG_RED << "**** Grid-engine configuration: " << mContentServers.size()
+                << " content sources but the content cache is disabled; only the first source is used"
+                << ANSI_FG_DEFAULT << std::endl;
+    }
+
     if (mContentCacheEnabled)
     {
       if (mContentSources.size() == 1)
@@ -666,9 +808,16 @@ DataServer::ServiceInterface* Engine::initDataServerImpl(ContentServer::ServiceI
   {
     DataServer::ServiceInterface* dServer = nullptr;
 
-    if (mDataServerRemote && mDataServerIor.length() > 50)
+    if (mDataServerRemote && mDataServerIor.length() <= 50)
     {
-      DataServer::Corba::ClientImplementation* client = new DataServer::Corba::ClientImplementation();
+      Fmi::Exception exception(BCP, "Remote data server requested but the IOR is missing or invalid!");
+      exception.addParameter("Setting", "smartmet.engine.grid.data-server.ior");
+      throw exception;
+    }
+
+    if (mDataServerRemote)
+    {
+      auto* client = new DataServer::Corba::ClientImplementation();
       client->init(mDataServerIor);
 
       mDataServer.reset(client);
@@ -717,16 +866,23 @@ QueryServer::ServiceInterface* Engine::initQueryServerImpl(ContentServer::Servic
   {
     QueryServer::ServiceInterface* qServer = nullptr;
 
-    if (mQueryServerRemote && mQueryServerIor.length() > 50)
+    if (mQueryServerRemote && mQueryServerIor.length() <= 50)
     {
-      QueryServer::Corba::ClientImplementation* client = new QueryServer::Corba::ClientImplementation();
+      Fmi::Exception exception(BCP, "Remote query server requested but the IOR is missing or invalid!");
+      exception.addParameter("Setting", "smartmet.engine.grid.query-server.ior");
+      throw exception;
+    }
+
+    if (mQueryServerRemote)
+    {
+      auto* client = new QueryServer::Corba::ClientImplementation();
       client->init(mQueryServerIor);
       mQueryServer.reset(client);
       qServer = client;
     }
     else
     {
-      QueryServer::ServiceImplementation* server = new QueryServer::ServiceImplementation();
+      auto* server = new QueryServer::ServiceImplementation();
       server->init(cServer, dServer, mGridConfigFile, mHeightConversionFile,
           mParameterMappingDefinitions_filenames,mUnitConversionFile,mParameterMappingAliasDefinitions_filenames,
           mParameterAliasDefinitions_filenames, mProducerSearchList_filename,
@@ -756,37 +912,37 @@ void Engine::initLogs(ContentServer::ServiceInterface* cServer, DataServer::Serv
 {
   try
   {
-    if (mContentServerProcessingLogFile.length() > 0)
+    if (!mContentServerProcessingLogFile.empty())
     {
       mContentServerProcessingLog.init(mContentServerProcessingLogEnabled, mContentServerProcessingLogFile.c_str(), mContentServerProcessingLogMaxSize, mContentServerProcessingLogTruncateSize);
       cServer->setProcessingLog(&mContentServerProcessingLog);
     }
 
-    if (mContentServerDebugLogFile.length() > 0)
+    if (!mContentServerDebugLogFile.empty())
     {
       mContentServerDebugLog.init(mContentServerDebugLogEnabled, mContentServerDebugLogFile.c_str(), mContentServerDebugLogMaxSize, mContentServerDebugLogTruncateSize);
       cServer->setDebugLog(&mContentServerDebugLog);
     }
 
-    if (mDataServerProcessingLogFile.length() > 0)
+    if (!mDataServerProcessingLogFile.empty())
     {
       mDataServerProcessingLog.init(mDataServerProcessingLogEnabled, mDataServerProcessingLogFile.c_str(), mDataServerProcessingLogMaxSize, mDataServerProcessingLogTruncateSize);
       dServer->setProcessingLog(&mDataServerProcessingLog);
     }
 
-    if (mDataServerDebugLogFile.length() > 0)
+    if (!mDataServerDebugLogFile.empty())
     {
       mDataServerDebugLog.init(mDataServerDebugLogEnabled, mDataServerDebugLogFile.c_str(), mDataServerDebugLogMaxSize, mDataServerDebugLogTruncateSize);
       dServer->setDebugLog(&mDataServerDebugLog);
     }
 
-    if (mQueryServerProcessingLogFile.length() > 0)
+    if (!mQueryServerProcessingLogFile.empty())
     {
       mQueryServerProcessingLog.init(mQueryServerProcessingLogEnabled, mQueryServerProcessingLogFile.c_str(), mQueryServerProcessingLogMaxSize, mQueryServerProcessingLogTruncateSize);
       qServer->setProcessingLog(&mQueryServerProcessingLog);
     }
 
-    if (mQueryServerDebugLogFile.length() > 0)
+    if (!mQueryServerDebugLogFile.empty())
     {
       mQueryServerDebugLog.init(mQueryServerDebugLogEnabled, mQueryServerDebugLogFile.c_str(), mQueryServerDebugLogMaxSize, mQueryServerDebugLogTruncateSize);
       qServer->setDebugLog(&mQueryServerDebugLog);
@@ -825,7 +981,7 @@ void Engine::checkConfiguration()
       return;
 
     ConfigurationFile configurationFile;
-    configurationFile.readFile(mConfigurationFile_name.c_str());
+    configurationFile.readFile(mConfigurationFile_name);
 
     //ContentServer_sptr contentServer = getContentServer_sptr();
 
@@ -837,8 +993,8 @@ void Engine::checkConfiguration()
       // if it is started in the disabled state.
 
       mEnabled = false;
-      for (auto it = mContentServers.begin(); it != mContentServers.end(); ++it)
-        (*it)->setEnabled(false);
+      for (auto& mContentServer : mContentServers)
+        mContentServer->setEnabled(false);
 
       mDataServer->setEnabled(false);
       mQueryServer->setEnabled(false);
@@ -847,6 +1003,30 @@ void Engine::checkConfiguration()
       return;
     }
 
+    applyLogConfigurations(configurationFile);
+
+    applyBrowserConfiguration(configurationFile);
+
+    applyCleanupConfiguration(configurationFile);
+
+    mConfigurationFile_modificationTime = tt;
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Constructor failed!", nullptr);
+    exception.addParameter("Configuration file", mConfigurationFile_name);
+    throw exception;
+  }
+}
+
+
+
+/*! \brief Engine: Re-read the processing and debug log configurations of the servers. */
+
+void Engine::applyLogConfigurations(ConfigurationFile& configurationFile)
+{
+  try
+  {
     // ### Content server processing log
     applyLogConfiguration(configurationFile,
       "smartmet.engine.grid.content-server.processing-log",
@@ -854,9 +1034,9 @@ void Engine::checkConfiguration()
       mContentServerProcessingLogMaxSize, mContentServerProcessingLogTruncateSize,
       mContentServerProcessingLog,
       [this](Log* l) {
-        for (auto it = mContentServers.begin(); it != mContentServers.end(); ++it)
-          if ((*it)->getProcessingLog() == nullptr)
-            (*it)->setProcessingLog(l);
+        for (auto& mContentServer : mContentServers)
+          if (mContentServer->getProcessingLog() == nullptr)
+            mContentServer->setProcessingLog(l);
       });
 
     // ### Content server debug log
@@ -866,9 +1046,9 @@ void Engine::checkConfiguration()
       mContentServerDebugLogMaxSize, mContentServerDebugLogTruncateSize,
       mContentServerDebugLog,
       [this](Log* l) {
-        for (auto it = mContentServers.begin(); it != mContentServers.end(); ++it)
-          if ((*it)->getDebugLog() == nullptr)
-            (*it)->setDebugLog(l);
+        for (auto& mContentServer : mContentServers)
+          if (mContentServer->getDebugLog() == nullptr)
+            mContentServer->setDebugLog(l);
       });
 
     // ### Data server processing log
@@ -914,7 +1094,21 @@ void Engine::checkConfiguration()
         if (mQueryServer->getDebugLog() == nullptr)
           mQueryServer->setDebugLog(l);
       });
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
 
+
+
+/*! \brief Engine: Re-read the browser configuration. */
+
+void Engine::applyBrowserConfiguration(ConfigurationFile& configurationFile)
+{
+  try
+  {
     // ### Browser
 
     bool browserEnabled = false;
@@ -941,7 +1135,21 @@ void Engine::checkConfiguration()
       mBrowserFlags = browserFlags;
       mBrowser.setFlags(mBrowserFlags);
     }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
 
+
+
+/*! \brief Engine: Re-read the grid storage clean-up configuration. */
+
+void Engine::applyCleanupConfiguration(ConfigurationFile& configurationFile)
+{
+  try
+  {
     if (mDataServerImplementation != nullptr)
     {
       time_t cleanupAge = mDataServerCleanupAge;
@@ -959,14 +1167,10 @@ void Engine::checkConfiguration()
 
       }
     }
-
-    mConfigurationFile_modificationTime = tt;
   }
   catch (...)
   {
-    Fmi::Exception exception(BCP, "Constructor failed!", nullptr);
-    exception.addParameter("Configuration file", mConfigurationFile_name);
-    throw exception;
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
   }
 }
 
@@ -981,7 +1185,7 @@ void Engine::applyLogConfiguration(ConfigurationFile& configurationFile,
                                    int& maxSizeMember,
                                    int& truncateSizeMember,
                                    Log& log,
-                                   std::function<void(Log*)> applyLogToServers)
+                                   const std::function<void(Log*)>& applyLogToServers)
 {
   try
   {
@@ -1056,26 +1260,42 @@ void Engine::shutdown()
 
     std::cout << "  -- Shutdown requested (grid engine)\n";
 
+    // Each step is guarded separately: a failing step must not prevent the remaining ones, and
+    // mShutdownFinished must be set in any case, otherwise the destructor aborts.
+    const auto step = [](const char* name, const std::function<void()>& func)
+    {
+      try
+      {
+        func();
+      }
+      catch (...)
+      {
+        Fmi::Exception exception(BCP, "Grid engine shutdown step failed!", nullptr);
+        exception.addParameter("Step", name);
+        exception.printError();
+      }
+    };
+
     if (mQueryServer)
     {
-      mQueryServer->shutdown();
+      step("query server", [this]() { mQueryServer->shutdown(); });
       boost::this_thread::sleep(boost::posix_time::seconds(1));
     }
 
     if (mDataServer)
     {
-      mDataServer->shutdown();
+      step("data server", [this]() { mDataServer->shutdown(); });
       boost::this_thread::sleep(boost::posix_time::seconds(1));
     }
 
     if (mContentServerCache)
-      mContentServerCache->shutdown();
+      step("content server cache", [this]() { mContentServerCache->shutdown(); });
 
     if (mContentServerMergeImplementation)
-      mContentServerMergeImplementation->shutdown();
+      step("content server merge", [this]() { mContentServerMergeImplementation->shutdown(); });
 
-    for (auto it = mContentServers.begin(); it != mContentServers.end(); ++it)
-      (*it)->shutdown();
+    for (auto& mContentServer : mContentServers)
+      step("content server", [&mContentServer]() { mContentServer->shutdown(); });
 
     //if (mContentServer)
     //  mContentServer->shutdown();
@@ -1112,7 +1332,7 @@ bool Engine::browserRequest(SessionManagement::SessionInfo& session,const Spine:
 
 /*! \brief Engine: Browser content. */
 
-void Engine::browserContent(SessionManagement::SessionInfo& session,std::ostringstream& output)
+void Engine::browserContent(const SessionManagement::SessionInfo& session,std::ostringstream& output)
 {
   FUNCTION_TRACE
   try
@@ -1188,6 +1408,8 @@ Query_sptr Engine::executeQuery(Query_sptr query) const
           exception.addDetail("or there are no producer list available in the grid engine's configuration "
               "file.");
           break;
+        default:
+          break;
       }
       throw exception;
     }
@@ -1244,8 +1466,7 @@ ContentServer_sptr Engine::getContentServer_sptr() const
   {
     if (mEnabled && mContentCacheEnabled)
       return mContentServerCache;
-    else
-    if (mContentServers.size())
+    if (!mContentServers.empty())
       return mContentServers[0];
 
     ContentServer_sptr sptr;
@@ -1342,15 +1563,15 @@ bool Engine::isGridProducer(const std::string& producer) const
     // Checking that the search of the current (Radon) producers is allower (defined in the
     // producers search file).
 
-    for (auto it = nameList.begin(); it != nameList.end(); ++it)
+    for (auto& it : nameList)
     {
-      if (it->empty())
+      if (it.empty())
         return true;  // The (newbase) producer is mapped to an empty (Radon) producer (=> default
                       // producer)
 
-      for (auto itm = mProducerSearchList.begin(); itm != mProducerSearchList.end(); ++itm)
+      for (auto& itm : mProducerSearchList)
       {
-        if (strcasecmp(it->c_str(), itm->c_str()) == 0)
+        if (strcasecmp(it.c_str(), itm.c_str()) == 0)
           return true;
       }
     }
@@ -1481,15 +1702,15 @@ void Engine::getProducerNameList(const std::string& mappingName, std::vector<std
     //   pal_skandinavia:SMARTMET;1096;;;
     //   pal_skandinavia:SMARTMETMTA;1096;;;
 
-    for (auto it = mappingList.begin(); it != mappingList.end(); it++)
+    for (auto& it : mappingList)
     {
       std::vector < std::string > partList;
-      splitString(*it, ';', partList);
+      splitString(it, ';', partList);
 
       nameList.emplace_back(partList[0]);
     }
 
-    if (nameList.size() == 0)
+    if (nameList.empty())
       nameList.emplace_back(mappingName);
   }
   catch (...)
@@ -1530,7 +1751,7 @@ UInt64 Engine::getProducerHash(T::ProducerId producerId) const
     AutoWriteLock lock(&mProducerHashMap_modificationLock);
     if (result == 0)
     {
-      HashRec hrec;
+      HashRec hrec{};
       hrec.checkTime = currentTime;
       hrec.hash = hash;
 
@@ -1559,19 +1780,19 @@ UInt64 Engine::getProducerHash(T::ProducerId producerId) const
 
 /*! \brief Engine: Get producer hash. */
 
-UInt64 Engine::getProducerHash(std::string producerName) const
+UInt64 Engine::getProducerHash(const std::string& producerName) const
 {
   try
   {
     UInt64 hash = 0;
     std::vector<std::string> nameList;
     getProducerNameList(producerName,nameList);
-    if (nameList.size() > 0)
+    if (!nameList.empty())
     {
-      for (auto it = nameList.begin(); it != nameList.end(); ++it)
+      for (auto& it : nameList)
       {
         T::ProducerInfo producerInfo;
-        getProducerInfoByName(*it,producerInfo);
+        getProducerInfoByName(it,producerInfo);
         if (producerInfo.mProducerId != 0)
         {
           hash += getProducerHash(producerInfo.mProducerId);
@@ -1615,10 +1836,10 @@ void Engine::getParameterDetails(const std::string& aliasName, ParameterDetails_
     std::vector <std::string> aliasStrings;
     mProducerMappingDefinitions.getAliasList(aliasName, aliasStrings);
 
-    for (auto it = aliasStrings.begin(); it != aliasStrings.end(); it++)
+    for (auto& aliasString : aliasStrings)
     {
       std::vector < std::string > partList;
-      splitString(*it, ';', partList);
+      splitString(aliasString, ';', partList);
 
       ParameterDetails p;
       p.mOriginalProducer = aliasName;
@@ -1651,13 +1872,15 @@ void Engine::getParameterDetails(const std::string& aliasName, ParameterDetails_
           case 5:
             p.mForecastNumber = partList[t];
             break;
+          default:
+            break;
         }
       }
 
       parameterDetails.emplace_back(p);
     }
 
-    if (parameterDetails.size() == 0)
+    if (parameterDetails.empty())
     {
       ParameterDetails p;
       p.mOriginalProducer = aliasName;
@@ -1705,7 +1928,7 @@ void Engine::getParameterDetails(const std::string& producerName, const std::str
 
 
     //std::cout << "DETAILS [" << producerName << "] [" << parameterName << "]\n";
-    std::string prod = producerName;
+    const std::string& prod = producerName;
     std::string tmp;
 
     // Finding the mapping name for the (newbase) producer. The producer name mappings look like
@@ -1759,10 +1982,10 @@ void Engine::getParameterDetails(const std::string& producerName, const std::str
     std::vector < std::string > mappingList;
     mProducerMappingDefinitions.getAliasList(key, mappingList);
 
-    for (auto it = mappingList.begin(); it != mappingList.end(); it++)
+    for (auto& it : mappingList)
     {
       std::vector <std::string> partList;
-      splitString(*it, ';', partList);
+      splitString(it, ';', partList);
 
       ParameterDetails p;
       p.mOriginalProducer = producerName;
@@ -1801,6 +2024,8 @@ void Engine::getParameterDetails(const std::string& producerName, const std::str
           case 5:
             p.mForecastNumber = val;
             break;
+          default:
+            break;
         }
       }
 
@@ -1808,7 +2033,7 @@ void Engine::getParameterDetails(const std::string& producerName, const std::str
       parameterDetails.emplace_back(p);
     }
 
-    if (parameterDetails.size() == 0)
+    if (parameterDetails.empty())
     {
       ParameterDetails p;
       p.mOriginalProducer = producerName;
@@ -1830,7 +2055,7 @@ void Engine::getParameterDetails(const std::string& producerName, const std::str
 
 /*! \brief Engine: Get parameter details. */
 
-void Engine::getParameterDetails(const std::string& producerName, const std::string& parameterName, std::string& level, ParameterDetails_vec& parameterDetails) const
+void Engine::getParameterDetails(const std::string& producerName, const std::string& parameterName, const std::string& level, ParameterDetails_vec& parameterDetails) const
 {
   FUNCTION_TRACE
   try
@@ -1839,8 +2064,8 @@ void Engine::getParameterDetails(const std::string& producerName, const std::str
       return;
 
     getParameterDetails(producerName, parameterName, parameterDetails);
-    for (auto it = parameterDetails.begin(); it != parameterDetails.end(); ++it)
-      it->mLevel = level;
+    for (auto& parameterDetail : parameterDetails)
+      parameterDetail.mLevel = level;
   }
   catch (...)
   {
@@ -1869,14 +2094,14 @@ void Engine::getParameterMappings(
 
     AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
 
-    for (auto m = mParameterMappingDefinitions->begin(); m != mParameterMappingDefinitions->end(); ++m)
+    for (auto& m : *mParameterMappingDefinitions)
     {
-      m->getMappings(producerName, parameterName, geometryId, onlySearchEnabled, mappings);
+      m.getMappings(producerName, parameterName, geometryId, onlySearchEnabled, mappings);
     }
 
-    for (auto m = mParameterAliasMappings.begin(); m != mParameterAliasMappings.end(); ++m)
+    for (auto& mParameterAliasMapping : mParameterAliasMappings)
     {
-      m->getMappings(producerName, parameterName, geometryId, onlySearchEnabled, mappings);
+      mParameterAliasMapping.getMappings(producerName, parameterName, geometryId, onlySearchEnabled, mappings);
     }
   }
   catch (...)
@@ -1899,14 +2124,14 @@ void Engine::getParameterMappings(const std::string& producerName, const std::st
 
     AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
 
-    for (auto m = mParameterMappingDefinitions->begin(); m != mParameterMappingDefinitions->end(); ++m)
+    for (auto& m : *mParameterMappingDefinitions)
     {
-      m->getMappings(producerName, parameterName, onlySearchEnabled, mappings);
+      m.getMappings(producerName, parameterName, onlySearchEnabled, mappings);
     }
 
-    for (auto m = mParameterAliasMappings.begin(); m != mParameterAliasMappings.end(); ++m)
+    for (auto& mParameterAliasMapping : mParameterAliasMappings)
     {
-      m->getMappings(producerName, parameterName, onlySearchEnabled, mappings);
+      mParameterAliasMapping.getMappings(producerName, parameterName, onlySearchEnabled, mappings);
     }
   }
   catch (...)
@@ -1936,14 +2161,14 @@ void Engine::getParameterMappings(
 
     AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
 
-    for (auto m = mParameterMappingDefinitions->begin(); m != mParameterMappingDefinitions->end(); ++m)
+    for (auto& m : *mParameterMappingDefinitions)
     {
-      m->getMappings(producerName, parameterName, geometryId, levelId, level, onlySearchEnabled, mappings);
+      m.getMappings(producerName, parameterName, geometryId, levelId, level, onlySearchEnabled, mappings);
     }
 
-    for (auto m = mParameterAliasMappings.begin(); m != mParameterAliasMappings.end(); ++m)
+    for (auto& mParameterAliasMapping : mParameterAliasMappings)
     {
-      m->getMappings(producerName, parameterName, geometryId, levelId, level, onlySearchEnabled, mappings);
+      mParameterAliasMapping.getMappings(producerName, parameterName, geometryId, levelId, level, onlySearchEnabled, mappings);
     }
   }
   catch (...)
@@ -1972,14 +2197,14 @@ void Engine::getParameterMappings(
 
     AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
 
-    for (auto m = mParameterMappingDefinitions->begin(); m != mParameterMappingDefinitions->end(); ++m)
+    for (auto& m : *mParameterMappingDefinitions)
     {
-      m->getMappings(producerName, parameterName, levelId, level, onlySearchEnabled, mappings);
+      m.getMappings(producerName, parameterName, levelId, level, onlySearchEnabled, mappings);
     }
 
-    for (auto m = mParameterAliasMappings.begin(); m != mParameterAliasMappings.end(); ++m)
+    for (auto& mParameterAliasMapping : mParameterAliasMappings)
     {
-      m->getMappings(producerName, parameterName, levelId, level, onlySearchEnabled, mappings);
+      mParameterAliasMapping.getMappings(producerName, parameterName, levelId, level, onlySearchEnabled, mappings);
     }
   }
   catch (...)
@@ -1990,6 +2215,74 @@ void Engine::getParameterMappings(
 
 /*! \brief Engine: Map parameter details. */
 
+/*! \brief Engine: Get the parameter mappings of a parameter detail. */
+
+void Engine::getParameterDetailMappings(const ParameterDetails& parameterDetail,QueryServer::ParameterMapping_vec& mappings) const
+{
+  try
+  {
+    if (parameterDetail.mLevelId > " " || parameterDetail.mLevel > " ")
+    {
+      getParameterMappings(parameterDetail.mProducerName, parameterDetail.mOriginalParameter, toInt32(parameterDetail.mGeometryId.c_str()), toInt32(parameterDetail.mLevelId.c_str()),
+          toInt32(parameterDetail.mLevel.c_str()), false, mappings);
+      if (mappings.empty() && parameterDetail.mLevel < " ")
+      {
+        getParameterMappings(parameterDetail.mProducerName, parameterDetail.mOriginalParameter, toInt32(parameterDetail.mGeometryId.c_str()), toInt32(parameterDetail.mLevelId.c_str()), -1, false,
+            mappings);
+      }
+    }
+    else
+    {
+      getParameterMappings(parameterDetail.mProducerName, parameterDetail.mOriginalParameter, toInt32(parameterDetail.mGeometryId.c_str()), true, mappings);
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Add the analysis and forecast times of the contents to the mapping details. */
+
+void Engine::addMappingTimes(MappingDetails& details,T::ContentInfoList& contentInfoList) const
+{
+  try
+  {
+    uint len = contentInfoList.getLength();
+    AutoReadLock lock(&mProducerInfoList_modificationLock);
+    for (uint t = 0; t < len; t++)
+    {
+      T::ContentInfo* cInfo = contentInfoList.getContentInfoByIndex(t);
+      if (cInfo != nullptr)
+      {
+        T::GenerationInfo* gInfo = mGenerationInfoList.getGenerationInfoById(cInfo->mGenerationId);
+        if (gInfo != nullptr)
+        {
+          auto tt = details.mTimes.find(gInfo->mAnalysisTime);
+          if (tt != details.mTimes.end())
+          {
+            tt->second.insert(cInfo->getForecastTime());
+          }
+          else
+          {
+            std::set < std::string > ttt;
+            ttt.insert(cInfo->getForecastTime());
+            details.mTimes.insert(std::pair<std::string, std::set<std::string>>(gInfo->mAnalysisTime, ttt));
+          }
+        }
+      }
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
 void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails) const
 {
   try
@@ -1999,62 +2292,24 @@ void Engine::mapParameterDetails(ParameterDetails_vec& parameterDetails) const
 
     ContentServer_sptr contentServer = getContentServer_sptr();
 
-    for (auto rec = parameterDetails.begin(); rec != parameterDetails.end(); ++rec)
+    for (auto& parameterDetail : parameterDetails)
     {
       QueryServer::ParameterMapping_vec mappings;
-      if (rec->mLevelId > " " || rec->mLevel > " ")
-      {
-        getParameterMappings(rec->mProducerName, rec->mOriginalParameter, atoi(rec->mGeometryId.c_str()), atoi(rec->mLevelId.c_str()),
-            atoi(rec->mLevel.c_str()), false, mappings);
-        if (mappings.size() == 0 && rec->mLevel < " ")
-        {
-          getParameterMappings(rec->mProducerName, rec->mOriginalParameter, atoi(rec->mGeometryId.c_str()), atoi(rec->mLevelId.c_str()), -1, false,
-              mappings);
-        }
-      }
-      else
-      {
-        getParameterMappings(rec->mProducerName, rec->mOriginalParameter, atoi(rec->mGeometryId.c_str()), true, mappings);
-      }
+      getParameterDetailMappings(parameterDetail, mappings);
 
-      for (auto m = mappings.begin(); m != mappings.end(); ++m)
+      for (auto& mapping : mappings)
       {
         MappingDetails details;
-        details.mMapping = *m;
+        details.mMapping = mapping;
 
         T::ContentInfoList contentInfoList;
-        int result = contentServer->getContentListByParameterAndProducerName(0, m->mProducerName, m->mParameterKeyType, m->mParameterKey,
-            m->mParameterLevelId, m->mParameterLevel, m->mParameterLevel, -1, -1, m->mGeometryId, std::string("19000101T000000"), std::string("21000101T000000"), 0,
+        int result = contentServer->getContentListByParameterAndProducerName(0, mapping.mProducerName, mapping.mParameterKeyType, mapping.mParameterKey,
+            mapping.mParameterLevelId, mapping.mParameterLevel, mapping.mParameterLevel, -1, -1, mapping.mGeometryId, std::string("19000101T000000"), std::string("21000101T000000"), 0,
             contentInfoList);
         if (result == 0)
-        {
-          uint len = contentInfoList.getLength();
-          AutoReadLock lock(&mProducerInfoList_modificationLock);
-          for (uint t = 0; t < len; t++)
-          {
-            T::ContentInfo* cInfo = contentInfoList.getContentInfoByIndex(t);
-            if (cInfo != nullptr)
-            {
-              T::GenerationInfo* gInfo = mGenerationInfoList.getGenerationInfoById(cInfo->mGenerationId);
-              if (gInfo != nullptr)
-              {
-                auto tt = details.mTimes.find(gInfo->mAnalysisTime);
-                if (tt != details.mTimes.end())
-                {
-                  tt->second.insert(cInfo->getForecastTime());
-                }
-                else
-                {
-                  std::set < std::string > ttt;
-                  ttt.insert(cInfo->getForecastTime());
-                  details.mTimes.insert(std::pair<std::string, std::set<std::string>>(gInfo->mAnalysisTime, ttt));
-                }
-              }
-            }
-          }
-        }
+          addMappingTimes(details, contentInfoList);
 
-        rec->mMappings.emplace_back(details);
+        parameterDetail.mMappings.emplace_back(details);
       }
     }
   }
@@ -2106,7 +2361,7 @@ std::string Engine::getProducerAlias(const std::string& producerName, int levelI
 
 /*! \brief Engine: Get producer info. */
 
-ContentTable Engine::getProducerInfo(std::optional<std::string> producer,std::string timeFormat) const
+ContentTable Engine::getProducerInfo(std::optional<std::string> producer,const std::string& timeFormat) const
 {
   try
   {
@@ -2196,6 +2451,357 @@ ContentTable Engine::getProducerInfo(std::optional<std::string> producer,std::st
 
 
 
+/*! \brief Engine: Get the FMI parameter names (output1) and their alias names (output2) of the generation geometry. */
+
+void Engine::getGeometryParameterNames(const T::ProducerInfo& info,const T::GeometryInfo& geom,ContentServer::ServiceInterface& contentServer,std::ostringstream& output1,std::ostringstream& output2) const
+{
+  try
+  {
+    if (!mParameterMappingDefinitions)
+      return;
+
+    AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
+    std::set<std::string> paramKeyList;
+    contentServer.getContentParamKeyListByGenerationAndGeometryId(0,geom.mGenerationId,geom.mGeometryId,T::ParamKeyTypeValue::FMI_NAME,paramKeyList);
+
+
+    std::set<std::string> paramList;
+    for (auto pk = paramKeyList.begin(); pk != paramKeyList.end(); ++pk)
+    {
+      QueryServer::ParameterMapping_vec mappings;
+      for (auto& mf : *mParameterMappingDefinitions)
+      {
+        mf.getMappingsByParamKey(info.mName,T::ParamKeyTypeValue::FMI_NAME,*pk,-1,-1,-1,mappings);
+      }
+
+      for (auto& mapping : mappings)
+      {
+        if (strcasecmp(pk->c_str(),mapping.mParameterName.c_str()) != 0)
+          paramList.insert(mapping.mParameterName);
+      }
+
+      if (pk != paramKeyList.begin())
+       output1 << ",";
+
+      output1 << *pk;
+    }
+
+    output2 << joinStrings(paramList);
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Add the generation info rows of the ready geometries of the generation (the caller holds the producer info lock). */
+
+void Engine::addGenerationInfoRows(Spine::Table& resultTable,uint& row,const T::ProducerInfo& info,const T::GenerationInfo& gInfo,
+    ContentServer::ServiceInterface& contentServer,const std::string& timeFormat,const Fmi::TimeFormatter* timeFormatter) const
+{
+  try
+  {
+    T::GeometryInfoList geometryInfoList;
+    // If there are no geometry status information available, it is generated.
+    getGenerationGeometries(gInfo,contentServer,geometryInfoList);
+
+    uint geomLen = geometryInfoList.getLength();
+    for (uint gg = 0; gg < geomLen; gg++)
+    {
+      T::GeometryInfo *geom = geometryInfoList.getGeometryInfoByIndex(gg);
+      if (geom == nullptr ||  geom->mStatus != T::GeometryInfo::Status::Ready)
+        continue;
+
+      std::set<std::string> contentTimeList;
+      contentServer.getContentTimeListByGenerationAndGeometryId(0,geom->mGenerationId,geom->mGeometryId,contentTimeList);
+
+      std::ostringstream output1;
+      std::ostringstream output2;
+
+      getGeometryParameterNames(info,*geom,contentServer,output1,output2);
+
+      uint slen = contentTimeList.size();
+      if (slen > 0)
+      {
+        auto first = contentTimeList.begin();
+        auto last = contentTimeList.rbegin();
+
+        // Producer name
+        resultTable.set(0, row, info.mName);
+
+        // Geometry id
+        resultTable.set(1, row, std::to_string(geom->mGeometryId));
+
+        // Timesteps
+        resultTable.set(2, row, std::to_string(slen));
+
+        setGenerationTimes(resultTable,row,gInfo.mAnalysisTime,*first,*last,geom->mModificationTime,timeFormat,timeFormatter);
+
+        // FMI Parameters
+        resultTable.set(7, row, output1.str());
+
+        // Parameter alias names
+        resultTable.set(8, row, output2.str());
+
+        row++;
+      }
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Count the ready geometries of the generations of a producer status record item ("producer[:geometryId]") by analysis time and geometry. Returns false if the producer is not found. */
+
+bool Engine::countGenerationGeometries(const std::string& recordItem,time_t currentTime,ContentServer::ServiceInterface& contentServer,
+    T::GeometryInfoList& tmpGeometryInfoList,std::map<std::string,std::vector<std::pair<uint,int>>>& counterList) const
+{
+  try
+  {
+    AutoReadLock lock(&mProducerInfoList_modificationLock);
+
+    std::vector <std::string> list;
+    splitString(recordItem, ':',list);
+
+    std::string producerName = list[0];
+    int geometryId = 0;
+    if (list.size() > 1)
+      geometryId = toInt32(list[1]);
+
+    T::ProducerInfo *pInfo = mProducerInfoList.getProducerInfoByName(producerName);
+    if (!pInfo)
+    {
+      //printf("PRODUCER [%s] NOT FOUND\n",(*rec)[t].c_str());
+      return false;
+    }
+
+    //printf("PRODUCER %s\n",pInfo->mName.c_str());
+    T::GenerationInfoList generationInfoList;
+    mGenerationInfoList.getGenerationInfoListByProducerId(pInfo->mProducerId,generationInfoList);
+    //printf("GENERATIONS %u/%u\n",generationInfoList.getLength(),mGenerationInfoList.getLength());
+
+    uint len = generationInfoList.getLength();
+    for (uint g = 0; g < len; g++)
+    {
+      T::GenerationInfo *gInfo = generationInfoList.getGenerationInfoByIndex(g);
+      time_t deletionTime = gInfo->mDeletionTime;
+
+      if (deletionTime == 0 || (currentTime + 120) < deletionTime)
+      {
+        T::GeometryInfoList geometryInfoList;
+        getExtGenerationGeometries(*gInfo,contentServer,tmpGeometryInfoList,geometryInfoList);
+
+        uint geomLen = geometryInfoList.getLength();
+        for (uint gg = 0; gg < geomLen; gg++)
+        {
+          T::GeometryInfo *geom = geometryInfoList.getGeometryInfoByIndex(gg);
+          if (geom != nullptr &&  geom->mStatus == T::GeometryInfo::Status::Ready  &&  (geometryId == geom->mGeometryId  ||  geometryId == 0))
+          {
+            std::string key = gInfo->mAnalysisTime + ":" + std::to_string(geom->mGeometryId);
+            auto p = counterList.find(key);
+            if (p != counterList.end())
+              p->second.emplace_back(std::pair<T::GenerationId,int>(geom->mGenerationId,geom->mGeometryId));
+            else
+            {
+              std::vector<std::pair<uint,int>> cntList;
+              cntList.emplace_back(std::pair<T::GenerationId,int>(geom->mGenerationId,geom->mGeometryId));
+              counterList.insert(std::pair<std::string,std::vector<std::pair<uint,int>>>(key,cntList));
+            }
+          }
+        }
+      }
+    }
+    return true;
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Get the geometries of the generation. If there are no geometry status information available,
+    it is generated to tmpGeometryInfoList. */
+
+void Engine::getExtGenerationGeometries(const T::GenerationInfo& gInfo,ContentServer::ServiceInterface& contentServer,
+    T::GeometryInfoList& tmpGeometryInfoList,T::GeometryInfoList& geometryInfoList) const
+{
+  try
+  {
+    mGeometryInfoList.getGeometryInfoListByGenerationId(gInfo.mGenerationId,geometryInfoList);
+
+    uint geomLen = geometryInfoList.getLength();
+    if (geomLen != 0)
+      return;
+
+    // It seems that there are no geometry status information available. Let's generate it.
+
+    std::set<T::GeometryId> geometryIdList;
+    contentServer.getContentGeometryIdListByGenerationId(0,gInfo.mGenerationId,geometryIdList);
+    if (!geometryIdList.empty())
+    {
+      for (int gi : geometryIdList)
+      {
+        auto *geom = new T::GeometryInfo();
+        geom->mProducerId = gInfo.mProducerId;
+        geom->mGenerationId = gInfo.mGenerationId;
+        geom->mGeometryId = gi;
+        geom->mModificationTime = gInfo.mModificationTime;
+        geom->mDeletionTime = gInfo.mDeletionTime;
+        geom->mStatus = gInfo.mStatus;
+        tmpGeometryInfoList.addGeometryInfo(geom);
+      }
+    }
+
+    tmpGeometryInfoList.getGeometryInfoListByGenerationId(gInfo.mGenerationId,geometryInfoList);
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Add the FMI parameter names of the geometry (paramList1) which have aliases (paramList2). */
+
+void Engine::addAliasedParameterNames(const std::string& producerAlias,const T::ProducerInfo& pInfo,const T::GeometryInfo& geom,
+    ContentServer::ServiceInterface& contentServer,std::set<std::string>& paramList1,std::set<std::string>& paramList2) const
+{
+  try
+  {
+    AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
+    std::set<std::string> paramKeyList;
+    contentServer.getContentParamKeyListByGenerationAndGeometryId(0,geom.mGenerationId,geom.mGeometryId,T::ParamKeyTypeValue::FMI_NAME,paramKeyList);
+
+    for (const auto& pk : paramKeyList)
+    {
+      QueryServer::ParameterMapping_vec mappings;
+      for (auto& mf : *mParameterMappingDefinitions)
+      {
+        mf.getMappingsByParamKey(pInfo.mName,T::ParamKeyTypeValue::FMI_NAME,pk,-1,-1,-1,mappings);
+      }
+
+      for (auto& mapping : mappings)
+      {
+        if (strcasecmp(pk.c_str(),mapping.mParameterName.c_str()) != 0)
+        {
+          std::string name = producerAlias + ";" + mapping.mParameterName;
+          std::string alias;
+          if (mProducerMappingDefinitions.getAlias(name,alias))
+          {
+            paramList1.insert(pk);
+            paramList2.insert(mapping.mParameterName);
+          }
+        }
+      }
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Get the latest modification time and the FMI parameter names (paramList1) having aliases (paramList2) of the geometries. */
+
+void Engine::getExtParameterNames(const std::string& producerAlias,const std::vector<std::pair<uint,int>>& geometries,T::GeometryInfoList& tmpGeometryInfoList,
+    ContentServer::ServiceInterface& contentServer,time_t& modTime,std::set<std::string>& paramList1,std::set<std::string>& paramList2) const
+{
+  try
+  {
+    for (auto g = geometries.begin(); g != geometries.end(); ++g)
+    {
+      //printf(" --- %u %d\n",g->first,g->second);
+      //T::GenerationInfo *gInfo = mGenerationInfoList.getGenerationInfoById(g->first);
+      T::GeometryInfo *geom = mGeometryInfoList.getGeometryInfoById(g->first,g->second,0);
+      if (!geom)
+        geom = tmpGeometryInfoList.getGeometryInfoById(g->first,g->second,0);
+
+      if (geom && geom->mModificationTime > modTime)
+      {
+        modTime = geom->mModificationTime;
+      }
+
+      if (!geom ||  !mParameterMappingDefinitions)
+        continue;
+
+      T::ProducerInfo *pInfo = mProducerInfoList.getProducerInfoById(geom->mProducerId);
+      if (pInfo)
+        addAliasedParameterNames(producerAlias,*pInfo,*geom,contentServer,paramList1,paramList2);
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Add the ext generation info row of an analysis time and geometry ("analysisTime:geometryId") of a producer status record. */
+
+void Engine::addExtGenerationInfoRow(Spine::Table& resultTable,uint& row,const std::string& producerAlias,const std::string& key,
+    const std::vector<std::pair<uint,int>>& geometries,T::GeometryInfoList& tmpGeometryInfoList,ContentServer::ServiceInterface& contentServer,
+    const std::string& timeFormat,const Fmi::TimeFormatter* timeFormatter) const
+{
+  try
+  {
+    time_t modTime = 0;
+
+    std::set<std::string> contentTimeList;
+    //printf("CONTENT [%s] [%u][%d]\n",it->first.c_str(),it->second[0].first,it->second[0].second);
+    contentServer.getContentTimeListByGenerationAndGeometryId(0,geometries[0].first,geometries[0].second,contentTimeList);
+
+    uint slen = contentTimeList.size();
+    if (slen == 0)
+      return;
+
+    std::set<std::string> paramList1;
+    std::set<std::string> paramList2;
+    getExtParameterNames(producerAlias,geometries,tmpGeometryInfoList,contentServer,modTime,paramList1,paramList2);
+
+    auto first = contentTimeList.begin();
+    auto last = contentTimeList.rbegin();
+    std::vector<std::string> ss;
+    splitString(key,':',ss);
+
+    // Producer name
+    resultTable.set(0, row, producerAlias);
+
+    // Geometry id
+    resultTable.set(1, row, ss[1]);
+
+    // Timesteps
+    resultTable.set(2, row, std::to_string(slen));
+
+    setGenerationTimes(resultTable,row,ss[0],*first,*last,modTime,timeFormat,timeFormatter);
+
+    // FMI Parameters
+    resultTable.set(7, row, joinStrings(paramList1));
+
+    // Parameter alias names
+    resultTable.set(8, row, joinStrings(paramList2));
+
+    row++;
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
 /*! \brief Engine: Get generation info. */
 
 ContentTable Engine::getGenerationInfo(std::optional<std::string> producer,std::string timeFormat) const
@@ -2254,150 +2860,13 @@ ContentTable Engine::getGenerationInfo(std::optional<std::string> producer,std::
         {
           generationList.sort(T::GenerationInfo::ComparisonMethod::analysisTime);
 
-          uint glen = generationList.getLength();
+          glen = generationList.getLength();
           for (uint g=0; g<glen; g++)
           {
             T::GenerationInfo *gInfo = generationList.getGenerationInfoByIndex(g);
             time_t deletionTime = gInfo->mDeletionTime;
             if (deletionTime == 0 || (currentTime + 120) < deletionTime)
-            {
-              T::GeometryInfoList geometryInfoList;
-              mGeometryInfoList.getGeometryInfoListByGenerationId(gInfo->mGenerationId,geometryInfoList);
-
-              uint geomLen = geometryInfoList.getLength();
-              if (geomLen == 0)
-              {
-                // It seems that there are no geometry status information available. Let's generate it.
-
-                std::set<T::GeometryId> geometryIdList;
-                contentServer->getContentGeometryIdListByGenerationId(0,gInfo->mGenerationId,geometryIdList);
-                if (geometryIdList.size() > 0)
-                {
-                  for (auto gi = geometryIdList.begin(); gi != geometryIdList.end(); ++gi)
-                  {
-                    T::GeometryInfo *geom = new T::GeometryInfo();
-                    geom->mProducerId = info->mProducerId;
-                    geom->mGenerationId = gInfo->mGenerationId;
-                    geom->mGeometryId = *gi;
-                    geom->mModificationTime = gInfo->mModificationTime;
-                    geom->mDeletionTime = gInfo->mDeletionTime;
-                    geom->mStatus = gInfo->mStatus;
-                    geometryInfoList.addGeometryInfo(geom);
-                  }
-                }
-                geomLen = geometryInfoList.getLength();
-              }
-
-              for (uint gg = 0; gg < geomLen; gg++)
-              {
-                T::GeometryInfo *geom = geometryInfoList.getGeometryInfoByIndex(gg);
-                if (geom != nullptr &&  geom->mStatus == T::GeometryInfo::Status::Ready)
-                {
-                  std::set<std::string> contentTimeList;
-                  contentServer->getContentTimeListByGenerationAndGeometryId(0,geom->mGenerationId,geom->mGeometryId,contentTimeList);
-
-                  std::ostringstream output1;
-                  std::ostringstream output2;
-
-                  if (mParameterMappingDefinitions)
-                  {
-                    AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
-                    std::set<std::string> paramKeyList;
-                    contentServer->getContentParamKeyListByGenerationAndGeometryId(0,geom->mGenerationId,geom->mGeometryId,T::ParamKeyTypeValue::FMI_NAME,paramKeyList);
-
-
-                    std::set<std::string> paramList;
-                    for (auto pk = paramKeyList.begin(); pk != paramKeyList.end(); ++pk)
-                    {
-                      QueryServer::ParameterMapping_vec mappings;
-                      for (auto mf = mParameterMappingDefinitions->begin(); mf != mParameterMappingDefinitions->end(); ++mf)
-                      {
-                        mf->getMappingsByParamKey(info->mName,T::ParamKeyTypeValue::FMI_NAME,*pk,-1,-1,-1,mappings);
-                      }
-
-                      if (mappings.size() > 0)
-                      {
-                        for (auto pm = mappings.begin(); pm != mappings.end(); ++pm)
-                        {
-                          if (strcasecmp(pk->c_str(),pm->mParameterName.c_str()) != 0)
-                            paramList.insert(pm->mParameterName);
-                        }
-                      }
-                      if (pk != paramKeyList.begin())
-                       output1 << ",";
-
-                      output1 << *pk;
-                    }
-
-                    for (auto pp = paramList.begin(); pp != paramList.end(); ++pp)
-                    {
-                      if (pp != paramList.begin())
-                       output2 << ",";
-
-                      output2 << *pp;
-                    }
-                  }
-
-                  uint slen = contentTimeList.size();
-                  if (slen > 0)
-                  {
-                    auto first = contentTimeList.begin();
-                    auto last = contentTimeList.rbegin();
-
-                    // Producer name
-                    resultTable->set(0, row, info->mName);
-
-                    // Geometry id
-                    resultTable->set(1, row, std::to_string(geom->mGeometryId));
-
-                    // Timesteps
-                    resultTable->set(2, row, std::to_string(slen));
-
-
-                    if (!timeFormat.empty()  &&  strcasecmp(timeFormat.c_str(),"ISO") != 0  && timeFormatter)
-                    {
-                      // Analysis time
-                      Fmi::DateTime aTime = toTimeStamp(gInfo->mAnalysisTime);
-                      resultTable->set(3, row, timeFormatter->format(aTime));
-
-                      // Min time
-                      Fmi::DateTime fTime = toTimeStamp(*first);
-                      resultTable->set(4, row, timeFormatter->format(fTime));
-
-                      // Max time
-                      Fmi::DateTime lTime = toTimeStamp(*last);
-                      resultTable->set(5, row, timeFormatter->format(lTime));
-
-                      // Modification time
-                      Fmi::DateTime mTime = toTimeStamp(utcTimeFromTimeT(geom->mModificationTime));
-                      resultTable->set(6, row, timeFormatter->format(mTime));
-                    }
-                    else
-                    {
-                      // Analysis time
-                      resultTable->set(3, row, gInfo->mAnalysisTime);
-
-                      // Min time
-                      resultTable->set(4, row, *first);
-
-                      // Max time
-                      resultTable->set(5, row, *last);
-
-                      // Modification time
-                      resultTable->set(6, row, utcTimeFromTimeT(geom->mModificationTime));
-                    }
-
-                    // FMI Parameters
-                    resultTable->set(7, row, output1.str());
-
-                    // Parameter alias names
-                    resultTable->set(8, row, output2.str());
-
-                    row++;
-                  }
-                }
-              }
-            }
+              addGenerationInfoRows(*resultTable,row,*info,*gInfo,*contentServer,timeFormat,timeFormatter.get());
           }
         }
       }
@@ -2447,244 +2916,24 @@ ContentTable Engine::getExtGenerationInfo(std::optional<std::string> producer,st
     uint row = 0;
 
     //printf("RECORDS %ld\n",records.size());
-    for (auto rec = records.begin(); rec != records.end(); ++rec)
+    for (auto& record : records)
     {
-      uint sz = rec->size();
-      if (sz > 1 && (!producer ||  producer->empty() || strcasecmp(producer->c_str(),(*rec)[0].c_str()) == 0))
+      uint sz = record.size();
+      if (sz > 1 && (!producer ||  producer->empty() || strcasecmp(producer->c_str(),record[0].c_str()) == 0))
       {
         bool available = true;
         std::map<std::string,std::vector<std::pair<uint,int>>> counterList;
 
         for (uint t=1; t<sz && available; t++)
-        {
-          AutoReadLock lock(&mProducerInfoList_modificationLock);
-
-          std::vector <std::string> list;
-          splitString((*rec)[t], ':',list);
-
-          std::string producerName = list[0];
-          int geometryId = 0;
-          if (list.size() > 1)
-            geometryId = toInt32(list[1]);
-
-          T::ProducerInfo *pInfo = mProducerInfoList.getProducerInfoByName(producerName);
-          if (pInfo)
-          {
-            //printf("PRODUCER %s\n",pInfo->mName.c_str());
-            T::GenerationInfoList generationInfoList;
-            mGenerationInfoList.getGenerationInfoListByProducerId(pInfo->mProducerId,generationInfoList);
-            //printf("GENERATIONS %u/%u\n",generationInfoList.getLength(),mGenerationInfoList.getLength());
-
-            uint len = generationInfoList.getLength();
-            for (uint g = 0; g < len; g++)
-            {
-              T::GenerationInfo *gInfo = generationInfoList.getGenerationInfoByIndex(g);
-              time_t deletionTime = gInfo->mDeletionTime;
-
-              if (deletionTime == 0 || (currentTime + 120) < deletionTime)
-              {
-                T::GeometryInfoList geometryInfoList;
-                mGeometryInfoList.getGeometryInfoListByGenerationId(gInfo->mGenerationId,geometryInfoList);
-
-                uint geomLen = geometryInfoList.getLength();
-
-                if (geomLen == 0)
-                {
-                  // It seems that there are no geometry status information available. Let's generate it.
-
-                  std::set<T::GeometryId> geometryIdList;
-                  contentServer->getContentGeometryIdListByGenerationId(0,gInfo->mGenerationId,geometryIdList);
-                  if (geometryIdList.size() > 0)
-                  {
-                    for (auto gi = geometryIdList.begin(); gi != geometryIdList.end(); ++gi)
-                    {
-                      T::GeometryInfo *geom = new T::GeometryInfo();
-                      geom->mProducerId = gInfo->mProducerId;
-                      geom->mGenerationId = gInfo->mGenerationId;
-                      geom->mGeometryId = *gi;
-                      geom->mModificationTime = gInfo->mModificationTime;
-                      geom->mDeletionTime = gInfo->mDeletionTime;
-                      geom->mStatus = gInfo->mStatus;
-                      tmpGeometryInfoList.addGeometryInfo(geom);
-                    }
-                  }
-
-                  tmpGeometryInfoList.getGeometryInfoListByGenerationId(gInfo->mGenerationId,geometryInfoList);
-                  geomLen = geometryInfoList.getLength();
-                }
-
-                for (uint gg = 0; gg < geomLen; gg++)
-                {
-                  T::GeometryInfo *geom = geometryInfoList.getGeometryInfoByIndex(gg);
-                  if (geom != nullptr &&  geom->mStatus == T::GeometryInfo::Status::Ready  &&  (geometryId == geom->mGeometryId  ||  geometryId == 0))
-                  {
-                    std::string key = gInfo->mAnalysisTime + ":" + std::to_string(geom->mGeometryId);
-                    auto p = counterList.find(key);
-                    if (p != counterList.end())
-                      p->second.push_back(std::pair<T::GenerationId,int>(geom->mGenerationId,geom->mGeometryId));
-                    else
-                    {
-                      std::vector<std::pair<uint,int>> cntList;
-                      cntList.push_back(std::pair<T::GenerationId,int>(geom->mGenerationId,geom->mGeometryId));
-                      counterList.insert(std::pair<std::string,std::vector<std::pair<uint,int>>>(key,cntList));
-                    }
-                  }
-                }
-              }
-            }
-          }
-          else
-          {
-            //printf("PRODUCER [%s] NOT FOUND\n",(*rec)[t].c_str());
-            available = false;
-          }
-        }
+          available = countGenerationGeometries(record[t],currentTime,*contentServer,tmpGeometryInfoList,counterList);
 
         tmpGeometryInfoList.sort(T::GeometryInfo::ComparisonMethod::generationId);
 
 
-        for (auto it = counterList.begin(); it != counterList.end(); ++it)
+        for (auto& it : counterList)
         {
-          time_t modTime = 0;
-          if (it->second.size() == (sz-1))
-          {
-            std::ostringstream output1;
-            std::ostringstream output2;
-
-            std::set<std::string> contentTimeList;
-            //printf("CONTENT [%s] [%u][%d]\n",it->first.c_str(),it->second[0].first,it->second[0].second);
-            contentServer->getContentTimeListByGenerationAndGeometryId(0,it->second[0].first,it->second[0].second,contentTimeList);
-
-            uint slen = contentTimeList.size();
-            if (slen > 0)
-            {
-              std::set<std::string> paramList1;
-              std::set<std::string> paramList2;
-
-              for (auto g = it->second.begin(); g != it->second.end(); ++g)
-              {
-                //printf(" --- %u %d\n",g->first,g->second);
-                //T::GenerationInfo *gInfo = mGenerationInfoList.getGenerationInfoById(g->first);
-                T::GeometryInfo *geom = mGeometryInfoList.getGeometryInfoById(g->first,g->second,0);
-                if (!geom)
-                  geom = tmpGeometryInfoList.getGeometryInfoById(g->first,g->second,0);
-
-                if (geom && geom->mModificationTime > modTime)
-                {
-                  modTime = geom->mModificationTime;
-                }
-
-                if (geom &&  mParameterMappingDefinitions)
-                {
-                  T::ProducerInfo *pInfo = mProducerInfoList.getProducerInfoById(geom->mProducerId);
-
-                  if (pInfo)
-                  {
-                    AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
-                    std::set<std::string> paramKeyList;
-                    contentServer->getContentParamKeyListByGenerationAndGeometryId(0,geom->mGenerationId,geom->mGeometryId,T::ParamKeyTypeValue::FMI_NAME,paramKeyList);
-
-                    for (auto pk = paramKeyList.begin(); pk != paramKeyList.end(); ++pk)
-                    {
-                      QueryServer::ParameterMapping_vec mappings;
-                      for (auto mf = mParameterMappingDefinitions->begin(); mf != mParameterMappingDefinitions->end(); ++mf)
-                      {
-                        mf->getMappingsByParamKey(pInfo->mName,T::ParamKeyTypeValue::FMI_NAME,*pk,-1,-1,-1,mappings);
-                      }
-
-                      if (mappings.size() > 0)
-                      {
-                        for (auto pm = mappings.begin(); pm != mappings.end(); ++pm)
-                        {
-                          if (strcasecmp(pk->c_str(),pm->mParameterName.c_str()) != 0)
-                          {
-                            std::string name = (*rec)[0] + ";" + pm->mParameterName;
-                            std::string alias;
-                            if (mProducerMappingDefinitions.getAlias(name,alias))
-                            {
-                              paramList1.insert(*pk);
-                              paramList2.insert(pm->mParameterName);
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-
-              for (auto pp = paramList1.begin(); pp != paramList1.end(); ++pp)
-              {
-                if (pp != paramList1.begin())
-                  output1 << ",";
-
-                output1 << *pp;
-              }
-
-              for (auto pp = paramList2.begin(); pp != paramList2.end(); ++pp)
-              {
-                if (pp != paramList2.begin())
-                  output2 << ",";
-
-                output2 << *pp;
-              }
-
-              auto first = contentTimeList.begin();
-              auto last = contentTimeList.rbegin();
-              std::vector<std::string> ss;
-              splitString(it->first,':',ss);
-
-              // Producer name
-              resultTable->set(0, row, (*rec)[0]);
-
-              // Geometry id
-              resultTable->set(1, row, ss[1]);
-
-              // Timesteps
-              resultTable->set(2, row, std::to_string(slen));
-
-              if (!timeFormat.empty()  &&  strcasecmp(timeFormat.c_str(),"iso") != 0  && timeFormatter)
-              {
-                // Analysis time
-                Fmi::DateTime aTime = toTimeStamp(ss[0]);
-                resultTable->set(3, row, timeFormatter->format(aTime));
-
-                // Min time
-                Fmi::DateTime fTime = toTimeStamp(*first);
-                resultTable->set(4, row, timeFormatter->format(fTime));
-
-                // Max time
-                Fmi::DateTime lTime = toTimeStamp(*last);
-                resultTable->set(5, row, timeFormatter->format(lTime));
-
-                // Modification time
-                Fmi::DateTime mTime = toTimeStamp(utcTimeFromTimeT(modTime));
-                resultTable->set(6, row, timeFormatter->format(mTime));
-              }
-              else
-              {
-                // Analysis time
-                resultTable->set(3, row, ss[0]);
-
-                // Min time
-                resultTable->set(4, row, *first);
-
-                // Max time
-                resultTable->set(5, row, *last);
-
-                // Modification time
-                resultTable->set(6, row, utcTimeFromTimeT(modTime));
-              }
-
-              // FMI Parameters
-              resultTable->set(7, row, output1.str());
-
-              // Parameter alias names
-              resultTable->set(8, row, output2.str());
-
-              row++;
-            }
-          }
+          if (it.second.size() == (sz-1))
+            addExtGenerationInfoRow(*resultTable,row,record[0],it.first,it.second,tmpGeometryInfoList,*contentServer,timeFormat,timeFormatter.get());
         }
       }
     }
@@ -2765,6 +3014,141 @@ ContentTable Engine::getParameterInfo(std::optional<std::string> producer) const
 
 
 
+/*! \brief Engine: Add the metadata of the generations of the producer (the caller holds the producer info lock). */
+
+void Engine::addProducerMetaData(std::list<MetaData>& metaDataList,const T::ProducerInfo& pInfo,ContentServer::ServiceInterface& contentServer,time_t currentTime) const
+{
+  try
+  {
+    std::set<T::ParamLevelId> levelIdList;
+    getProducerLevelIdList(pInfo.mProducerId,levelIdList);
+
+    T::GenerationInfoList generationList;
+    mGenerationInfoList.getGenerationInfoListByProducerId(pInfo.mProducerId, generationList);
+
+    uint glen = generationList.getLength();
+    if (glen == 0  || levelIdList.empty())
+      return;
+
+    generationList.sort(T::GenerationInfo::ComparisonMethod::analysisTime);
+
+    glen = generationList.getLength();
+    for (uint g=0; g<glen; g++)
+    {
+      T::GenerationInfo *gInfo = generationList.getGenerationInfoByIndex(g);
+      time_t deletionTime = gInfo->mDeletionTime;
+
+      if (deletionTime == 0 || (currentTime + 120) < deletionTime)
+      {
+        T::GeometryInfoList geometryInfoList;
+        getGenerationGeometries(*gInfo,contentServer,geometryInfoList);
+
+        uint geomLen = geometryInfoList.getLength();
+        for (uint gg = 0; gg < geomLen; gg++)
+        {
+          T::GeometryInfo *geom = geometryInfoList.getGeometryInfoByIndex(gg);
+          if (geom != nullptr &&  geom->mStatus == T::GeometryInfo::Status::Ready)
+            addGeometryMetaData(metaDataList,pInfo,*gInfo,*geom,levelIdList,contentServer);
+        }
+      }
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Get the geometries of the generation (from the content if not known). */
+
+void Engine::getGenerationGeometries(const T::GenerationInfo& gInfo,ContentServer::ServiceInterface& contentServer,T::GeometryInfoList& geometryInfoList) const
+{
+  try
+  {
+    mGeometryInfoList.getGeometryInfoListByGenerationId(gInfo.mGenerationId,geometryInfoList);
+
+    uint geomLen = geometryInfoList.getLength();
+    if (geomLen == 0)
+    {
+      std::set<T::GeometryId> geometryIdList;
+      contentServer.getContentGeometryIdListByGenerationId(0,gInfo.mGenerationId,geometryIdList);
+      if (!geometryIdList.empty())
+      {
+        for (int gi : geometryIdList)
+        {
+          auto *geom = new T::GeometryInfo();
+          geom->mProducerId = gInfo.mProducerId;
+          geom->mGenerationId = gInfo.mGenerationId;
+          geom->mGeometryId = gi;
+          geom->mModificationTime = gInfo.mModificationTime;
+          geom->mDeletionTime = gInfo.mDeletionTime;
+          geom->mStatus = gInfo.mStatus;
+          geometryInfoList.addGeometryInfo(geom);
+        }
+      }
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Add the metadata of each level type of the geometry. */
+
+void Engine::addGeometryMetaData(std::list<MetaData>& metaDataList,const T::ProducerInfo& pInfo,const T::GenerationInfo& gInfo,const T::GeometryInfo& geom,const std::set<T::ParamLevelId>& levelIdList,ContentServer::ServiceInterface& contentServer) const
+{
+  try
+  {
+    for (short levelId : levelIdList)
+    {
+      MetaData metaData;
+      contentServer.getContentTimeListByGenerationGeometryAndLevelId(0,geom.mGenerationId,geom.mGeometryId,levelId,metaData.times);
+      uint slen = metaData.times.size();
+      if (slen > 0)
+      {
+        std::set<std::string> paramKeyList;
+        contentServer.getContentParamKeyListByGenerationGeometryAndLevelId(0,geom.mGenerationId,geom.mGeometryId,levelId,T::ParamKeyTypeValue::FMI_NAME,paramKeyList);
+        contentServer.getContentLevelListByGenerationGeometryAndLevelId(0,geom.mGenerationId,geom.mGeometryId,levelId,metaData.levels);
+
+        metaData.producerId = pInfo.mProducerId;
+        metaData.producerName = pInfo.mName;
+        metaData.producerDescription = pInfo.mDescription;
+        metaData.generationId = gInfo.mGenerationId;
+        metaData.analysisTime = gInfo.mAnalysisTime;
+        metaData.geometryId = geom.mGeometryId;
+
+        setGeometryMetaData(metaData,geom.mGeometryId);
+
+        metaData.levelId = levelId;
+
+        Identification::LevelDef levelDef;
+        if (Identification::gridDef.getFmiLevelDef(levelId,levelDef))
+        {
+          metaData.levelName = levelDef.mName;
+          metaData.levelDescription = levelDef.mDescription;
+        }
+
+
+        //std::cout << metaData.producerName << ":" << metaData.analysisTime << ":" << metaData.geometryId << ":" << metaData.levelId << " Levels : " << metaData.levels.size() <<  " Times : " << metaData.times.size() << " Params : " << paramKeyList.size() << "\n";
+
+        setParameterMetaData(metaData,paramKeyList);
+        metaDataList.push_back(metaData);
+      }
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
 /*! \brief Engine: Get engine metadata. */
 
 std::list<MetaData> Engine::getEngineMetadata(const char *producerName) const
@@ -2790,124 +3174,7 @@ std::list<MetaData> Engine::getEngineMetadata(const char *producerName) const
       T::ProducerInfo* pInfo = mProducerInfoList.getProducerInfoByIndex(t);
 
       if (!producerName || producerName[0] == '\0' || strcasecmp(producerName, pInfo->mName.c_str()) == 0)
-      {
-        std::set<T::ParamLevelId> levelIdList;
-        getProducerLevelIdList(pInfo->mProducerId,levelIdList);
-
-        T::GenerationInfoList generationList;
-        mGenerationInfoList.getGenerationInfoListByProducerId(pInfo->mProducerId, generationList);
-
-        uint glen = generationList.getLength();
-        if (glen > 0  && levelIdList.size() > 0)
-        {
-          generationList.sort(T::GenerationInfo::ComparisonMethod::analysisTime);
-
-          uint glen = generationList.getLength();
-          for (uint g=0; g<glen; g++)
-          {
-            T::GenerationInfo *gInfo = generationList.getGenerationInfoByIndex(g);
-            time_t deletionTime = gInfo->mDeletionTime;
-
-            if (deletionTime == 0 || (currentTime + 120) < deletionTime)
-            {
-              T::GeometryInfoList geometryInfoList;
-              mGeometryInfoList.getGeometryInfoListByGenerationId(gInfo->mGenerationId,geometryInfoList);
-
-              uint geomLen = geometryInfoList.getLength();
-              if (geomLen == 0)
-              {
-                std::set<T::GeometryId> geometryIdList;
-                contentServer->getContentGeometryIdListByGenerationId(0,gInfo->mGenerationId,geometryIdList);
-                if (geometryIdList.size() > 0)
-                {
-                  for (auto gi = geometryIdList.begin(); gi != geometryIdList.end(); ++gi)
-                  {
-                    T::GeometryInfo *geom = new T::GeometryInfo();
-                    geom->mProducerId = gInfo->mProducerId;
-                    geom->mGenerationId = gInfo->mGenerationId;
-                    geom->mGeometryId = *gi;
-                    geom->mModificationTime = gInfo->mModificationTime;
-                    geom->mDeletionTime = gInfo->mDeletionTime;
-                    geom->mStatus = gInfo->mStatus;
-                    geometryInfoList.addGeometryInfo(geom);
-                  }
-                }
-                geomLen = geometryInfoList.getLength();
-              }
-
-              for (uint gg = 0; gg < geomLen; gg++)
-              {
-                T::GeometryInfo *geom = geometryInfoList.getGeometryInfoByIndex(gg);
-                if (geom != nullptr &&  geom->mStatus == T::GeometryInfo::Status::Ready)
-                {
-                  for (auto levelId = levelIdList.begin(); levelId != levelIdList.end(); ++levelId)
-                  {
-                    MetaData metaData;
-                    contentServer->getContentTimeListByGenerationGeometryAndLevelId(0,geom->mGenerationId,geom->mGeometryId,*levelId,metaData.times);
-                    uint slen = metaData.times.size();
-                    if (slen > 0)
-                    {
-                      std::set<std::string> paramKeyList;
-                      contentServer->getContentParamKeyListByGenerationGeometryAndLevelId(0,geom->mGenerationId,geom->mGeometryId,*levelId,T::ParamKeyTypeValue::FMI_NAME,paramKeyList);
-                      contentServer->getContentLevelListByGenerationGeometryAndLevelId(0,geom->mGenerationId,geom->mGeometryId,*levelId,metaData.levels);
-
-                      metaData.producerId = pInfo->mProducerId;
-                      metaData.producerName = pInfo->mName;
-                      metaData.producerDescription = pInfo->mDescription;
-                      metaData.generationId = gInfo->mGenerationId;
-                      metaData.analysisTime = gInfo->mAnalysisTime;
-                      metaData.geometryId = geom->mGeometryId;
-
-
-                      auto g = Identification::gridDef.getGrib2DefinitionByGeometryId(geom->mGeometryId);
-                      if (g)
-                      {
-                        metaData.xNumber = g->getGridColumnCount();
-                        metaData.yNumber = g->getGridRowCount();
-                        g->getGridLatLonArea(metaData.latlon_topLeft,metaData.latlon_topRight,metaData.latlon_bottomLeft,metaData.latlon_bottomRight);
-                        metaData.projectionId = g->getGridProjection();
-                        metaData.projectionName = T::get_gridProjectionString(metaData.projectionId);
-
-                        metaData.wkt = g->getWKT();
-                        metaData.proj4 = g->getProj4();
-                      }
-
-                      metaData.levelId = *levelId;
-
-                      Identification::LevelDef levelDef;
-                      if (Identification::gridDef.getFmiLevelDef(*levelId,levelDef))
-                      {
-                        metaData.levelName = levelDef.mName;
-                        metaData.levelDescription = levelDef.mDescription;
-                      }
-
-
-                      //std::cout << metaData.producerName << ":" << metaData.analysisTime << ":" << metaData.geometryId << ":" << metaData.levelId << " Levels : " << metaData.levels.size() <<  " Times : " << metaData.times.size() << " Params : " << paramKeyList.size() << "\n";
-
-                      metaData.parameters.reserve(paramKeyList.size());
-                      for (auto pk = paramKeyList.begin(); pk != paramKeyList.end(); ++pk)
-                      {
-                        Identification::FmiParameterDef paramDef;
-                        if (Identification::gridDef.getFmiParameterDefByName(pk->c_str(), paramDef))
-                        {
-                          Parameter param;
-                          param.parameterId = paramDef.mFmiParameterId;
-                          param.parameterName = paramDef.mParameterName;
-                          param.parameterUnits = paramDef.mParameterUnits;
-                          param.parameterDescription = paramDef.mParameterDescription;
-
-                          metaData.parameters.push_back(param);
-                        }
-                      }
-                      metaDataList.push_back(metaData);
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+        addProducerMetaData(metaDataList,*pInfo,*contentServer,currentTime);
     }
 
 
@@ -2984,7 +3251,7 @@ Fmi::Cache::CacheStatistics Engine::getCacheStats() const
 
 /*! \brief Engine: Get state attributes. */
 
-void Engine::getStateAttributes(std::shared_ptr<T::AttributeNode> parent)
+void Engine::getStateAttributes(const std::shared_ptr<T::AttributeNode>& parent)
 {
   try
   {
@@ -3059,6 +3326,42 @@ T::ParamLevelId Engine::getFmiParameterLevelId(T::ProducerId producerId, int lev
   {
     Fmi::Exception exception(BCP, "Operation failed!", nullptr);
     exception.addParameter("Configuration file", mConfigurationFile_name);
+    throw exception;
+  }
+}
+
+/*! \brief Engine: Get the names the parameter mappings of the producer give to its FMI parameters, by FMI parameter name. Mappings excluded from searches are left out, as queries do not find them either. */
+
+void Engine::getParameterMappingNames(const std::string& producerName,const std::set<std::string>& fmiParameterNames,std::map<std::string,std::set<std::string>>& mappingNames) const
+{
+  FUNCTION_TRACE
+  try
+  {
+    if (!mEnabled || !mParameterMappingDefinitions)
+      return;
+
+    AutoReadLock lock(&mParameterMappingDefinitions_modificationLock);
+
+    for (const auto& fmiName : fmiParameterNames)
+    {
+      QueryServer::ParameterMapping_vec mappings;
+      for (auto& mf : *mParameterMappingDefinitions)
+        mf.getMappingsByParamKey(producerName,T::ParamKeyTypeValue::FMI_NAME,fmiName,-1,-1,-1,mappings);
+
+      for (auto& mf : mParameterAliasMappings)
+        mf.getMappingsByParamKey(producerName,T::ParamKeyTypeValue::FMI_NAME,fmiName,-1,-1,-1,mappings);
+
+      for (const auto& mapping : mappings)
+      {
+        if (mapping.mSearchEnabled && strcasecmp(fmiName.c_str(),mapping.mParameterName.c_str()) != 0)
+          mappingNames[fmiName].insert(mapping.mParameterName);
+      }
+    }
+  }
+  catch (...)
+  {
+    Fmi::Exception exception(BCP, "Operation failed!", nullptr);
+    exception.addParameter("Producer",producerName);
     throw exception;
   }
 }
@@ -3155,9 +3458,9 @@ void Engine::getProducerParameterLevelList(const std::string& producerName, T::P
     std::vector < std::string > nameList;
     getProducerNameList(producerName, nameList);
 
-    for (auto pname = nameList.begin(); pname != nameList.end(); ++pname)
+    for (auto& pname : nameList)
     {
-      T::ProducerInfo *producerInfo = mProducerInfoList.getProducerInfoByName(*pname);
+      T::ProducerInfo *producerInfo = mProducerInfoList.getProducerInfoByName(pname);
       if (producerInfo != nullptr)
       {
         std::string fmiParameterName;
@@ -3173,7 +3476,7 @@ void Engine::getProducerParameterLevelList(const std::string& producerName, T::P
           }
         }
 
-        if (levels.size() > 0)
+        if (!levels.empty())
           return;
       }
     }
@@ -3201,9 +3504,9 @@ void Engine::getProducerParameterLevelIdList(const std::string& producerName, st
     std::vector < std::string > nameList;
     getProducerNameList(producerName, nameList);
 
-    for (auto pname = nameList.begin(); pname != nameList.end(); ++pname)
+    for (auto& pname : nameList)
     {
-      T::ProducerInfo *producerInfo = mProducerInfoList.getProducerInfoByName(*pname);
+      T::ProducerInfo *producerInfo = mProducerInfoList.getProducerInfoByName(pname);
       if (producerInfo != nullptr)
       {
         std::string fmiParameterName;
@@ -3218,7 +3521,7 @@ void Engine::getProducerParameterLevelIdList(const std::string& producerName, st
           }
         }
 
-        if (levelIdList.size() > 0)
+        if (!levelIdList.empty())
           return;
       }
     }
@@ -3344,25 +3647,25 @@ void Engine::loadMappings(QueryServer::ParamMappingFile_vec& parameterMappings,
     if (!mUnitConversionFile.empty())
       loadUnitConversionFile();
 
-    for (auto it = mParameterMappingDefinitions_filenames.begin(); it != mParameterMappingDefinitions_filenames.end(); ++it)
+    for (auto& mParameterMappingDefinitions_filename : mParameterMappingDefinitions_filenames)
     {
-      QueryServer::ParameterMappingFile mapping(*it);
+      QueryServer::ParameterMappingFile mapping(mParameterMappingDefinitions_filename);
       parameterMappings.emplace_back(mapping);
     }
 
-    for (auto it = parameterMappings.begin(); it != parameterMappings.end(); ++it)
+    for (auto& parameterMapping : parameterMappings)
     {
       // Loading parameter mappings if the mapping file exists and it is not empty.
-      if (getFileSize(it->getFilename().c_str()) > 0)
+      if (getFileSize(parameterMapping.getFilename().c_str()) > 0)
       {
-        it->init();
+        parameterMapping.init();
 
-        for (auto itm = mParameterMappingAliasDefinitions_filenames.begin(); itm != mParameterMappingAliasDefinitions_filenames.end(); ++itm)
+        for (auto& mParameterMappingAliasDefinitions_filename : mParameterMappingAliasDefinitions_filenames)
         {
-          if (*itm == it->getFilename())
+          if (mParameterMappingAliasDefinitions_filename == parameterMapping.getFilename())
           {
             QueryServer::ParameterMapping_vec aliasMappings;
-            it->getAliasMappings(aliasMappings,mUnitConversions);
+            parameterMapping.getAliasMappings(aliasMappings,mUnitConversions);
 
             QueryServer::ParameterMappingFile mapping;
             mapping.setParameterMappings(aliasMappings);
@@ -3453,6 +3756,101 @@ void Engine::getAnalysisTimes(std::vector<std::vector<std::string>>& table) cons
 
 /*! \brief Engine: Get ext analysis times. */
 
+/*! \brief Engine: Count the ready generations of the producer by analysis time. Returns false if the producer is not found. */
+
+bool Engine::countReadyGenerations(const std::string& producerName,time_t currentTime,std::map<std::string,uint>& counterList,std::map<std::string,T::GenerationId>& generationList) const
+{
+  try
+  {
+    AutoReadLock lock(&mProducerInfoList_modificationLock);
+    T::ProducerInfo *pInfo = mProducerInfoList.getProducerInfoByName(producerName);
+    if (!pInfo)
+    {
+      //printf("PRODUCER [%s] NOT FOUND\n",(*rec)[t].c_str());
+      return false;
+    }
+
+    //printf("PRODUCER %s\n",pInfo->mName.c_str());
+    T::GenerationInfoList generationInfoList;
+    mGenerationInfoList.getGenerationInfoListByProducerId(pInfo->mProducerId,generationInfoList);
+    //printf("GENERATIONS %u/%u\n",generationInfoList.getLength(),mGenerationInfoList.getLength());
+
+    uint len = generationInfoList.getLength();
+    for (uint g = 0; g < len; g++)
+    {
+      T::GenerationInfo *gInfo = generationInfoList.getGenerationInfoByIndex(g);
+      time_t deletionTime = gInfo->mDeletionTime;
+
+      if (gInfo->mStatus == T::GenerationInfo::Status::Ready)
+      {
+        if (deletionTime == 0 || (currentTime + 120) < deletionTime)
+        {
+          auto p = counterList.find(gInfo->mAnalysisTime);
+          if (p != counterList.end())
+            p->second++;
+          else
+          {
+            counterList.insert(std::pair<std::string,uint>(gInfo->mAnalysisTime,1));
+            generationList.insert(std::pair<std::string,T::GenerationId>(gInfo->mAnalysisTime,gInfo->mGenerationId));
+          }
+        }
+      }
+    }
+    return true;
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
+/*! \brief Engine: Add the analysis time rows of the record whose all producers have the analysis time. */
+
+void Engine::addAnalysisTimeRows(const std::vector<std::string>& record,const std::map<std::string,uint>& counterList,const std::map<std::string,T::GenerationId>& generationList,ContentServer::ServiceInterface& contentServer,std::vector<std::vector<std::string>>& table) const
+{
+  try
+  {
+    uint sz = record.size();
+    for (const auto& it : counterList)
+    {
+      if (it.second == (sz-1))
+      {
+        auto g = generationList.find(it.first);
+        if (g != generationList.end())
+        {
+          std::set<std::string> contentTimeList;
+          contentServer.getContentTimeListByGenerationId(0,g->second,contentTimeList);
+
+          uint slen = contentTimeList.size();
+          if (slen > 0)
+          {
+            auto first = contentTimeList.begin();
+            auto last = contentTimeList.rbegin();
+            //printf("%s:%s:%s:%s:%u\n",(*rec)[0].c_str(),it->first.c_str(),first->c_str(),last->c_str(),slen);
+
+            std::vector<std::string> vec;
+            vec.push_back(record[0]);
+            vec.push_back(it.first);
+            vec.push_back(*first);
+            vec.push_back(*last);
+            vec.push_back(std::to_string(slen));
+
+            table.push_back(vec);
+          }
+        }
+      }
+    }
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
 void Engine::getExtAnalysisTimes(std::vector<std::vector<std::string>>& table) const
 {
   FUNCTION_TRACE
@@ -3475,81 +3873,16 @@ void Engine::getExtAnalysisTimes(std::vector<std::vector<std::string>>& table) c
     time_t currentTime = time(nullptr);
 
     //printf("RECORDS %ld\n",records.size());
-    for (auto rec = records.begin(); rec != records.end(); ++rec)
+    for (auto& record : records)
     {
-      uint sz = rec->size();
+      uint sz = record.size();
       bool available = true;
       std::map<std::string,uint> counterList;
       std::map<std::string,T::GenerationId> generationList;
       for (uint t=1; t<sz && available; t++)
-      {
-        AutoReadLock lock(&mProducerInfoList_modificationLock);
-        T::ProducerInfo *pInfo = mProducerInfoList.getProducerInfoByName((*rec)[t]);
-        if (pInfo)
-        {
-          //printf("PRODUCER %s\n",pInfo->mName.c_str());
-          T::GenerationInfoList generationInfoList;
-          mGenerationInfoList.getGenerationInfoListByProducerId(pInfo->mProducerId,generationInfoList);
-          //printf("GENERATIONS %u/%u\n",generationInfoList.getLength(),mGenerationInfoList.getLength());
+        available = countReadyGenerations(record[t],currentTime,counterList,generationList);
 
-          uint len = generationInfoList.getLength();
-          for (uint g = 0; g < len; g++)
-          {
-            T::GenerationInfo *gInfo = generationInfoList.getGenerationInfoByIndex(g);
-            time_t deletionTime = gInfo->mDeletionTime;
-
-            if (gInfo->mStatus == T::GenerationInfo::Status::Ready)
-            {
-              if (deletionTime == 0 || (currentTime + 120) < deletionTime)
-              {
-                auto p = counterList.find(gInfo->mAnalysisTime);
-                if (p != counterList.end())
-                  p->second++;
-                else
-                {
-                  counterList.insert(std::pair<std::string,uint>(gInfo->mAnalysisTime,1));
-                  generationList.insert(std::pair<std::string,T::GenerationId>(gInfo->mAnalysisTime,gInfo->mGenerationId));
-                }
-              }
-            }
-          }
-        }
-        else
-        {
-          //printf("PRODUCER [%s] NOT FOUND\n",(*rec)[t].c_str());
-          available = false;
-        }
-      }
-
-      for (auto it = counterList.begin(); it != counterList.end(); ++it)
-      {
-        if (it->second == (sz-1))
-        {
-          auto g = generationList.find(it->first);
-          if (g != generationList.end())
-          {
-            std::set<std::string> contentTimeList;
-            contentServer->getContentTimeListByGenerationId(0,g->second,contentTimeList);
-
-            uint slen = contentTimeList.size();
-            if (slen > 0)
-            {
-              auto first = contentTimeList.begin();
-              auto last = contentTimeList.rbegin();
-              //printf("%s:%s:%s:%s:%u\n",(*rec)[0].c_str(),it->first.c_str(),first->c_str(),last->c_str(),slen);
-
-              std::vector<std::string> vec;
-              vec.push_back((*rec)[0]);
-              vec.push_back(it->first);
-              vec.push_back(*first);
-              vec.push_back(*last);
-              vec.push_back(std::to_string(slen));
-
-              table.push_back(vec);
-            }
-          }
-        }
-      }
+      addAnalysisTimeRows(record,counterList,generationList,*contentServer,table);
     }
   }
   catch (...)
@@ -3763,6 +4096,8 @@ std::ofstream Engine::openMappingFile(const std::string& mappingFile)
 
 
 
+namespace
+{
 bool filesEqual(const char *filename1,const char *filename2)
 {
   FUNCTION_TRACE
@@ -3797,6 +4132,7 @@ bool filesEqual(const char *filename1,const char *filename2)
     throw exception;
   }
 }
+}  // namespace
 
 
 
@@ -3897,6 +4233,185 @@ void Engine::writeMappingLine(std::ofstream& file,
 
 
 
+/*! \brief Engine: The state of a parameter mapping file update. */
+
+struct Engine::MappingUpdateState
+{
+  MappingUpdateState(T::ParamKeyType theSourceParameterKeyType,T::ParamKeyType theTargetParameterKeyType,const std::string& theMappingFile,
+      const std::string& theTmpMappingFile,QueryServer::ParamMappingFile_vec& theParameterMappings,Spine::Table& theParamTable)
+  : sourceParameterKeyType(theSourceParameterKeyType),
+    targetParameterKeyType(theTargetParameterKeyType),
+    mappingFile(theMappingFile),
+    tmpMappingFile(theTmpMappingFile),
+    parameterMappings(theParameterMappings),
+    paramTable(theParamTable),
+    row(theParamTable.maxj())
+  {
+  }
+
+  T::ParamKeyType sourceParameterKeyType;
+  T::ParamKeyType targetParameterKeyType;
+  const std::string& mappingFile;
+  const std::string& tmpMappingFile;
+  QueryServer::ParamMappingFile_vec& parameterMappings;
+  Spine::Table& paramTable;
+  std::size_t row;
+  uint numOfNewMappings = 0;
+  std::unordered_set < std::string > mapList;
+  std::unordered_set < std::string > searchList;
+  std::unordered_set < std::string > pList;
+  std::ofstream file;
+};
+
+
+
+namespace
+{
+/*! \brief Adds the parameter definition row of the producer parameter (pl[0] = producer, pl[1] = parameter) to the table. */
+
+void addParamTableRow(Spine::Table& paramTable,std::size_t& row,const std::vector<std::string>& pl)
+{
+  paramTable.set(0, row, std::to_string(row + 1));
+  paramTable.set(1, row, pl[0]);
+  paramTable.set(2, row, pl[1]);
+
+  Identification::FmiParameterDef paramDef;
+  if (Identification::gridDef.getFmiParameterDefByName(pl[1], paramDef))
+  {
+    paramTable.set(3, row, std::to_string(paramDef.mFmiParameterId));
+
+    Identification::NewbaseParameterDef nbDef;
+    Identification::gridDef.getNewbaseParameterDefByFmiId(paramDef.mFmiParameterId, nbDef);
+    paramTable.set(4, row, nbDef.mParameterName);
+    paramTable.set(5, row, std::to_string(nbDef.mNewbaseParameterId));
+
+    paramTable.set(6, row, paramDef.mParameterUnits);
+    paramTable.set(7, row, paramDef.mParameterDescription);
+  }
+
+  row++;
+}
+
+
+
+/*! \brief Checks whether the mapping is defined in the other mapping files (found) or the parameter can be searched (searchEnabled). */
+
+void findOtherMapping(QueryServer::ParamMappingFile_vec& parameterMappings,const std::string& mappingFile,QueryServer::ParameterMapping& m,
+    const std::unordered_set<std::string>& searchList,const std::string& searchKey,bool& found,bool& searchEnabled)
+{
+  for (auto it = parameterMappings.begin(); it != parameterMappings.end() && !found; ++it)
+  {
+    if (it->getFilename() == mappingFile)
+      continue;
+
+    if (it->getMapping(m) != nullptr)
+    {
+      found = true;
+    }
+    else
+    {
+      if (searchList.find(searchKey) != searchList.end())
+      {
+        searchEnabled = true;
+      }
+      else
+      {
+        QueryServer::ParameterMapping_vec vec;
+        it->getMappings(m.mProducerName, m.mParameterName, m.mGeometryId, true, vec);
+        if (!vec.empty())
+        {
+          searchEnabled = true;
+        }
+      }
+    }
+  }
+}
+}  // namespace
+
+
+
+/*! \brief Engine: Adds the producer parameter (';' separated info) to the mapping file update. */
+
+void Engine::addParameterMapping(const std::string& info,MappingUpdateState& state)
+{
+  try
+  {
+    std::vector < std::string > pl;
+    splitString(info.c_str(), ';', pl);
+    if (pl.size() < 8)
+      return;
+
+    bool simplifiedLevel = false;
+
+    QueryServer::ParameterMapping m;
+    m.mProducerName = pl[0];
+    m.mParameterName = pl[1];
+    m.mParameterKeyType = toUInt8(pl[2].c_str());
+    m.mParameterKey = pl[3];
+    m.mGeometryId = toInt32(pl[4].c_str());
+    //m.mParameterLevelIdType = toUInt8(pl[5].c_str());
+    m.mParameterLevelId = toInt8(pl[6].c_str());
+    if (mParameterMapping_simplifiedLevelIdSet.find(m.mParameterLevelId) != mParameterMapping_simplifiedLevelIdSet.end())
+    {
+      m.mParameterLevel = 0;
+      simplifiedLevel = true;
+    }
+    else
+      m.mParameterLevel = toInt32(pl[7].c_str());
+
+    if (state.sourceParameterKeyType == T::ParamKeyTypeValue::FMI_NAME)
+    {
+      std::string tmp = pl[0] + ";" + pl[1];
+
+      auto res = state.pList.insert(tmp);
+      if (res.second)
+        addParamTableRow(state.paramTable,state.row,pl);
+    }
+
+    std::string level = pl[7];
+    if (simplifiedLevel)
+      level = "*";
+
+    std::string key = pl[0] + ";" + pl[1] + ";" + pl[2] + ";" + pl[3] + ";" + pl[4] + ";" + pl[5] + ";" + pl[6] + ";" + level + ";";
+    std::string searchKey = m.mProducerName + ":" + m.mParameterName + ":" + std::to_string(m.mGeometryId);
+
+    if (state.mapList.find(key) != state.mapList.end())
+      return;
+
+    state.mapList.insert(key);
+
+    bool found = false;
+    bool searchEnabled = false;
+    findOtherMapping(state.parameterMappings,state.mappingFile,m,state.searchList,searchKey,found,searchEnabled);
+
+    if (found)
+      return;
+
+    state.numOfNewMappings++;
+
+    char s = 'D';
+    if (!searchEnabled || (m.mParameterLevelId == 6 && m.mParameterLevel <= 10) || (m.mParameterLevelId == 1 && m.mParameterLevel == 0))
+    {
+      if (!simplifiedLevel)
+        s = 'E';
+    }
+
+    // if (searchList.find(searchKey) == searchList.end())
+    state.searchList.insert(searchKey);
+
+    if (!state.file.is_open())
+      state.file = openMappingFile(state.tmpMappingFile);
+
+    writeMappingLine(state.file, pl, level, s, state.sourceParameterKeyType, state.targetParameterKeyType);
+  }
+  catch (...)
+  {
+    throw Fmi::Exception(BCP, "Operation failed!", nullptr);
+  }
+}
+
+
+
 /*! \brief Engine: Update mappings. */
 
 void Engine::updateMappings(
@@ -3920,9 +4435,6 @@ void Engine::updateMappings(
     ContentServer_sptr contentServer = getContentServer_sptr();
 
     T::SessionId sessionId = 0;
-    uint numOfNewMappings = 0;
-    std::unordered_set < std::string > mapList;
-    std::unordered_set < std::string > searchList;
 
     T::ProducerInfoList producerInfoList;
     int result = contentServer->getProducerInfoList(sessionId, producerInfoList);
@@ -3933,9 +4445,9 @@ void Engine::updateMappings(
       return;
     }
 
-    std::ofstream file;
-    std::unordered_set < std::string > pList;
-    auto row = paramTable.maxj();
+    MappingUpdateState state(sourceParameterKeyType, targetParameterKeyType, mappingFile, tmpMappingFile, parameterMappings, paramTable);
+    std::ofstream& file = state.file;
+    uint& numOfNewMappings = state.numOfNewMappings;
 
     uint plen = producerInfoList.getLength();
     for (uint t = 0; t < plen; t++)
@@ -3949,118 +4461,12 @@ void Engine::updateMappings(
       int result = contentServer->getProducerParameterListByProducerId(sessionId, producerInfo->mProducerId, sourceParameterKeyType, targetParameterKeyType, infoList);
       if (result == 0)
       {
-        for (auto it = infoList.begin(); it != infoList.end(); ++it)
+        for (const auto& it : infoList)
         {
           if (Spine::Reactor::isShuttingDown())
             return;
 
-          std::vector < std::string > pl;
-          splitString(it->c_str(), ';', pl);
-          if (pl.size() >= 8)
-          {
-            QueryServer::ParameterMapping m;
-            m.mProducerName = pl[0];
-            m.mParameterName = pl[1];
-            m.mParameterKeyType = toUInt8(pl[2].c_str());
-            m.mParameterKey = pl[3];
-            m.mGeometryId = toInt32(pl[4].c_str());
-            //m.mParameterLevelIdType = toUInt8(pl[5].c_str());
-            m.mParameterLevelId = toInt8(pl[6].c_str());
-            if (mParameterMapping_simplifiedLevelIdSet.find(m.mParameterLevelId) != mParameterMapping_simplifiedLevelIdSet.end())
-              m.mParameterLevel = 0;
-            else
-              m.mParameterLevel = toInt32(pl[7].c_str());
-
-            if (sourceParameterKeyType == T::ParamKeyTypeValue::FMI_NAME)
-            {
-              std::string tmp = pl[0] + ";" + pl[1];
-
-              auto res = pList.insert(tmp);
-              if (res.second)
-              {
-                paramTable.set(0, row, std::to_string(row + 1));
-                paramTable.set(1, row, pl[0]);
-                paramTable.set(2, row, pl[1]);
-
-                Identification::FmiParameterDef paramDef;
-                if (Identification::gridDef.getFmiParameterDefByName(pl[1], paramDef))
-                {
-                  paramTable.set(3, row, std::to_string(paramDef.mFmiParameterId));
-
-                  Identification::NewbaseParameterDef nbDef;
-                  Identification::gridDef.getNewbaseParameterDefByFmiId(paramDef.mFmiParameterId, nbDef);
-                  paramTable.set(4, row, nbDef.mParameterName);
-                  paramTable.set(5, row, std::to_string(nbDef.mNewbaseParameterId));
-
-                  paramTable.set(6, row, paramDef.mParameterUnits);
-                  paramTable.set(7, row, paramDef.mParameterDescription);
-                }
-
-                row++;
-              }
-            }
-
-            std::string level = pl[7];
-            if (mParameterMapping_simplifiedLevelIdSet.find(m.mParameterLevelId) != mParameterMapping_simplifiedLevelIdSet.end())
-              level = "*";
-
-            std::string key = pl[0] + ";" + pl[1] + ";" + pl[2] + ";" + pl[3] + ";" + pl[4] + ";" + pl[5] + ";" + pl[6] + ";" + level + ";";
-            std::string searchKey = m.mProducerName + ":" + m.mParameterName + ":" + std::to_string(m.mGeometryId);
-
-            if (mapList.find(key) == mapList.end())
-            {
-              mapList.insert(key);
-
-              bool found = false;
-              bool searchEnabled = false;
-              for (auto it = parameterMappings.begin(); it != parameterMappings.end() && !found; ++it)
-              {
-                if (it->getFilename() != mappingFile)
-                {
-                  if (it->getMapping(m) != nullptr)
-                  {
-                    found = true;
-                  }
-                  else
-                  {
-                    if (searchList.find(searchKey) != searchList.end())
-                    {
-                      searchEnabled = true;
-                    }
-                    else
-                    {
-                      QueryServer::ParameterMapping_vec vec;
-                      it->getMappings(m.mProducerName, m.mParameterName, m.mGeometryId, true, vec);
-                      if (vec.size() > 0)
-                      {
-                        searchEnabled = true;
-                      }
-                    }
-                  }
-                }
-              }
-
-              if (!found)
-              {
-                numOfNewMappings++;
-
-                char s = 'D';
-                if (!searchEnabled || (m.mParameterLevelId == 6 && m.mParameterLevel <= 10) || (m.mParameterLevelId == 1 && m.mParameterLevel == 0))
-                {
-                  if (mParameterMapping_simplifiedLevelIdSet.find(m.mParameterLevelId) == mParameterMapping_simplifiedLevelIdSet.end())
-                    s = 'E';
-                }
-
-                // if (searchList.find(searchKey) == searchList.end())
-                searchList.insert(searchKey);
-
-                if (!file.is_open())
-                  file = openMappingFile(tmpMappingFile);
-
-                writeMappingLine(file, pl, level, s, sourceParameterKeyType, targetParameterKeyType);
-              }
-            }
-          }
+          addParameterMapping(it, state);
         }
       }
     }
@@ -4076,9 +4482,16 @@ void Engine::updateMappings(
       file.close();
 
     if (!filesEqual(tmpMappingFile.c_str(), mappingFile.c_str()))
-      rename(tmpMappingFile.c_str(), mappingFile.c_str());
+    {
+      if (rename(tmpMappingFile.c_str(), mappingFile.c_str()) != 0)
+      {
+        Fmi::Exception exception(BCP, "Failed to replace the mapping file");
+        exception.addParameter("Mapping file", mappingFile);
+        throw exception;
+      }
+    }
     else
-      remove(tmpMappingFile.c_str());
+      (void)remove(tmpMappingFile.c_str());
   }
   catch (...)
   {
@@ -4244,8 +4657,8 @@ void Engine::getVerticalGrid(
     const std::string& heightProducerName,
     const std::string& heightParameter,
     int geometryId,
-    int forecastType,
-    int forecastNumber,
+    int /*forecastType*/,
+    int /*forecastNumber*/,
     short areaInterpolationMethod,
     short timeInterpolationMethod,
     std::vector<T::Coordinate>& coordinates,
@@ -4272,7 +4685,7 @@ void Engine::getVerticalGrid(
     int result = contentServer->getGenerationInfoListByProducerName(sessionId, valueProducerName, gInfoList1);
     if (result != 0)
     {
-      Fmi::Exception exception(BCP, ContentServer::getResultString(result).c_str(), nullptr);
+      Fmi::Exception exception(BCP, ContentServer::getResultString(result), nullptr);
       exception.addParameter("ProducerName", valueProducerName);
       throw exception;
     }
@@ -4280,7 +4693,7 @@ void Engine::getVerticalGrid(
     result = contentServer->getGenerationInfoListByProducerName(sessionId, heightProducerName, gInfoList2);
     if (result != 0)
     {
-      Fmi::Exception exception(BCP, ContentServer::getResultString(result).c_str());
+      Fmi::Exception exception(BCP, ContentServer::getResultString(result));
       exception.addParameter("ProducerName", heightProducerName);
       throw exception;
     }
@@ -4303,7 +4716,7 @@ void Engine::getVerticalGrid(
     }
 
     getProducerParameterLevelList(valueProducerName, 3, 1, levels1);
-    if (levels1.size() == 0)
+    if (levels1.empty())
     {
       Fmi::Exception exception(BCP, "Cannot find valid levels for the value parameter!");
       exception.addParameter("ValueProducer", valueProducerName);
@@ -4311,7 +4724,7 @@ void Engine::getVerticalGrid(
     }
 
     getProducerParameterLevelList(heightProducerName, 3, 1, levels2);
-    if (levels2.size() == 0)
+    if (levels2.empty())
     {
       Fmi::Exception exception(BCP, "Cannot find valid levels for the height parameter!");
       exception.addParameter("HeightProducer", heightProducerName);
@@ -4352,7 +4765,7 @@ void Engine::getVerticalGrid(
         for (uint t = 0; t < sz; t++)
         {
           auto dist = points.second[t];
-          coordinates.emplace_back(T::Coordinate(dist, heightVec[t]));
+          coordinates.emplace_back(dist, heightVec[t]);
 
           gridData.emplace_back(valueVec[t]);
         }
@@ -4433,7 +4846,7 @@ void Engine::getVerticalGrid(
 
 /*! \brief Engine: Set dem. */
 
-void Engine::setDem(std::shared_ptr<Fmi::DEM> dem)
+void Engine::setDem(const std::shared_ptr<Fmi::DEM>& dem)
 {
   try
   {
@@ -4453,23 +4866,9 @@ void Engine::setDem(std::shared_ptr<Fmi::DEM> dem)
 }
 
 
-inline bool setBit(uchar *_bits,uint _pos)
-{
-  uint bt = _pos / 8;
-  uint bit = _pos % 8;
-
-  uchar v = 1 << bit;
-
-  if (_bits[bt] & v)
-    return true;
-
-  return false;
-}
-
-
 /*! \brief Engine: Set land cover. */
 
-void Engine::setLandCover(std::shared_ptr<Fmi::LandCover> landCover)
+void Engine::setLandCover(const std::shared_ptr<Fmi::LandCover>& landCover)
 {
   try
   {
@@ -4509,7 +4908,7 @@ void Engine::startUpdateProcessing()
 
 /*! \brief Engine: Request grid generation info. */
 
-ContentTable  Engine::requestGridGenerationInfo(const Spine::HTTP::Request &theRequest)
+ContentTable  Engine::requestGridGenerationInfo(const Spine::HTTP::Request &theRequest) const
 try
 {
   auto producer = theRequest.getParameter("producer");
@@ -4525,7 +4924,7 @@ catch (...)
 
 /*! \brief Engine: Request grid qd generation info. */
 
-ContentTable  Engine::requestGridQdGenerationInfo(const Spine::HTTP::Request &theRequest)
+ContentTable  Engine::requestGridQdGenerationInfo(const Spine::HTTP::Request &theRequest) const
 try
 {
   auto producer = theRequest.getParameter("producer");
@@ -4541,7 +4940,7 @@ catch (...)
 
 /*! \brief Engine: Request grid parameter info. */
 
-ContentTable  Engine::requestGridParameterInfo(const Spine::HTTP::Request &theRequest)
+ContentTable  Engine::requestGridParameterInfo(const Spine::HTTP::Request &theRequest) const
 try
 {
   auto producer = theRequest.getParameter("producer");
@@ -4556,7 +4955,7 @@ catch (...)
 
 /*! \brief Engine: Request grid producer info. */
 
-ContentTable  Engine::requestGridProducerInfo(const Spine::HTTP::Request &theRequest)
+ContentTable  Engine::requestGridProducerInfo(const Spine::HTTP::Request &theRequest) const
 try
 {
   auto producer = theRequest.getParameter("producer");

@@ -66,7 +66,6 @@ INCLUDES := -Iinclude $(INCLUDES)
 # The rules
 
 all: objdir $(LIBFILE)
-	$(MAKE) -C testdata $@
 
 debug: all
 release: all
@@ -90,7 +89,6 @@ doc:
 clean:
 	rm -f $(LIBFILE) obj/* *~ $(SUBNAME)/*~
 	rm -rf doc/html
-	$(MAKE) -C testdata $@
 
 clean-install:
 	rm -rf $(includedir)/$(INCDIR)/*
@@ -109,11 +107,10 @@ install:
 	done
 	@mkdir -p $(enginedir)
 	$(INSTALL_PROG) $(LIBFILE) $(enginedir)/$(LIBFILE)
-	$(MAKE) -C testdata $@
 
 
 test:
-	if [ -d test/Makefile ] ; then $(MAKE) -C test $@; else true; fi
+	if [ -f test/Makefile ] ; then $(MAKE) -C test $@; else true; fi
 
 objdir:
 	@mkdir -p $(objdir)

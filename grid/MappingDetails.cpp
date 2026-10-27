@@ -76,10 +76,10 @@ void MappingDetails::print(std::ostream& stream,uint level,uint optionFlags)
     stream << space(level) << "- mMapping        = \n";
     mMapping.print(stream,level+2,optionFlags);
     stream << space(level) << "- mTimes          = \n";
-    for (auto a = mTimes.begin(); a != mTimes.end(); ++a)
+    for (auto& mTime : mTimes)
     {
-      stream << space(level+2) << "- analysisTime   = " << a->first << "\n";
-      for (auto t = a->second.begin(); t != a->second.end(); ++t)
+      stream << space(level+2) << "- analysisTime   = " << mTime.first << "\n";
+      for (auto t = mTime.second.begin(); t != mTime.second.end(); ++t)
       {
         stream << space(level+4) << "* " << *t << "\n";
       }

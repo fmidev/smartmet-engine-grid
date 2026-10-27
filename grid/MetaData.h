@@ -18,13 +18,14 @@ struct Parameter
   public:
     Parameter()
     {
-      parameterId = 0;
+
     }
 
     Parameter(const Parameter &param) = default;
     Parameter &operator=(const Parameter &param) = default;
+    ~Parameter() = default;
 
-    void print(std::ostream& stream,uint level,uint optionFlags)
+    void print(std::ostream& stream,uint level,uint /*optionFlags*/) const
     {
       stream << space(level) << "Parameter\n";
       stream << space(level) << "- parameterId          = " << parameterId << "\n";
@@ -33,7 +34,7 @@ struct Parameter
       stream << space(level) << "- parameterDescription = " << parameterDescription << "\n";
     }
 
-    uint          parameterId;         //!< FMI parameter identifier.
+    uint          parameterId{0};         //!< FMI parameter identifier.
     std::string   parameterName;       //!< Short parameter name.
     std::string   parameterUnits;      //!< Unit string (e.g. "K", "m/s").
     std::string   parameterDescription;//!< Human-readable description.
@@ -50,7 +51,7 @@ struct MetaData
 {
   MetaData()
   {
-    geometryId = 0;
+
     levelId = 0;
     xNumber = 0;
     yNumber = 0;
@@ -59,6 +60,7 @@ struct MetaData
 
   MetaData(const MetaData &md) = default;
   MetaData &operator=(const MetaData &md) = default;
+  ~MetaData() = default;
 
   void print(std::ostream& stream,uint level,uint optionFlags)
   {
@@ -84,28 +86,28 @@ struct MetaData
     stream << space(level) << "- levelDescription    = " << levelDescription << "\n";
     stream << space(level) << "- levels              = " ;
 
-    for (auto a = levels.begin(); a != levels.end(); ++a)
-      stream << *a << " ";
+    for (int level : levels)
+      stream << level << " ";
 
     stream << "\n";
 
     stream << space(level) << "- times               = \n";
-    for (auto t = times.begin(); t != times.end(); ++t)
-      stream << space(level+2) << "* " << *t << "\n";
+    for (const auto& time : times)
+      stream << space(level+2) << "* " << time << "\n";
 
     stream << space(level) << "- parameters          = \n";
-    for (auto p = parameters.begin(); p != parameters.end(); ++p)
-      p->print(stream,level+2,optionFlags);
+    for (auto& parameter : parameters)
+      parameter.print(stream,level+2,optionFlags);
   }
 
 
-  T::ProducerId           producerId;           //!< FMI producer identifier.
+  T::ProducerId           producerId = 0;           //!< FMI producer identifier.
   std::string             producerName;         //!< Producer short name.
   std::string             producerDescription;  //!< Producer human-readable description.
-  T::GenerationId         generationId;         //!< Generation (model run) identifier.
+  T::GenerationId         generationId = 0;         //!< Generation (model run) identifier.
   std::string             analysisTime;         //!< Analysis time in UTC (format "YYYYMMDDTHHMISS").
 
-  T::GeometryId           geometryId;           //!< FMI grid geometry identifier.
+  T::GeometryId           geometryId{0};           //!< FMI grid geometry identifier.
   int                     projectionId;         //!< Projection type code.
   std::string             projectionName;       //!< Projection short name.
   std::string             wkt;                  //!< Well-known text projection string.

@@ -27,6 +27,11 @@
 #include "MetaData.h"
 
 
+namespace Fmi
+{
+class TimeFormatter;
+}
+
 namespace SmartMet
 {
 namespace Engine
@@ -34,14 +39,14 @@ namespace Engine
 namespace Grid
 {
 
-typedef std::unique_ptr<Spine::Table> ContentTable;                           //!< Owning pointer to a formatted table returned as HTTP response content.
-typedef std::shared_ptr<ContentServer::ServiceInterface> ContentServer_sptr;  //!< Shared pointer to a ContentServer service interface.
-typedef std::vector<ContentServer_sptr> ContentServer_sptr_vec;               //!< Ordered list of ContentServer shared pointers (one per configured source).
-typedef std::shared_ptr<DataServer::ServiceInterface> DataServer_sptr;        //!< Shared pointer to a DataServer service interface.
-typedef std::shared_ptr<QueryServer::ServiceInterface> QueryServer_sptr;      //!< Shared pointer to a QueryServer service interface.
-typedef std::shared_ptr<QueryServer::Query> Query_sptr;                       //!< Shared pointer to a QueryServer query object.
+using ContentTable = std::unique_ptr<Spine::Table>;                           //!< Owning pointer to a formatted table returned as HTTP response content.
+using ContentServer_sptr = std::shared_ptr<ContentServer::ServiceInterface>;  //!< Shared pointer to a ContentServer service interface.
+using ContentServer_sptr_vec = std::vector<ContentServer_sptr>;               //!< Ordered list of ContentServer shared pointers (one per configured source).
+using DataServer_sptr = std::shared_ptr<DataServer::ServiceInterface>;        //!< Shared pointer to a DataServer service interface.
+using QueryServer_sptr = std::shared_ptr<QueryServer::ServiceInterface>;      //!< Shared pointer to a QueryServer service interface.
+using Query_sptr = std::shared_ptr<QueryServer::Query>;                       //!< Shared pointer to a QueryServer query object.
 
-typedef std::shared_ptr<QueryServer::ParamMappingFile_vec> ParamMappingFile_vec_sptr;  //!< Shared pointer to the live parameter mapping file vector.
+using ParamMappingFile_vec_sptr = std::shared_ptr<QueryServer::ParamMappingFile_vec>;  //!< Shared pointer to the live parameter mapping file vector.
 
 /*! \brief Timestamp and content hash for detecting producer content changes. */
 struct HashRec
@@ -50,7 +55,7 @@ struct HashRec
   UInt64 hash;       //!< Content hash; changes indicate new grid files have been indexed.
 };
 
-typedef std::unordered_map<T::ProducerId,HashRec> ProducerHash_map;  //!< Maps each producer ID to its last-known content hash.
+using ProducerHash_map = std::unordered_map<T::ProducerId,HashRec>;  //!< Maps each producer ID to its last-known content hash.
 
 
 /*! \brief Configuration for one external content server source.
@@ -69,7 +74,7 @@ struct ContentSource
   int         mRedisSecondaryPort = 0;                      //!< Redis secondary port (0 = disabled).
   bool        mRedisLockEnabled = false;                    //!< Whether to use Redis-level distributed locking.
   bool        mRedisReloadRequired = true;                  //!< Whether a full reload is required on reconnect.
-  std::string mRedisPassword = "";                          //!< Redis primary host address.
+  std::string mRedisPassword;                          //!< Redis primary host address.
   std::string mCorbaIor;                                    //!< CORBA IOR string when type is "corba".
   std::string mHttpUrl;                                     //!< Base URL when type is "http".
   std::string mPrimaryConnectionString;                     //!< Primary PostgreSQL connection string when type is "postgresql".
@@ -78,7 +83,7 @@ struct ContentSource
   uint        mEventListMaxSize = 0;                        //!< Maximum number of events to buffer (0 = unlimited).
 };
 
-typedef std::vector<ContentSource> ContentSource_vec;  //!< Ordered list of content source configurations.
+using ContentSource_vec = std::vector<ContentSource>;  //!< Ordered list of content source configurations.
 
 
 
@@ -100,10 +105,12 @@ class Engine : public SmartMet::Spine::SmartMetEngine
   public:
 
                         Engine(const char *theConfigFile);
-    virtual             ~Engine();
+    ~Engine() override;
+    Engine(const Engine&) = delete;
+    Engine& operator=(const Engine&) = delete;
 
     bool                browserRequest(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
-    void                browserContent(SessionManagement::SessionInfo& session,std::ostringstream& output);
+    void                browserContent(const SessionManagement::SessionInfo& session,std::ostringstream& output);
 
     int                 executeQuery(QueryServer::Query& query) const;
     Query_sptr          executeQuery(std::shared_ptr<QueryServer::Query> query) const;
@@ -119,9 +126,9 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                getExtAnalysisTimes(std::vector<std::vector<std::string>>& table) const;
 
     void                getCacheStats(Fmi::Cache::CacheStatistics& statistics) const;
-    void                getStateAttributes(std::shared_ptr<T::AttributeNode> parent);
+    void                getStateAttributes(const std::shared_ptr<T::AttributeNode>& parent);
 
-    Fmi::Cache::CacheStatistics getCacheStats() const;
+    Fmi::Cache::CacheStatistics getCacheStats() const override;
 
     ContentSource_vec&  getContentSources() {return mContentSources;}
 
@@ -140,9 +147,9 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                           int levelId) const;
 
     UInt64              getProducerHash(T::ProducerId producerId) const;
-    UInt64              getProducerHash(std::string producerName) const;
+    UInt64              getProducerHash(const std::string& producerName) const;
 
-    ContentTable        getProducerInfo(std::optional<std::string> producer,std::string timeFormat) const;
+    ContentTable        getProducerInfo(std::optional<std::string> producer,const std::string& timeFormat) const;
     ContentTable        getGenerationInfo(std::optional<std::string> producer,std::string timeFormat) const;
     ContentTable        getExtGenerationInfo(std::optional<std::string> producer,std::string timeFormat) const;
 
@@ -170,7 +177,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     void                getParameterDetails(
                           const std::string& producerName,
                           const std::string& parameterName,
-                          std::string& level,
+                          const std::string& level,
                           ParameterDetails_vec& parameterDetails) const;
 
     void                mapParameterDetails(ParameterDetails_vec& parameterDetails) const;
@@ -204,6 +211,14 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                           T::ParamLevel level,
                           bool onlySearchEnabled,
                           QueryServer::ParameterMapping_vec& mappings) const;
+
+    /*! \brief The names the parameter mappings of a producer give to its FMI parameters, by FMI
+        parameter name (for example Temperature for T-K). These are the names a query may use
+        instead of the FMI names. Names equal to the FMI name are left out. */
+    void                getParameterMappingNames(
+                          const std::string& producerName,
+                          const std::set<std::string>& fmiParameterNames,
+                          std::map<std::string,std::set<std::string>>& mappingNames) const;
 
     void                getProducerList(string_vec& producerList) const;
 
@@ -249,13 +264,13 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
     bool                isEnabled() const;
     bool                isGridProducer(const std::string& producer) const;
-    void                setDem(std::shared_ptr<Fmi::DEM> dem);
-    void                setLandCover(std::shared_ptr<Fmi::LandCover> landCover);
+    void                setDem(const std::shared_ptr<Fmi::DEM>& dem);
+    void                setLandCover(const std::shared_ptr<Fmi::LandCover>& landCover);
     void                updateProcessing();
 
   protected:
 
-    void                init();
+    void                init() override;
 
     /*! \brief Write one new auto-mapping entry to the mapping file.  Looks up the FMI parameter
      *  definition for the target key, emits the per-method interpolation columns, conversion
@@ -279,7 +294,24 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                                               int& maxSizeMember,
                                               int& truncateSizeMember,
                                               Log& log,
-                                              std::function<void(Log*)> applyLogToServers);
+                                              const std::function<void(Log*)>& applyLogToServers);
+    void                applyLogConfigurations(ConfigurationFile& configurationFile);     //!< Re-read the processing and debug log configurations of the servers.
+    void                applyBrowserConfiguration(ConfigurationFile& configurationFile);  //!< Re-read the browser configuration.
+    void                applyCleanupConfiguration(ConfigurationFile& configurationFile);  //!< Re-read the grid storage clean-up configuration.
+    void                getParameterDetailMappings(const ParameterDetails& parameterDetail,QueryServer::ParameterMapping_vec& mappings) const;  //!< Get the parameter mappings of a parameter detail.
+    void                addMappingTimes(MappingDetails& details,T::ContentInfoList& contentInfoList) const;  //!< Add the analysis and forecast times of the contents to the mapping details.
+    bool                countReadyGenerations(const std::string& producerName,time_t currentTime,std::map<std::string,uint>& counterList,std::map<std::string,T::GenerationId>& generationList) const;  //!< Count the ready generations of the producer by analysis time.
+    void                addProducerMetaData(std::list<MetaData>& metaDataList,const T::ProducerInfo& pInfo,ContentServer::ServiceInterface& contentServer,time_t currentTime) const;  //!< Add the metadata of the generations of the producer.
+    void                getGeometryParameterNames(const T::ProducerInfo& info,const T::GeometryInfo& geom,ContentServer::ServiceInterface& contentServer,std::ostringstream& output1,std::ostringstream& output2) const;  //!< Get the FMI parameter names and their aliases of the generation geometry.
+    void                addGenerationInfoRows(Spine::Table& resultTable,uint& row,const T::ProducerInfo& info,const T::GenerationInfo& gInfo,ContentServer::ServiceInterface& contentServer,const std::string& timeFormat,const Fmi::TimeFormatter* timeFormatter) const;  //!< Add the generation info rows of the ready geometries of the generation.
+    bool                countGenerationGeometries(const std::string& recordItem,time_t currentTime,ContentServer::ServiceInterface& contentServer,T::GeometryInfoList& tmpGeometryInfoList,std::map<std::string,std::vector<std::pair<uint,int>>>& counterList) const;  //!< Count the ready geometries of a producer status record item.
+    void                getExtGenerationGeometries(const T::GenerationInfo& gInfo,ContentServer::ServiceInterface& contentServer,T::GeometryInfoList& tmpGeometryInfoList,T::GeometryInfoList& geometryInfoList) const;  //!< Get the geometries of the generation (generated to tmpGeometryInfoList if not known).
+    void                addAliasedParameterNames(const std::string& producerAlias,const T::ProducerInfo& pInfo,const T::GeometryInfo& geom,ContentServer::ServiceInterface& contentServer,std::set<std::string>& paramList1,std::set<std::string>& paramList2) const;  //!< Add the FMI parameter names of the geometry which have aliases.
+    void                getExtParameterNames(const std::string& producerAlias,const std::vector<std::pair<uint,int>>& geometries,T::GeometryInfoList& tmpGeometryInfoList,ContentServer::ServiceInterface& contentServer,time_t& modTime,std::set<std::string>& paramList1,std::set<std::string>& paramList2) const;  //!< Get the modification time and the aliased parameter names of the geometries.
+    void                addExtGenerationInfoRow(Spine::Table& resultTable,uint& row,const std::string& producerAlias,const std::string& key,const std::vector<std::pair<uint,int>>& geometries,T::GeometryInfoList& tmpGeometryInfoList,ContentServer::ServiceInterface& contentServer,const std::string& timeFormat,const Fmi::TimeFormatter* timeFormatter) const;  //!< Add the ext generation info row of an analysis time and geometry.
+    void                getGenerationGeometries(const T::GenerationInfo& gInfo,ContentServer::ServiceInterface& contentServer,T::GeometryInfoList& geometryInfoList) const;  //!< Get the geometries of the generation (from the content if not known).
+    void                addGeometryMetaData(std::list<MetaData>& metaDataList,const T::ProducerInfo& pInfo,const T::GenerationInfo& gInfo,const T::GeometryInfo& geom,const std::set<T::ParamLevelId>& levelIdList,ContentServer::ServiceInterface& contentServer) const;  //!< Add the metadata of each level type of the geometry.
+    void                addAnalysisTimeRows(const std::vector<std::string>& record,const std::map<std::string,uint>& counterList,const std::map<std::string,T::GenerationId>& generationList,ContentServer::ServiceInterface& contentServer,std::vector<std::vector<std::string>>& table) const;  //!< Add the analysis time rows of a producer status record.
 
     // Phase helpers for init().  Each handles one well-defined stage:
     void                initMemoryMapper();                                                   //!< Apply memory-mapper configuration from member fields.
@@ -291,7 +323,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                                  DataServer::ServiceInterface* ds,
                                  QueryServer::ServiceInterface* qs);                          //!< Initialise the six per-server processing/debug logs (no-op for empty file paths).
 
-    void                shutdown();
+    void                shutdown() override;
     void                startUpdateProcessing();
     void                clearMappings();
     void                checkConfiguration();
@@ -299,6 +331,9 @@ class Engine : public SmartMet::Spine::SmartMetEngine
                                      QueryServer::ParamMappingFile_vec& parameterAliasMappings);
     void                loadUnitConversionFile();
     std::ofstream       openMappingFile(const std::string& mappingFile);
+
+    struct MappingUpdateState;
+    void                addParameterMapping(const std::string& info,MappingUpdateState& state);  //!< Add a producer parameter to the mapping file update.
     void                updateMappings();
 
     void                updateMappings(
@@ -312,12 +347,12 @@ class Engine : public SmartMet::Spine::SmartMetEngine
 
   private:
 
-    ContentTable        requestGridGenerationInfo(const Spine::HTTP::Request &theRequest);
-    ContentTable        requestGridQdGenerationInfo(const Spine::HTTP::Request &theRequest);
-    ContentTable        requestGridParameterInfo(const Spine::HTTP::Request &theRequest);
-    ContentTable        requestGridProducerInfo(const Spine::HTTP::Request &theRequest);
+    ContentTable        requestGridGenerationInfo(const Spine::HTTP::Request &theRequest) const;
+    ContentTable        requestGridQdGenerationInfo(const Spine::HTTP::Request &theRequest) const;
+    ContentTable        requestGridParameterInfo(const Spine::HTTP::Request &theRequest) const;
+    ContentTable        requestGridProducerInfo(const Spine::HTTP::Request &theRequest) const;
 
-  private:
+  
 
     bool                mEnabled;                             //!< Whether the engine is operational (false disables all service calls).
 
@@ -392,7 +427,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     uint                mQueryServerContentSearchCache_clearInterval;         //!< Interval (seconds) between content-search cache clear passes.
 
     std::string         mHeightConversionFile;                    //!< Path to the height/pressure conversion data file.
-    std::string         mCacheType;                               //!< DataServer grid cache backend type ("memory" or "filesystem").
+    std::string         mCacheType;                               //!< DataServer grid cache backend type ("memory" or "filesys").
     std::string         mCacheDir;                                //!< Directory for filesystem-backed grid cache.
     uint                mNumOfCachedGrids;                        //!< Maximum number of decoded grids kept in the cache.
     uint                mMaxSizeOfCachedGridsInMegaBytes;         //!< Maximum total size (MiB) of the decoded grid cache.
