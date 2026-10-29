@@ -4,7 +4,7 @@ INCDIR = smartmet/engines/$(SUBNAME)
 
 REQUIRES = libpq configpp gdal
 
-include $(shell echo $${PREFIX-/usr})/share/smartmet/devel/makefile.inc
+include $(or $(PREFIX),$(shell smartbuildcfg --prefix))/share/smartmet/devel/makefile.inc
 
 # Enabling / disabling CORBA usage.
 
@@ -25,9 +25,9 @@ LIBS += $(PREFIX_LDFLAGS) \
 ifeq ($(CORBA), disabled)
   CORBA_FLAGS = -DCORBA_DISABLED
 else
-  CORBA_INCLUDE = -isystem /usr/include/smartmet/grid-content/contentServer/corba/stubs \
-                  -isystem /usr/include/smartmet/grid-content/dataServer/corba/stubs \
-                  -isystem /usr/include/smartmet/grid-content/queryServer/corba/stubs
+  CORBA_INCLUDE = -isystem $(PREFIX)/include/smartmet/grid-content/contentServer/corba/stubs \
+                  -isystem $(PREFIX)/include/smartmet/grid-content/dataServer/corba/stubs \
+                  -isystem $(PREFIX)/include/smartmet/grid-content/queryServer/corba/stubs
   CORBA_LIBS = -lomniORB4 -lomnithread
 endif
 
