@@ -4,7 +4,7 @@ INCDIR = smartmet/engines/$(SUBNAME)
 
 REQUIRES = libpq configpp gdal
 
-include $(shell echo $${PREFIX-/usr})/share/smartmet/devel/makefile.inc
+include $(or $(PREFIX),$(shell smartbuildcfg --prefix))/share/smartmet/devel/makefile.inc
 
 # Enabling / disabling CORBA usage.
 
