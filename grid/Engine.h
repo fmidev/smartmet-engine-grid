@@ -447,7 +447,7 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     std::size_t         mMemoryMapper_pageCacheSize;              //!< Size (pages) of the memory mapper's prefetch page cache.
 
     pthread_t           mThread;                                  //!< Background thread that drives periodic content/mapping updates.
-    std::atomic<bool>   mShutdownRequested;                       //!< Set to true to signal the background thread to stop.
+    std::atomic<bool>   mShutdownRequested{false};                       //!< Set to true to signal the background thread to stop.
     bool                mShutdownFinished;                        //!< Set to true after the background thread has exited.
     Browser             mBrowser;                                 //!< Admin browser instance.
     bool                mBrowserEnabled;                          //!< Whether the admin browser is active.

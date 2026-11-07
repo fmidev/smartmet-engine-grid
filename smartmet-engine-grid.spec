@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 26.10.23
+Version: 26.11.7
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -113,6 +113,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Sat Nov 7 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.11.7-1.fmi
+- Initialize member variables that some constructors left uninitialized
+
 * Fri Oct 23 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.10.23-1.fmi
 - Added getParameterMappingNames: the names the parameter mappings of a producer give to its
   FMI parameters, for listing the parameters a query may use
