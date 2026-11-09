@@ -280,7 +280,8 @@ hot-reloaded by the Query Server and by the engine's own collections.
   `browserContent()` / `browserRequest()`. Pages that modify things are gated by
   `browser.flags`: `contentModificationEnabled` (1) allows adding and deleting content,
   and `logModificationEnabled` (2) allows switching logs. The session user must be in
-  the `grid-admin` group.
+  the `grid-admin` group. The new admin pages of grid-admin (`/grid-console`) read the same
+  settings through `isBrowserEnabled()` and `getBrowserFlags()`.
 
 ## 11. Concurrency
 

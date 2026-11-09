@@ -112,6 +112,11 @@ class Engine : public SmartMet::Spine::SmartMetEngine
     bool                browserRequest(SessionManagement::SessionInfo& session,const Spine::HTTP::Request& theRequest,Spine::HTTP::Response& theResponse);
     void                browserContent(const SessionManagement::SessionInfo& session,std::ostringstream& output);
 
+    // The browser settings (browser.enabled, browser.flags, see Browser::Flags) for the
+    // admin pages of grid-admin (/gadmin). They are re-read with the configuration.
+    bool                isBrowserEnabled() const;
+    UInt64              getBrowserFlags() const;
+
     int                 executeQuery(QueryServer::Query& query) const;
     Query_sptr          executeQuery(std::shared_ptr<QueryServer::Query> query) const;
 

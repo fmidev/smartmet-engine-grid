@@ -1330,6 +1330,20 @@ bool Engine::browserRequest(SessionManagement::SessionInfo& session,const Spine:
   }
 }
 
+/*! \brief Engine: Whether the admin pages may show the engine (browser.enabled). */
+
+bool Engine::isBrowserEnabled() const
+{
+  return mBrowserEnabled;
+}
+
+/*! \brief Engine: The capability flags of the admin pages (browser.flags, Browser::Flags). */
+
+UInt64 Engine::getBrowserFlags() const
+{
+  return mBrowserFlags;
+}
+
 /*! \brief Engine: Browser content. */
 
 void Engine::browserContent(const SessionManagement::SessionInfo& session,std::ostringstream& output)
