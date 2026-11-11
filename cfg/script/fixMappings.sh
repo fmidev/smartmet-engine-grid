@@ -1,7 +1,7 @@
 # This script can be used for fixing fields in mapping files. This is sometimes
 # needed if the default configuration does not automatically produce correct
 # mappings. On the other hand, this script can also be used for fixing or 
-# removing old mapppings from the mapping files.
+# removing old mappings from the mapping files.
 
 # Usage: fixMappings.sh <inputFile>
 

@@ -167,7 +167,7 @@ The grid engine uses also some external libraries that needs to be configured. T
 
 The current library is used for memory mapping and extracting information from grid files. Memory mapping means that information in these files can be accessed by using memory pointers and the operating system automatically loads requested memory pages into the memory. Extraction means that the current library reads grid files and creates C++ objects that corresponds these files and grids in them. After that all information in these files and grids can be accessed through these objects. 
 
-If grid data is packed by using "simple packing" method and if it does not contain any bitmaps then all grid points can be accessed directly by using memory pointers. However, if this is not the case then grid points cannot be accessed directly by using memory pointers, which means that we have to extract this data and put it into the cache so that we can access it faster. The point is that we do not want to extract the whole grid everytime it is accessed.
+If grid data is packed by using "simple packing" method and if it does not contain any bitmaps then all grid points can be accessed directly by using memory pointers. However, if this is not the case then grid points cannot be accessed directly by using memory pointers, which means that we have to extract this data and put it into the cache so that we can access it faster. The point is that we do not want to extract the whole grid every time it is accessed.
 
 The current cache implementation supports two different modes:
 
@@ -536,7 +536,7 @@ the clean-up.
 
 ### <span id="chapter-2-3-2"></span>2.3.2 Local file cache
 
-Local file cache is used in order to store some marked grid files locally before they can be taken into use. The actual marking of the files is done by the 'radon2smartmet' program, which stores this information into the FileInfo -records when it writes this informatin into the Content Storage.
+Local file cache is used in order to store some marked grid files locally before they can be taken into use. The actual marking of the files is done by the 'radon2smartmet' program, which stores this information into the FileInfo -records when it writes this information into the Content Storage.
 
 The idea is to cache frequently accessed files into the local filesystem, which helps to reduce network traffic. Notice that the following configuration lines enable local file caching in the dataServer. If you want that all marked files are stored locally before they are taken in to used, then you should define how long time the contentServer is allowed wait this local file caching (=> see contentServer "fileCache" definitions above). 
 
@@ -556,7 +556,7 @@ The idea is to cache frequently accessed files into the local filesystem, which 
 
 ### <span id="chapter-2-3-3"></span>2.3.3 Logs
 
-The Data Server has also the processing log and the debug log. These logs are congfigured in the same way as the logs used by the Content Server.
+The Data Server has also the processing log and the debug log. These logs are configured in the same way as the logs used by the Content Server.
 
 <pre>
   data-server :

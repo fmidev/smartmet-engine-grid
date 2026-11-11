@@ -3163,7 +3163,7 @@ bool Browser::page_parameterMappingFiles(const SessionManagement::SessionInfo& /
     output << "      to Kelvins, before isolines/isobands are counted from the grid. This is faster than converting the whole grid to Celcius.</P>";
     output << "  </LI>\n";
     output << "  <LI>\n";
-    output << "    <B>Defining parameter seach orders for the queries</B>\n";
+    output << "    <B>Defining parameter search orders for the queries</B>\n";
     output << "      <P>It is quite common that queries do not exactly identify parameters that they are requesting. For example, they do not";
     output << "      necessary define which geometry, level type or level should be used. In this case, the first mapping of the requested parameter ";
     output << "       which 'search type' field has value 'E' is selected. So, the order of the mappings is significant in these cases.</P>";
@@ -3183,7 +3183,7 @@ bool Browser::page_parameterMappingFiles(const SessionManagement::SessionInfo& /
     output << "  </LI>\n";
     output << "  <LI>\n";
     output << "    <B>Defining missing parameter mappings automatically</B>\n";
-    output << "      <P>New parameters are added continuosly into the content database. However, they cannot be queried if there are no mappings ";
+    output << "      <P>New parameters are added continuously into the content database. However, they cannot be queried if there are no mappings ";
     output << "      in place. That's why the system creates automatically temporary mappings for such parameters. Usually these mappings can be ";
     output << "      found from '*_auto.csv' files. These mappings are not necessary correct and that's why they need to be checked manually and ";
     output << "      moved into permanent mapping files.</P>";

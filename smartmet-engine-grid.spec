@@ -3,7 +3,7 @@
 %define SPECNAME smartmet-engine-%{DIRNAME}
 Summary: SmartMet grid engine
 Name: %{SPECNAME}
-Version: 26.11.9
+Version: 26.11.11
 Release: 1%{?dist}.fmi
 License: MIT
 Group: SmartMet/Engines
@@ -113,6 +113,9 @@ rm -rf $RPM_BUILD_ROOT
 %{_includedir}/smartmet/engines/%{DIRNAME}
 
 %changelog
+* Wed Nov 11 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.11.11-1.fmi
+- Fixed typos in messages and comments
+
 * Mon Nov 9 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.11.9-1.fmi
 - New isBrowserEnabled() and getBrowserFlags() for the admin pages of grid-admin (/grid-console)
 * Sat Nov 7 2026 Mika Heiskanen <mika.heiskanen@fmi.fi> - 26.11.7-1.fmi

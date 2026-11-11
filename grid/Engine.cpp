@@ -1971,7 +1971,7 @@ void Engine::getParameterDetails(const std::string& producerName, const std::str
     //   pal_skandinavia;FogIntensity:SMARTMET;1096;;;;;
     //   pal_skandinavia;PrecipitationType:SMARTMETMTA;1096;;;;;
     //
-    // Notice that this search only maps the (newbase) producer and the paramer information into
+    // Notice that this search only maps the (newbase) producer and the parameter information into
     // the producer name, geometry, levelId, level, forecast type and forecast number used by the
     // Radon. This means that the current (newbase) parameter name should be found from the
     // parameter mapping files (this is not checked here). For example:
@@ -2347,7 +2347,7 @@ std::string Engine::getProducerAlias(const std::string& producerName, int levelI
 
     // This method returns the producer mapping name. Sometimes the same alias name
     // is used for different mappings. In this case the requested level type might
-    // help us to identify the corret producer.
+    // help us to identify the correct producer.
 
     // The mapping definitions might look like this (aliasName + levelId):
     //   ec:ecmwf_maailma_pinta

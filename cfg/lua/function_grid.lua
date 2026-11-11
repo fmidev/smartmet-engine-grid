@@ -1,4 +1,4 @@
--- This file enables simple caclulation of new grids. The idea is that GRID of GRIDX functions 
+-- This file enables simple calculation of new grids. The idea is that GRID of GRIDX functions 
 -- call a sub-function for each grid point and this sub-function calculates a new value for 
 -- the grid point and returns it to the calling function. 
 
@@ -18,8 +18,8 @@
 
 
 -- If you want to define you own sub-functions just create a new file and add the "require" command
--- below. Notice that LUA cannot find the file if its location is not defined in the LUA_PATH enviroment
--- varible. This should be defined before the server is started:
+-- below. Notice that LUA cannot find the file if its location is not defined in the LUA_PATH environment
+-- variable. This should be defined before the server is started:
 
 --         export LUA_PATH=/smartmet/cnf/smartmetd/clients/engines/grid-engine/?.lua
 
