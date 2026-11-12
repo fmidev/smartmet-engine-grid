@@ -41,7 +41,6 @@
 #include <vector>
 #include "TestCommon.h"
 #include "grid/Engine.h"
-#include "../grid/Engine.h"
 
 using namespace SmartMet;
 using namespace GridTest;
