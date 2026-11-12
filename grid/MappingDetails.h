@@ -1,7 +1,12 @@
 #pragma once
 
-#include <grid-files/grid/Typedefs.h>
 #include <grid-content/queryServer/definition/ParameterMapping.h>
+#include <grid-files/common/Typedefs.h>
+#include <iosfwd>
+#include <map>
+#include <set>
+#include <string>
+#include <vector>
 
 
 namespace SmartMet

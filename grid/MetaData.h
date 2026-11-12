@@ -1,8 +1,13 @@
 #pragma once
 
-#include <grid-files/identification/GridDef.h>
-#include <grid-content/contentServer/definition/ProducerInfo.h>
+#include <grid-files/common/Coordinate.h>
+#include <grid-files/common/GeneralFunctions.h>
+#include <grid-files/common/Typedefs.h>
+#include <grid-files/grid/Typedefs.h>
 #include <set>
+#include <ostream>
+#include <string>
+#include <vector>
 
 namespace SmartMet
 {

@@ -1,11 +1,50 @@
 #pragma once
-#include <array>
-#include <spine/SmartMetPlugin.h>
-#include <spine/Reactor.h>
-#include <spine/HTTP.h>
 #include <grid-files/common/ConfigurationFile.h>
-#include <grid-content/contentServer/http/server/ServerInterface.h>
-#include <grid-content/sessionManagement/implementation/ServiceImplementation.h>
+#include <grid-content/contentServer/definition/ContentInfo.h>
+#include <grid-content/contentServer/definition/FileInfo.h>
+#include <grid-content/contentServer/definition/GenerationInfo.h>
+#include <grid-content/contentServer/definition/ProducerInfo.h>
+#include <grid-content/contentServer/definition/ServiceInterface.h>
+#include <grid-files/common/Typedefs.h>
+#include <grid-files/grid/Typedefs.h>
+#include <array>
+#include <cstddef>
+#include <iosfwd>
+#include <iterator>
+#include <map>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
+namespace SmartMet
+{
+namespace SessionManagement
+{
+class SessionInfo;
+}
+}
+namespace SmartMet
+{
+namespace Spine
+{
+namespace HTTP
+{
+class Request;
+class Response;
+}
+}
+}
+namespace SmartMet
+{
+namespace T
+{
+class ContentInfoList;
+class FileInfoList;
+class GenerationInfoList;
+class ProducerInfoList;
+}
+}
 
 
 

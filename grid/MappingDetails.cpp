@@ -1,6 +1,8 @@
 #include "MappingDetails.h"
 #include <grid-files/common/GeneralFunctions.h>
-#include <boost/functional/hash.hpp>
+#include <macgyver/Exception.h>
+#include <ostream>
+#include <utility>
 
 
 namespace SmartMet

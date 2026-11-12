@@ -8,10 +8,6 @@
 
 #define BOOST_TEST_MODULE EngineTest
 #include <boost/test/included/unit_test.hpp>
-
-#include "TestCommon.h"
-#include "grid/Engine.h"
-
 #include <grid-content/contentServer/definition/ContentInfo.h>
 #include <grid-content/contentServer/definition/FileInfo.h>
 #include <grid-content/contentServer/definition/GenerationInfo.h>
@@ -21,13 +17,31 @@
 #include <grid-files/grid/GridFile.h>
 #include <grid-files/grid/Message.h>
 #include <grid-files/identification/GridDef.h>
-
 #include <boost/algorithm/string/replace.hpp>
+#include <grid-content/queryServer/definition/ParameterMapping.h>
+#include <grid-content/queryServer/definition/ParameterValues.h>
+#include <grid-content/queryServer/definition/Query.h>
+#include <grid-content/queryServer/definition/QueryParameter.h>
+#include <grid-files/common/AttributeList.h>
+#include <grid-files/common/Typedefs.h>
+#include <grid-files/grid/GridValue.h>
+#include <grid-files/grid/GridValueList.h>
+#include <grid-files/grid/Typedefs.h>
 #include <filesystem>
 #include <fstream>
 #include <memory>
 #include <set>
 #include <sstream>
+#include <cstdlib>
+#include <algorithm>
+#include <cmath>
+#include <map>
+#include <optional>
+#include <string>
+#include <vector>
+#include "TestCommon.h"
+#include "grid/Engine.h"
+#include "../grid/Engine.h"
 
 using namespace SmartMet;
 using namespace GridTest;

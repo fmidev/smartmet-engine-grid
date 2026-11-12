@@ -1,9 +1,25 @@
 #include "Browser.h"
-#include "Engine.h"
 #include <grid-files/grid/GridFile.h>
 #include <macgyver/Hash.h>
 #include <spine/Convenience.h>
+#include <grid-content/contentServer/definition/ContentInfoList.h>
+#include <grid-content/contentServer/definition/FileInfoList.h>
+#include <grid-content/contentServer/definition/GenerationInfoList.h>
+#include <grid-content/contentServer/definition/ProducerInfoList.h>
+#include <grid-content/dataServer/definition/ServiceInterface.h>
+#include <grid-content/queryServer/definition/ServiceInterface.h>
+#include <grid-content/sessionManagement/definition/SessionInfo.h>
+#include <grid-content/userManagement/definition/UserInfo.h>
+#include <grid-files/common/AttributeNode.h>
+#include <grid-files/common/GeneralFunctions.h>
+#include <grid-files/common/Log.h>
+#include <macgyver/Exception.h>
+#include <spine/HTTP.h>
 #include <fstream>
+#include <ctime>
+#include <optional>
+#include <sstream>
+#include "Engine.h"
 
 
 namespace SmartMet
