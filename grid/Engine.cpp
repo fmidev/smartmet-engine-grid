@@ -1418,7 +1418,20 @@ Query_sptr Engine::executeQuery(Query_sptr query) const
       switch (result)
       {
         case QueryServer::Result::NO_PRODUCERS_FOUND:
+        {
+          // Name what was searched for: the producer is often given only in the parameter
+          // (for example T-K:MEPS), and the content server may simply not have it.
+          std::string producers;
+          for (const auto& name : query->mProducerNameList)
+            producers += (producers.empty() ? "" : ",") + name;
+          std::string parameters;
+          for (const auto& param : query->mQueryParameterList)
+            parameters += (parameters.empty() ? "" : ",") + param.mOrigParam;
+          exception.addParameter("Producers", producers.empty() ? "-" : producers);
+          exception.addParameter("Parameters", parameters.empty() ? "-" : parameters);
+        }
           exception.addDetail("The reason for this situation is usually that the given producer is unknown");
+          exception.addDetail("to the content server (check /grid-admin?method=getProducerInfoList)");
           exception.addDetail("or there are no producer list available in the grid engine's configuration "
               "file.");
           break;
