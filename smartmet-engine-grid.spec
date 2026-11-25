@@ -22,10 +22,10 @@ BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 BuildRequires: rpm-build
 BuildRequires: gcc-c++
-BuildRequires: smartmet-library-spine-devel >= 26.10.16
-BuildRequires: smartmet-library-grid-content-devel >= 26.10.16
-BuildRequires: smartmet-library-grid-files-devel >= 26.10.16
-BuildRequires: smartmet-library-macgyver-devel >= 26.10.16
+BuildRequires: smartmet-library-spine-devel >= 26.11.19
+BuildRequires: smartmet-library-grid-content-devel >= 26.11.21
+BuildRequires: smartmet-library-grid-files-devel >= 26.11.25
+BuildRequires: smartmet-library-macgyver-devel >= 26.11.13
 BuildRequires: make
 BuildRequires: omniORB-devel >= 4.3.0
 BuildRequires: %{smartmet_boost}-devel
@@ -34,21 +34,21 @@ BuildRequires: bzip2-devel
 BuildRequires: zlib-devel
 BuildRequires: postgresql15-devel
 Requires: %{smartmet_boost}-thread
-Requires: smartmet-library-grid-content >= 26.10.17
-Requires: smartmet-library-grid-files >= 26.10.17
-Requires: smartmet-library-spine >= 26.10.17
-Requires: smartmet-library-macgyver >= 26.10.17
+Requires: smartmet-library-grid-content >= 26.11.21
+Requires: smartmet-library-grid-files >= 26.11.25
+Requires: smartmet-library-spine >= 26.11.19
+Requires: smartmet-library-macgyver >= 26.11.13
 Requires: omniORB-devel
 #TestRequires: %{smartmet_boost}-devel
 #TestRequires: gcc-c++
 #TestRequires: make
 #TestRequires: gdal312-devel
 #TestRequires: omniORB-devel
-#TestRequires: smartmet-library-grid-content-devel >= 26.10.16
-#TestRequires: smartmet-library-grid-files-devel >= 26.10.16
+#TestRequires: smartmet-library-grid-content-devel >= 26.11.21
+#TestRequires: smartmet-library-grid-files-devel >= 26.11.25
 #TestRequires: smartmet-library-newbase-devel
-#TestRequires: smartmet-library-spine-devel >= 26.10.16
-#TestRequires: smartmet-library-grid-files-test >= 26.10.16
+#TestRequires: smartmet-library-spine-devel >= 26.11.19
+#TestRequires: smartmet-library-grid-files-test >= 26.11.25
 #TestRequires: smartmet-test-data
 
 %if 0%{?rhel} && 0%{rhel} == 8
@@ -82,10 +82,10 @@ SmartMet grid engine
 Summary: SmartMet %{SPECNAME} development headers
 Group: SmartMet/Development
 Provides: %{SPECNAME}-devel
-Requires: smartmet-library-grid-content-devel >= 26.10.16
+Requires: smartmet-library-grid-content-devel >= 26.11.21
 Requires: %{SPECNAME} = %{version}-%{release}
-Requires: smartmet-library-spine-devel >= 26.10.16
-Requires: smartmet-library-macgyver-devel >= 26.10.16
+Requires: smartmet-library-spine-devel >= 26.11.19
+Requires: smartmet-library-macgyver-devel >= 26.11.13
 %description -n %{SPECNAME}-devel
 SmartMet %{SPECNAME} development headers.
 
